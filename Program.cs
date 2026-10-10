@@ -1,3 +1,4 @@
+using SecondHandMarketplace.Web.Services;
 namespace SecondHandMarketplace.Web
 {
     public class Program
@@ -8,7 +9,7 @@ namespace SecondHandMarketplace.Web
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
-
+            builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -25,6 +26,7 @@ namespace SecondHandMarketplace.Web
             app.UseAuthorization();
 
             app.MapStaticAssets();
+            app.MapControllers();
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
