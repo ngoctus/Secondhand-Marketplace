@@ -1,38 +1,37 @@
-using SecondHandMarketplace.Web.Services;
-namespace SecondHandMarketplace.Web
+using Web2Hand.Common.Extensions;
+using Web2Hand.Data.Seed;
+using Web2Hand.Hubs;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Mỗi nhóm cấu hình nằm trong Common/Extensions/ServiceCollectionExtensions.cs
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddIdentityAndAuth();
+builder.Services.AddAppServices();
+builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
+
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
-            builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
-
-            app.UseHttpsRedirection();
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.MapStaticAssets();
-            app.MapControllers();
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
-                .WithStaticAssets();
-
-            app.Run();
-        }
-    }
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllerRoute(name: "areas", pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapHub<AuctionHub>("/hubs/auction");
+app.MapHub<ChatHub>("/hubs/chat");
+app.MapHub<NotificationHub>("/hubs/notification");
+
+await DbSeeder.SeedAsync(app.Services);
+
+app.Run();

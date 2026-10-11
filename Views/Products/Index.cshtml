@@ -1,0 +1,41 @@
+@model List<ProductCardVm>
+@{
+    ViewData["Title"] = "Sản phẩm";
+    var query = Context.Request.Query;
+}
+
+<h2>Sản phẩm</h2>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-5"><input name="Keyword" value="@query["Keyword"]" class="form-control" placeholder="Tên sản phẩm hoặc người bán" /></div>
+    <div class="col-md-2"><input name="MinPrice" value="@query["MinPrice"]" class="form-control" placeholder="Giá từ" /></div>
+    <div class="col-md-2"><input name="MaxPrice" value="@query["MaxPrice"]" class="form-control" placeholder="Giá đến" /></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100">Tìm</button></div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <p class="text-muted">Không có sản phẩm nào.</p>
+}
+
+<div class="row row-cols-1 row-cols-md-4 g-3">
+    @foreach (var p in Model)
+    {
+        <div class="col">
+            <div class="card h-100">
+                @if (p.ImageUrl != null)
+                {
+                    <img src="@p.ImageUrl" class="card-img-top" alt="@p.Name" />
+                }
+                <div class="card-body">
+                    <h5 class="card-title">@p.Name</h5>
+                    <p class="card-text mb-1">@p.Price.ToString("N0")đ @(p.SaleType == SaleType.Auction ? "(đấu giá)" : "")</p>
+                    <small class="text-muted">@p.SellerName</small>
+                </div>
+                <div class="card-footer">
+                    <a asp-action="Details" asp-route-id="@p.Id">Chi tiết</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

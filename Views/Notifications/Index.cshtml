@@ -1,0 +1,33 @@
+@model List<Notification>
+@{
+    ViewData["Title"] = "Thông báo";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Thông báo</h2>
+    <form asp-action="MarkAllRead" method="post">
+        <button class="btn btn-outline-secondary btn-sm">Đánh dấu đã đọc tất cả</button>
+    </form>
+</div>
+
+@if (Model.Count == 0)
+{
+    <p class="text-muted">Chưa có thông báo.</p>
+}
+
+<ul class="list-group">
+    @foreach (var n in Model)
+    {
+        <li class="list-group-item @(n.IsRead ? "" : "fw-bold")">
+            @if (n.Link != null)
+            {
+                <a href="@n.Link">@n.Content</a>
+            }
+            else
+            {
+                <span>@n.Content</span>
+            }
+            <small class="text-muted ms-2">@n.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+        </li>
+    }
+</ul>
