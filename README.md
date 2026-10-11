@@ -1,20 +1,6 @@
-# Web2Hand: khung xương Backend (ASP.NET Core MVC, .NET 9)
+# khung xương Backend
 
-## 1. Chạy dự án lần đầu
-
-1. Mở `Web2Hand.sln` bằng Visual Studio 2022 (cần .NET 9 SDK).
-2. Kiểm tra chuỗi kết nối trong `Web2Hand/appsettings.json` (mặc định dùng LocalDB, máy nào có VS cũng chạy được).
-3. Mở **Tools > NuGet Package Manager > Package Manager Console**, chạy:
-   ```
-   Add-Migration InitialCreate
-   ```
-   (Khi chạy app, `DbSeeder` sẽ tự áp migration vào DB.)
-4. Nhấn F5.
-5. Tài khoản Admin mặc định: `admin@web2hand.local` / `Admin@123` (đổi trong `Data/Seed/DbSeeder.cs`).
-
-API key (AI, v.v.) để trong **User Secrets** (chuột phải project > Manage User Secrets), không ghi vào appsettings.json và không commit.
-
-## 2. Sơ đồ thư mục
+## 1. Sơ đồ thư mục
 
 ```
 Web2Hand/
@@ -43,25 +29,7 @@ Web2Hand/
 └── wwwroot/                        css, js, uploads
 ```
 
-## 3. Gặp tình huống này thì mở file nào?
-
-| Tình huống | Mở file |
-|---|---|
-| Trang không hiện / 404 | `Areas/<Role>/Controllers/<Tên>Controller.cs`, và kiểm tra có `Views/<Tên>/<Action>.cshtml` |
-| Bị đẩy ra trang đăng nhập / AccessDenied | `Areas/<Role>/Controllers/<Role>BaseController.cs` (phân quyền), `Controllers/AccountController.cs` |
-| Lỗi `Unable to resolve service for type...` | `Common/Extensions/ServiceCollectionExtensions.cs` > `AddAppServices` (quên đăng ký) |
-| Dữ liệu sai / lỗi truy vấn | `Services/<Tính năng>/<Tên>Service.cs` |
-| Thêm cột / thêm bảng | `Models/Entities/` + `Data/AppDbContext.cs` + tạo migration |
-| Đổi trạng thái đơn / sản phẩm | `Models/Enums/AppEnums.cs` + service tương ứng |
-| Sai luật đặt giá, kết thúc đấu giá | `Services/Auctions/AuctionService.cs` |
-| Giá không cập nhật realtime | `Hubs/AuctionHub.cs`, `wwwroot/js/auction.js` |
-| Phiên đấu giá không tự đóng | `BackgroundJobs/AuctionJob.cs` |
-| Thông báo không tới | `Services/Notifications/NotificationService.cs`, `Hubs/NotificationHub.cs` |
-| Chatbox AI | `Services/Ai/AiChatService.cs`, `Controllers/Api/AiChatController.cs` |
-| Menu / giao diện chung | `Views/Shared/_Layout.cshtml` |
-| Tài khoản admin, danh mục mẫu | `Data/Seed/DbSeeder.cs` |
-
-## 4. Thêm một chức năng mới (làm theo thứ tự)
+## 2. Thêm một chức năng mới (làm theo thứ tự)
 
 Ví dụ: Seller đăng sản phẩm.
 
@@ -71,34 +39,6 @@ Ví dụ: Seller đăng sản phẩm.
 4. **Controller**: thêm action trong `Areas/Seller/Controllers/ProductsController.cs`. Controller chỉ nhận request, gọi service, trả View. **Không viết logic và không dùng `AppDbContext` trong controller.**
 5. **View**: tạo `Areas/Seller/Views/Products/<Action>.cshtml`.
 6. Service mới (nếu có) thì đăng ký trong `AddAppServices`.
-
-## 5. Quy ước chung
-
-- Tên file = tên class. Một class một file.
-- Dùng `AppRoles.Admin`, `OrderStatus.Pending`... thay vì gõ chuỗi.
-- Lấy Id người dùng: `User.GetUserId()`.
-- Mọi hành động quan trọng của Admin phải gọi `IAuditLogService.LogAsync(...)`.
-- Mỗi thay đổi trạng thái đơn phải đúng luồng: Pending → Confirmed → Shipping → Delivered → Completed (nhánh Cancelled chỉ khi Pending / Confirmed).
-- Thông báo thành công / lỗi: `TempData["Success"]` / `TempData["Error"]` (layout đã tự hiển thị).
-
-## 6. Làm việc nhóm với Git
-
-- Mỗi người nhận một **module** và chỉ sửa trong thư mục của module đó (controller + view + service) nên ít đụng nhau.
-- Các file dùng chung, dễ xung đột, **thông báo nhóm trước khi sửa**: `AppDbContext.cs`, `ServiceCollectionExtensions.cs`, `_Layout.cshtml`, `AppEnums.cs`.
-- Mỗi người một nhánh (`feature/cart`, `feature/auction`...). `pull` nhánh chính trước khi tạo migration.
-- Ai đổi entity thì tự tạo migration và commit cùng code. **Không sửa migration đã push**, cần đổi thì tạo migration mới.
-
-## 7. Gợi ý chia module (4-5 người)
-
-| Người | Module |
-|---|---|
-| A | Account, Profile, Seller upgrade, Admin Users / Sellers, Audit Log |
-| B | Products, Categories, Favorites, tìm kiếm, Seller Products, Admin duyệt sản phẩm |
-| C | Cart, Orders (Buyer + Seller + Admin), Disputes |
-| D | Auctions, Bids, AuctionJob, SignalR |
-| E | Notifications, Chat, Reviews, Reports, Dashboard, Banners, Chatbox AI |
-
-## 8. Đã làm sẵn và còn để trống
 
 **Đã chạy được (viết sẵn):** đăng ký / đăng nhập / phân quyền 3 role, seed admin, danh sách + tìm kiếm + chi tiết sản phẩm, đặt giá có chống trùng, mở / đóng phiên đấu giá tự động, thông báo (lưu DB + realtime), Audit Log service, layout theo role.
 
