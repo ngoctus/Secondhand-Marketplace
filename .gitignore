@@ -426,3 +426,7 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Ảnh người dùng upload khi chạy thử (giữ lại thư mục bằng .gitkeep)
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
