@@ -13,8 +13,7 @@ END
 GO
 
 CREATE TABLE NguoiDung (
-<<<<<<< HEAD
-    Id              INT IDENTITY(1,1)  NOT NULL,
+    MaNguoiDung     INT IDENTITY(1,1)  NOT NULL,
     HoTen           NVARCHAR(100)      NOT NULL,   -- [Đề xuất] độ dài 100
     Email           VARCHAR(256)       NOT NULL,   -- luôn chữ thường; [Đề xuất] độ dài 256
     SDT             VARCHAR(10)        NOT NULL,   -- đúng 10 chữ số; [Đề xuất] NOT NULL (UNIQUE chỉ cho 1 dòng NULL)
@@ -36,7 +35,7 @@ GO
 -- Có bản ghi CuaHang = đã kích hoạt bán, không có vai trò Seller riêng
 -- ---------------------------------------------------------------------
 CREATE TABLE CuaHang (
-    Id              INT IDENTITY(1,1)  NOT NULL,
+    MaCuaHang       INT IDENTITY(1,1)  NOT NULL,
     NguoiDungId     INT                NOT NULL,   -- chủ shop
     Ten             NVARCHAR(100)      NOT NULL,   -- tên shop tối đa 100; [Đề xuất] tên cột "Ten"
     SDTLienHe       VARCHAR(10)        NOT NULL,   -- đúng 10 chữ số; [Đề xuất] tên cột
@@ -48,18 +47,7 @@ CREATE TABLE CuaHang (
     NgayTao         DATETIME2(3)       NOT NULL CONSTRAINT DF_CuaHang_NgayTao     DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] cột mốc quản trị
     NgayCapNhat     DATETIME2(3)       NOT NULL CONSTRAINT DF_CuaHang_NgayCapNhat DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] như trên
     CONSTRAINT PK_CuaHang PRIMARY KEY (Id)
-=======
-    MaNguoiDung             int           IDENTITY(1,1) NOT NULL,
-    -- Ngọc Tú   
-);
-GO
-
-CREATE TABLE CuaHang (
-    MaCuaHang                 int           IDENTITY(1,1) NOT NULL,
-    --Ngọc Tú 
->>>>>>> 631be27a0ff0bf0d6424b62e5f5517338dfe9028
-);
-GO
+GO 
 
 CREATE TABLE DanhMuc (
     MaDanhMuc         int           IDENTITY(1,1) NOT NULL,
