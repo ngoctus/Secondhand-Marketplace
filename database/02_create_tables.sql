@@ -13,6 +13,7 @@ END
 GO
 
 CREATE TABLE NguoiDung (
+<<<<<<< HEAD
     Id              INT IDENTITY(1,1)  NOT NULL,
     HoTen           NVARCHAR(100)      NOT NULL,   -- [Đề xuất] độ dài 100
     Email           VARCHAR(256)       NOT NULL,   -- luôn chữ thường; [Đề xuất] độ dài 256
@@ -47,6 +48,16 @@ CREATE TABLE CuaHang (
     NgayTao         DATETIME2(3)       NOT NULL CONSTRAINT DF_CuaHang_NgayTao     DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] cột mốc quản trị
     NgayCapNhat     DATETIME2(3)       NOT NULL CONSTRAINT DF_CuaHang_NgayCapNhat DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] như trên
     CONSTRAINT PK_CuaHang PRIMARY KEY (Id)
+=======
+    MaNguoiDung             int           IDENTITY(1,1) NOT NULL,
+    -- Ngọc Tú   
+);
+GO
+
+CREATE TABLE CuaHang (
+    MaCuaHang                 int           IDENTITY(1,1) NOT NULL,
+    --Ngọc Tú 
+>>>>>>> 631be27a0ff0bf0d6424b62e5f5517338dfe9028
 );
 GO
 
