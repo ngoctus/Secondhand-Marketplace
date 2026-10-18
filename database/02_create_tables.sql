@@ -1,19 +1,17 @@
-<<<<<<< Updated upstream
--- =====================================================================
--- 02a: Tạo bảng nhóm Tài khoản & Cửa hàng (NguoiDung, CuaHang)
--- Chỉ tạo bảng + khóa chính + giá trị mặc định.
--- Khóa ngoại / UNIQUE / CHECK nằm ở file 03a_tai_khoan_shop_constraints.sql
---
--- Quy ước đọc file:
---   -- [Đề xuất]      = chi tiết tài liệu chưa nêu, do mình thêm, nhóm xem lại
--- =====================================================================
-USE SecondHandDB;   -- [Đề xuất] : thêm sau
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ARITHABORT ON;
+GO
+USE SecondHandMarketplace;
 GO
 
--- ---------------------------------------------------------------------
--- NguoiDung (dòng 1, 2 của bảng phân tích): tài khoản, vai trò USER / ADMIN
--- Cột riêng của Identity (NormalizedEmail, SecurityStamp...) sẽ thêm sau ở E4
--- ---------------------------------------------------------------------
+IF OBJECT_ID(N'NguoiDung', N'U') IS NOT NULL
+BEGIN
+    PRINT N'Cac bang da ton tai, bo qua 02_create_tables.sql.';
+    SET NOEXEC ON;
+END
+GO
+
 CREATE TABLE NguoiDung (
     Id              INT IDENTITY(1,1)  NOT NULL,
     HoTen           NVARCHAR(100)      NOT NULL,   -- [Đề xuất] độ dài 100
@@ -49,32 +47,6 @@ CREATE TABLE CuaHang (
     NgayTao         DATETIME2(3)       NOT NULL CONSTRAINT DF_CuaHang_NgayTao     DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] cột mốc quản trị
     NgayCapNhat     DATETIME2(3)       NOT NULL CONSTRAINT DF_CuaHang_NgayCapNhat DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] như trên
     CONSTRAINT PK_CuaHang PRIMARY KEY (Id)
-);
-GO
-=======
-SET ANSI_NULLS ON;
-SET QUOTED_IDENTIFIER ON;
-SET ARITHABORT ON;
-GO
-USE SecondHandMarketplace;
-GO
-
-IF OBJECT_ID(N'NguoiDung', N'U') IS NOT NULL
-BEGIN
-    PRINT N'Cac bang da ton tai, bo qua 02_create_tables.sql.';
-    SET NOEXEC ON;
-END
-GO
-
-CREATE TABLE NguoiDung (
-    MaNguoiDung             int           IDENTITY(1,1) NOT NULL,
-    -- Ngọc Tú   
-);
-GO
-
-CREATE TABLE CuaHang (
-    MaCuaHang                 int           IDENTITY(1,1) NOT NULL,
-    --Ngọc Tú 
 );
 GO
 
@@ -235,4 +207,4 @@ GO
 PRINT N'Da tao xong cac bang.';
 SET NOEXEC OFF;
 GO
->>>>>>> Stashed changes
+

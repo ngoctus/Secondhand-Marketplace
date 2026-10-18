@@ -1,19 +1,3 @@
-<<<<<<< Updated upstream
-
-USE master;
-GO
-
-IF DB_ID(N'SecondHandDB') IS NULL
-BEGIN
-    CREATE DATABASE SecondHandDB;
-    PRINT N'Da tao database SecondHandDB.';
-END
-ELSE
-BEGIN
-    PRINT N'Database SecondHandDB da ton tai.';
-END
-GO
-=======
 USE master;
 GO
 
@@ -30,4 +14,4 @@ GO
 IF (SELECT is_read_committed_snapshot_on FROM sys.databases WHERE name = N'SecondHandMarketplace') = 0
     ALTER DATABASE SecondHandMarketplace SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
 GO
->>>>>>> Stashed changes
+
