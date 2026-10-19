@@ -1,0 +1,22 @@
+@model Product
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="row">
+    <div class="col-md-6">
+        @foreach (var img in Model.Images)
+        {
+            <img src="@img.Url" class="img-fluid mb-2" alt="@Model.Name" />
+        }
+    </div>
+    <div class="col-md-6">
+        <h2>@Model.Name</h2>
+        <h4 class="text-danger">@Model.Price.ToString("N0")đ</h4>
+        <p>Danh mục: @Model.Category.Name | Người bán: @Model.Seller.FullName</p>
+        <p>@Model.Description</p>
+
+        @* TODO: nút Thêm vào giỏ / Mua ngay (BuyNow) hoặc ô đặt giá + đếm ngược (Auction) *@
+        @* TODO: nút Yêu thích, Chat với người bán, Báo cáo vi phạm *@
+    </div>
+</div>
