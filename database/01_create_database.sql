@@ -1,8 +1,17 @@
-IF DB_ID(N'SecondhandMarketplace') IS NULL
-BEGIN
-    CREATE DATABASE SecondhandMarketplace;
-END
+USE master;
 GO
 
-USE SecondhandMarketplace;
+IF DB_ID(N'SecondHandMarketplace') IS NULL
+BEGIN
+    CREATE DATABASE SecondHandMarketplace COLLATE Vietnamese_CI_AS;
+    PRINT N'Da tao database SecondHandMarketplace.';
+END
+ELSE
+    PRINT N'Database SecondHandMarketplace da ton tai, bo qua.';
 GO
+
+-- Giảm khóa đọc/ghi khi nhiều người dùng thao tác cùng lúc
+IF (SELECT is_read_committed_snapshot_on FROM sys.databases WHERE name = N'SecondHandMarketplace') = 0
+    ALTER DATABASE SecondHandMarketplace SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+GO
+
