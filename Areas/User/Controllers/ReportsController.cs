@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Web2Hand.Areas.Buyer.Controllers;
+namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
-public class ReportsController : BuyerBaseController
+public class ReportsController : UserBaseController
 {
     // TODO: Báo cáo vi phạm
     public IActionResult Index() => View();

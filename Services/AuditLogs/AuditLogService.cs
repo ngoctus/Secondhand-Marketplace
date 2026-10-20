@@ -1,7 +1,7 @@
-using Web2Hand.Data;
-using Web2Hand.Models.Entities;
+using SecondHandMarketplace.Web.Data;
+using SecondHandMarketplace.Web.Models.Entities;
 
-namespace Web2Hand.Services.AuditLogs;
+namespace SecondHandMarketplace.Web.Services.AuditLogs;
 
 public class AuditLogService : IAuditLogService
 {

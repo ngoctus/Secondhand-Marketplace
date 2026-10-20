@@ -1,6 +1,6 @@
-using Web2Hand.Data;
+using SecondHandMarketplace.Web.Data;
 
-namespace Web2Hand.Services.Reviews;
+namespace SecondHandMarketplace.Web.Services.Reviews;
 
 public class ReviewService : IReviewService
 {

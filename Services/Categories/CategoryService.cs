@@ -1,6 +1,6 @@
-using Web2Hand.Data;
+using SecondHandMarketplace.Web.Data;
 
-namespace Web2Hand.Services.Categories;
+namespace SecondHandMarketplace.Web.Services.Categories;
 
 public class CategoryService : ICategoryService
 {

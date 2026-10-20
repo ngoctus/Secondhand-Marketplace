@@ -1,6 +1,6 @@
-using Web2Hand.Data;
+using SecondHandMarketplace.Web.Data;
 
-namespace Web2Hand.Services.Reports;
+namespace SecondHandMarketplace.Web.Services.Reports;
 
 public class ReportService : IReportService
 {

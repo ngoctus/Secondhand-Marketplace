@@ -1,4 +1,4 @@
-namespace Web2Hand.Models.Enums;
+namespace SecondHandMarketplace.Web.Models.Enums;
 
 // Tất cả enum của hệ thống nằm trong file này để dễ tìm.
 
@@ -18,7 +18,7 @@ public enum PaymentMethod { Cod, BankTransfer }
 
 public enum AuctionStatus { Scheduled, Running, Ended, Cancelled }
 
-public enum ReportTargetType { Product, Seller, Behavior }
+public enum ReportTargetType { Product, User, Behavior }
 
 public enum ReportStatus { New, Investigating, Resolved, Rejected }
 

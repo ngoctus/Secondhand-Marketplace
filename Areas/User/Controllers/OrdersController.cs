@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Web2Hand.Areas.Buyer.Controllers;
+namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
-public class OrdersController : BuyerBaseController
+public class OrdersController : UserBaseController
 {
     // TODO: Đơn hàng của tôi
     public IActionResult Index() => View();

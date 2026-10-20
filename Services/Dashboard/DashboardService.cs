@@ -1,6 +1,6 @@
-using Web2Hand.Data;
+using SecondHandMarketplace.Web.Data;
 
-namespace Web2Hand.Services.Dashboard;
+namespace SecondHandMarketplace.Web.Services.Dashboard;
 
 public class DashboardService : IDashboardService
 {

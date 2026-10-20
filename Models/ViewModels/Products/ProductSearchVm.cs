@@ -1,6 +1,6 @@
-using Web2Hand.Models.Enums;
+using SecondHandMarketplace.Web.Models.Enums;
 
-namespace Web2Hand.Models.ViewModels.Products;
+namespace SecondHandMarketplace.Web.Models.ViewModels.Products;
 
 /// <summary>Bộ lọc tìm kiếm sản phẩm (lấy từ query string: /Products?Keyword=iphone&MaxPrice=5000000)</summary>
 public class ProductSearchVm

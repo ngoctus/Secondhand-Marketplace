@@ -1,6 +1,6 @@
-using Web2Hand.Data;
+using SecondHandMarketplace.Web.Data;
 
-namespace Web2Hand.Services.Disputes;
+namespace SecondHandMarketplace.Web.Services.Disputes;
 
 public class DisputeService : IDisputeService
 {

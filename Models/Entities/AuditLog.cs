@@ -1,4 +1,4 @@
-namespace Web2Hand.Models.Entities;
+namespace SecondHandMarketplace.Web.Models.Entities;
 
 /// <summary>Admin đã làm gì, với đối tượng nào, lúc nào.</summary>
 public class AuditLog

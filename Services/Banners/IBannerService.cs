@@ -1,4 +1,4 @@
-namespace Web2Hand.Services.Banners;
+namespace SecondHandMarketplace.Web.Services.Banners;
 
 /// <summary>Quản lý banner trang chủ</summary>
 public interface IBannerService

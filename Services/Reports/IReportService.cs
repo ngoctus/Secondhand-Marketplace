@@ -1,4 +1,4 @@
-namespace Web2Hand.Services.Reports;
+namespace SecondHandMarketplace.Web.Services.Reports;
 
 /// <summary>Báo cáo vi phạm và xử lý của Admin</summary>
 public interface IReportService

@@ -1,6 +1,6 @@
-using Web2Hand.Models.Enums;
+using SecondHandMarketplace.Web.Models.Enums;
 
-namespace Web2Hand.Models.Entities;
+namespace SecondHandMarketplace.Web.Models.Entities;
 
 /// <summary>Khiếu nại / tranh chấp về một đơn hàng.</summary>
 public class Dispute

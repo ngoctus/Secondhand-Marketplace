@@ -1,6 +1,6 @@
-using Web2Hand.Data;
+using SecondHandMarketplace.Web.Data;
 
-namespace Web2Hand.Services.Favorites;
+namespace SecondHandMarketplace.Web.Services.Favorites;
 
 public class FavoriteService : IFavoriteService
 {

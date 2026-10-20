@@ -1,6 +1,6 @@
-using Web2Hand.Models.Enums;
+using SecondHandMarketplace.Web.Models.Enums;
 
-namespace Web2Hand.Models.ViewModels.Products;
+namespace SecondHandMarketplace.Web.Models.ViewModels.Products;
 
 /// <summary>Dữ liệu hiển thị 1 sản phẩm trong danh sách.</summary>
 public class ProductCardVm

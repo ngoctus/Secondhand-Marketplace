@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Web2Hand.Areas.Buyer.Controllers;
+namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
-public class FavoritesController : BuyerBaseController
+public class FavoritesController : UserBaseController
 {
     // TODO: Sản phẩm yêu thích
     public IActionResult Index() => View();

@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace Web2Hand.Common.Extensions;
+namespace SecondHandMarketplace.Web.Common.Extensions;
 
 public static class ClaimsPrincipalExtensions
 {

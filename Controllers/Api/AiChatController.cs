@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Web2Hand.Common.Constants;
-using Web2Hand.Common.Extensions;
-using Web2Hand.Models.ViewModels.Ai;
-using Web2Hand.Services.Ai;
+using SecondHandMarketplace.Web.Common.Constants;
+using SecondHandMarketplace.Web.Common.Extensions;
+using SecondHandMarketplace.Web.Models.ViewModels.Ai;
+using SecondHandMarketplace.Web.Services.Ai;
 
-namespace Web2Hand.Controllers.Api;
+namespace SecondHandMarketplace.Web.Controllers.Api;
 
 /// <summary>API cho chatbox AI: POST /api/ai/chat  { "message": "..." }</summary>
 [ApiController]
@@ -20,9 +20,7 @@ public class AiChatController : ControllerBase
     [HttpPost("chat")]
     public async Task<IActionResult> Chat([FromBody] AiChatRequest request)
     {
-        var role = User.IsInRole(AppRoles.Admin) ? AppRoles.Admin
-                 : User.IsInRole(AppRoles.Seller) ? AppRoles.Seller
-                 : AppRoles.Buyer;
+        var role = User.IsInRole(AppRoles.Admin) ? AppRoles.Admin : AppRoles.User;
 
         var reply = await _ai.AskAsync(User.GetUserId(), role, request.Message);
         return Ok(new { reply });

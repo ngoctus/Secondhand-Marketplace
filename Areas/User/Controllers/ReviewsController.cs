@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Web2Hand.Areas.Buyer.Controllers;
+namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
-public class ReviewsController : BuyerBaseController
+public class ReviewsController : UserBaseController
 {
     // TODO: Đánh giá người bán
     public IActionResult Index() => View();

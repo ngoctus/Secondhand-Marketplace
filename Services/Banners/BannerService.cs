@@ -1,6 +1,6 @@
-using Web2Hand.Data;
+using SecondHandMarketplace.Web.Data;
 
-namespace Web2Hand.Services.Banners;
+namespace SecondHandMarketplace.Web.Services.Banners;
 
 public class BannerService : IBannerService
 {

@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using Web2Hand.Data;
-using Web2Hand.Models.Entities;
-using Web2Hand.Models.Enums;
-using Web2Hand.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Data;
+using SecondHandMarketplace.Web.Models.Entities;
+using SecondHandMarketplace.Web.Models.Enums;
+using SecondHandMarketplace.Web.Models.ViewModels.Products;
 
-namespace Web2Hand.Services.Products;
+namespace SecondHandMarketplace.Web.Services.Products;
 
 public class ProductService : IProductService
 {

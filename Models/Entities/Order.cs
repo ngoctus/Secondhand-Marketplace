@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Web2Hand.Models.Enums;
+using SecondHandMarketplace.Web.Models.Enums;
 
-namespace Web2Hand.Models.Entities;
+namespace SecondHandMarketplace.Web.Models.Entities;
 
 /// <summary>Mỗi đơn thuộc 1 shop. Giỏ nhiều shop sẽ tách thành nhiều đơn.</summary>
 public class Order

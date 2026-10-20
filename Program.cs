@@ -11,8 +11,10 @@ namespace SecondHandMarketplace.Web
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
-            builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
             builder.Services.AddSingleton<IMatKhauService, MatKhauService>();
+
+            // TODO (sau khi scaffold DbContext): builder.Services.AddDatabase(builder.Configuration);
+            //                                    builder.Services.AddAppServices();
 
             // 2.8a: đăng nhập bằng cookie (không dùng Identity)
             builder.Services
@@ -74,6 +76,10 @@ namespace SecondHandMarketplace.Web
             app.MapStaticAssets();
             app.MapControllers();
             app.MapControllerRoute(
+                name: "areas",
+                pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}")
+                .WithStaticAssets();
+            app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
@@ -82,20 +88,3 @@ namespace SecondHandMarketplace.Web
         }
     }
 }
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllerRoute(name: "areas", pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
-app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
-
-app.MapHub<AuctionHub>("/hubs/auction");
-app.MapHub<ChatHub>("/hubs/chat");
-app.MapHub<NotificationHub>("/hubs/notification");
-
-await DbSeeder.SeedAsync(app.Services);
-
-app.Run();

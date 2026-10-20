@@ -1,4 +1,4 @@
-namespace Web2Hand.Services.Disputes;
+namespace SecondHandMarketplace.Web.Services.Disputes;
 
 /// <summary>Khiếu nại / tranh chấp đơn hàng</summary>
 public interface IDisputeService

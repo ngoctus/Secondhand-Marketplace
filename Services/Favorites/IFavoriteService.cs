@@ -1,4 +1,4 @@
-namespace Web2Hand.Services.Favorites;
+namespace SecondHandMarketplace.Web.Services.Favorites;
 
 /// <summary>Yêu thích sản phẩm</summary>
 public interface IFavoriteService

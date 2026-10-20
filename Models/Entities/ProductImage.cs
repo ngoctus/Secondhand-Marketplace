@@ -1,4 +1,4 @@
-namespace Web2Hand.Models.Entities;
+namespace SecondHandMarketplace.Web.Models.Entities;
 
 public class ProductImage
 {

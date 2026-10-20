@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using SecondHandMarketplace.Web.Models;
+using System.Diagnostics;
 
-namespace Web2Hand.Controllers;
-
-public class HomeController : Controller
+namespace SecondHandMarketplace.Web.Controllers
 {
-    // TODO: hiện banner (IBannerService), sản phẩm mới, phiên đấu giá sắp kết thúc
-    public IActionResult Index() => View();
-
-        public IActionResult Privacy()
+    public class HomeController : Controller
+    {
+        public IActionResult Index()
         {
             return View();
         }
@@ -54,5 +53,4 @@ public class HomeController : Controller
             });
         }
     }
-    public IActionResult Error() => View();
 }

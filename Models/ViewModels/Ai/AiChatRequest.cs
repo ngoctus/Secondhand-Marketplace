@@ -1,3 +1,3 @@
-namespace Web2Hand.Models.ViewModels.Ai;
+namespace SecondHandMarketplace.Web.Models.ViewModels.Ai;
 
 public record AiChatRequest(string Message);

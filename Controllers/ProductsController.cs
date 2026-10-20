@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Web2Hand.Models.Enums;
-using Web2Hand.Models.ViewModels.Products;
-using Web2Hand.Services.Products;
+using SecondHandMarketplace.Web.Models.Enums;
+using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Products;
 
-namespace Web2Hand.Controllers;
+namespace SecondHandMarketplace.Web.Controllers;
 
 /// <summary>Xem / tìm sản phẩm: ai cũng truy cập được (không cần đăng nhập).</summary>
 public class ProductsController : Controller

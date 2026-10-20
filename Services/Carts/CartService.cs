@@ -1,6 +1,6 @@
-using Web2Hand.Data;
+using SecondHandMarketplace.Web.Data;
 
-namespace Web2Hand.Services.Carts;
+namespace SecondHandMarketplace.Web.Services.Carts;
 
 public class CartService : ICartService
 {

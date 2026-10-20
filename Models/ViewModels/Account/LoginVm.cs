@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Web2Hand.Models.ViewModels.Account;
+namespace SecondHandMarketplace.Web.Models.ViewModels.Account;
 
 public class LoginVm
 {

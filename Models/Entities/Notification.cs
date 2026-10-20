@@ -1,6 +1,6 @@
-using Web2Hand.Models.Enums;
+using SecondHandMarketplace.Web.Models.Enums;
 
-namespace Web2Hand.Models.Entities;
+namespace SecondHandMarketplace.Web.Models.Entities;
 
 public class Notification
 {

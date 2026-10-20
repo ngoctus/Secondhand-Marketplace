@@ -1,6 +1,6 @@
-namespace Web2Hand.Models.Entities;
+namespace SecondHandMarketplace.Web.Models.Entities;
 
-/// <summary>Buyer đánh giá Seller sau khi đơn COMPLETED.</summary>
+/// <summary>User mua đánh giá User bán sau khi đơn COMPLETED.</summary>
 public class Review
 {
     public int Id { get; set; }

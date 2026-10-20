@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Web2Hand.Models.Entities;
+using SecondHandMarketplace.Web.Models.Entities;
 
-namespace Web2Hand.Data.Configurations;
+namespace SecondHandMarketplace.Web.Data.Configurations;
 
 public class OrderConfiguration : IEntityTypeConfiguration<Order>
 {

@@ -1,4 +1,4 @@
-namespace Web2Hand.Models.Entities;
+namespace SecondHandMarketplace.Web.Models.Entities;
 
 /// <summary>Mỗi sản phẩm chỉ có 1 cái nên không cần số lượng.</summary>
 public class CartItem

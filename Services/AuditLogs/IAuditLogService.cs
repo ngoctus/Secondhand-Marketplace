@@ -1,4 +1,4 @@
-namespace Web2Hand.Services.AuditLogs;
+namespace SecondHandMarketplace.Web.Services.AuditLogs;
 
 public interface IAuditLogService
 {

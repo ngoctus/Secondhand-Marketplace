@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Web2Hand.Models.Entities;
+namespace SecondHandMarketplace.Web.Models.Entities;
 
 public class OrderItem
 {

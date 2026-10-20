@@ -1,6 +1,6 @@
-using Web2Hand.Data;
+using SecondHandMarketplace.Web.Data;
 
-namespace Web2Hand.Services.Orders;
+namespace SecondHandMarketplace.Web.Services.Orders;
 
 public class OrderService : IOrderService
 {

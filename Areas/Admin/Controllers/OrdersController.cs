@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Web2Hand.Areas.Admin.Controllers;
+namespace SecondHandMarketplace.Web.Areas.Admin.Controllers;
 
 public class OrdersController : AdminBaseController
 {

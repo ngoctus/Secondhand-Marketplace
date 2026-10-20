@@ -1,4 +1,4 @@
-namespace Web2Hand.Services.Categories;
+namespace SecondHandMarketplace.Web.Services.Categories;
 
 /// <summary>Quản lý danh mục sản phẩm</summary>
 public interface ICategoryService
