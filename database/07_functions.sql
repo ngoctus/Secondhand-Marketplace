@@ -5,8 +5,7 @@ GO
 USE SecondHandMarketplace;
 GO
 
--- chuẩn hóa chuỗi: xóa dấu, ký tự đặc biệt, gộp khoảng trắng
-CREATE OR ALTER FUNCTION fn_ChuanHoaChuoi (@VanBan nvarchar(max))
+CREATE OR ALTER FUNCTION dbo.fn_ChuanHoaChuoi (@VanBan nvarchar(max))
 RETURNS nvarchar(max)
 AS
 BEGIN
@@ -23,35 +22,31 @@ BEGIN
     SET @Nhom = N'ỳýỷỹỵ';                SET @KQ = TRANSLATE(@KQ, @Nhom, REPLICATE(N'y', LEN(@Nhom)));
     SET @KQ = REPLACE(@KQ, N'đ', N'd');
 
-    -- Dấu câu và ký tự trắng đặc biệt -> khoảng trắng
     SET @Nhom = N'.,;:!?()[]{}"''/\-_+*&%$#@^~|<>=';
     SET @KQ = TRANSLATE(@KQ, @Nhom, REPLICATE(N' ', LEN(@Nhom)));
     SET @Nhom = NCHAR(9) + NCHAR(10) + NCHAR(13) + NCHAR(160);
     SET @KQ = TRANSLATE(@KQ, @Nhom, REPLICATE(N' ', LEN(@Nhom)));
 
-    -- Gộp nhiều khoảng trắng thành 1
-    SET @KQ = REPLACE(REPLACE(REPLACE(@KQ, N' ', NCHAR(1) + NCHAR(2)), NCHAR(2) + NCHAR(1), N''), NCHAR(1) + NCHAR(2), N' ');
+    WHILE CHARINDEX(N'  ', @KQ) > 0
+        SET @KQ = REPLACE(@KQ, N'  ', N' ');
+
     RETURN LTRIM(RTRIM(@KQ));
 END
 GO
 
--- Tìm các từ/cụm từ cấm xuất hiện trong văn bản (khớp theo ranh giới từ)
-CREATE OR ALTER FUNCTION fn_TimTuKhoaCam (@VanBan nvarchar(max))
+CREATE OR ALTER FUNCTION dbo.fn_TimTuKhoaCam (@VanBan nvarchar(max))
 RETURNS TABLE
 AS
 RETURN(
     SELECT k.MaTuKhoaCam AS Id, k.CumTu, k.Nhom
     FROM TuKhoaCam k
-    CROSS APPLY (SELECT N' ' + fn_ChuanHoaChuoi(@VanBan) + N' ' AS VB) x
+    CROSS JOIN (SELECT N' ' + dbo.fn_ChuanHoaChuoi(@VanBan) + N' ' AS VB) x
     WHERE k.DangApDung = 1
       AND CHARINDEX(N' ' + k.CumTuChuanHoa + N' ', x.VB) > 0
 );
 GO
 
--- Bộ rule kiểm tra khi Gửi duyệt (task 6.1 + 6.3). Trả về mỗi dòng = 1 lỗi.
--- Không có dòng nào = đạt. Thêm rule mới chỉ cần thêm 1 SELECT ... UNION ALL
-
-CREATE OR ALTER FUNCTION fn_KiemTraRuleSanPham (@MaSanPham int)
+CREATE OR ALTER FUNCTION dbo.fn_KiemTraRuleSanPham (@MaSanPham int)
 RETURNS TABLE
 AS
 RETURN(
@@ -77,43 +72,40 @@ RETURN(
       AND NOT EXISTS (SELECT 1 FROM TinhTrangSanPham tt WHERE tt.MaTinhTrang = sp.MaTinhTrang AND tt.DangSuDung = 1)
     UNION ALL
     SELECT N'TU_CAM', N'Ten', N'Tên chứa từ/cụm từ bị cấm: "' + k.CumTu + N'".'
-    FROM SanPham sp CROSS APPLY fn_TimTuKhoaCam(sp.Ten) k WHERE sp.MaSanPham = @MaSanPham
+    FROM SanPham sp CROSS APPLY dbo.fn_TimTuKhoaCam(sp.Ten) k WHERE sp.MaSanPham = @MaSanPham
     UNION ALL
     SELECT N'TU_CAM', N'MoTa', N'Mô tả chứa từ/cụm từ bị cấm: "' + k.CumTu + N'".'
-    FROM SanPham sp CROSS APPLY fn_TimTuKhoaCam(sp.MoTa) k WHERE sp.MaSanPham = @MaSanPham
+    FROM SanPham sp CROSS APPLY dbo.fn_TimTuKhoaCam(sp.MoTa) k WHERE sp.MaSanPham = @MaSanPham
 );
 GO
 
--- Bảng chuyển trạng thái SẢN PHẨM (nguồn sự thật duy nhất cho DB)
-CREATE OR ALTER FUNCTION fn_ChuyenTrangThaiSanPhamHopLe (@Cu varchar(20), @Moi varchar(20))
+CREATE OR ALTER FUNCTION dbo.fn_ChuyenTrangThaiSanPhamHopLe (@Cu varchar(20), @Moi varchar(20))
 RETURNS bit
 AS
 BEGIN
     RETURN CASE WHEN EXISTS (
         SELECT 1
         FROM (VALUES
-             ('DRAFT',          'PENDING_REVIEW'),
+            ('DRAFT',          'PENDING_REVIEW'),
             ('PENDING_REVIEW', 'ACTIVE'),
             ('PENDING_REVIEW', 'REJECTED'),
             ('REJECTED',       'PENDING_REVIEW'),
             ('ACTIVE',         'HIDDEN'),
             ('ACTIVE',         'RESERVED'),
             ('ACTIVE',         'REMOVED'),
-            ('ACTIVE',         'PENDING_REVIEW'),     -- sửa nội dung sản phẩm đang bán -> duyệt lại
+            ('ACTIVE',         'PENDING_REVIEW'),
             ('HIDDEN',         'ACTIVE'),
-            ('HIDDEN',         'PENDING_REVIEW'),     -- sửa nội dung sản phẩm đang ẩn -> duyệt lại
-            ('RESERVED',       'ACTIVE'),             -- đơn bị hủy
-            ('RESERVED',       'SOLD'),               -- đơn hoàn tất
-            ('REMOVED',        'ACTIVE'),             -- Admin khôi phục
-            ('REMOVED',        'PENDING_REVIEW')      -- người bán sửa + gửi lại
+            ('HIDDEN',         'PENDING_REVIEW'),
+            ('RESERVED',       'ACTIVE'),
+            ('RESERVED',       'SOLD'),
+            ('REMOVED',        'ACTIVE'),
+            ('REMOVED',        'PENDING_REVIEW')
         ) t (Cu, Moi)
         WHERE t.Cu = @Cu AND t.Moi = @Moi) THEN 1 ELSE 0 END;
 END
 GO
 
-
--- Bảng chuyển trạng thái ĐƠN HÀNG
-CREATE OR ALTER FUNCTION fn_ChuyenTrangThaiDonHangHopLe (@Cu varchar(15), @Moi varchar(15))
+CREATE OR ALTER FUNCTION dbo.fn_ChuyenTrangThaiDonHangHopLe (@Cu varchar(15), @Moi varchar(15))
 RETURNS bit
 AS
 BEGIN
@@ -131,11 +123,14 @@ BEGIN
 END
 GO
 
--- Tổng tiền tính lại từ chi tiết đơn (dùng để đối soát TongTien)
-CREATE OR ALTER FUNCTION fn_TinhTongTienDonHang (@MaDonHang int)
+CREATE OR ALTER FUNCTION dbo.fn_TinhTongTienDonHang (@MaDonHang int)
 RETURNS decimal(18,2)
 AS
 BEGIN
-    RETURN (SELECT ISNULL(SUM(Gia), 0) FROM ChiTietDonHang WHERE MaDonHang = @MaDonHang);
+    RETURN (SELECT ISNULL(SUM(ct.Gia), 0) FROM ChiTietDonHang ct WHERE ct.MaDonHang = @MaDonHang)
+         + ISNULL((SELECT dh.PhiVanChuyen FROM DonHang dh WHERE dh.MaDonHang = @MaDonHang), 0);
 END
+GO
+
+PRINT N'Đã tạo xong file Functions.';
 GO

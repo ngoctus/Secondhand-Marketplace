@@ -2,52 +2,60 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 SET ARITHABORT ON;
 GO
+
 USE SecondHandMarketplace;
 GO
 
-IF OBJECT_ID(N'NguoiDung', N'U') IS NOT NULL
-BEGIN
-    PRINT N'Cac bang da ton tai, bo qua 02_create_tables.sql.';
-    SET NOEXEC ON;
-END
-GO
+DROP TABLE IF EXISTS NhatKyHeThong;
+DROP TABLE IF EXISTS TuKhoaCam;
+DROP TABLE IF EXISTS PhanTichAI;
+DROP TABLE IF EXISTS LuotKiemDuyet;
+DROP TABLE IF EXISTS LichSuTrangThaiSanPham;
+DROP TABLE IF EXISTS ThanhToan;
+DROP TABLE IF EXISTS LichSuTrangThaiDonHang;
+DROP TABLE IF EXISTS ChiTietDonHang;
+DROP TABLE IF EXISTS DonHang;
+DROP TABLE IF EXISTS GioHang;
+DROP TABLE IF EXISTS AnhSanPham;
+DROP TABLE IF EXISTS SanPham;
+DROP TABLE IF EXISTS TinhTrangSanPham;
+DROP TABLE IF EXISTS DanhMuc;
+DROP TABLE IF EXISTS CuaHang;
+DROP TABLE IF EXISTS NguoiDung;
 
 CREATE TABLE NguoiDung (
-    MaNguoiDung     INT IDENTITY(1,1)  NOT NULL,
-    HoTen           NVARCHAR(100)      NOT NULL,   -- [Đề xuất] độ dài 100
-    Email           VARCHAR(256)       NOT NULL,   -- luôn chữ thường; [Đề xuất] độ dài 256
-    SDT             VARCHAR(10)        NOT NULL,   -- đúng 10 chữ số; [Đề xuất] NOT NULL (UNIQUE chỉ cho 1 dòng NULL)
-    MatKhauBam      VARCHAR(256)       NOT NULL,   -- mật khẩu đã băm; [Đề xuất] tên cột và độ dài
-    VaiTro          VARCHAR(10)        NOT NULL CONSTRAINT DF_NguoiDung_VaiTro    DEFAULT 'USER',    -- [Đề xuất] mặc định USER
-    TrangThai       VARCHAR(10)        NOT NULL CONSTRAINT DF_NguoiDung_TrangThai DEFAULT 'ACTIVE',  -- [Đề xuất] mặc định ACTIVE
-    LyDoKhoa        NVARCHAR(500)      NULL,       -- lý do tối đa 500 (mục "điểm đã chốt" số 4)
-    ThoiGianKhoa    DATETIME2(3)       NULL,       -- giờ UTC
-    AnhDaiDien      VARCHAR(500)       NULL,       -- [Đề xuất] độ dài; lưu đường dẫn (tên file GUID)
-    DiaChiMacDinh   NVARCHAR(500)       NULL,      -- [Đề xuất] tên cột, độ dài; gộp thành 1 cột chuỗi
-    NgayTao         DATETIME2(3)       NOT NULL CONSTRAINT DF_NguoiDung_NgayTao     DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] cột mốc quản trị theo quy ước tên NgayTao
-    NgayCapNhat     DATETIME2(3)       NOT NULL CONSTRAINT DF_NguoiDung_NgayCapNhat DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] như trên
-    CONSTRAINT PK_NguoiDung PRIMARY KEY (Id)
+    MaNguoiDung     int            IDENTITY(1,1) NOT NULL,
+    HoTen           nvarchar(100)  NOT NULL,
+    Email           varchar(256)   NOT NULL,
+    SoDienThoai     varchar(15)    NULL,
+    MatKhauBam      varchar(256)   NOT NULL,
+    VaiTro          varchar(10)    NOT NULL CONSTRAINT DF_NguoiDung_VaiTro    DEFAULT ('USER'),
+    TrangThai       varchar(10)    NOT NULL CONSTRAINT DF_NguoiDung_TrangThai DEFAULT ('ACTIVE'),
+    LyDoKhoa        nvarchar(500)  NULL,
+    ThoiGianKhoa    datetime2(3)   NULL,
+    AnhDaiDien      varchar(500)   NULL,
+    DiaChiMacDinh   nvarchar(500)  NULL,
+    NgayTao         datetime2(3)   NOT NULL CONSTRAINT DF_NguoiDung_NgayTao     DEFAULT (SYSUTCDATETIME()),
+    NgayCapNhat     datetime2(3)   NOT NULL CONSTRAINT DF_NguoiDung_NgayCapNhat DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT PK_NguoiDung PRIMARY KEY CLUSTERED (MaNguoiDung)
 );
 GO
 
--- ---------------------------------------------------------------------
--- CuaHang (dòng 3 của bảng phân tích): 1 người dùng = 1 shop
--- Có bản ghi CuaHang = đã kích hoạt bán, không có vai trò Seller riêng
--- ---------------------------------------------------------------------
 CREATE TABLE CuaHang (
-    MaCuaHang       INT IDENTITY(1,1)  NOT NULL,
-    NguoiDungId     INT                NOT NULL,   -- chủ shop
-    Ten             NVARCHAR(100)      NOT NULL,   -- tên shop tối đa 100; [Đề xuất] tên cột "Ten"
-    SDTLienHe       VARCHAR(10)        NOT NULL,   -- đúng 10 chữ số; [Đề xuất] tên cột
-    MoTa            NVARCHAR(1000)     NULL,       -- mô tả shop tối đa 1.000
-    Logo            VARCHAR(500)       NULL,       -- [Đề xuất] độ dài; lưu đường dẫn (tên file GUID)
-    TrangThai       VARCHAR(10)        NOT NULL CONSTRAINT DF_CuaHang_TrangThai DEFAULT 'ACTIVE',  -- [Đề xuất] mặc định ACTIVE
-    LyDoKhoa        NVARCHAR(500)      NULL,       -- lý do tối đa 500
-    ThoiGianKhoa    DATETIME2(3)       NULL,       -- giờ UTC
-    NgayTao         DATETIME2(3)       NOT NULL CONSTRAINT DF_CuaHang_NgayTao     DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] cột mốc quản trị
-    NgayCapNhat     DATETIME2(3)       NOT NULL CONSTRAINT DF_CuaHang_NgayCapNhat DEFAULT SYSUTCDATETIME(),  -- [Đề xuất] như trên
-    CONSTRAINT PK_CuaHang PRIMARY KEY (Id)
-GO 
+    MaCuaHang          int            IDENTITY(1,1) NOT NULL,
+    MaNguoiDung        int            NOT NULL,
+    TenShop            nvarchar(100)  NOT NULL,
+    SoDienThoaiLienHe  varchar(15)    NOT NULL,
+    MoTa               nvarchar(1000) NULL,
+    Logo               varchar(500)   NULL,
+    TrangThai          varchar(10)    NOT NULL CONSTRAINT DF_CuaHang_TrangThai DEFAULT ('ACTIVE'),
+    LyDoKhoa           nvarchar(500)  NULL,
+    ThoiGianKhoa       datetime2(3)   NULL,
+    NgayTao            datetime2(3)   NOT NULL CONSTRAINT DF_CuaHang_NgayTao     DEFAULT (SYSUTCDATETIME()),
+    NgayCapNhat        datetime2(3)   NOT NULL CONSTRAINT DF_CuaHang_NgayCapNhat DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT PK_CuaHang PRIMARY KEY CLUSTERED (MaCuaHang)
+);
+GO
 
 CREATE TABLE DanhMuc (
     MaDanhMuc         int           IDENTITY(1,1) NOT NULL,
@@ -101,87 +109,78 @@ CREATE TABLE AnhSanPham (
 );
 GO
 
-/* GioHang - Bảng Giỏ Hàng:
-   Lưu sản phẩm người mua thêm và giỏ.
-   Giỏ hàng khác Đơn hàng: chưa phát sinh giao dịch mua.
-   Mỗi người mua chỉ có một dòng cho một sản phẩm.
-   SoLuong = 1 vì mỗi sản phẩm đồ cũ chỉ có 1 đơn vị. */
-CREATE TABLE GioHang
-(
-    MaGioHang      BIGINT IDENTITY(1,1) PRIMARY KEY,
-    MaNguoiMua         BIGINT NOT NULL,
-    MaSanPham       BIGINT NOT NULL,
-    SoLuong        INT NOT NULL DEFAULT 1,
-    NgayTao       DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+CREATE TABLE GioHang (
+    MaGioHang         int           IDENTITY(1,1) NOT NULL,
+    MaNguoiDung       int           NOT NULL,
+    MaSanPham         int           NOT NULL,
+    DaChon            bit           NOT NULL CONSTRAINT DF_GioHang_DaChon      DEFAULT (1),
+    ThoiGianThem      datetime2(3)  NOT NULL CONSTRAINT DF_GioHang_ThoiGianThem DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT PK_GioHang PRIMARY KEY CLUSTERED (MaGioHang)
 );
 GO
 
-/* DonHang - BẢNG ĐƠN HÀNG
-   lưu thông tin của đơn hàng: người mua, người bán, địa chỉ giao hàng, phí ship, tổng tiền và trạng thái. */
-CREATE TABLE DonHang
-(
-    MaDonHang             BIGINT IDENTITY(1,1) PRIMARY KEY,
-    MaDon           VARCHAR(30) NOT NULL,
-    MaNguoiMua             BIGINT NOT NULL,
-    MaNguoiBan            BIGINT NOT NULL,
-    TenNguoiNhan       NVARCHAR(150) NOT NULL,
-    SDTNguoiNhan      VARCHAR(20) NOT NULL,
-    DiaChiGiaoHang     NVARCHAR(1000) NOT NULL,
-    NgayGiaoDuKien  DATETIME2 NULL,
-    TienHang            DECIMAL(18,2) NOT NULL,
-    PhiVanChuyen         DECIMAL(18,2) NOT NULL DEFAULT 0,
-    TongTien         DECIMAL(18,2) NOT NULL,
-    PhuongThucThanhToan       VARCHAR(30) NOT NULL DEFAULT 'COD',
-    TrangThaiThanhToan       VARCHAR(20) NOT NULL DEFAULT 'UNPAID',
-    TrangThaiDonHang         VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    LyDoHuy        NVARCHAR(1000) NULL,
-    NgayHuy         DATETIME2 NULL,
-    NgayTao           DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-    NgayCapNhat           DATETIME2 NULL
+CREATE TABLE DonHang (
+    MaDonHang            int            IDENTITY(1,1) NOT NULL,
+    MaDon                varchar(30)    NOT NULL,
+    MaNguoiDung          int            NOT NULL,
+    MaCuaHang            int            NOT NULL,
+    TenNguoiNhan         nvarchar(100)  NOT NULL,
+    SoDienThoaiNhan      varchar(15)    NOT NULL,
+    DiaChiNhan           nvarchar(500)  NOT NULL,
+    TienHang             decimal(18,2)  NOT NULL,
+    PhiVanChuyen         decimal(18,2)  NOT NULL CONSTRAINT DF_DonHang_PhiVanChuyen DEFAULT (0),
+    TongTien             decimal(18,2)  NOT NULL,
+    PhuongThucThanhToan  varchar(20)    NOT NULL CONSTRAINT DF_DonHang_PhuongThuc  DEFAULT ('COD'),
+    TrangThaiThanhToan   varchar(10)    NOT NULL CONSTRAINT DF_DonHang_TTThanhToan DEFAULT ('UNPAID'),
+    TrangThai            varchar(15)    NOT NULL CONSTRAINT DF_DonHang_TrangThai    DEFAULT ('PENDING'),
+    NguoiHuy             varchar(10)    NULL,
+    LyDoHuy              nvarchar(500)  NULL,
+    ThoiGianHuy          datetime2(3)   NULL,
+    ThoiGianXacNhan      datetime2(3)   NULL,
+    ThoiGianBatDauGiao   datetime2(3)   NULL,
+    ThoiGianDaGiao       datetime2(3)   NULL,
+    ThoiGianHoanTat      datetime2(3)   NULL,
+    NgayTao              datetime2(3)   NOT NULL CONSTRAINT DF_DonHang_NgayTao     DEFAULT (SYSUTCDATETIME()),
+    NgayCapNhat          datetime2(3)   NOT NULL CONSTRAINT DF_DonHang_NgayCapNhat DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT PK_DonHang PRIMARY KEY CLUSTERED (MaDonHang)
 );
 GO
 
-/* ChiTietDonHang - CHI TIẾT ĐƠN HÀNG:
-   Lưu sản phẩm, tên sản phẩm và giá tại thời điểm mua.
-   ThanhTien đưọc tính từ DonGia * SoLuong. */
-CREATE TABLE ChiTietDonHang
-(
-    MaChiTietDonHang     BIGINT IDENTITY(1,1) PRIMARY KEY,
-    MaDonHang         BIGINT NOT NULL,
-    MaSanPham       BIGINT NOT NULL,
-    TenSanPham     NVARCHAR(200) NOT NULL,
-    DonGia       DECIMAL(18,2) NOT NULL,
-    SoLuong        INT NOT NULL DEFAULT 1,
-    ThanhTien AS (DonGia * SoLuong) PERSISTED
+CREATE TABLE ChiTietDonHang (
+    MaChiTietDonHang  int            IDENTITY(1,1) NOT NULL,
+    MaDonHang         int            NOT NULL,
+    MaSanPham         int            NOT NULL,
+    TenSanPham        nvarchar(200)  NOT NULL,
+    AnhDaiDien        nvarchar(500)  NULL,
+    Gia               decimal(18,2)  NOT NULL,
+    DangGiuCho        bit            NOT NULL CONSTRAINT DF_ChiTietDonHang_DangGiuCho DEFAULT (1),
+    CONSTRAINT PK_ChiTietDonHang PRIMARY KEY CLUSTERED (MaChiTietDonHang)
 );
 GO
 
-/* LichSuTrangThaiDonHang:
-   Lưu lịch sử chuyển trạng thái của đơn hàng. */
-CREATE TABLE LichSuTrangThaiDonHang
-(
-    MaLichSu       BIGINT IDENTITY(1,1) PRIMARY KEY,
-    MaDonHang         BIGINT NOT NULL,
-    TrangThaiCu       VARCHAR(20) NULL,
-    TrangThaiMoi       VARCHAR(20) NOT NULL,
-    NguoiThayDoi       BIGINT NULL,
-    GhiChu            NVARCHAR(1000) NULL,
-    NgayThayDoi       DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+CREATE TABLE LichSuTrangThaiDonHang (
+    MaLichSuTrangThaiDonHang int          IDENTITY(1,1) NOT NULL,
+    MaDonHang         int           NOT NULL,
+    TrangThaiCu       varchar(15)   NULL,
+    TrangThaiMoi      varchar(15)   NOT NULL,
+    LoaiNguoiThucHien varchar(10)   NOT NULL,
+    NguoiThucHienId   int           NULL,
+    LyDo              nvarchar(500) NULL,
+    ThoiGian          datetime2(3)  NOT NULL CONSTRAINT DF_LichSuDon_ThoiGian DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT PK_LichSuTrangThaiDonHang PRIMARY KEY CLUSTERED (MaLichSuTrangThaiDonHang)
 );
 GO
 
-/* ThanhToan:
-   Lưu các giao dịch thanh toán, mã giao dịch và kết quả. */
-CREATE TABLE ThanhToan
-(
-    MaThanhToan       BIGINT IDENTITY(1,1) PRIMARY KEY,
-    MaDonHang         BIGINT NOT NULL,
-    MaGiaoDich VARCHAR(100) NULL,
-    PhuongThucThanhToan   VARCHAR(30) NOT NULL,
-    SoTien          DECIMAL(18,2) NOT NULL,
-    TrangThaiThanhToan   VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    NgayThanhToan          DATETIME2 NULL,
-    NgayTao       DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+CREATE TABLE ThanhToan (
+    MaThanhToan          int            IDENTITY(1,1) NOT NULL,
+    MaDonHang            int            NOT NULL,
+    MaGiaoDich           varchar(100)   NULL,
+    PhuongThucThanhToan  varchar(20)    NOT NULL,
+    SoTien               decimal(18,2)  NOT NULL,
+    TrangThaiThanhToan   varchar(10)    NOT NULL CONSTRAINT DF_ThanhToan_TrangThai DEFAULT ('PENDING'),
+    ThoiGianThanhToan    datetime2(3)   NULL,
+    NgayTao              datetime2(3)   NOT NULL CONSTRAINT DF_ThanhToan_NgayTao DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT PK_ThanhToan PRIMARY KEY CLUSTERED (MaThanhToan)
 );
 GO
 
@@ -199,27 +198,34 @@ CREATE TABLE LichSuTrangThaiSanPham (
 GO
 
 CREATE TABLE LuotKiemDuyet (
-    MaLuotKiemDuyet                 int           IDENTITY(1,1) NOT NULL,
-    --Giàu 
+    MaLuotKiemDuyet    int           IDENTITY(1,1) NOT NULL,
+    MaSanPham          int           NOT NULL,
+    ThoiGianGui        datetime2(3)  NOT NULL CONSTRAINT DF_LuotKiemDuyet_ThoiGianGui DEFAULT (SYSUTCDATETIME()),
+    KetQuaRule         nvarchar(max) NULL,
+    QuyetDinh          varchar(10)   NULL,
+    LyDo               nvarchar(500) NULL,
+    MaQuanTriVien      int           NULL,
+    ThoiGianQuyetDinh  datetime2(3)  NULL,
+    CONSTRAINT PK_LuotKiemDuyet PRIMARY KEY CLUSTERED (MaLuotKiemDuyet)
 );
 GO
 
 CREATE TABLE PhanTichAI (
-    MaPhanTichAI      int            IDENTITY(1,1) NOT NULL,
-    MaLuotKiemDuyet   int            NOT NULL,
-    TrangThai         varchar(12)    NOT NULL CONSTRAINT DF_PhanTichAI_TrangThai DEFAULT ('QUEUED'),
-    SoLanThu          int            NOT NULL CONSTRAINT DF_PhanTichAI_SoLanThu  DEFAULT (0),
-    MucRuiRo          varchar(10)    NULL,
-    DauHieu           nvarchar(max)  NULL,
-    DeXuat            varchar(15)    NULL,
-    GiaiThich         nvarchar(2000) NULL,
-    MaBamDauVao       char(64)       NULL,
-    PhienBanMoHinh    varchar(50)    NULL,
-    ThoiGianXuLyMs    int            NULL,
-    LoiXuLy           nvarchar(1000) NULL,
-    QuanTriVienLamTheo bit           NULL,
-    NgayTao           datetime2(3)   NOT NULL CONSTRAINT DF_PhanTichAI_NgayTao DEFAULT (SYSUTCDATETIME()),
-    ThoiGianHoanThanh datetime2(3)   NULL,
+    MaPhanTichAI       int            IDENTITY(1,1) NOT NULL,
+    MaLuotKiemDuyet    int            NOT NULL,
+    TrangThai          varchar(12)    NOT NULL CONSTRAINT DF_PhanTichAI_TrangThai DEFAULT ('QUEUED'),
+    SoLanThu           int            NOT NULL CONSTRAINT DF_PhanTichAI_SoLanThu  DEFAULT (0),
+    MucRuiRo           varchar(10)    NULL,
+    DauHieu            nvarchar(max)  NULL,
+    DeXuat             varchar(15)    NULL,
+    GiaiThich          nvarchar(2000) NULL,
+    MaBamDauVao        char(64)       NULL,
+    PhienBanMoHinh     varchar(50)    NULL,
+    ThoiGianXuLyMs     int            NULL,
+    LoiXuLy            nvarchar(1000) NULL,
+    QuanTriVienLamTheo bit            NULL,
+    NgayTao            datetime2(3)   NOT NULL CONSTRAINT DF_PhanTichAI_NgayTao DEFAULT (SYSUTCDATETIME()),
+    ThoiGianHoanThanh  datetime2(3)   NULL,
     CONSTRAINT PK_PhanTichAI PRIMARY KEY CLUSTERED (MaPhanTichAI)
 );
 GO
@@ -233,6 +239,19 @@ CREATE TABLE TuKhoaCam (
     DangApDung        bit           NOT NULL CONSTRAINT DF_TuKhoaCam_DangApDung DEFAULT (1),
     NgayTao           datetime2(3)  NOT NULL CONSTRAINT DF_TuKhoaCam_NgayTao    DEFAULT (SYSUTCDATETIME()),
     CONSTRAINT PK_TuKhoaCam PRIMARY KEY CLUSTERED (MaTuKhoaCam)
+);
+GO
+
+CREATE TABLE ThongBao (
+    MaThongBao        int            IDENTITY(1,1) NOT NULL,
+    MaNguoiDung       int            NOT NULL,
+    Loai              varchar(10)    NOT NULL,
+    TieuDe            nvarchar(200)  NOT NULL,
+    NoiDung           nvarchar(1000) NOT NULL,
+    MaThamChieu       int            NULL,
+    DaDoc             bit            NOT NULL CONSTRAINT DF_ThongBao_DaDoc DEFAULT (0),
+    NgayTao           datetime2(3)   NOT NULL CONSTRAINT DF_ThongBao_NgayTao DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT PK_ThongBao PRIMARY KEY CLUSTERED (MaThongBao)
 );
 GO
 
@@ -253,11 +272,5 @@ GO
 CREATE SEQUENCE sq_MaDonHang AS int START WITH 1 INCREMENT BY 1 CACHE 50;
 GO
 
--- Bộ đếm sinh mã đơn: DH + yyyyMMdd + '-' + 6 số
-CREATE SEQUENCE sq_MaDonHang AS int START WITH 1 INCREMENT BY 1 CACHE 50;
+PRINT N'Đã tạo xong các bảng.';
 GO
-
-PRINT N'Da tao xong cac bang.';
-SET NOEXEC OFF;
-GO
-

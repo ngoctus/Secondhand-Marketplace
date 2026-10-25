@@ -5,13 +5,6 @@ GO
 USE SecondHandMarketplace;
 GO
 
-IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_SanPham_ACTIVE_MaDanhMuc_Gia' AND object_id = OBJECT_ID(N'SanPham'))
-BEGIN
-    PRINT N'Index da ton tai, bo qua 04_indexes.sql.';
-    SET NOEXEC ON;
-END
-GO
-
 CREATE NONCLUSTERED INDEX IX_SanPham_ACTIVE_MaDanhMuc_Gia
     ON SanPham (MaDanhMuc, Gia) INCLUDE (MaCuaHang, MaTinhTrang, NgayTao)
     WHERE TrangThai = 'ACTIVE' AND DaXoa = 0;
@@ -46,6 +39,8 @@ CREATE NONCLUSTERED INDEX IX_DonHang_DELIVERED_QuaHan
 
 CREATE NONCLUSTERED INDEX IX_ChiTietDonHang_SanPham ON ChiTietDonHang (MaSanPham);
 
+CREATE NONCLUSTERED INDEX IX_ThanhToan_DonHang ON ThanhToan (MaDonHang);
+
 CREATE NONCLUSTERED INDEX IX_LichSuDon_DonHang     ON LichSuTrangThaiDonHang (MaDonHang, ThoiGian);
 CREATE NONCLUSTERED INDEX IX_LichSuSanPham_SanPham ON LichSuTrangThaiSanPham (MaSanPham, ThoiGian);
 
@@ -55,6 +50,10 @@ CREATE NONCLUSTERED INDEX IX_LuotKiemDuyet_HangCho
 CREATE NONCLUSTERED INDEX IX_LuotKiemDuyet_SanPham
     ON LuotKiemDuyet (MaSanPham, ThoiGianGui DESC);
 
+CREATE NONCLUSTERED INDEX IX_SanPham_PENDING_REVIEW
+    ON SanPham (NgayTao)
+    WHERE TrangThai = 'PENDING_REVIEW';
+
 CREATE NONCLUSTERED INDEX IX_PhanTichAI_HangDoi
     ON PhanTichAI (NgayTao) WHERE TrangThai = 'QUEUED';
 
@@ -62,8 +61,9 @@ CREATE NONCLUSTERED INDEX IX_NguoiDung_VaiTro_TrangThai ON NguoiDung (VaiTro, Tr
 CREATE NONCLUSTERED INDEX IX_CuaHang_TrangThai          ON CuaHang (TrangThai);
 CREATE NONCLUSTERED INDEX IX_NhatKy_NguoiDung_ThoiGian  ON NhatKyHeThong (MaNguoiDung, ThoiGian DESC);
 CREATE NONCLUSTERED INDEX IX_NhatKy_DoiTuong            ON NhatKyHeThong (LoaiDoiTuong, DoiTuongId);
+
+CREATE NONCLUSTERED INDEX IX_ThongBao_NguoiDung ON ThongBao (MaNguoiDung, DaDoc, NgayTao DESC);
 GO
 
-PRINT N'Da tao xong index.';
-SET NOEXEC OFF;
+PRINT N'Đã tạo xong index.';
 GO
