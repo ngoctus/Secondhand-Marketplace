@@ -25,4 +25,25 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- TypeScript: Scripts/*.ts -> wwwroot/dist (tự chạy khi dotnet build / F5, cần Node.js, xem README mục 7) -->
+  <ItemGroup>
+    <TsNguon Include="Scripts\**\*.ts" />
+    <Content Update="package.json;package-lock.json;tsconfig.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <Target Name="KiemTraNode" Condition="'$(SkipTsBuild)' != 'true'">
+    <Exec Command="node --version" IgnoreExitCode="true" IgnoreStandardErrorWarningFormat="true" StandardOutputImportance="low" StandardErrorImportance="low">
+      <Output TaskParameter="ExitCode" PropertyName="NodeExitCode" />
+    </Exec>
+    <Error Condition="'$(NodeExitCode)' != '0'" Text="Chua cai Node.js. Cai ban LTS (20 tro len) tai https://nodejs.org roi mo lai terminal hoac Visual Studio. Muon bo qua buoc TypeScript: dotnet build -p:SkipTsBuild=true" />
+  </Target>
+
+  <Target Name="CaiNpm" DependsOnTargets="KiemTraNode" Condition="'$(SkipTsBuild)' != 'true'" Inputs="package.json;package-lock.json" Outputs="node_modules\.package-lock.json">
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <Target Name="BuildTypeScript" DependsOnTargets="CaiNpm" BeforeTargets="BeforeBuild" Condition="'$(SkipTsBuild)' != 'true'" Inputs="@(TsNguon);package.json;tsconfig.json" Outputs="wwwroot\dist\site.js">
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
 </Project>

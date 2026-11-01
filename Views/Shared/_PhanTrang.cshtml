@@ -1,0 +1,49 @@
+@* Phân trang dùng chung. Dùng: @await Html.PartialAsync("_PhanTrang", (trangHienTai, tongSoTrang))
+   Giữ nguyên các tham số lọc đang có trên URL, chỉ đổi tham số trang (mặc định "trang";
+   đổi bằng ViewData["ThamSoTrang"] = "page"). Chỉ hiện khi có từ 2 trang trở lên. *@
+@model (int TrangHienTai, int TongSoTrang)
+@{
+    var tong = Model.TongSoTrang;
+    var hienTai = Math.Clamp(Model.TrangHienTai, 1, Math.Max(tong, 1));
+    var thamSo = ViewData["ThamSoTrang"] as string ?? "trang";
+
+    string TaoLink(int trang)
+    {
+        var cacThamSo = Context.Request.Query
+            .Where(q => !string.Equals(q.Key, thamSo, StringComparison.OrdinalIgnoreCase))
+            .SelectMany(q => q.Value.Select(v => $"{Uri.EscapeDataString(q.Key)}={Uri.EscapeDataString(v ?? "")}"))
+            .Append($"{Uri.EscapeDataString(thamSo)}={trang}");
+        return $"{Context.Request.PathBase}{Context.Request.Path}?{string.Join("&", cacThamSo)}";
+    }
+
+    // Luôn hiện trang đầu, trang cuối và 2 trang mỗi bên trang hiện tại; chỗ hở hiện dấu "..."
+    var cacTrang = Enumerable.Range(1, tong)
+        .Where(i => i == 1 || i == tong || Math.Abs(i - hienTai) <= 2)
+        .ToList();
+    var trangTruoc = 0;
+}
+
+@if (tong > 1)
+{
+    <nav aria-label="Phân trang">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(hienTai <= 1 ? "disabled" : "")">
+                <a class="page-link" href="@TaoLink(Math.Max(hienTai - 1, 1))">Trước</a>
+            </li>
+            @foreach (var trang in cacTrang)
+            {
+                if (trang - trangTruoc > 1)
+                {
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                }
+                <li class="page-item @(trang == hienTai ? "active" : "")" aria-current="@(trang == hienTai ? "page" : null)">
+                    <a class="page-link" href="@TaoLink(trang)">@trang</a>
+                </li>
+                trangTruoc = trang;
+            }
+            <li class="page-item @(hienTai >= tong ? "disabled" : "")">
+                <a class="page-link" href="@TaoLink(Math.Min(hienTai + 1, tong))">Sau</a>
+            </li>
+        </ul>
+    </nav>
+}

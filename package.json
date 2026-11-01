@@ -1,0 +1,16 @@
+{
+  "name": "secondhand-marketplace-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TypeScript cho giao diện: Scripts/*.ts build ra wwwroot/dist",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}
