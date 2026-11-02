@@ -1,0 +1,16 @@
+@model ProfileVm
+@{ ViewData["Title"] = "Hồ sơ cá nhân"; }
+<div class="container py-4" style="max-width:760px">
+    <h2>Hồ sơ cá nhân</h2>
+    <p class="text-muted">Cập nhật thông tin tài khoản của bạn.</p>
+    <form asp-action="Profile" method="post" class="card card-body gap-3">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div><label asp-for="HoTen" class="form-label"></label><input asp-for="HoTen" class="form-control"/><span asp-validation-for="HoTen" class="text-danger"></span></div>
+        <div><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" readonly/><small class="text-muted">Email không thể thay đổi.</small></div>
+        <div><label asp-for="SoDienThoai" class="form-label"></label><input asp-for="SoDienThoai" class="form-control" required/><span asp-validation-for="SoDienThoai" class="text-danger"></span></div>
+        <div><label asp-for="DiaChiMacDinh" class="form-label"></label><textarea asp-for="DiaChiMacDinh" class="form-control" rows="2"></textarea><span asp-validation-for="DiaChiMacDinh" class="text-danger"></span></div>
+        <div><label asp-for="AnhDaiDien" class="form-label"></label><input asp-for="AnhDaiDien" class="form-control" placeholder="/uploads/avatar.jpg"/><span asp-validation-for="AnhDaiDien" class="text-danger"></span></div>
+        <div class="d-flex gap-2"><button class="btn btn-primary" type="submit">Lưu thay đổi</button><a asp-action="ChangePassword" class="btn btn-outline-secondary">Đổi mật khẩu</a></div>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

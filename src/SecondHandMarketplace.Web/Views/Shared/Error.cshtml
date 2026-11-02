@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = Model.TieuDe;
+}
+
+<div class="text-center py-5">
+    <h1 class="display-4 text-danger">@Model.MaLoi</h1>
+    <h2>@Model.TieuDe</h2>
+    <p class="text-muted">@Model.ThongDiep</p>
+
+    @if (Model.ShowRequestId)
+    {
+        <p class="small text-muted">Mã yêu cầu: <code>@Model.RequestId</code></p>
+    }
+
+    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Về trang chủ</a>
+</div>

@@ -1,0 +1,10 @@
+@model IReadOnlyList<SecondHandMarketplace.Web.Models.Entities.CuaHang>
+@{ ViewData["Title"] = "Quản lý cửa hàng"; }
+<div class="container-fluid py-4">
+    <h2>Quản lý cửa hàng</h2>
+    <form method="get" class="row g-2 mb-3"><div class="col-md-5"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tên shop, chủ shop hoặc email"/></div><div class="col-md-3"><select name="status" class="form-select"><option value="">Tất cả trạng thái</option><option value="ACTIVE" selected="@(ViewBag.Status as string == "ACTIVE")">Đang hoạt động</option><option value="LOCKED" selected="@(ViewBag.Status as string == "LOCKED")">Đã khóa</option></select></div><div class="col-auto"><button class="btn btn-primary">Lọc</button></div></form>
+    <div class="table-responsive"><table class="table table-striped align-middle"><thead><tr><th>Cửa hàng</th><th>Chủ cửa hàng</th><th>Liên hệ</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
+    @foreach(var shop in Model){<tr><td><strong>@shop.TenShop</strong><div class="small text-muted">@shop.MoTa</div></td><td>@shop.NguoiDung.HoTen<br/><small>@shop.NguoiDung.Email</small></td><td>@shop.SoDienThoaiLienHe</td><td>@shop.TrangThai @if(shop.TrangThai == "LOCKED"){<div class="small text-muted">@shop.LyDoKhoa</div>}</td><td>@if(shop.TrangThai == "ACTIVE"){<form asp-action="Lock" method="post" class="d-flex gap-1"><input type="hidden" name="id" value="@shop.MaCuaHang"/><input name="reason" class="form-control form-control-sm" placeholder="Lý do khóa" required maxlength="500"/><button class="btn btn-sm btn-danger">Khóa</button></form>}else{<form asp-action="Unlock" method="post"><input type="hidden" name="id" value="@shop.MaCuaHang"/><button class="btn btn-sm btn-success">Mở khóa</button></form>}</td></tr>}
+    @if(Model.Count == 0){<tr><td colspan="5" class="text-center text-muted">Chưa có cửa hàng.</td></tr>}
+    </tbody></table></div>
+</div>

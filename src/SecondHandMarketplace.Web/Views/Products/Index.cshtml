@@ -1,0 +1,49 @@
+@model List<ProductCardVm>
+@{
+    ViewData["Title"] = "Khám phá sản phẩm";
+    var query = Context.Request.Query;
+}
+<section class="page catalog-page">
+    <div class="page-title">
+        <div><div class="eyebrow">THE COMMUNITY CLOSET</div><h2>Tìm món đồ tiếp theo</h2><p class="muted">Sản phẩm chỉ hiển thị sau khi được Admin duyệt.</p></div>
+        <span class="muted">@Model.Count sản phẩm</span>
+    </div>
+
+    <form method="get" class="filters">
+        <input name="Keyword" value="@query["Keyword"]" placeholder="Tìm tên sản phẩm hoặc cửa hàng..." />
+        <input name="MinPrice" value="@query["MinPrice"]" type="number" min="0" placeholder="Giá từ" />
+        <input name="MaxPrice" value="@query["MaxPrice"]" type="number" min="0" placeholder="Giá đến" />
+        <button class="primary" type="submit">Tìm kiếm</button>
+    </form>
+
+    @if (Model.Count == 0)
+    {
+        <div class="panel empty">Không tìm thấy sản phẩm phù hợp.</div>
+    }
+    else
+    {
+        <div class="product-grid">
+            @foreach (var p in Model)
+            {
+                <article class="product-card">
+                    <a asp-action="Details" asp-route-id="@p.Id">
+                        @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
+                        {
+                            <img src="@p.ImageUrl" alt="@p.Name" loading="lazy" data-fallback />
+                        }
+                        else
+                        {
+                            <div class="product-art-fallback" aria-label="Chưa có ảnh sản phẩm">♻</div>
+                        }
+                        <div class="product-info">
+                            <h3 class="product-title">@p.Name</h3>
+                            <div class="product-meta"><span>@(p.ConditionName ?? "Chưa rõ tình trạng")</span><span>@p.ShopName</span></div>
+                            <div class="price">@p.Price.ToString("N0") ₫</div>
+                            <div class="card-foot"><span class="pill">Đã kiểm duyệt</span><span>Xem chi tiết ↗</span></div>
+                        </div>
+                    </a>
+                </article>
+            }
+        </div>
+    }
+</section>

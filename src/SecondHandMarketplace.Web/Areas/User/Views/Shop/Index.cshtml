@@ -1,0 +1,11 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Shop.ShopVm
+@{ ViewData["Title"] = "Cửa hàng của tôi"; }
+<div class="container py-4" style="max-width:760px"><h2>Cửa hàng của tôi</h2><p class="text-muted">Mỗi tài khoản USER được tạo tối đa một cửa hàng.</p>
+<form asp-action="Index" method="post" class="card card-body gap-3"><div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div><label asp-for="TenShop" class="form-label"></label><input asp-for="TenShop" class="form-control"/><span asp-validation-for="TenShop" class="text-danger"></span></div>
+<div><label asp-for="SoDienThoaiLienHe" class="form-label"></label><input asp-for="SoDienThoaiLienHe" class="form-control"/><span asp-validation-for="SoDienThoaiLienHe" class="text-danger"></span></div>
+<div><label asp-for="MoTa" class="form-label"></label><textarea asp-for="MoTa" class="form-control" rows="3"></textarea><span asp-validation-for="MoTa" class="text-danger"></span></div>
+<div><label asp-for="Logo" class="form-label"></label><input asp-for="Logo" class="form-control" placeholder="/uploads/shop-logo.png"/><span asp-validation-for="Logo" class="text-danger"></span></div>
+@if(Model.MaCuaHang.HasValue){<p>Trạng thái: <strong>@Model.TrangThai</strong></p>}
+<button class="btn btn-primary" type="submit">@(Model.MaCuaHang.HasValue ? "Cập nhật cửa hàng" : "Tạo cửa hàng")</button></form></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

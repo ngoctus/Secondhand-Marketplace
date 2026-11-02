@@ -1,0 +1,18 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Admin.AdminUsersVm
+@{ ViewData["Title"] = "Quản lý người dùng"; }
+<div class="container-fluid py-4">
+    <h2>Quản lý người dùng</h2>
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-5"><input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo tên hoặc email" /></div>
+        <div class="col-md-3"><select name="status" class="form-select"><option value="">Tất cả trạng thái</option><option value="ACTIVE" selected="@(Model.Status == "ACTIVE")">Đang hoạt động</option><option value="LOCKED" selected="@(Model.Status == "LOCKED")">Đã khóa</option></select></div>
+        <div class="col-auto"><button class="btn btn-primary">Lọc</button></div>
+    </form>
+    <div class="table-responsive"><table class="table table-striped align-middle"><thead><tr><th>Người dùng</th><th>Email</th><th>Điện thoại</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead><tbody>
+    @foreach (var item in Model.Items) { <tr><td>@item.HoTen</td><td>@item.Email</td><td>@item.SoDienThoai</td><td>@item.VaiTro</td><td><span class="badge @(item.TrangThai == "ACTIVE" ? "bg-success" : "bg-secondary")">@item.TrangThai</span>@if(item.TrangThai == "LOCKED" && !string.IsNullOrWhiteSpace(item.LyDoKhoa)){<div class="small text-muted">@item.LyDoKhoa</div>}</td><td>@item.NgayTao.ToLocalTime().ToString("dd/MM/yyyy")</td><td>
+    @if(item.VaiTro != "ADMIN" && item.TrangThai == "ACTIVE") { <form asp-action="Lock" method="post" class="d-flex gap-1"><input type="hidden" name="id" value="@item.Id"/><input name="reason" class="form-control form-control-sm" placeholder="Lý do khóa" required maxlength="500"/><button class="btn btn-sm btn-danger" type="submit">Khóa</button></form> }
+    else if(item.TrangThai == "LOCKED") { <form asp-action="Unlock" method="post"><input type="hidden" name="id" value="@item.Id"/><button class="btn btn-sm btn-success" type="submit">Mở khóa</button></form> }
+    </td></tr> }
+    @if(Model.Items.Count == 0){<tr><td colspan="7" class="text-center text-muted">Không có dữ liệu.</td></tr>}
+    </tbody></table></div>
+    <div class="d-flex justify-content-between"><span>Tổng @Model.TotalItems người dùng</span><div class="d-flex gap-2">@if(Model.Page > 1){<a class="btn btn-sm btn-outline-secondary" asp-route-page="@(Model.Page-1)" asp-route-search="@Model.Search" asp-route-status="@Model.Status">Trước</a>}<span class="align-self-center">Trang @Model.Page / @Math.Max(1,Model.TotalPages)</span>@if(Model.Page < Model.TotalPages){<a class="btn btn-sm btn-outline-secondary" asp-route-page="@(Model.Page+1)" asp-route-search="@Model.Search" asp-route-status="@Model.Status">Sau</a>}</div></div>
+</div>

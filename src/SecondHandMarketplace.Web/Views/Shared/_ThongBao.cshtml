@@ -1,0 +1,21 @@
+@* Thông báo dùng chung: đặt bằng this.ThongBaoThanhCong("...") / this.ThongBaoLoi("...") trong Controller *@
+@{
+    var thanhCong = TempData["ThanhCong"] as string;
+    var loi = TempData["Loi"] as string;
+}
+
+@if (!string.IsNullOrEmpty(thanhCong))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @thanhCong
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(loi))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @loi
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+    </div>
+}

@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "Khám phá";
+}
+<section class="page">
+    <div class="hero">
+        <div>
+            <div class="eyebrow">SECOND LIFE, BETTER CHOICE</div>
+            <h1>Món đồ tốt<br />xứng đáng <em>vòng đời mới.</em></h1>
+            <p>Khám phá những món đồ đã qua sử dụng được kiểm duyệt trước khi xuất hiện trên sàn.</p>
+            <a class="primary" asp-controller="Products" asp-action="Index">Khám phá ngay <span>↗</span></a>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+            <div class="sun"></div>
+            <div class="art-card art-one">PRE-LOVED<br /><b>GOOD FINDS</b></div>
+            <div class="art-card art-two">REUSE<br />RELOVE</div>
+            <div class="art-sticker">GIVE<br />IT<br />AGAIN</div>
+        </div>
+    </div>
+
+    <div class="trust-row">
+        <div><b>01</b><span>Kiểm duyệt trước khi đăng</span></div>
+        <div><b>02</b><span>Mỗi món đồ, một chủ nhân mới</span></div>
+        <div><b>03</b><span>Mua bán có trách nhiệm</span></div>
+    </div>
+
+    <section class="catalog">
+        <div class="section-head">
+            <div><div class="eyebrow">THE COMMUNITY CLOSET</div><h2>Tìm món đồ tiếp theo</h2></div>
+            <span class="muted">Sản phẩm đã được Admin duyệt</span>
+        </div>
+        <form asp-controller="Products" asp-action="Index" method="get" class="filters">
+            <input name="Keyword" placeholder="Tìm tên sản phẩm hoặc người bán..." />
+            <input name="MinPrice" type="number" min="0" placeholder="Giá từ" />
+            <input name="MaxPrice" type="number" min="0" placeholder="Giá đến" />
+            <button class="primary" type="submit">Tìm kiếm</button>
+        </form>
+        <div class="panel">
+            <p class="muted">Danh sách sản phẩm được tải từ dữ liệu của hệ thống tại mục Khám phá.</p>
+            <a class="primary" asp-controller="Products" asp-action="Index">Xem sản phẩm <span>↗</span></a>
+        </div>
+    </section>
+</section>

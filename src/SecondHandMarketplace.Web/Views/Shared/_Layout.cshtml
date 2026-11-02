@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Re:Market</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="topline">MUA BÁN ĐỒ ĐÃ QUA SỬ DỤNG · TỐT CHO BẠN, TỐT CHO MÔI TRƯỜNG</div>
+    <header class="header">
+        <a class="brand" asp-area="" asp-controller="Home" asp-action="Index">
+            <span class="brandmark">r</span><span>re<span class="brand-accent">:</span>market</span>
+        </a>
+        <nav aria-label="Điều hướng chính">
+            <a class="navlink" asp-area="" asp-controller="Home" asp-action="Index">Khám phá</a>
+            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("USER"))
+            {
+                <a class="navlink" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn hàng</a>
+                <a class="navlink" asp-area="User" asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
+                <a class="navlink" asp-area="User" asp-controller="Products" asp-action="Index">Kênh người bán</a>
+                <a class="navlink" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng</a>
+            }
+            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
+            {
+                <a class="navlink" asp-area="Admin" asp-controller="Products" asp-action="Index">Kiểm duyệt</a>
+                <a class="navlink" asp-area="Admin" asp-controller="Users" asp-action="Index">Người dùng</a>
+                <a class="navlink" asp-area="Admin" asp-controller="Sellers" asp-action="Index">Cửa hàng</a>
+                <a class="navlink" asp-area="Admin" asp-controller="Categories" asp-action="Index">Danh mục</a>
+                <a class="navlink" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">Nhật ký</a>
+            }
+        </nav>
+        <div class="head-actions">
+            <div class="account-menu">
+                <button type="button" class="iconbtn account-trigger" id="accountButton" aria-expanded="false" aria-controls="accountPanel">Tài khoản</button>
+                <div class="account-panel" id="accountPanel" hidden>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="account-name">Xin chào, @User.Identity.Name</div>
+                        <a asp-area="" asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a>
+                        <a asp-area="" asp-controller="Account" asp-action="ChangePassword">Đổi mật khẩu</a>
+                        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                            <button type="submit">Đăng xuất</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-area="" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                        <a asp-area="" asp-controller="Account" asp-action="Register">Đăng ký tài khoản</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="site-main">
+        <partial name="_ThongBao" />
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="brand"><span class="brandmark">r</span><span>re<span class="brand-accent">:</span>market</span></div>
+        <span>Chợ đồ đã qua sử dụng</span>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
