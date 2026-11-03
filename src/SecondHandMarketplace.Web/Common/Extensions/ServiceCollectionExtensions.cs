@@ -9,6 +9,7 @@ using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Dashboard;
 using SecondHandMarketplace.Web.Services.Disputes;
 using SecondHandMarketplace.Web.Services.Favorites;
+using SecondHandMarketplace.Web.Services.Notifications;
 using SecondHandMarketplace.Web.Services.Orders;
 using SecondHandMarketplace.Web.Services.Products;
 using SecondHandMarketplace.Web.Services.Reports;
@@ -37,6 +38,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IShopService, ShopService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAiChatService, AiChatService>();
 
         services.AddScoped<ICartService, CartService>();

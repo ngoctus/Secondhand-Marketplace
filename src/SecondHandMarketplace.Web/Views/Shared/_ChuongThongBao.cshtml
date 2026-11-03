@@ -1,0 +1,16 @@
+@* Chuông thông báo + số chưa đọc. Người B chèn vào _Layout.cshtml bằng: <partial name="_ChuongThongBao" />
+   Chỉ hiện khi đã đăng nhập. Tự lấy số chưa đọc qua INotificationService, không cần model. *@
+@using SecondHandMarketplace.Web.Common
+@using SecondHandMarketplace.Web.Services.Notifications
+@inject INotificationService Notifications
+@if (User.Identity?.IsAuthenticated == true && User.LayNguoiDungId() is int nguoiDungId)
+{
+    var chuaDoc = await Notifications.CountUnreadAsync(nguoiDungId);
+    <a class="iconbtn" asp-area="User" asp-controller="Notifications" asp-action="Index" aria-label="Thông báo (@chuaDoc chưa đọc)">
+        <span aria-hidden="true">🔔</span>
+        @if (chuaDoc > 0)
+        {
+            <span class="count">@(chuaDoc > 99 ? "99+" : chuaDoc.ToString())</span>
+        }
+    </a>
+}
