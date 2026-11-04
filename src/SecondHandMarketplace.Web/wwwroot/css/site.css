@@ -44,9 +44,9 @@
     --line: var(--color-border);
     --muted: var(--color-text-secondary);
 
-    /* Fonts */
+    /* Fonts (Dùng Playfair Display chuẩn 100% tiếng Việt, không bị lỗi dấu như DM Serif Display) */
     --font-main: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-serif: 'DM Serif Display', Georgia, serif;
+    --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
 
     /* Spacing & Radii */
     --radius-sm: 6px;
