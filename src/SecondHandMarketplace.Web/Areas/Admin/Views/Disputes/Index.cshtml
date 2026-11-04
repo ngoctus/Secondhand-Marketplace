@@ -1,6 +1,175 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Disputes.AdminDisputeListViewModel
 @{
-    ViewData["Title"] = "Xử lý tranh chấp";
+    ViewData["Title"] = "Xử lý tranh chấp đơn hàng";
 }
 
-<h2>Xử lý tranh chấp</h2>
-<p class="text-muted">TODO: Areas/Admin/Controllers/DisputesController.cs &rarr; Index</p>
+<div class="container-fluid my-4 px-md-4" style="max-width: 1300px;">
+    <!-- Tiêu đề trang Admin -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-hammer text-success"></i> Quản lý Tranh chấp đơn hàng</h2>
+            <p class="text-muted small mb-0">Hiện có <strong class="text-danger">@Model.TongChuaGiaiQuyet</strong> trường hợp khiếu nại đang chờ xử lý.</p>
+        </div>
+    </div>
+
+    <partial name="_ThongBao" />
+
+    <!-- Bộ lọc trạng thái -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-3">
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label class="form-label mb-0 fw-semibold small text-dark">Lọc theo trạng thái:</label>
+            </div>
+            <div class="col-auto">
+                <select name="trangThai" class="form-select form-select-sm rounded-pill" onchange="this.form.submit()">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="OPEN" selected="@(Model.TrangThaiFilter == "OPEN")">Chờ phản hồi (OPEN)</option>
+                    <option value="PROCESSING" selected="@(Model.TrangThaiFilter == "PROCESSING")">Đang xử lý (PROCESSING)</option>
+                    <option value="RESOLVED" selected="@(Model.TrangThaiFilter == "RESOLVED")">Đã phán quyết (RESOLVED)</option>
+                    <option value="REJECTED" selected="@(Model.TrangThaiFilter == "REJECTED")">Đã bác bỏ (REJECTED)</option>
+                </select>
+            </div>
+            <div class="col-auto ms-auto">
+                <a asp-area="Admin" asp-controller="Disputes" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    Xóa lọc
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bảng danh sách tranh chấp -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th style="width: 70px;" class="ps-3">Mã</th>
+                        <th style="width: 140px;">Đơn hàng</th>
+                        <th style="width: 160px;">Người mua</th>
+                        <th style="width: 160px;">Cửa hàng</th>
+                        <th>Nội dung khiếu nại</th>
+                        <th style="width: 130px;">Trạng thái</th>
+                        <th style="width: 140px;">Ngày tạo</th>
+                        <th style="width: 150px;" class="text-end pe-3">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                Không có tranh chấp nào phù hợp với bộ lọc.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="ps-3 fw-bold text-dark">#@item.MaTranhChap</td>
+                            <td>
+                                <span class="fw-semibold font-monospace text-dark">#@item.MaDon</span>
+                                <div class="small text-success fw-semibold">@item.TongTien.ToString("N0") ₫</div>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">@item.TenNguoiTao</span>
+                            </td>
+                            <td>
+                                <span class="text-dark">@item.TenShop</span>
+                            </td>
+                            <td>
+                                <div><strong class="text-dark">Lý do:</strong> @item.LyDo</div>
+                                @if (!string.IsNullOrEmpty(item.BangChungAnh))
+                                {
+                                    <div class="small text-muted mt-1"><i class="bi bi-image"></i> Bằng chứng: @item.BangChungAnh</div>
+                                }
+                                @if (!string.IsNullOrEmpty(item.PhanHoiNguoiBan))
+                                {
+                                    <div class="small text-primary mt-1"><strong>Shop:</strong> @item.PhanHoiNguoiBan</div>
+                                }
+                                @if (!string.IsNullOrEmpty(item.PhanQuyet))
+                                {
+                                    <div class="small text-success mt-1"><strong>Phán quyết:</strong> @item.PhanQuyet</div>
+                                }
+                            </td>
+                            <td>
+                                @switch (item.TrangThai)
+                                {
+                                    case "OPEN":
+                                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small">Mới mở</span>
+                                        break;
+                                    case "PROCESSING":
+                                        <span class="badge bg-primary rounded-pill px-2 py-1 small">Đang xử lý</span>
+                                        break;
+                                    case "RESOLVED":
+                                        <span class="badge bg-success rounded-pill px-2 py-1 small">Đã giải quyết</span>
+                                        break;
+                                    case "REJECTED":
+                                        <span class="badge bg-secondary rounded-pill px-2 py-1 small">Đã bác bỏ</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-muted small">@item.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-end pe-3">
+                                @if (item.TrangThai == "OPEN" || item.TrangThai == "PROCESSING")
+                                {
+                                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold"
+                                            onclick="toggleRow('rowPhanQuyet_@item.MaTranhChap')">
+                                        Phán quyết
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Đã hoàn tất</span>
+                                }
+                            </td>
+                        </tr>
+
+                        @* Khung phán quyết inline *@
+                        @if (item.TrangThai == "OPEN" || item.TrangThai == "PROCESSING")
+                        {
+                            <tr id="rowPhanQuyet_@item.MaTranhChap" style="display: none;" class="table-light">
+                                <td colspan="8" class="p-3">
+                                    <form asp-area="Admin" asp-controller="Disputes" asp-action="PhanQuyet" method="post" class="border rounded-3 p-3 bg-white">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="maTranhChap" value="@item.MaTranhChap" />
+                                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-hammer text-success me-1"></i> Phán quyết tranh chấp #@item.MaTranhChap (Đơn @item.MaDon)</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small">Phán quyết của Ban quản trị <span class="text-danger">*</span></label>
+                                                <input type="text" name="phanQuyet" class="form-control form-control-sm rounded-2" required
+                                                       placeholder="Ví dụ: Chấp thuận hoàn tiền 100% cho người mua..." />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small">Ghi chú nội bộ Admin</label>
+                                                <input type="text" name="ghiChu" class="form-control form-control-sm rounded-2"
+                                                       placeholder="Ghi chú chi tiết quá trình xác minh..." />
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 justify-content-end mt-3">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="toggleRow('rowPhanQuyet_@item.MaTranhChap')">Hủy bỏ</button>
+                                            <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold"
+                                                    style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
+                                                Lưu phán quyết
+                                            </button>
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleRow(rowId) {
+            var row = document.getElementById(rowId);
+            if (row) {
+                row.style.display = (row.style.display === "none" || row.style.display === "") ? "table-row" : "none";
+            }
+        }
+    </script>
+}

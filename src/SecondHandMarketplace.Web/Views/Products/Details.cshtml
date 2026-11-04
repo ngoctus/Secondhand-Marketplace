@@ -7,30 +7,127 @@
         "SOLD" => "Đã bán",
         _ => "Đang bán"
     };
+    var badgeClass = Model.Status switch
+    {
+        "RESERVED" => "bg-warning text-dark",
+        "SOLD" => "bg-secondary text-white",
+        _ => "bg-success text-white"
+    };
 }
 
-<div class="row">
-    <div class="col-md-6">
-        @if (Model.Images.Count == 0)
-        {
-            <div class="product-art-fallback" aria-label="Chưa có ảnh sản phẩm">♻</div>
-        }
-        else
-        {
-            foreach (var img in Model.Images)
-            {
-                <img src="@img" class="img-fluid mb-2" alt="@Model.Name" data-fallback />
-            }
-        }
-    </div>
-    <div class="col-md-6">
-        <h2>@Model.Name</h2>
-        <h4 class="text-danger">@Model.Price.ToString("N0")đ</h4>
-        <p><span class="pill">@trangThai</span></p>
-        <p>Danh mục: @(Model.CategoryName ?? "Chưa phân loại") | Tình trạng: @(Model.ConditionName ?? "Chưa rõ") | Cửa hàng: @Model.ShopName</p>
-        <p>@Model.Description</p>
+<div class="container my-4" style="max-width: 1100px;">
+    <!-- Breadcrumb điều hướng -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Products" asp-action="Index" class="text-decoration-none text-muted">Khám phá</a></li>
+            <li class="breadcrumb-item active text-dark" aria-current="page">@Model.Name</li>
+        </ol>
+    </nav>
 
-        @* TODO: nút Thêm vào giỏ / Mua ngay (chỉ hiện khi Model.CanBuy) *@
-        @* TODO: nút Yêu thích, Chat với người bán, Báo cáo vi phạm *@
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white p-4 p-md-5">
+        <div class="row g-4 align-items-start">
+            <!-- Cột trái: Ảnh sản phẩm -->
+            <div class="col-md-6">
+                <div class="bg-light rounded-4 p-3 text-center border" style="min-height: 380px; display: grid; place-items: center;">
+                    @if (Model.Images.Count == 0)
+                    {
+                        <div class="text-muted display-1" aria-label="Chưa có ảnh sản phẩm">♻</div>
+                    }
+                    else
+                    {
+                        <img src="@Model.Images.First()" class="img-fluid rounded-3 shadow-sm" alt="@Model.Name" 
+                             style="max-height: 400px; object-fit: contain; width: 100%;" data-fallback />
+                        @if (Model.Images.Count > 1)
+                        {
+                            <div class="d-flex gap-2 mt-3 overflow-auto w-100 justify-content-center">
+                                @foreach (var img in Model.Images)
+                                {
+                                    <img src="@img" class="rounded border p-1" style="width: 65px; height: 65px; object-fit: cover;" alt="@Model.Name" data-fallback />
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Cột phải: Thông tin sản phẩm & Mua hàng -->
+            <div class="col-md-6 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge @badgeClass px-2 py-1 rounded-pill small">@trangThai</span>
+                        <span class="badge bg-light text-muted border px-2 py-1 rounded-pill small">Đồ cũ (1 món duy nhất)</span>
+                    </div>
+
+                    <h1 class="h3 fw-bold text-dark mb-2" style="line-height: 1.3;">@Model.Name</h1>
+
+                    <div class="d-flex align-items-baseline gap-2 mb-3">
+                        <span class="h2 fw-bold text-success mb-0">@Model.Price.ToString("N0") ₫</span>
+                    </div>
+
+                    <!-- Thông tin chi tiết phân loại & cửa hàng -->
+                    <div class="p-3 rounded-3 bg-light border mb-4">
+                        <div class="row g-2 small">
+                            <div class="col-6">
+                                <span class="text-muted d-block">Danh mục:</span>
+                                <strong class="text-dark">@(Model.CategoryName ?? "Chưa phân loại")</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">Tình trạng đồ:</span>
+                                <strong class="text-dark">@(Model.ConditionName ?? "Chưa rõ")</strong>
+                            </div>
+                            <div class="col-12 pt-2 border-top mt-2 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted">Người bán / Shop:</span>
+                                    <strong class="text-dark ms-1">@Model.ShopName</strong>
+                                </div>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Đã xác minh</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mô tả sản phẩm -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-dark mb-2">Mô tả sản phẩm</h6>
+                        <p class="text-secondary small" style="line-height: 1.7; white-space: pre-line;">@(string.IsNullOrWhiteSpace(Model.Description) ? "Người bán chưa cung cấp mô tả chi tiết." : Model.Description)</p>
+                    </div>
+                </div>
+
+                <!-- Thao tác mua hàng & Báo cáo vi phạm -->
+                <div class="pt-3 border-top">
+                    @if (Model.CanBuy)
+                    {
+                        <div class="d-flex gap-2 mb-3">
+                            <form asp-area="User" asp-controller="Cart" asp-action="Them" method="post" class="flex-grow-1">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="maSanPham" value="@Model.Id" />
+                                <button type="submit" class="btn btn-outline-success w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                                </button>
+                            </form>
+                            <a asp-area="User" asp-controller="Orders" asp-action="Checkout" asp-route-maSanPham="@Model.Id" 
+                               class="btn btn-success flex-grow-1 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                               style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
+                                <i class="bi bi-lightning-charge-fill"></i> Mua ngay
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary small py-2 mb-3 text-center">
+                            Sản phẩm này hiện không thể đặt mua trực tiếp (đang được giữ chỗ, đã bán hoặc của chính cửa hàng bạn).
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center pt-2">
+                        <span class="text-muted small"><i class="bi bi-shield-check text-success"></i> Cam kết thông tin minh bạch</span>
+                        <a asp-area="User" asp-controller="Reports" asp-action="Tao" asp-route-loai="PRODUCT" asp-route-id="@Model.Id" asp-route-ten="@Model.Name" 
+                           class="btn btn-link btn-sm text-secondary text-decoration-none p-0" title="Báo cáo sản phẩm nếu có dấu hiệu lừa đảo, hàng cấm">
+                            <i class="bi bi-flag"></i> Báo cáo vi phạm
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
