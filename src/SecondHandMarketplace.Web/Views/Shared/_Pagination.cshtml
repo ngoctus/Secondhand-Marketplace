@@ -1,0 +1,93 @@
+@model PaginationVm
+@{
+    if (Model.TotalPages <= 1) return;
+
+    var current = Model.CurrentPage;
+    var total = Model.TotalPages;
+
+    // Tính danh sách các số trang cần hiển thị với dấu chấm lửng
+    var pageNumbers = new List<int>();
+    for (var i = 1; i <= total; i++)
+    {
+        if (i == 1 || i == total || (i >= current - 1 && i <= current + 1))
+        {
+            pageNumbers.Add(i);
+        }
+    }
+
+    // Helper tạo dictionary route values bao gồm tham số page
+    Dictionary<string, string> GetRoute(int page)
+    {
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in Model.RouteValues)
+        {
+            if (!string.IsNullOrEmpty(kvp.Value) && !kvp.Key.Equals("page", StringComparison.OrdinalIgnoreCase))
+            {
+                dict[kvp.Key] = kvp.Value;
+            }
+        }
+        dict["page"] = page.ToString();
+        return dict;
+    }
+}
+
+<nav class="rm-pagination" aria-label="Phân trang danh sách">
+    @if (Model.HasPreviousPage)
+    {
+        <a class="rm-page-item rm-page-nav"
+           asp-area="@Model.Area"
+           asp-controller="@Model.Controller"
+           asp-action="@Model.Action"
+           asp-all-route-data="GetRoute(current - 1)"
+           aria-label="Trang trước">
+            ‹
+        </a>
+    }
+    else
+    {
+        <span class="rm-page-item rm-page-nav is-disabled" aria-hidden="true">‹</span>
+    }
+
+    @{
+        var lastPage = 0;
+        foreach (var p in pageNumbers)
+        {
+            if (lastPage > 0 && p - lastPage > 1)
+            {
+                <span class="rm-page-item rm-page-ellipsis" aria-hidden="true">…</span>
+            }
+
+            if (p == current)
+            {
+                <span class="rm-page-item is-active" aria-current="page">@p</span>
+            }
+            else
+            {
+                <a class="rm-page-item"
+                   asp-area="@Model.Area"
+                   asp-controller="@Model.Controller"
+                   asp-action="@Model.Action"
+                   asp-all-route-data="GetRoute(p)">
+                    @p
+                </a>
+            }
+            lastPage = p;
+        }
+    }
+
+    @if (Model.HasNextPage)
+    {
+        <a class="rm-page-item rm-page-nav"
+           asp-area="@Model.Area"
+           asp-controller="@Model.Controller"
+           asp-action="@Model.Action"
+           asp-all-route-data="GetRoute(current + 1)"
+           aria-label="Trang tiếp theo">
+            ›
+        </a>
+    }
+    else
+    {
+        <span class="rm-page-item rm-page-nav is-disabled" aria-hidden="true">›</span>
+    }
+</nav>

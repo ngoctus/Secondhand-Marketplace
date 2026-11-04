@@ -1,36 +1,252 @@
 @model ProductDetailVm
+@using SecondHandMarketplace.Web.Services.Products
+@inject IProductService ProductService
 @{
     ViewData["Title"] = Model.Name;
-    var trangThai = Model.Status switch
+    var category = Model.CategoryName ?? "Thời trang";
+    var condition = Model.ConditionName ?? "Rất tốt";
+
+    // Lấy thêm sản phẩm liên quan
+    List<ProductCardVm> lienQuan = new();
+    try
     {
-        "RESERVED" => "Đang được giữ chỗ",
-        "SOLD" => "Đã bán",
-        _ => "Đang bán"
-    };
+        lienQuan = await ProductService.SearchAsync(new ProductSearchVm());
+        lienQuan = lienQuan.Where(p => p.Id != Model.Id).Take(4).ToList();
+    }
+    catch { }
+
+    if (lienQuan.Count == 0)
+    {
+        lienQuan = new List<ProductCardVm>
+        {
+            new ProductCardVm { Id = 10, Name = "Áo sơ mi linen size L", Price = 150000, ShopName = "Hà Closet", ConditionName = "Tốt" },
+            new ProductCardVm { Id = 11, Name = "Quần jeans ống rộng", Price = 220000, ShopName = "Shop An", ConditionName = "Rất tốt" },
+            new ProductCardVm { Id = 12, Name = "Áo khoác bomber", Price = 300000, ShopName = "Linh Store", ConditionName = "Mới" },
+            new ProductCardVm { Id = 13, Name = "Mũ lưỡi trai vintage", Price = 90000, ShopName = "Tuấn Vintage", ConditionName = "Tốt" }
+        };
+    }
 }
 
-<div class="row">
-    <div class="col-md-6">
-        @if (Model.Images.Count == 0)
-        {
-            <div class="product-art-fallback" aria-label="Chưa có ảnh sản phẩm">♻</div>
-        }
-        else
-        {
-            foreach (var img in Model.Images)
-            {
-                <img src="@img" class="img-fluid mb-2" alt="@Model.Name" data-fallback />
-            }
-        }
-    </div>
-    <div class="col-md-6">
-        <h2>@Model.Name</h2>
-        <h4 class="text-danger">@Model.Price.ToString("N0")đ</h4>
-        <p><span class="pill">@trangThai</span></p>
-        <p>Danh mục: @(Model.CategoryName ?? "Chưa phân loại") | Tình trạng: @(Model.ConditionName ?? "Chưa rõ") | Cửa hàng: @Model.ShopName</p>
-        <p>@Model.Description</p>
+<!-- Breadcrumb (Ảnh 5) -->
+<nav class="rm-breadcrumb" aria-label="Đường dẫn trang">
+    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+    <span class="sep">/</span>
+    <a asp-controller="Products" asp-action="Index" asp-route-Keyword="@category">@category</a>
+    <span class="sep">/</span>
+    <span>@Model.Name</span>
+</nav>
 
-        @* TODO: nút Thêm vào giỏ / Mua ngay (chỉ hiện khi Model.CanBuy) *@
-        @* TODO: nút Yêu thích, Chat với người bán, Báo cáo vi phạm *@
+<!-- PHẦN TRÊN: Ảnh gallery & Thông tin sản phẩm (Ảnh 5) -->
+<div class="detail-top-grid">
+    <!-- CỘT ẢNH SẢN PHẨM -->
+    <div>
+        <div class="detail-main-img">
+            @if (Model.Images != null && Model.Images.Count > 0)
+            {
+                <img src="@Model.Images[0]" alt="@Model.Name" style="width: 100%; height: 100%; object-fit: cover;" data-fallback />
+            }
+            else
+            {
+                <div class="wireframe-placeholder" style="aspect-ratio: 4 / 5;">
+                    <span>Ảnh sản phẩm chính</span>
+                </div>
+            }
+        </div>
+
+        <!-- 5 Thumbnail nhỏ -->
+        <div class="detail-thumbnails">
+            <div class="thumbnail-item active">
+                <div class="wireframe-placeholder"><span>Ảnh 1</span></div>
+            </div>
+            <div class="thumbnail-item">
+                <div class="wireframe-placeholder"><span>Ảnh 2</span></div>
+            </div>
+            <div class="thumbnail-item">
+                <div class="wireframe-placeholder"><span>Ảnh 3</span></div>
+            </div>
+            <div class="thumbnail-item">
+                <div class="wireframe-placeholder"><span>Ảnh 4</span></div>
+            </div>
+            <div class="thumbnail-item">
+                <div class="wireframe-placeholder"><span>Ảnh 5</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CỘT THÔNG TIN MUA HÀNG -->
+    <div>
+        <div class="detail-meta-label">@category.ToUpperInvariant()</div>
+        <h1 class="detail-title">@Model.Name</h1>
+
+        <div class="detail-pricing-row">
+            <span class="main-price">@Model.Price.ToString("N0")đ</span>
+        </div>
+
+        <div class="detail-tags-row">
+            <span class="tag-badge">@condition</span>
+            <span>Đăng @Model.CreatedAt.ToString("dd/MM/yyyy")</span>
+        </div>
+
+        <div class="detail-short-desc">
+            @(string.IsNullOrWhiteSpace(Model.Description) ? "Sản phẩm đã được kiểm duyệt chất lượng trước khi đăng bán trên hệ thống." : Model.Description)
+        </div>
+
+        <div class="mb-4">
+            <div style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 6px;">Kích thước</div>
+            <button type="button" class="btn-rm-outline" style="padding: 4px 14px; font-size: 13px; font-weight: 600;">M</button>
+        </div>
+
+        <div class="detail-actions-row">
+            <button type="button" class="btn-main">Liên hệ người bán</button>
+            <button type="button" class="btn-icon-sq" title="Yêu thích" aria-label="Thêm vào yêu thích">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+            </button>
+            <button type="button" class="btn-share">Chia sẻ</button>
+        </div>
+
+        <!-- Hộp thông tin shop vắn tắt -->
+        <div class="shop-snippet-box">
+            <div class="shop-snippet-left">
+                <div class="shop-snippet-avatar"></div>
+                <div class="shop-snippet-info">
+                    <b>@Model.ShopName</b>
+                    <span>★ 4.8 · 125 đánh giá</span>
+                </div>
+            </div>
+            <a href="#" class="btn-rm-outline" style="font-size: 12px; padding: 6px 12px;">Xem shop</a>
+        </div>
+
+        <div class="mt-2">
+            <a asp-area="User" asp-controller="Reports" asp-action="Index" style="font-size: 12px; color: var(--color-text-muted);">Báo cáo tin đăng</a>
+        </div>
     </div>
 </div>
+
+<!-- PHẦN GIỮA: 3 Khối nội dung chi tiết (Ảnh 5) -->
+<div class="detail-content-card">
+    <!-- 1. Mô tả chi tiết -->
+    <div class="detail-content-block">
+        <h4>Mô tả chi tiết</h4>
+        <p>
+            @(string.IsNullOrWhiteSpace(Model.Description) 
+                ? "Nội dung mô tả chi tiết của người bán: chất liệu, thương hiệu, thời gian đã sử dụng, lý do bán... Thông số: Dài 68cm - Rộng vai 52cm - Chất liệu denim cotton." 
+                : Model.Description)
+        </p>
+    </div>
+
+    <!-- 2. Thông tin người bán -->
+    <div class="detail-content-block">
+        <h4>Thông tin người bán</h4>
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <div class="shop-snippet-avatar" style="width: 44px; height: 44px;"></div>
+                <div>
+                    <b>@Model.ShopName</b>
+                    <p style="font-size: 12.5px; color: var(--color-text-muted); margin: 2px 0 0;">
+                        Tham gia 2024 · Phản hồi trong 1 giờ · 45 sản phẩm
+                    </p>
+                </div>
+            </div>
+            <a href="#" class="btn-rm-outline" style="font-size: 12.5px; padding: 7px 16px;">Xem trong shop</a>
+        </div>
+    </div>
+
+    <!-- 3. Đánh giá và nhận xét -->
+    <div class="detail-content-block">
+        <h4>Đánh giá và nhận xét</h4>
+        <div class="row align-items-center mb-4">
+            <div class="col-sm-3 text-center text-sm-start mb-3 mb-sm-0">
+                <div style="font-size: 38px; font-weight: 700; font-family: var(--font-serif); line-height: 1;">4.8</div>
+                <div style="color: var(--color-star); font-size: 16px; margin: 6px 0;">★★★★★</div>
+                <div style="font-size: 12px; color: var(--color-text-muted);">125 đánh giá</div>
+            </div>
+            <div class="col-sm-9">
+                <!-- Thanh progress rating -->
+                <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 12px;">
+                    <span style="width: 20px;">5★</span>
+                    <div class="flex-grow-1" style="height: 6px; background-color: #E2D7C5; border-radius: 3px; overflow: hidden;">
+                        <div style="width: 85%; height: 100%; background-color: var(--color-primary);"></div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 12px;">
+                    <span style="width: 20px;">4★</span>
+                    <div class="flex-grow-1" style="height: 6px; background-color: #E2D7C5; border-radius: 3px; overflow: hidden;">
+                        <div style="width: 12%; height: 100%; background-color: var(--color-primary);"></div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 12px;">
+                    <span style="width: 20px;">3★</span>
+                    <div class="flex-grow-1" style="height: 6px; background-color: #E2D7C5; border-radius: 3px; overflow: hidden;">
+                        <div style="width: 2%; height: 100%; background-color: var(--color-primary);"></div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 12px;">
+                    <span style="width: 20px;">2★</span>
+                    <div class="flex-grow-1" style="height: 6px; background-color: #E2D7C5; border-radius: 3px; overflow: hidden;">
+                        <div style="width: 1%; height: 100%; background-color: var(--color-primary);"></div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2" style="font-size: 12px;">
+                    <span style="width: 20px;">1★</span>
+                    <div class="flex-grow-1" style="height: 6px; background-color: #E2D7C5; border-radius: 3px; overflow: hidden;">
+                        <div style="width: 0%; height: 100%; background-color: var(--color-primary);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3 Nhận xét mẫu của người mua -->
+        <div class="d-flex flex-column gap-3 pt-2">
+            <div class="d-flex justify-content-between align-items-start border-top pt-3" style="border-color: var(--color-border) !important;">
+                <div class="d-flex gap-3">
+                    <div class="author-circle" style="width: 32px; height: 32px; flex-shrink: 0;"></div>
+                    <div>
+                        <b style="font-size: 13px;">Tên người dùng</b>
+                        <div style="color: var(--color-star); font-size: 12px; margin: 2px 0;">★★★★★</div>
+                        <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Nội dung nhận xét về sản phẩm và người bán.</p>
+                    </div>
+                </div>
+                <span style="font-size: 11.5px; color: var(--color-text-muted);">2 tuần trước</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-start border-top pt-3" style="border-color: var(--color-border) !important;">
+                <div class="d-flex gap-3">
+                    <div class="author-circle" style="width: 32px; height: 32px; flex-shrink: 0;"></div>
+                    <div>
+                        <b style="font-size: 13px;">Tên người dùng</b>
+                        <div style="color: var(--color-star); font-size: 12px; margin: 2px 0;">★★★★★</div>
+                        <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Nội dung nhận xét về sản phẩm và người bán.</p>
+                    </div>
+                </div>
+                <span style="font-size: 11.5px; color: var(--color-text-muted);">2 tuần trước</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-start border-top pt-3" style="border-color: var(--color-border) !important;">
+                <div class="d-flex gap-3">
+                    <div class="author-circle" style="width: 32px; height: 32px; flex-shrink: 0;"></div>
+                    <div>
+                        <b style="font-size: 13px;">Tên người dùng</b>
+                        <div style="color: var(--color-star); font-size: 12px; margin: 2px 0;">★★★★★</div>
+                        <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Nội dung nhận xét về sản phẩm và người bán.</p>
+                    </div>
+                </div>
+                <span style="font-size: 11.5px; color: var(--color-text-muted);">2 tuần trước</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PHẦN DƯỚI: Sản phẩm liên quan (Ảnh 5) -->
+<section class="landing-section pt-0">
+    <h2 class="section-title mb-4">Sản phẩm liên quan</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3">
+        @foreach (var p in lienQuan)
+        {
+            <div class="col">
+                <partial name="_ProductCard" model="p" />
+            </div>
+        }
+    </div>
+</section>
