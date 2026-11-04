@@ -25,6 +25,7 @@ for %%F in (
     11_danhgia.sql
     12_tranhchap_baocao.sql
     13_daugia.sql
+    14_donhang_admin.sql
 ) do (
     echo Running %%F...
     sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -b -f 65001 -i "%%F"

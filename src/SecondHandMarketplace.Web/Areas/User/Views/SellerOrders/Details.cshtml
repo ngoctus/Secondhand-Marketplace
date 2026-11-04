@@ -1,0 +1,56 @@
+@model OrderDetailVm
+@{
+    ViewData["Title"] = "Đơn " + Model.MaDon;
+    var tiep = OrderRules.TiepTheoChoNguoiBan(Model.Status);
+    var duocHuy = OrderRules.NguoiBanDuocHuy(Model.Status);
+}
+<p class="muted mt-3"><a asp-action="Index">← Danh sách đơn bán</a></p>
+<div class="page-head">
+    <div><h2>Đơn @Model.MaDon</h2><p class="muted">Người mua: @Model.BuyerName · Đặt lúc @HienThi.NgayGio(Model.CreatedAt)</p></div>
+    <span class="@HienThi.LopTrangThai(Model.Status)">@HienThi.TrangThaiDon(Model.Status)</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <partial name="_ChiTietDon" model="Model" />
+    </div>
+    <div class="col-lg-4">
+        <div class="panel">
+            <h3>Xử lý đơn</h3>
+            @if (Model.Status == "CANCELLED")
+            {
+                <div class="note">Đơn đã bị hủy bởi <b>@HienThi.NguoiThucHien(Model.CancelledBy ?? "")</b>. Lý do: @Model.CancelReason</div>
+            }
+            else if (Model.Status == "DELIVERED")
+            {
+                <div class="note">Bạn đã giao thành công. Đơn sẽ hoàn tất khi người mua xác nhận đã nhận hàng.</div>
+            }
+            else if (Model.Status == "COMPLETED")
+            {
+                <div class="note">Đơn đã hoàn tất, sản phẩm đã chuyển sang trạng thái đã bán.</div>
+            }
+
+            @foreach (var s in tiep)
+            {
+                <form asp-action="UpdateStatus" method="post" class="mb-2">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="status" value="@s" />
+                    <button class="primary full" type="submit">@OrderRules.NhanHanhDong(s)</button>
+                </form>
+            }
+
+            @if (duocHuy)
+            {
+                <hr />
+                <form asp-action="UpdateStatus" method="post" onsubmit="return confirm('Hủy đơn hàng này?');">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="status" value="CANCELLED" />
+                    <label>Lý do hủy đơn (bắt buộc)
+                        <textarea name="reason" rows="2" required maxlength="500" placeholder="Ví dụ: Sản phẩm không còn như mô tả..."></textarea>
+                    </label>
+                    <button class="reject full" type="submit" style="padding:11px">Hủy đơn</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>

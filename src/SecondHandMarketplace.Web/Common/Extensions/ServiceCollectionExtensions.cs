@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
+using SecondHandMarketplace.Web.Services.Auctions;
+using SecondHandMarketplace.Web.Services.OrderManagement;
 using SecondHandMarketplace.Web.Services.Ai;
 using SecondHandMarketplace.Web.Services.Auth;
 using SecondHandMarketplace.Web.Services.AuditLogs;
@@ -48,6 +50,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IBannerService, BannerService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        // Phần E
+        services.AddScoped<IOrderManagementService, OrderManagementService>();
+        services.AddScoped<IAuctionService, AuctionService>();
+        services.AddHostedService<AuctionBackgroundService>();
 
         return services;
     }

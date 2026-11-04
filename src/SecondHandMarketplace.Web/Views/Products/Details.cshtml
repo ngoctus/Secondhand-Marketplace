@@ -1,6 +1,8 @@
 @model ProductDetailVm
+@inject SecondHandMarketplace.Web.Services.Auctions.IAuctionService Auctions
 @{
     ViewData["Title"] = Model.Name;
+    var phienDauGiaId = await Auctions.GetOpenAuctionIdForProductAsync(Model.Id);
     var trangThai = Model.Status switch
     {
         "RESERVED" => "Đang được giữ chỗ",
@@ -27,6 +29,14 @@
         <h2>@Model.Name</h2>
         <h4 class="text-danger">@Model.Price.ToString("N0")đ</h4>
         <p><span class="pill">@trangThai</span></p>
+        
+        @if (phienDauGiaId.HasValue)
+        {
+            <div class="note">
+                🔨 Sản phẩm này đang được đấu giá.
+                <a asp-controller="PublicAuctions" asp-action="Details" asp-route-id="@phienDauGiaId">Xem phiên đấu giá →</a>
+            </div>
+        }
         <p>Danh mục: @(Model.CategoryName ?? "Chưa phân loại") | Tình trạng: @(Model.ConditionName ?? "Chưa rõ") | Cửa hàng: @Model.ShopName</p>
         <p>@Model.Description</p>
 

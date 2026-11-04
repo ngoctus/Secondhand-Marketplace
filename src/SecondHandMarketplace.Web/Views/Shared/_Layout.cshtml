@@ -15,12 +15,16 @@
         </a>
         <nav aria-label="Điều hướng chính">
             <a class="navlink" asp-area="" asp-controller="Home" asp-action="Index">Khám phá</a>
+            <a class="navlink" asp-area="" asp-controller="PublicAuctions" asp-action="Index">Đấu giá</a>
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("USER"))
             {
                 <a class="navlink" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn hàng</a>
                 <a class="navlink" asp-area="User" asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
                 <a class="navlink" asp-area="User" asp-controller="Products" asp-action="Index">Kênh người bán</a>
                 <a class="navlink" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng</a>
+                <a class="navlink" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán</a>
+                <a class="navlink" asp-area="User" asp-controller="Auctions" asp-action="Index">Đấu giá của tôi</a>
+                <a class="navlink" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê</a>
             }
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
             {
@@ -29,6 +33,9 @@
                 <a class="navlink" asp-area="Admin" asp-controller="Sellers" asp-action="Index">Cửa hàng</a>
                 <a class="navlink" asp-area="Admin" asp-controller="Categories" asp-action="Index">Danh mục</a>
                 <a class="navlink" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">Nhật ký</a>
+                <a class="navlink" asp-area="Admin" asp-controller="Orders" asp-action="Index">Đơn hàng</a>
+                <a class="navlink" asp-area="Admin" asp-controller="Auctions" asp-action="Index">Đấu giá</a>
+                <a class="navlink" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Thống kê</a>
             }
         </nav>
         <div class="head-actions">

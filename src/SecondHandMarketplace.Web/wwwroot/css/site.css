@@ -62,3 +62,465 @@ main.site-main{max-width:1240px;margin:0 auto;padding:0 28px 70px;min-height:65v
 .catalog-cta{display:inline-block;border:1px solid var(--line);background:#fff;padding:12px 16px;border-radius:7px;color:var(--green);font-size:13px;font-weight:600;text-decoration:none}
 .catalog-link{font-size:12px;color:var(--green);text-decoration:none}
 @media(max-width:900px){.account-name{display:none}}
+
+/* ===== Phần E: đơn hàng, thống kê, đấu giá ===== */
+.page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    margin: 40px 0 22px;
+    flex-wrap: wrap
+}
+
+    .page-head h2 {
+        font-size: 30px;
+        letter-spacing: -1px;
+        margin: 0
+    }
+
+    .page-head p {
+        margin: 6px 0 0
+    }
+
+.table-wrap {
+    overflow: auto
+}
+
+.thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #e8eee2
+}
+
+    .thumb.product-art-fallback {
+        height: 48px;
+        font-size: 22px
+    }
+
+a.primary {
+    display: inline-block
+}
+
+/* badge trạng thái */
+.st {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 30px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    background: #edf2e7;
+    color: #557448
+}
+
+.st-pending, .st-scheduled {
+    background: #fff2dd;
+    color: #9b6a25
+}
+
+.st-confirmed {
+    background: #e9efff;
+    color: #536ba2
+}
+
+.st-shipping, .st-ending {
+    background: #e3f1f7;
+    color: #2b7691
+}
+
+.st-delivered {
+    background: #e6f3ea;
+    color: #2f7a4b
+}
+
+.st-completed, .st-running {
+    background: #d6ed8a;
+    color: #35521d
+}
+
+.st-cancelled {
+    background: #fce9e6;
+    color: #a94c40
+}
+
+.st-ended {
+    background: #ececec;
+    color: #666
+}
+
+/* tab trạng thái */
+.status-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line)
+}
+
+    .status-tabs a {
+        padding: 11px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #657067;
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px
+    }
+
+        .status-tabs a b {
+            background: #edf2e7;
+            border-radius: 20px;
+            padding: 2px 7px;
+            font-size: 10px;
+            margin-left: 4px
+        }
+
+        .status-tabs a.on {
+            color: var(--green);
+            border-color: var(--green)
+        }
+
+.auction-search {
+    display: flex;
+    gap: 8px
+}
+
+    .auction-search input {
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        font: 12px 'DM Sans';
+        min-width: 240px
+    }
+
+.pager {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+    font-size: 12px
+}
+
+    .pager a {
+        color: var(--green);
+        text-decoration: none;
+        font-weight: 600;
+        border: 1px solid var(--line);
+        padding: 7px 12px;
+        border-radius: 7px;
+        background: #fff
+    }
+
+/* chi tiết đơn */
+.order-sum {
+    max-width: 340px;
+    margin-left: auto;
+    font-size: 13px
+}
+
+    .order-sum div {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0
+    }
+
+    .order-sum .total {
+        border-top: 1px solid var(--line);
+        margin-top: 6px;
+        padding-top: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--green)
+    }
+
+.timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 18px;
+    border-left: 2px solid var(--line)
+}
+
+    .timeline li {
+        position: relative;
+        padding: 0 0 18px 14px
+    }
+
+        .timeline li::before {
+            content: "";
+            position: absolute;
+            left: -25px;
+            top: 3px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--green);
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1px var(--line)
+        }
+
+/* dashboard */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(190px,1fr));
+    gap: 14px;
+    margin-bottom: 6px
+}
+
+.kpi {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+    text-decoration: none;
+    color: var(--ink);
+    display: block
+}
+
+    .kpi span {
+        display: block;
+        font-size: 11px;
+        color: #6d7b6c;
+        margin-bottom: 8px
+    }
+
+    .kpi b {
+        font-size: 24px;
+        letter-spacing: -.5px
+    }
+
+    .kpi small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 4px
+    }
+
+a.kpi:hover {
+    box-shadow: 0 8px 24px #283e2512
+}
+
+.kpi.warn b {
+    color: var(--orange)
+}
+
+.chart-box {
+    position: relative;
+    height: 300px
+}
+
+.seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden
+}
+
+    .seg button {
+        border: 0;
+        background: #fff;
+        padding: 7px 12px;
+        font: 600 11px 'DM Sans';
+        cursor: pointer;
+        color: #657067
+    }
+
+        .seg button.on {
+            background: var(--green);
+            color: #fff
+        }
+
+.bar-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 28px;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+    font-size: 12px
+}
+
+.bar {
+    height: 8px;
+    background: #eef1e8;
+    border-radius: 6px;
+    overflow: hidden
+}
+
+    .bar i {
+        display: block;
+        height: 100%;
+        background: #8eae55;
+        border-radius: 6px
+    }
+
+/* đấu giá */
+.auction-main-img {
+    width: 100%;
+    max-height: 460px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #e8eee2
+}
+
+.auction-thumbs {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap
+}
+
+    .auction-thumbs img {
+        width: 76px;
+        height: 76px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid var(--line)
+    }
+
+.bid-panel {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 12px 35px #283e2510
+}
+
+.bid-title {
+    font-size: 20px;
+    margin: 0 12px 14px 0
+}
+
+.bid-price-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-top: 6px
+}
+
+.bid-price {
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: -1px;
+    line-height: 1.1
+}
+
+    .bid-price.flash {
+        animation: flash .9s ease
+    }
+
+@keyframes flash {
+    0% {
+        background: #d6ed8a
+    }
+
+    100% {
+        background: transparent
+    }
+}
+
+.countdown-box {
+    background: #f0f4eb;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    margin: 16px 0
+}
+
+.countdown-label {
+    font-size: 11px;
+    color: #6d7b6c
+}
+
+.countdown {
+    font-size: 30px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink)
+}
+
+    .countdown.urgent {
+        color: #c0392b
+    }
+
+.leader-badge {
+    background: var(--lime);
+    color: #35521d;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    text-align: center
+}
+
+.bid-input {
+    position: relative
+}
+
+    .bid-input input {
+        padding-right: 30px;
+        font-size: 18px;
+        font-weight: 700
+    }
+
+    .bid-input span {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-35%);
+        color: var(--muted)
+    }
+
+.quick-bids {
+    display: flex;
+    gap: 8px;
+    margin: 10px 0
+}
+
+    .quick-bids button {
+        flex: 1;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 7px;
+        padding: 8px;
+        font: 600 11px 'DM Sans';
+        cursor: pointer
+    }
+
+        .quick-bids button:hover {
+            background: #f0f4eb
+        }
+
+.bid-msg {
+    font-size: 12px;
+    margin-top: 10px;
+    min-height: 18px
+}
+
+    .bid-msg.ok {
+        color: #2f7a4b
+    }
+
+    .bid-msg.err {
+        color: #c0392b
+    }
+
+#bid-list tr.mine td {
+    background: #f4f9e8
+}
+
+@media(max-width:900px) {
+    .bid-price {
+        font-size: 32px
+    }
+
+    .auction-search input {
+        min-width: 0;
+        flex: 1
+    }
+}
