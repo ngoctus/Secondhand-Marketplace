@@ -209,4 +209,120 @@ public class OrderServiceTests
         Assert.False(ok);
         Assert.Contains("Chỉ có thể xác nhận khi đơn hàng đã được giao đến bạn", msg);
     }
+
+    [Fact]
+    public async Task HuyDonMuaAsync_DonDangGiao_KhongChoHuy()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_HuyDonDangGiao");
+        var fakeCart = new FakeCartService();
+
+        var don = new DonHang
+        {
+            MaDonHang = 21,
+            MaNguoiDung = 1,
+            MaCuaHang = 2,
+            TrangThai = "SHIPPING",
+            TrangThaiThanhToan = "PAID",
+            TongTien = 200000,
+            NgayTao = DateTime.UtcNow
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var service = new OrderService(db, fakeCart);
+        var (ok, msg) = await service.HuyDonMuaAsync(1, 21, "Muốn hủy khi đang giao");
+
+        Assert.False(ok);
+        Assert.Contains("Chỉ có thể hủy đơn hàng khi đơn ở trạng thái chờ duyệt hoặc đã xác nhận", msg);
+    }
+
+    [Fact]
+    public async Task HuyDonMuaAsync_DonDaGiao_KhongChoHuy()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_HuyDonDaGiao");
+        var fakeCart = new FakeCartService();
+
+        var don = new DonHang
+        {
+            MaDonHang = 22,
+            MaNguoiDung = 1,
+            MaCuaHang = 2,
+            TrangThai = "DELIVERED",
+            TrangThaiThanhToan = "PAID",
+            TongTien = 350000,
+            NgayTao = DateTime.UtcNow
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var service = new OrderService(db, fakeCart);
+        var (ok, msg) = await service.HuyDonMuaAsync(1, 22, "Muốn hủy khi đã giao");
+
+        Assert.False(ok);
+        Assert.Contains("Chỉ có thể hủy đơn hàng khi đơn ở trạng thái chờ duyệt hoặc đã xác nhận", msg);
+    }
+
+    [Fact]
+    public async Task HuyDonMuaAsync_DonPending_ThanhCongVaGiaiPhongGiuCho()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_HuyPendingGiaiPhong");
+        var fakeCart = new FakeCartService();
+
+        var sp = new SanPham
+        {
+            MaSanPham = 50,
+            MaCuaHang = 2,
+            Ten = "Laptop Test",
+            Gia = 1000000,
+            TrangThai = "RESERVED"
+        };
+        db.SanPhams.Add(sp);
+
+        var don = new DonHang
+        {
+            MaDonHang = 23,
+            MaNguoiDung = 1,
+            MaCuaHang = 2,
+            TrangThai = "PENDING",
+            TrangThaiThanhToan = "PAID",
+            TongTien = 1000000,
+            NgayTao = DateTime.UtcNow
+        };
+        db.DonHangs.Add(don);
+
+        db.ChiTietDonHangs.Add(new ChiTietDonHang
+        {
+            MaDonHang = 23,
+            MaSanPham = 50,
+            Gia = 1000000,
+                        DangGiuCho = true
+        });
+
+        db.ThanhToans.Add(new ThanhToan
+        {
+            MaDonHang = 23,
+            SoTien = 1000000,
+            PhuongThucThanhToan = "ONLINE",
+            TrangThaiThanhToan = "SUCCESS"
+        });
+
+        await db.SaveChangesAsync();
+
+        var service = new OrderService(db, fakeCart);
+        var (ok, msg) = await service.HuyDonMuaAsync(1, 23, "Khách đổi ý");
+
+        Assert.True(ok);
+        var donDb = await db.DonHangs.FindAsync(23);
+        Assert.Equal("CANCELLED", donDb!.TrangThai);
+        Assert.Equal("REFUNDED", donDb.TrangThaiThanhToan);
+
+        var ctDb = await db.ChiTietDonHangs.FirstAsync(c => c.MaDonHang == 23);
+        Assert.False(ctDb.DangGiuCho);
+
+        var spDb = await db.SanPhams.FindAsync(50);
+        Assert.Equal("ACTIVE", spDb!.TrangThai);
+
+        var ttDb = await db.ThanhToans.FirstAsync(t => t.MaDonHang == 23);
+        Assert.Equal("REFUNDED", ttDb.TrangThaiThanhToan);
+    }
 }

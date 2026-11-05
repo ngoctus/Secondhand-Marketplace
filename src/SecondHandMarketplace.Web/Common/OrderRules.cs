@@ -1,4 +1,4 @@
-﻿namespace SecondHandMarketplace.Web.Common;
+namespace SecondHandMarketplace.Web.Common;
 
 /// <summary>Luật chuyển trạng thái đơn ở phía C#, khớp fn_ChuyenTrangThaiDonHangHopLe trong DB (DB vẫn là nơi chốt cuối).</summary>
 public static class OrderRules
@@ -7,8 +7,9 @@ public static class OrderRules
     {
         ["PENDING"] = new[] { "CONFIRMED", "CANCELLED" },
         ["CONFIRMED"] = new[] { "SHIPPING", "CANCELLED" },
-        ["SHIPPING"] = new[] { "DELIVERED" },
-        ["DELIVERED"] = new[] { "COMPLETED" }
+        ["SHIPPING"] = new[] { "DELIVERED", "COMPLETED", "CANCELLED" },
+        ["DELIVERED"] = new[] { "COMPLETED", "CANCELLED" },
+        ["COMPLETED"] = new[] { "CANCELLED" }
     };
 
     public static bool HopLe(string cu, string moi) => Next.TryGetValue(cu, out var ds) && ds.Contains(moi);
@@ -23,6 +24,8 @@ public static class OrderRules
     };
 
     public static bool NguoiBanDuocHuy(string cu) => cu is "PENDING" or "CONFIRMED";
+
+    public static bool NguoiMuaDuocHuy(string cu) => cu is "PENDING" or "CONFIRMED";
 
     public static string[] TiepTheoChoAdmin(string cu) => Next.TryGetValue(cu, out var ds) ? ds : Array.Empty<string>();
 

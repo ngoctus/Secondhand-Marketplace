@@ -98,6 +98,10 @@ BEGIN
             ('HIDDEN',         'PENDING_REVIEW'),
             ('RESERVED',       'ACTIVE'),
             ('RESERVED',       'SOLD'),
+            ('RESERVED',       'REMOVED'),
+            ('SOLD',           'REMOVED'),
+            ('HIDDEN',         'REMOVED'),
+            ('PENDING_REVIEW', 'REMOVED'),
             ('REMOVED',        'ACTIVE'),
             ('REMOVED',        'PENDING_REVIEW')
         ) t (Cu, Moi)

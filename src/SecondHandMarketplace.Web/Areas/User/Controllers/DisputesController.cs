@@ -91,6 +91,19 @@ public class DisputesController : UserBaseController
             return RedirectToAction("Index", "Orders");
         }
 
+        if (donHang.TrangThai != "SHIPPING" && donHang.TrangThai != "DELIVERED" && donHang.TrangThai != "COMPLETED")
+        {
+            this.ThongBaoLoi("Chỉ có thể mở khiếu nại đối với đơn hàng đang giao, đã giao hoặc đã hoàn tất.");
+            return RedirectToAction("ChiTiet", "Orders", new { id = maDonHang });
+        }
+
+        var tranhChapHienCo = await _db.TranhChaps.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
+        if (tranhChapHienCo != null)
+        {
+            this.ThongBaoLoi("Đơn hàng này đã có khiếu nại trước đó.");
+            return RedirectToAction(nameof(ChiTiet), new { id = tranhChapHienCo.MaTranhChap });
+        }
+
         var vm = new MoTranhChapViewModel
         {
             MaDonHang = donHang.MaDonHang,

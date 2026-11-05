@@ -478,4 +478,171 @@ public class DisputeServiceTests
         // Trạng thái đơn giữ nguyên DELIVERED
         Assert.Equal("DELIVERED", don.TrangThai);
     }
+
+    [Fact]
+    public async Task MoTranhChapAsync_DonDaCoTranhChapResolved_KhongChoMoLai()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_ChongMoSauResolved");
+        var fakeNotify = new FakeNotificationService();
+        var fakeAudit = new FakeAuditLogService();
+        var service = new DisputeService(db, fakeNotify, fakeAudit);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop" };
+        db.CuaHangs.Add(shop);
+
+        var don = new DonHang
+        {
+            MaDonHang = 50,
+            MaDon = "DH050",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "DELIVERED",
+            TrangThaiThanhToan = "PAID",
+            TongTien = 100000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+
+        db.TranhChaps.Add(new TranhChap
+        {
+            MaTranhChap = 20,
+            MaDonHang = 50,
+            MaNguoiTao = 20,
+            LyDo = "Đã giải quyết xong trước đó",
+            TrangThai = "RESOLVED"
+        });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, thongBao) = await service.MoTranhChapAsync(20, new MoTranhChapViewModel
+        {
+            MaDonHang = 50,
+            LyDo = "Muốn mở khiếu nại lần nữa"
+        });
+
+        Assert.False(thanhCong);
+        Assert.Contains("đã có khiếu nại đang chờ xử lý hoặc đã được giải quyết xong", thongBao);
+    }
+
+    [Fact]
+    public async Task XuLyTranhChapAdminAsync_Refund_ResetDangGiuChoVaPhucHoiSanPham()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_RefundResetDangGiuCho");
+        var fakeNotify = new FakeNotificationService();
+        var fakeAudit = new FakeAuditLogService();
+        var service = new DisputeService(db, fakeNotify, fakeAudit);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop" };
+        db.CuaHangs.Add(shop);
+
+        var sp = new SanPham
+        {
+            MaSanPham = 60,
+            MaCuaHang = 1,
+            Ten = "Áo khoác",
+            Gia = 200000,
+            TrangThai = "SOLD"
+        };
+        db.SanPhams.Add(sp);
+
+        var don = new DonHang
+        {
+            MaDonHang = 60,
+            MaDon = "DH060",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "DELIVERED",
+            TrangThaiThanhToan = "PAID",
+            TongTien = 200000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+
+        db.ChiTietDonHangs.Add(new ChiTietDonHang
+        {
+            MaDonHang = 60,
+            MaSanPham = 60,
+            Gia = 200000,
+                        DangGiuCho = true
+        });
+
+        db.ThanhToans.Add(new ThanhToan
+        {
+            MaDonHang = 60,
+            SoTien = 200000,
+            PhuongThucThanhToan = "ONLINE",
+            TrangThaiThanhToan = "SUCCESS"
+        });
+
+        db.TranhChaps.Add(new TranhChap
+        {
+            MaTranhChap = 25,
+            MaDonHang = 60,
+            MaNguoiTao = 20,
+            LyDo = "Hàng bị rách",
+            TrangThai = "PROCESSING",
+            DonHang = don
+        });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, _) = await service.XuLyTranhChapAdminAsync(25, 999, "REFUND_BUYER", "Hoàn tiền cho khách");
+        Assert.True(thanhCong);
+
+        var donDb = await db.DonHangs.FindAsync(60);
+        Assert.Equal("CANCELLED", donDb!.TrangThai);
+        Assert.Equal("REFUNDED", donDb.TrangThaiThanhToan);
+
+        var ctDb = await db.ChiTietDonHangs.FirstAsync(c => c.MaDonHang == 60);
+        Assert.False(ctDb.DangGiuCho);
+
+        var spDb = await db.SanPhams.FindAsync(60);
+        Assert.Equal("ACTIVE", spDb!.TrangThai);
+
+        var ttDb = await db.ThanhToans.FirstAsync(t => t.MaDonHang == 60);
+        Assert.Equal("REFUNDED", ttDb.TrangThaiThanhToan);
+    }
+
+    [Fact]
+    public async Task XuLyTranhChapAdminAsync_PaySeller_DonDaCompleted_KhongLoi()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_PaySellerCompleted");
+        var fakeNotify = new FakeNotificationService();
+        var fakeAudit = new FakeAuditLogService();
+        var service = new DisputeService(db, fakeNotify, fakeAudit);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop" };
+        db.CuaHangs.Add(shop);
+
+        var don = new DonHang
+        {
+            MaDonHang = 70,
+            MaDon = "DH070",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "COMPLETED",
+            TrangThaiThanhToan = "PAID",
+            TongTien = 120000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+
+        db.TranhChaps.Add(new TranhChap
+        {
+            MaTranhChap = 26,
+            MaDonHang = 70,
+            MaNguoiTao = 20,
+            LyDo = "Khiếu nại sau khi hoàn tất",
+            TrangThai = "PROCESSING",
+            DonHang = don
+        });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, _) = await service.XuLyTranhChapAdminAsync(26, 999, "PAY_SELLER", "Duyệt trả tiền người bán");
+        Assert.True(thanhCong);
+
+        var tcDb = await db.TranhChaps.FindAsync(26);
+        Assert.Equal("RESOLVED", tcDb!.TrangThai);
+
+        var donDb = await db.DonHangs.FindAsync(70);
+        Assert.Equal("COMPLETED", donDb!.TrangThai);
+    }
 }

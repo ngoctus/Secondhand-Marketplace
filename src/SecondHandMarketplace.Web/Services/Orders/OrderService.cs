@@ -56,10 +56,11 @@ public class OrderService : IOrderService
         var user = await _db.NguoiDungs.FindAsync(maNguoiDung);
         var sp = await _db.SanPhams
             .Include(x => x.CuaHang)
+                .ThenInclude(c => c.NguoiDung)
             .Include(x => x.Anh)
             .FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && !x.DaXoa);
 
-        if (sp == null || sp.TrangThai != "ACTIVE" || sp.CuaHang.TrangThai != "ACTIVE")
+        if (sp == null || sp.TrangThai != "ACTIVE" || sp.CuaHang.TrangThai != "ACTIVE" || (sp.CuaHang.NguoiDung != null && sp.CuaHang.NguoiDung.TrangThai != "ACTIVE"))
         {
             return null;
         }
@@ -103,12 +104,40 @@ public class OrderService : IOrderService
 
         try
         {
+            // Fix #4: Tự động bỏ chọn các sản phẩm trong giỏ không còn khả dụng
+            var itemsKhongKhaDung = await _db.GioHangs
+                .Include(g => g.SanPham)
+                .ThenInclude(s => s.CuaHang)
+                .ThenInclude(c => c.NguoiDung)
+                .Where(g => g.MaNguoiDung == maNguoiDung && g.DaChon &&
+                            (g.SanPham.TrangThai != "ACTIVE" || g.SanPham.DaXoa ||
+                             g.SanPham.CuaHang.TrangThai != "ACTIVE" || g.SanPham.CuaHang.NguoiDung.TrangThai != "ACTIVE"))
+                .ToListAsync();
+
+            if (itemsKhongKhaDung.Any())
+            {
+                foreach (var item in itemsKhongKhaDung)
+                {
+                    item.DaChon = false;
+                }
+                await _db.SaveChangesAsync();
+            }
+
+            var coSanPhamChon = await _db.GioHangs.AnyAsync(g => g.MaNguoiDung == maNguoiDung && g.DaChon);
+            if (!coSanPhamChon)
+            {
+                return new DatHangResultViewModel
+                {
+                    ThanhCong = false,
+                    ThongBao = "Không có sản phẩm khả dụng nào được chọn trong giỏ hàng."
+                };
+            }
             // Kiến trúc: Stored procedure sp_DatHangTuGio trong database/06_procedures.sql đã tự động
             // tạo thông báo (NotificationTypes.Order) cho người bán và người mua trong cùng transaction,
             // đồng thời ghi nhận bản ghi ThanhToan với trạng thái tương ứng, đảm bảo tính toàn vẹn (ACID).
             if (_db.Database.IsRelational())
             {
-                var conn = _db.Database.GetDbConnection();
+                using var conn = _db.Database.GetDbConnection();
                 if (conn.State != ConnectionState.Open) await conn.OpenAsync();
 
                 using var cmd = conn.CreateCommand();
@@ -352,6 +381,11 @@ public class OrderService : IOrderService
 
         if (d == null) return null;
 
+        var maTranhChap = await _db.TranhChaps
+            .Where(t => t.MaDonHang == maDonHang)
+            .Select(t => (int?)t.MaTranhChap)
+            .FirstOrDefaultAsync();
+
         return new DonHangChiTietViewModel
         {
             MaDonHang = d.MaDonHang,
@@ -390,7 +424,8 @@ public class OrderService : IOrderService
                 LoaiNguoiThucHien = ls.LoaiNguoiThucHien,
                 LyDo = ls.LyDo,
                 ThoiGian = ls.ThoiGian
-            }).ToList()
+            }).ToList(),
+            MaTranhChap = maTranhChap
         };
     }
 
@@ -399,6 +434,14 @@ public class OrderService : IOrderService
         if (string.IsNullOrWhiteSpace(lyDo))
         {
             return (false, "Vui lòng nhập lý do hủy đơn.");
+        }
+
+        // Fix #2: Kiểm tra trạng thái đơn hàng phía Buyer trước khi xử lý
+        var donHang = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
+        if (donHang == null) return (false, "Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
+        if (donHang.TrangThai != "PENDING" && donHang.TrangThai != "CONFIRMED")
+        {
+            return (false, "Chỉ có thể hủy đơn hàng khi đơn ở trạng thái chờ duyệt hoặc đã xác nhận (shop chưa giao hàng).");
         }
 
         try
@@ -410,16 +453,32 @@ public class OrderService : IOrderService
             }
             else
             {
-                var donHang = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
-                if (donHang == null) return (false, "Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
-                if (donHang.TrangThai != "PENDING" && donHang.TrangThai != "CONFIRMED")
-                {
-                    return (false, "Chỉ có thể hủy đơn hàng khi đơn ở trạng thái chờ duyệt hoặc đã xác nhận.");
-                }
                 donHang.TrangThai = "CANCELLED";
                 donHang.LyDoHuy = lyDo.Trim();
                 donHang.NguoiHuy = "BUYER";
                 donHang.ThoiGianHuy = DateTime.UtcNow;
+                if (donHang.TrangThaiThanhToan == "PAID")
+                {
+                    donHang.TrangThaiThanhToan = "REFUNDED";
+                    var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
+                    if (tt != null)
+                    {
+                        tt.TrangThaiThanhToan = "REFUNDED";
+                    }
+                }
+
+                var chiTiets = await _db.ChiTietDonHangs
+                    .Include(c => c.SanPham)
+                    .Where(c => c.MaDonHang == maDonHang).ToListAsync();
+                foreach (var ct in chiTiets)
+                {
+                    ct.DangGiuCho = false;
+                    if (ct.SanPham != null && ct.SanPham.TrangThai == "RESERVED")
+                    {
+                        ct.SanPham.TrangThai = "ACTIVE";
+                    }
+                }
+
                 await _db.SaveChangesAsync();
             }
 

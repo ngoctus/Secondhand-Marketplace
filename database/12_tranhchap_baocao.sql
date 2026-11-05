@@ -59,6 +59,7 @@ GO
 -- Chỉ mục tìm kiếm và chống gửi báo cáo trùng khi chưa xử lý
 CREATE NONCLUSTERED INDEX IX_TranhChap_MaDonHang ON TranhChap(MaDonHang);
 CREATE NONCLUSTERED INDEX IX_TranhChap_TrangThai ON TranhChap(TrangThai);
+CREATE UNIQUE NONCLUSTERED INDEX UQ_TranhChap_ChongTrung ON TranhChap(MaDonHang) WHERE TrangThai IN ('OPEN', 'PROCESSING');
 CREATE NONCLUSTERED INDEX IX_BaoCao_DoiTuong ON BaoCao(LoaiDoiTuong, MaDoiTuong);
 CREATE NONCLUSTERED INDEX IX_BaoCao_TrangThai ON BaoCao(TrangThai);
 CREATE UNIQUE NONCLUSTERED INDEX UQ_BaoCao_ChongTrung ON BaoCao(MaNguoiBaoCao, LoaiDoiTuong, MaDoiTuong) WHERE TrangThai = 'PENDING';

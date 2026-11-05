@@ -116,7 +116,10 @@
                                 <select name="phanQuyet" class="form-select form-select-sm rounded-2" required>
                                     <option value="">-- Chọn quyết định --</option>
                                     <option value="REFUND_BUYER">Hoàn tiền cho người mua (Hủy đơn hàng)</option>
-                                    <option value="RELEASE_SELLER">Thanh toán cho người bán (Hoàn tất đơn)</option>
+                                    @if (Model.TrangThaiDonHang != "COMPLETED")
+                                    {
+                                        <option value="RELEASE_SELLER">Thanh toán cho người bán (Hoàn tất đơn)</option>
+                                    }
                                     <option value="REJECT">Bác bỏ khiếu nại (Giữ nguyên trạng thái)</option>
                                 </select>
                             </div>

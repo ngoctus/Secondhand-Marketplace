@@ -146,7 +146,21 @@
 
                 }
 
-                @if (Model.CoTheMoTranhChap)
+                @if (Model.MaTranhChap.HasValue)
+
+                {
+
+                    <a asp-area="User" asp-controller="Disputes" asp-action="ChiTiet" asp-route-id="@Model.MaTranhChap.Value"
+
+                       class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
+
+                        <i class="bi bi-shield-check me-1"></i> Xem tiến độ khiếu nại
+
+                    </a>
+
+                }
+
+                else if (Model.CoTheMoTranhChap)
 
                 {
 

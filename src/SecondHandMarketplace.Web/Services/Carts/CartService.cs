@@ -19,6 +19,7 @@ public class CartService : ICartService
             .AsNoTracking()
             .Include(x => x.SanPham)
                 .ThenInclude(s => s.CuaHang)
+                    .ThenInclude(c => c.NguoiDung)
             .Include(x => x.SanPham)
                 .ThenInclude(s => s.Anh)
             .Where(x => x.MaNguoiDung == maNguoiDung)
@@ -29,7 +30,7 @@ public class CartService : ICartService
         {
             var sp = gh.SanPham;
             var ch = sp?.CuaHang;
-            var coTheMua = sp != null && !sp.DaXoa && sp.TrangThai == "ACTIVE" && ch != null && ch.TrangThai == "ACTIVE";
+            var coTheMua = sp != null && !sp.DaXoa && sp.TrangThai == "ACTIVE" && ch != null && ch.TrangThai == "ACTIVE" && ch.NguoiDung != null && ch.NguoiDung.TrangThai == "ACTIVE";
 
             return new CartItemViewModel
             {

@@ -303,4 +303,31 @@ public class ReportServiceTests
         // Ghi audit log FAILED
         Assert.Contains(fakeAudit.Logs, l => l.Action == "RESOLVE_REPORT" && l.TargetId == 11 && l.Result == "FAILED");
     }
+
+    [Fact]
+    public async Task XuLyBaoCaoAdminAsync_Dismiss_GhiChuQuaDai_TraVeLoi()
+    {
+        using var db = GetInMemoryDbContext("ReportTest_DismissGhiChuQuaDai");
+        var service = new ReportService(db, new FakeUserAdminService(), new FakeShopService(), new FakeAuditLogService(), new FakeNotificationService());
+
+        db.BaoCaos.Add(new BaoCao
+        {
+            MaBaoCao = 15,
+            MaNguoiBaoCao = 5,
+            LoaiDoiTuong = "PRODUCT",
+            MaDoiTuong = 100,
+            LyDo = "Vi phạm bản quyền",
+            TrangThai = "PENDING"
+        });
+        await db.SaveChangesAsync();
+
+        string ghiChuQuaDai = new string('x', 501);
+        var (thanhCong, thongBao) = await service.XuLyBaoCaoAdminAsync(15, 999, "DISMISS", ghiChuQuaDai);
+
+        Assert.False(thanhCong);
+        Assert.Contains("không được vượt quá 500 ký tự", thongBao);
+
+        var bc = await db.BaoCaos.FindAsync(15);
+        Assert.Equal("PENDING", bc!.TrangThai);
+    }
 }

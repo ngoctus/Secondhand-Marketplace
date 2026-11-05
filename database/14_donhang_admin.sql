@@ -20,7 +20,7 @@ BEGIN
 
     DECLARE @TrangThaiCu varchar(15), @MaNguoiMua int, @ChuShopId int, @MaDon varchar(30),
             @Now datetime2(3) = SYSUTCDATETIME(), @TrangThaiSanPhamMoi varchar(20), @Nhan nvarchar(30);
-    DECLARE @SanPhamDoi TABLE (MaSanPham int PRIMARY KEY);
+    DECLARE @SanPhamDoi TABLE (MaSanPham int PRIMARY KEY, TrangThaiCu varchar(20));
 
     BEGIN TRY
         BEGIN TRANSACTION;
@@ -37,6 +37,14 @@ BEGIN
 
         IF @TrangThaiCu IS NULL
             THROW 51201, N'Đơn hàng không tồn tại.', 1;
+
+        -- Nếu trạng thái không thay đổi (ví dụ đơn đã COMPLETED và admin duyệt PAY_SELLER), coi như thành công (Fix #6)
+        IF @TrangThaiCu = @TrangThaiMoi
+        BEGIN
+            COMMIT TRANSACTION;
+            SELECT @MaDonHang AS MaDonHang, @TrangThaiCu AS TrangThaiCu, @TrangThaiMoi AS TrangThaiMoi;
+            RETURN;
+        END
 
         IF dbo.fn_ChuyenTrangThaiDonHangHopLe(@TrangThaiCu, @TrangThaiMoi) = 0
             THROW 51203, N'Không cho phép chuyển trạng thái này.', 1;
@@ -67,12 +75,18 @@ BEGIN
 
         IF @TrangThaiMoi IN ('CANCELLED', 'COMPLETED')
         BEGIN
+            -- Fix #1: Bắt buộc giải phóng DangGiuCho để không khóa sản phẩm vĩnh viễn (lỗi UX 2601)
+            UPDATE ChiTietDonHang
+            SET DangGiuCho = 0
+            WHERE MaDonHang = @MaDonHang;
+
             SET @TrangThaiSanPhamMoi = CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN 'SOLD' ELSE 'ACTIVE' END;
 
+            -- Fix #17: Ghi nhận chính xác TrangThaiCu của sản phẩm trước khi cập nhật
             UPDATE sp
             SET TrangThai   = @TrangThaiSanPhamMoi,
                 NgayCapNhat = @Now
-            OUTPUT inserted.MaSanPham INTO @SanPhamDoi (MaSanPham)
+            OUTPUT inserted.MaSanPham, deleted.TrangThai INTO @SanPhamDoi (MaSanPham, TrangThaiCu)
             FROM SanPham sp
             JOIN ChiTietDonHang ct ON ct.MaSanPham = sp.MaSanPham
             WHERE ct.MaDonHang = @MaDonHang
@@ -82,9 +96,24 @@ BEGIN
               );
 
             INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
-            SELECT x.MaSanPham, CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN 'RESERVED' ELSE 'SOLD' END, @TrangThaiSanPhamMoi, 'ADMIN', @QuanTriVienId,
+            SELECT x.MaSanPham, x.TrangThaiCu, @TrangThaiSanPhamMoi, 'ADMIN', @QuanTriVienId,
                    CONCAT(N'Đơn ', @MaDon, CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN N' hoàn tất' ELSE N' bị hủy/hoàn tiền' END, N': ', @LyDo)
             FROM @SanPhamDoi x;
+        END
+
+        -- Fix #8: Đồng bộ bảng ThanhToan khi Admin hoàn tiền hoặc hoàn tất đơn
+        IF @TrangThaiMoi = 'CANCELLED'
+        BEGIN
+            UPDATE ThanhToan
+            SET TrangThaiThanhToan = 'REFUNDED'
+            WHERE MaDonHang = @MaDonHang;
+        END
+        ELSE IF @TrangThaiMoi = 'COMPLETED'
+        BEGIN
+            UPDATE ThanhToan
+            SET TrangThaiThanhToan = 'SUCCESS',
+                ThoiGianThanhToan = ISNULL(ThoiGianThanhToan, @Now)
+            WHERE MaDonHang = @MaDonHang;
         END
 
         INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu)

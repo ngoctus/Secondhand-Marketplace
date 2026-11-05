@@ -49,7 +49,7 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
     // Chốt với D tên bảng/cột/giá trị "chưa xử lý". Khi D đã tạo bảng, chỉ cần đặt Dashboard:PendingReportsSql
     // trong appsettings (câu SELECT trả về 1 cột tên Value) mà không phải sửa code.
     private const string DemBaoCaoMacDinh =
-        "SELECT COUNT(*) AS Value FROM dbo.BaoCao WHERE TrangThai IN ('NEW', 'INVESTIGATING')";
+        "SELECT COUNT(*) AS Value FROM dbo.BaoCao WHERE TrangThai = 'PENDING'";
 
     public async Task<SellerDashboardVm?> GetSellerAsync(int userId, CancellationToken ct = default)
     {

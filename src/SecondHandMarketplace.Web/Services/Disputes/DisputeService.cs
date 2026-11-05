@@ -57,13 +57,13 @@ public class DisputeService : IDisputeService
             return (false, "Chỉ có thể mở khiếu nại đối với đơn hàng đang giao, đã giao hoặc đã hoàn tất.");
         }
 
-        // 4. Chống mở trùng khiếu nại đang xử lý
-        var coTranhChapChuaXong = await _db.TranhChaps.AnyAsync(t =>
-            t.MaDonHang == vm.MaDonHang && (t.TrangThai == "OPEN" || t.TrangThai == "PROCESSING"));
+        // 4. Chống mở trùng khiếu nại đang xử lý hoặc đã được giải quyết
+        var daCoTranhChap = await _db.TranhChaps.AnyAsync(t =>
+            t.MaDonHang == vm.MaDonHang && (t.TrangThai == "OPEN" || t.TrangThai == "PROCESSING" || t.TrangThai == "RESOLVED"));
 
-        if (coTranhChapChuaXong)
+        if (daCoTranhChap)
         {
-            return (false, "Đơn hàng này đang có khiếu nại đang chờ xử lý.");
+            return (false, "Đơn hàng này đã có khiếu nại đang chờ xử lý hoặc đã được giải quyết xong.");
         }
 
         var now = DateTime.UtcNow;
@@ -79,7 +79,14 @@ public class DisputeService : IDisputeService
         };
 
         _db.TranhChaps.Add(tranhChap);
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return (false, "Đơn hàng này đang có khiếu nại đang chờ xử lý.");
+        }
 
         // Gửi thông báo cho Người bán (chủ cửa hàng)
         await _notifications.CreateAsync(
@@ -299,12 +306,15 @@ public class DisputeService : IDisputeService
             return (false, "Tranh chấp này đã được phân xử trước đó.");
         }
 
+        using var tx = _db.Database.IsRelational() ? await _db.Database.BeginTransactionAsync() : null;
         var now = DateTime.UtcNow;
         tc.NguoiXuLyId = adminId;
         tc.NgayGiaiQuyet = now;
         tc.GhiChuAdmin = ghiChu;
         var trangThaiDonCu = tc.DonHang.TrangThai;
 
+        try
+        {
         if (phanQuyet == "REFUND_BUYER")
         {
             tc.TrangThai = "RESOLVED";
@@ -324,6 +334,12 @@ public class DisputeService : IDisputeService
                 tc.DonHang.NguoiHuy = "ADMIN";
                 tc.DonHang.LyDoHuy = lyDoAdmin;
                 tc.DonHang.ThoiGianHuy = now;
+
+                var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == tc.MaDonHang);
+                if (tt != null)
+                {
+                    tt.TrangThaiThanhToan = "REFUNDED";
+                }
 
                 // Hoàn lại sản phẩm về ACTIVE bất kể đang RESERVED hay đã SOLD (khi đơn COMPLETED bị refund)
                 var chiTiets = await _db.ChiTietDonHangs
@@ -370,54 +386,65 @@ public class DisputeService : IDisputeService
             tc.PhanQuyet = "Bác bỏ khiếu nại: Thanh toán hoàn tất cho người bán.";
             var lyDoAdmin = string.IsNullOrWhiteSpace(ghiChu) ? tc.PhanQuyet : $"{tc.PhanQuyet} Ghi chú: {ghiChu.Trim()}";
 
-            if (_db.Database.IsRelational())
+            // Fix #6: Nếu đơn đã COMPLETED thì không gọi đổi trạng thái đơn nữa
+            if (tc.DonHang.TrangThai != "COMPLETED")
             {
-                await _db.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC dbo.sp_AdminCapNhatTrangThaiDon @MaDonHang={tc.MaDonHang}, @TrangThaiMoi={"COMPLETED"}, @QuanTriVienId={adminId}, @LyDo={lyDoAdmin}");
-            }
-            else
-            {
-                tc.DonHang.TrangThai = "COMPLETED";
-                tc.DonHang.TrangThaiThanhToan = "PAID";
-                tc.DonHang.NgayCapNhat = now;
-                tc.DonHang.ThoiGianHoanTat = now;
-
-                var chiTiets = await _db.ChiTietDonHangs
-                    .Include(c => c.SanPham)
-                    .Where(c => c.MaDonHang == tc.MaDonHang).ToListAsync();
-
-                foreach (var ct in chiTiets)
+                if (_db.Database.IsRelational())
                 {
-                    ct.DangGiuCho = false;
-                    if (ct.SanPham != null && ct.SanPham.TrangThai != "SOLD")
-                    {
-                        var spCu = ct.SanPham.TrangThai;
-                        ct.SanPham.TrangThai = "SOLD";
-                        ct.SanPham.NgayCapNhat = now;
-
-                        _db.LichSuTrangThaiSanPhams.Add(new LichSuTrangThaiSanPham
-                        {
-                            MaSanPham = ct.MaSanPham,
-                            TrangThaiCu = spCu,
-                            TrangThaiMoi = "SOLD",
-                            LoaiNguoiThucHien = "ADMIN",
-                            NguoiThucHienId = adminId,
-                            LyDo = $"Admin hoàn tất đơn #{tc.DonHang.MaDon}: {tc.PhanQuyet}",
-                            ThoiGian = now
-                        });
-                    }
+                    await _db.Database.ExecuteSqlInterpolatedAsync(
+                        $"EXEC dbo.sp_AdminCapNhatTrangThaiDon @MaDonHang={tc.MaDonHang}, @TrangThaiMoi={"COMPLETED"}, @QuanTriVienId={adminId}, @LyDo={lyDoAdmin}");
                 }
-
-                _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+                else
                 {
-                    MaDonHang = tc.MaDonHang,
-                    TrangThaiCu = trangThaiDonCu,
-                    TrangThaiMoi = "COMPLETED",
-                    LoaiNguoiThucHien = "ADMIN",
-                    NguoiThucHienId = adminId,
-                    LyDo = tc.PhanQuyet,
-                    ThoiGian = now
-                });
+                    tc.DonHang.TrangThai = "COMPLETED";
+                    tc.DonHang.TrangThaiThanhToan = "PAID";
+                    tc.DonHang.NgayCapNhat = now;
+                    tc.DonHang.ThoiGianHoanTat = now;
+
+                    var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == tc.MaDonHang);
+                    if (tt != null)
+                    {
+                        tt.TrangThaiThanhToan = "SUCCESS";
+                        tt.ThoiGianThanhToan = now;
+                                            }
+
+                    var chiTiets = await _db.ChiTietDonHangs
+                        .Include(c => c.SanPham)
+                        .Where(c => c.MaDonHang == tc.MaDonHang).ToListAsync();
+
+                    foreach (var ct in chiTiets)
+                    {
+                        ct.DangGiuCho = false;
+                        if (ct.SanPham != null && ct.SanPham.TrangThai != "SOLD")
+                        {
+                            var spCu = ct.SanPham.TrangThai;
+                            ct.SanPham.TrangThai = "SOLD";
+                            ct.SanPham.NgayCapNhat = now;
+
+                            _db.LichSuTrangThaiSanPhams.Add(new LichSuTrangThaiSanPham
+                            {
+                                MaSanPham = ct.MaSanPham,
+                                TrangThaiCu = spCu,
+                                TrangThaiMoi = "SOLD",
+                                LoaiNguoiThucHien = "ADMIN",
+                                NguoiThucHienId = adminId,
+                                LyDo = $"Admin hoàn tất đơn #{tc.DonHang.MaDon}: {tc.PhanQuyet}",
+                                ThoiGian = now
+                            });
+                        }
+                    }
+
+                    _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+                    {
+                        MaDonHang = tc.MaDonHang,
+                        TrangThaiCu = trangThaiDonCu,
+                        TrangThaiMoi = "COMPLETED",
+                        LoaiNguoiThucHien = "ADMIN",
+                        NguoiThucHienId = adminId,
+                        LyDo = tc.PhanQuyet,
+                        ThoiGian = now
+                    });
+                }
             }
         }
         else if (phanQuyet == "REJECT")
@@ -432,12 +459,21 @@ public class DisputeService : IDisputeService
         }
 
         await _db.SaveChangesAsync();
+        if (tx != null) await tx.CommitAsync();
+    }
+    catch (Exception ex)
+    {
+        if (tx != null) await tx.RollbackAsync();
+        return (false, SecondHandMarketplace.Web.Common.SqlLoi.ThongBao(ex));
+    }
 
-        // Ghi Audit Log
+    // Audit log và thông báo thực hiện sau khi transaction đã commit thành công.
+    // Nếu chúng thất bại không làm rollback lại đơn hàng đã xử lý xong.
+    try
+    {
         await _audit.LogAsync(adminId, "RESOLVE_DISPUTE", "TranhChap", tc.MaTranhChap, "SUCCESS",
             $"Phán quyết: {phanQuyet}. Ghi chú: {ghiChu}");
 
-        // Gửi thông báo cho cả 2 bên
         await _notifications.CreateAsync(tc.MaNguoiTao, NotificationTypes.Order,
             "Kết quả xử lý khiếu nại đơn hàng",
             $"Tranh chấp đơn hàng #{tc.DonHang.MaDon} đã có kết quả: {tc.PhanQuyet}",
@@ -447,7 +483,12 @@ public class DisputeService : IDisputeService
             "Kết quả xử lý khiếu nại đơn hàng",
             $"Tranh chấp đơn hàng #{tc.DonHang.MaDon} đã có kết quả: {tc.PhanQuyet}",
             tc.MaTranhChap);
-
-        return (true, "Đã lưu phán quyết tranh chấp và cập nhật đơn hàng thành công.");
     }
+    catch
+    {
+        // Best effort: không làm thay đổi kết quả đã lưu vào DB.
+    }
+
+    return (true, "Đã lưu phán quyết tranh chấp và cập nhật đơn hàng thành công.");
+}
 }

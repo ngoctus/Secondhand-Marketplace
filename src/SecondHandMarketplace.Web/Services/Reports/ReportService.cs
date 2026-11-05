@@ -182,6 +182,10 @@ public class ReportService : IReportService
         if (hanhDong == "DISMISS")
         {
             var lyDoBoQua = string.IsNullOrWhiteSpace(ghiChu) ? "Bỏ qua báo cáo (không vi phạm)." : ghiChu.Trim();
+            if (lyDoBoQua.Length > 500)
+            {
+                return (false, "Lý do / Ghi chú xử lý không được vượt quá 500 ký tự.");
+            }
             bc.TrangThai = "DISMISSED";
             bc.GhiChuXuLy = lyDoBoQua;
             bc.NguoiXuLyId = adminId;
@@ -272,6 +276,9 @@ public class ReportService : IReportService
                     sp.TrangThai = "REMOVED";
                     sp.LyDoGo = lyDoXuLy;
                     sp.NgayCapNhat = now;
+
+                    var chiTiets = await _db.ChiTietDonHangs.Where(c => c.MaSanPham == sp.MaSanPham && c.DangGiuCho).ToListAsync();
+                    foreach (var ct in chiTiets) ct.DangGiuCho = false;
 
                     _db.LichSuTrangThaiSanPhams.Add(new LichSuTrangThaiSanPham
                     {
