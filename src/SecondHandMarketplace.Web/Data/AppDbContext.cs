@@ -30,6 +30,8 @@ public class AppDbContext : DbContext
     public DbSet<ThongBao> ThongBaos => Set<ThongBao>();
     public DbSet<TranhChap> TranhChaps => Set<TranhChap>();
     public DbSet<BaoCao> BaoCaos => Set<BaoCao>();
+    public DbSet<PhienDauGia> PhienDauGias => Set<PhienDauGia>();
+    public DbSet<LuotDatGia> LuotDatGias => Set<LuotDatGia>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,7 +129,6 @@ public class AppDbContext : DbContext
         {
             e.ToTable("GioHang");
             e.HasKey(x => x.MaGioHang);
-
             e.HasOne(x => x.NguoiDung)
                 .WithMany()
                 .HasForeignKey(x => x.MaNguoiDung)
@@ -260,6 +261,33 @@ public class AppDbContext : DbContext
             e.Property(x => x.GhiChuXuLy).HasMaxLength(500);
             e.HasOne(x => x.NguoiBaoCao).WithMany().HasForeignKey(x => x.MaNguoiBaoCao).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.NguoiXuLy).WithMany().HasForeignKey(x => x.NguoiXuLyId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PhienDauGia>(e =>
+        {
+            e.ToTable("PhienDauGia");
+            e.HasKey(x => x.MaPhienDauGia);
+            e.Property(x => x.GiaNiemYet).HasPrecision(18, 2);
+            e.Property(x => x.GiaKhoiDiem).HasPrecision(18, 2);
+            e.Property(x => x.BuocGia).HasPrecision(18, 2);
+            e.Property(x => x.GiaHienTai).HasPrecision(18, 2);
+            e.Property(x => x.GiaThang).HasPrecision(18, 2);
+            e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(12);
+            e.Property(x => x.NguoiHuy).IsUnicode(false).HasMaxLength(10);
+            e.Property(x => x.LyDoHuy).HasMaxLength(500);
+
+            e.HasOne(x => x.SanPham).WithMany().HasForeignKey(x => x.MaSanPham).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.NguoiDanDau).WithMany().HasForeignKey(x => x.MaNguoiDanDau).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.NguoiThang).WithMany().HasForeignKey(x => x.MaNguoiThang).OnDelete(DeleteBehavior.Restrict);
+            e.HasMany(x => x.LuotDat).WithOne(l => l.Phien).HasForeignKey(l => l.MaPhienDauGia).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<LuotDatGia>(e =>
+        {
+            e.ToTable("LuotDatGia");
+            e.HasKey(x => x.MaLuotDatGia);
+            e.Property(x => x.SoTien).HasPrecision(18, 2);
+            e.HasOne(x => x.NguoiDung).WithMany().HasForeignKey(x => x.MaNguoiDung).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

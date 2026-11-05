@@ -57,6 +57,7 @@
 
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000">Giá tốt</a>
+                <a class="rm-nav-link" asp-area="" asp-controller="PublicAuctions" asp-action="Index">🔨 Đấu giá</a>
 
                 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
                 {
@@ -66,12 +67,13 @@
                             <svg viewBox="0 0 12 8" width="10" height="6" fill="currentColor"><path d="M1.41 0L6 4.58L10.59 0L12 1.41L6 7.41L0 1.41L1.41 0Z"/></svg>
                         </button>
                         <div class="rm-dropdown-menu" id="adminDropdownMenu" aria-labelledby="adminMenuBtn" hidden>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Products" asp-action="Index">Kiểm duyệt sản phẩm</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Users" asp-action="Index">Quản lý người dùng</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Sellers" asp-action="Index">Quản lý cửa hàng</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Categories" asp-action="Index">Danh mục sản phẩm</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Banners" asp-action="Index">Quản lý Banner</a>
+                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Thống kê hệ thống</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Orders" asp-action="Index">Quản lý đơn hàng</a>
+                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Auctions" asp-action="Index">Quản lý đấu giá</a>
+                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Users" asp-action="Index">Người dùng</a>
+                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Sellers" asp-action="Index">Cửa hàng</a>
+                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Products" asp-action="Index">Duyệt sản phẩm</a>
+                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Categories" asp-action="Index">Danh mục</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Disputes" asp-action="Index">Tranh chấp</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Reports" asp-action="Index">Báo cáo vi phạm</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">Nhật ký hệ thống</a>
@@ -113,16 +115,21 @@
                             <span style="font-size: 13.5px; font-weight: 500;">@User.Identity?.Name</span>
                             <svg viewBox="0 0 12 8" width="9" height="5" fill="currentColor"><path d="M1.41 0L6 4.58L10.59 0L12 1.41L6 7.41L0 1.41L1.41 0Z"/></svg>
                         </button>
-                        <div class="rm-dropdown-menu" id="userDropdownMenu" style="right: 0; left: auto; width: 200px;" hidden>
+                        <div class="rm-dropdown-menu" id="userDropdownMenu" style="right: 0; left: auto; width: 220px;" hidden>
                             <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a>
                             <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="ChangePassword">Đổi mật khẩu</a>
                             @if (User.IsInRole("USER"))
                             {
                                 <div class="rm-dropdown-divider"></div>
-                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn hàng</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua của tôi</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán (Shop)</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Auctions" asp-action="Index">Đấu giá của tôi</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê doanh thu</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">Yêu thích</a>
-                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Products" asp-action="Index">Quản lý sản phẩm</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Disputes" asp-action="Index">Khiếu nại / Tranh chấp</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Reports" asp-action="Index">Lịch sử báo cáo</a>
                             }
                             <div class="rm-dropdown-divider"></div>
                             <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="m-0 p-0">

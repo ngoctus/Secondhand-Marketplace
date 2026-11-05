@@ -1,6 +1,51 @@
-@{
-    ViewData["Title"] = "Đấu giá của tôi";
-}
+@model PagedResult<AuctionCardVm>
+@{ ViewData["Title"] = "Đấu giá của tôi"; }
 
-<h2>Đấu giá của tôi</h2>
-<p class="text-muted">TODO: Areas/User/Controllers/AuctionsController.cs &rarr; Index</p>
+<div class="page-head">
+    <div><h2>Đấu giá của tôi</h2><p class="muted">Quản lý các phiên đấu giá cho sản phẩm trong cửa hàng của bạn.</p></div>
+    <a class="primary text-decoration-none" asp-action="Create">+ Tạo phiên đấu giá</a>
+</div>
+
+@if (Model.Items.Count == 0)
+{
+    <div class="empty panel">Bạn chưa có phiên đấu giá nào. Hãy chọn một sản phẩm đang bán để bắt đầu.</div>
+}
+else
+{
+    <div class="panel table-wrap">
+        <table class="table align-middle">
+            <thead><tr><th>SẢN PHẨM</th><th>GIÁ KHỞI ĐIỂM</th><th>GIÁ HIỆN TẠI</th><th>LƯỢT ĐẶT</th><th>THỜI GIAN</th><th>TRẠNG THÁI</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var a in Model.Items)
+            {
+                <tr>
+                    <td class="d-flex align-items-center gap-2">
+                        @if (!string.IsNullOrEmpty(a.Image)) { <img class="thumb" src="@a.Image" alt="" data-fallback /> }
+                        <b>@a.ProductName</b>
+                    </td>
+                    <td>@HienThi.Tien(a.StartPrice)</td>
+                    <td><b>@HienThi.Tien(a.CurrentPrice)</b></td>
+                    <td>@a.BidCount</td>
+                    <td class="small">@HienThi.NgayGio(a.StartAt)<br />→ @HienThi.NgayGio(a.EndAt)</td>
+                    <td>
+                        <span class="@HienThi.LopTrangThai(a.Status)">@HienThi.TrangThaiPhien(a.Status)</span>
+                        @if (a.Status == "ENDED" && a.WinnerName is not null) { <div class="small text-muted">Thắng: @a.WinnerName</div> }
+                        @if (a.Status == "CANCELLED" && !string.IsNullOrEmpty(a.CancelReason)) { <div class="small text-muted">@a.CancelReason</div> }
+                    </td>
+                    <td class="actions">
+                        <a class="smallbtn text-decoration-none" asp-controller="PublicAuctions" asp-area="" asp-action="Details" asp-route-id="@a.Id">Xem</a>
+                        @if (a.Status is "RUNNING" or "SCHEDULED" && a.BidCount == 0)
+                        {
+                            <form asp-action="Cancel" method="post" onsubmit="return confirm('Hủy phiên đấu giá này?');">
+                                <input type="hidden" name="id" value="@a.Id" />
+                                <button class="reject" type="submit">Hủy phiên</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <partial name="_Pager" model="new PagerVm(Model.Page, Model.TotalPages)" />
+}

@@ -1,0 +1,22 @@
+@model PagerVm
+@if (Model.TotalPages > 1)
+{
+    string Link(int p)
+    {
+        var q = Context.Request.Query.Where(k => k.Key != "page")
+            .Select(k => new KeyValuePair<string, string?>(k.Key, k.Value.ToString())).ToList();
+        q.Add(new KeyValuePair<string, string?>("page", p.ToString()));
+        return Context.Request.Path + QueryString.Create(q);
+    }
+    <nav class="pager" aria-label="Phân trang">
+        @if (Model.Page > 1)
+        {
+            <a href="@Link(Model.Page - 1)">‹ Trước</a>
+        }
+        <span>Trang @Model.Page / @Model.TotalPages</span>
+        @if (Model.Page < Model.TotalPages)
+        {
+            <a href="@Link(Model.Page + 1)">Sau ›</a>
+        }
+    </nav>
+}

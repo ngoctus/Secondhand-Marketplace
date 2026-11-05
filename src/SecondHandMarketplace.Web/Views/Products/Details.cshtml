@@ -1,10 +1,13 @@
 @model ProductDetailVm
 @using SecondHandMarketplace.Web.Services.Products
 @inject IProductService ProductService
+@inject SecondHandMarketplace.Web.Services.Auctions.IAuctionService Auctions
 @{
     ViewData["Title"] = Model.Name;
     var category = Model.CategoryName ?? "Thời trang";
     var condition = Model.ConditionName ?? "Rất tốt";
+
+    var phienDauGiaId = await Auctions.GetOpenAuctionIdForProductAsync(Model.Id);
 
     var trangThai = Model.Status switch
     {
@@ -104,6 +107,14 @@
                 <span class="badge bg-warning text-dark px-2 py-1 ms-2" style="font-size: 13px;">@trangThai</span>
             }
         </div>
+
+        @if (phienDauGiaId.HasValue)
+        {
+            <div class="alert alert-warning py-2 px-3 my-2 d-flex align-items-center justify-content-between rounded-3 border-warning" style="font-size: 13px;">
+                <span>🔨 <strong>Sản phẩm này đang được đấu giá!</strong></span>
+                <a asp-controller="PublicAuctions" asp-action="Details" asp-route-id="@phienDauGiaId" class="btn btn-sm btn-outline-dark fw-semibold">Xem phiên đấu giá →</a>
+            </div>
+        }
 
         <div class="detail-tags-row">
             <span class="tag-badge">@condition</span>

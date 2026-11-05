@@ -1,0 +1,56 @@
+@model AuctionDetailVm
+@{
+    ViewData["Title"] = "Phiên đấu giá #" + Model.Id;
+    var open = Model.Status is "RUNNING" or "SCHEDULED" or "ENDING";
+}
+<p class="muted mt-3"><a asp-action="Index">← Danh sách phiên</a></p>
+<div class="page-head">
+    <div><h2>Phiên #@Model.Id · @Model.ProductName</h2><p class="muted">Cửa hàng @Model.ShopName</p></div>
+    <span class="@HienThi.LopTrangThai(Model.Status)">@HienThi.TrangThaiPhien(Model.Status)</span>
+</div>
+
+<div class="stats">
+    <div class="stat"><b>@HienThi.Tien(Model.CurrentPrice)</b><span>Giá hiện tại</span></div>
+    <div class="stat"><b>@Model.BidCount</b><span>Lượt đặt giá</span></div>
+    <div class="stat"><b>@HienThi.Tien(Model.Step)</b><span>Bước giá (khởi điểm @HienThi.Tien(Model.StartPrice))</span></div>
+</div>
+
+<div class="panel">
+    <div class="row">
+        <div class="col-md-6"><b>Bắt đầu:</b> @HienThi.NgayGio(Model.StartAt)</div>
+        <div class="col-md-6"><b>Kết thúc:</b> @HienThi.NgayGio(Model.EndAt)</div>
+    </div>
+    @if (Model.Status == "ENDED" && Model.WinnerName is not null)
+    {
+        <p class="mt-2 mb-0">Người thắng: <b>@Model.WinnerName</b> · Giá @HienThi.Tien(Model.WinningPrice ?? 0)
+            @if (Model.OrderId.HasValue) { <text> · </text><a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId">Xem đơn hàng</a> }
+        </p>
+    }
+    @if (Model.Status == "CANCELLED")
+    {
+        <p class="mt-2 mb-0">Đã hủy bởi <b>@HienThi.NguoiThucHien(Model.CancelBy ?? "")</b>. Lý do: @Model.CancelReason</p>
+    }
+</div>
+
+@if (open)
+{
+    <div class="panel">
+        <h3>Hủy phiên vi phạm</h3>
+        <form asp-action="Cancel" method="post" onsubmit="return confirm('Hủy phiên đấu giá này? Thao tác không hoàn tác được.');">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <textarea name="reason" class="form-control" rows="2" required minlength="5" maxlength="500" placeholder="Lý do hủy (bắt buộc, sẽ gửi tới người bán và người đã đặt giá)"></textarea>
+            <button class="btn btn-danger mt-2" type="submit">Hủy phiên đấu giá</button>
+        </form>
+    </div>
+}
+
+<div class="panel">
+    <h3>Lịch sử đặt giá (@Model.Bids.Count)</h3>
+    <table class="table">
+        <thead><tr><th>NGƯỜI ĐẶT</th><th>SỐ TIỀN</th><th>THỜI GIAN</th></tr></thead>
+        <tbody>
+        @foreach (var b in Model.Bids) { <tr><td>@b.Bidder</td><td><b>@HienThi.Tien(b.Amount)</b></td><td>@HienThi.NgayGio(b.At)</td></tr> }
+        @if (Model.Bids.Count == 0) { <tr><td colspan="3" class="text-center text-muted">Chưa có lượt đặt giá.</td></tr> }
+        </tbody>
+    </table>
+</div>

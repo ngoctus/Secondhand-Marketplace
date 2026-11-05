@@ -1,6 +1,44 @@
+@model PagedResult<AuctionCardVm>
 @{
     ViewData["Title"] = "Quản lý đấu giá";
+    var status = (string?)ViewBag.Status;
+    var q = (string?)ViewBag.Q;
 }
+<div class="page-head"><div><h2>Quản lý đấu giá</h2><p class="muted">Theo dõi mọi phiên đấu giá và xử lý phiên vi phạm.</p></div></div>
 
-<h2>Quản lý đấu giá</h2>
-<p class="text-muted">TODO: Areas/Admin/Controllers/AuctionsController.cs &rarr; Index</p>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-5"><input name="q" value="@q" class="form-control" placeholder="Mã phiên, tên sản phẩm hoặc cửa hàng" /></div>
+    <div class="col-md-3">
+        <select name="status" class="form-select">
+            <option value="">Tất cả trạng thái</option>
+            <option value="RUNNING" selected="@(status == "RUNNING")">Đang diễn ra</option>
+            <option value="SCHEDULED" selected="@(status == "SCHEDULED")">Sắp diễn ra</option>
+            <option value="ENDED" selected="@(status == "ENDED")">Đã kết thúc</option>
+            <option value="CANCELLED" selected="@(status == "CANCELLED")">Đã hủy</option>
+        </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-primary">Lọc</button></div>
+</form>
+
+<div class="panel table-wrap">
+    <table class="table align-middle">
+        <thead><tr><th>MÃ</th><th>SẢN PHẨM</th><th>CỬA HÀNG</th><th>GIÁ HIỆN TẠI</th><th>LƯỢT</th><th>KẾT THÚC</th><th>TRẠNG THÁI</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var a in Model.Items)
+        {
+            <tr>
+                <td>#@a.Id</td>
+                <td><b>@a.ProductName</b></td>
+                <td>@a.ShopName</td>
+                <td><b>@HienThi.Tien(a.CurrentPrice)</b></td>
+                <td>@a.BidCount</td>
+                <td class="small">@HienThi.NgayGio(a.EndAt)</td>
+                <td><span class="@HienThi.LopTrangThai(a.Status)">@HienThi.TrangThaiPhien(a.Status)</span></td>
+                <td><a class="smallbtn text-decoration-none" asp-action="Details" asp-route-id="@a.Id">Chi tiết</a></td>
+            </tr>
+        }
+        @if (Model.Items.Count == 0) { <tr><td colspan="8" class="text-center text-muted">Không có dữ liệu.</td></tr> }
+        </tbody>
+    </table>
+</div>
+<partial name="_Pager" model="new PagerVm(Model.Page, Model.TotalPages)" />

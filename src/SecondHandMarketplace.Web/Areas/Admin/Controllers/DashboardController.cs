@@ -1,9 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
+using SecondHandMarketplace.Web.Services.Dashboard;
 
 namespace SecondHandMarketplace.Web.Areas.Admin.Controllers;
 
-public class DashboardController : AdminBaseController
+public sealed class DashboardController(IDashboardService dashboard) : AdminBaseController
 {
-    // TODO: Thống kê hệ thống
-    public IActionResult Index() => View();
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken ct) => View(await dashboard.GetAdminAsync(ct));
+
+    [HttpGet]
+    public async Task<IActionResult> Chart(string mode = "day", CancellationToken ct = default) =>
+        Json(await dashboard.GetAdminChartAsync(mode, ct));
 }
