@@ -27,7 +27,10 @@ public class AppDbContext : DbContext
     public DbSet<LuotKiemDuyet> LuotKiemDuyets => Set<LuotKiemDuyet>();
     public DbSet<PhanTichAI> PhanTichAIs => Set<PhanTichAI>();
     public DbSet<TuKhoaCam> TuKhoaCams => Set<TuKhoaCam>();
+    public DbSet<LichSuViPham> LichSuViPhams => Set<LichSuViPham>();
     public DbSet<ThongBao> ThongBaos => Set<ThongBao>();
+    public DbSet<TranhChap> TranhChaps => Set<TranhChap>();
+    public DbSet<BaoCao> BaoCaos => Set<BaoCao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -224,12 +227,51 @@ public class AppDbContext : DbContext
         {
             e.ToTable("TuKhoaCam");
             e.HasKey(x => x.MaTuKhoaCam);
+            e.Property(x => x.MucDo).IsUnicode(false).HasMaxLength(4);
+        });
+
+        modelBuilder.Entity<LichSuViPham>(e =>
+        {
+            e.ToTable("LichSuViPham");
+            e.HasKey(x => x.MaViPham);
+            e.Property(x => x.MucDo).IsUnicode(false).HasMaxLength(4);
+            e.Property(x => x.NguonGhiNhan).IsUnicode(false).HasMaxLength(20);
+            // Khớp UQ_LichSuViPham_LuotKiemDuyet: một lượt kiểm duyệt tối đa một vi phạm.
+            e.HasIndex(x => x.MaLuotKiemDuyet).IsUnique();
         });
 
         modelBuilder.Entity<ThongBao>(e =>
         {
             e.ToTable("ThongBao");
             e.HasKey(x => x.MaThongBao);
+        });
+
+            modelBuilder.Entity<TranhChap>(e =>
+            {
+                e.ToTable("TranhChap");
+                e.HasKey(x => x.MaTranhChap);
+                e.Property(x => x.LyDo).HasMaxLength(500);
+                e.Property(x => x.BangChungAnh).IsUnicode(false).HasMaxLength(500);
+                e.Property(x => x.PhanHoiNguoiBan).HasMaxLength(1000);
+                e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(20);
+                e.Property(x => x.PhanQuyet).HasMaxLength(500);
+                e.Property(x => x.GhiChuAdmin).HasMaxLength(1000);
+                e.HasOne(x => x.DonHang).WithMany().HasForeignKey(x => x.MaDonHang).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(x => x.NguoiTao).WithMany().HasForeignKey(x => x.MaNguoiTao).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(x => x.NguoiXuLy).WithMany().HasForeignKey(x => x.NguoiXuLyId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+        modelBuilder.Entity<BaoCao>(e =>
+        {
+            e.ToTable("BaoCao");
+            e.HasKey(x => x.MaBaoCao);
+            e.Property(x => x.LoaiDoiTuong).IsUnicode(false).HasMaxLength(10);
+            e.Property(x => x.LyDo).HasMaxLength(255);
+            e.Property(x => x.MoTa).HasMaxLength(1000);
+            e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(15);
+            e.Property(x => x.GhiChuXuLy).HasMaxLength(500);
+            e.HasOne(x => x.NguoiBaoCao).WithMany().HasForeignKey(x => x.MaNguoiBaoCao).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.NguoiXuLy).WithMany().HasForeignKey(x => x.NguoiXuLyId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

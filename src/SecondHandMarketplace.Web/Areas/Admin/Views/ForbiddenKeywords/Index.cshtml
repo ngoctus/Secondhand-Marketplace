@@ -1,0 +1,88 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Admin.ForbiddenKeywordsVm
+@{ ViewData["Title"] = "Từ khóa cấm"; }
+<div class="container-fluid py-4">
+    <h2>Từ khóa cấm</h2>
+    <p class="text-muted">
+        <strong>HIGH</strong>: sản phẩm bị tự động từ chối và người bán bị ghi 1 vi phạm.
+        <strong>LOW</strong>: chờ Admin xem xét ở màn hình kiểm duyệt (xác nhận vi phạm hoặc bỏ qua).
+        Thay đổi chỉ áp dụng cho các lần phân tích sau.
+    </p>
+
+    <form asp-action="Add" method="post" class="row g-2 mb-4">
+        <div class="col-md-3"><input name="phrase" class="form-control" placeholder="Từ/cụm từ cấm" required maxlength="100" /></div>
+        <div class="col-md-2"><input name="group" class="form-control" placeholder="Nhóm (HANG_GIA)" maxlength="30" /></div>
+        <div class="col-md-2">
+            <select name="level" class="form-select">
+                <option value="LOW" selected>LOW - chờ Admin</option>
+                <option value="HIGH">HIGH - tự từ chối</option>
+            </select>
+        </div>
+        <div class="col-md-3"><input name="note" class="form-control" placeholder="Ghi chú" maxlength="500" /></div>
+        <div class="col-auto"><button class="btn btn-primary">Thêm từ khóa</button></div>
+    </form>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-3"><input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo từ khóa hoặc nhóm" /></div>
+        <div class="col-md-2">
+            <select name="level" class="form-select">
+                <option value="" selected="@string.IsNullOrEmpty(Model.Level)">Mọi mức độ</option>
+                <option value="HIGH" selected="@(Model.Level == "HIGH")">HIGH</option>
+                <option value="LOW" selected="@(Model.Level == "LOW")">LOW</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="active" class="form-select">
+                <option value="" selected="@(Model.Active == null)">Mọi trạng thái</option>
+                <option value="true" selected="@(Model.Active == true)">Đang áp dụng</option>
+                <option value="false" selected="@(Model.Active == false)">Đã tắt</option>
+            </select>
+        </div>
+        <div class="col-auto"><button class="btn btn-outline-secondary">Lọc</button></div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr><th>Từ khóa</th><th>Nhóm</th><th>Mức độ</th><th>Ghi chú</th><th>Trạng thái</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var k in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <strong>@k.Phrase</strong>
+                        <div class="small text-muted">@k.NormalizedPhrase</div>
+                    </td>
+                    <td colspan="3">
+                        <form asp-action="Update" method="post" class="d-flex gap-2">
+                            <input type="hidden" name="id" value="@k.Id" />
+                            <input name="group" value="@k.Group" class="form-control" style="max-width:170px" maxlength="30" />
+                            <select name="level" class="form-select" style="max-width:120px">
+                                <option value="LOW" selected="@(k.Level == "LOW")">LOW</option>
+                                <option value="HIGH" selected="@(k.Level == "HIGH")">HIGH</option>
+                            </select>
+                            <input name="note" value="@k.Note" class="form-control" maxlength="500" />
+                            <button class="btn btn-sm btn-outline-primary">Lưu</button>
+                        </form>
+                    </td>
+                    <td>
+                        @if (k.Active) { <span class="badge bg-success">Đang áp dụng</span> }
+                        else { <span class="badge bg-secondary">Đã tắt</span> }
+                    </td>
+                    <td>
+                        <form asp-action="Toggle" method="post">
+                            <input type="hidden" name="id" value="@k.Id" />
+                            <input type="hidden" name="active" value="@((!k.Active).ToString().ToLowerInvariant())" />
+                            <button class="btn btn-sm @(k.Active ? "btn-outline-warning" : "btn-outline-success")">@(k.Active ? "Tắt" : "Bật")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Items.Any())
+            {
+                <tr><td colspan="6" class="text-center text-muted">Chưa có từ khóa nào.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

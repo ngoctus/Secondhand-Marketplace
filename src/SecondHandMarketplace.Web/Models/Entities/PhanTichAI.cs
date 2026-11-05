@@ -22,5 +22,9 @@ public class PhanTichAI
     public DateTime NgayTao { get; set; }
     public DateTime? ThoiGianHoanThanh { get; set; }
 
+    // --- C2 (database/14_kiemduyet_tukhoa_c2.sql) ---
+    /// <summary>NONE, LOW, HIGH: mức cao nhất của lần quét từ khóa gần nhất. NULL = chưa quét từ khóa.</summary>
+    public string? MucDoTuKhoa { get; set; }
+
     public LuotKiemDuyet LuotKiemDuyet { get; set; } = null!;
 }
