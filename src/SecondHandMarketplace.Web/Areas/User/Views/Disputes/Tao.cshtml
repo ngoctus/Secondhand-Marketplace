@@ -1,0 +1,73 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Disputes.MoTranhChapViewModel
+@{
+    ViewData["Title"] = $"Mở khiếu nại đơn hàng #{Model.MaDon}";
+}
+
+<div class="container my-4" style="max-width: 700px;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Khiếu nại & Tranh chấp</a></li>
+            <li class="breadcrumb-item active text-dark" aria-current="page">Mở khiếu nại</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 p-md-5">
+        <div class="text-center mb-4">
+            <div class="display-5 text-warning mb-2">🛡️</div>
+            <h2 class="h4 fw-bold text-dark">Mở khiếu nại đơn hàng</h2>
+            <p class="text-muted small">Ban quản trị sẽ đồng hành và bảo vệ quyền lợi chính đáng của bạn.</p>
+        </div>
+
+        <partial name="_ThongBao" />
+
+        <div class="p-3 bg-light rounded-3 mb-4 border">
+            <div class="row g-2 small">
+                <div class="col-6">
+                    <span class="text-muted d-block">Mã đơn hàng:</span>
+                    <strong class="text-dark">#@Model.MaDon</strong>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted d-block">Cửa hàng:</span>
+                    <strong class="text-dark">@Model.TenShop</strong>
+                </div>
+                <div class="col-12 pt-2 border-top mt-2">
+                    <span class="text-muted">Tổng thanh toán:</span>
+                    <strong class="text-success ms-1">@Model.TongTien.ToString("N0") ₫</strong>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Tao" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="MaDonHang" />
+            <input type="hidden" asp-for="MaDon" />
+            <input type="hidden" asp-for="TenShop" />
+            <input type="hidden" asp-for="TongTien" />
+
+            <div class="mb-3">
+                <label asp-for="LyDo" class="form-label fw-semibold text-dark">Lý do khiếu nại <span class="text-danger">*</span></label>
+                <textarea asp-for="LyDo" rows="4" class="form-control rounded-3" required
+                          placeholder="Mô tả chi tiết vấn đề: hàng không đúng mô tả, hàng bị vỡ nát, người bán gửi sai hàng, thiếu linh phụ kiện... (tối đa 500 ký tự)"></textarea>
+                <span asp-validation-for="LyDo" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="BangChungAnh" class="form-label fw-semibold text-dark">Ảnh bằng chứng (URL hoặc đường dẫn ảnh)</label>
+                <input asp-for="BangChungAnh" type="text" class="form-control rounded-3"
+                       placeholder="Ví dụ: /uploads/disputes/evidence.jpg hoặc liên kết hình ảnh mở hàng..." />
+                <span asp-validation-for="BangChungAnh" class="text-danger small"></span>
+                <div class="form-text small">Khuyến khích cung cấp ảnh hoặc video mở kiện hàng để BQT xử lý nhanh nhất.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning flex-grow-1 py-2 fw-semibold rounded-pill">
+                    <i class="bi bi-shield-exclamation"></i> Gửi yêu cầu giải quyết
+                </button>
+                <a asp-controller="Orders" asp-action="ChiTiet" asp-route-id="@Model.MaDonHang" class="btn btn-outline-secondary py-2 px-4 rounded-pill">
+                    Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

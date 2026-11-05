@@ -28,6 +28,7 @@ public class TranhChapDetailViewModel
     public string MaDon { get; set; } = string.Empty;
     public int MaNguoiTao { get; set; }
     public string TenNguoiTao { get; set; } = string.Empty;
+    public int MaChuShop { get; set; }
     public string TenShop { get; set; } = string.Empty;
     public decimal TongTien { get; set; }
     public string TrangThaiDonHang { get; set; } = string.Empty;

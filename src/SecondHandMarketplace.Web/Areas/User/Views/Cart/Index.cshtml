@@ -1,9 +1,10 @@
-@model SecondHandMarketplace.Web.Models.ViewModels.Cart.CartIndexViewModel
+﻿@model SecondHandMarketplace.Web.Models.ViewModels.Cart.CartIndexViewModel
 @{
     ViewData["Title"] = "Giỏ hàng của bạn";
 }
 
 <div class="container my-4" style="max-width: 1100px;">
+    <form id="antiForgeryCartForm" style="display:none;">@Html.AntiForgeryToken()</form>
     <!-- Tiêu đề trang -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
@@ -173,6 +174,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Checkbox từng sản phẩm
+            const afToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
             document.querySelectorAll('.item-checkbox').forEach(function (chk) {
                 chk.addEventListener('change', function () {
                     const id = this.getAttribute('data-id');
@@ -181,7 +183,8 @@
                     fetch('@Url.Action("ChuyenTrangThaiChon", "Cart", new { area = "User" })', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: 'maGioHang=' + encodeURIComponent(id) + '&daChon=' + encodeURIComponent(daChon)
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': afToken },
+                        body: 'maGioHang=' + encodeURIComponent(id) + '&daChon=' + encodeURIComponent(daChon) + '&__RequestVerificationToken=' + encodeURIComponent(afToken)
                     }).then(res => res.json()).then(data => {
                         capNhatGiaoDien();
                     });
@@ -201,7 +204,8 @@
                     fetch('@Url.Action("ChonTatCaShop", "Cart", new { area = "User" })', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: 'maCuaHang=' + encodeURIComponent(shopId) + '&daChon=' + encodeURIComponent(daChon)
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': afToken },
+                        body: 'maCuaHang=' + encodeURIComponent(shopId) + '&daChon=' + encodeURIComponent(daChon) + '&__RequestVerificationToken=' + encodeURIComponent(afToken)
                     }).then(res => res.json()).then(data => {
                         capNhatGiaoDien();
                     });

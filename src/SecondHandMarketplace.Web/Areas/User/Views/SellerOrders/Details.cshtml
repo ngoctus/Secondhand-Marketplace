@@ -1,4 +1,4 @@
-@model OrderDetailVm
+﻿@model OrderDetailVm
 @{
     ViewData["Title"] = "Đơn " + Model.MaDon;
     var tiep = OrderRules.TiepTheoChoNguoiBan(Model.Status);
@@ -9,6 +9,26 @@
     <div><h2>Đơn @Model.MaDon</h2><p class="muted">Người mua: @Model.BuyerName · Đặt lúc @HienThi.NgayGio(Model.CreatedAt)</p></div>
     <span class="@HienThi.LopTrangThai(Model.Status)">@HienThi.TrangThaiDon(Model.Status)</span>
 </div>
+
+@inject SecondHandMarketplace.Web.Data.AppDbContext DbContext
+@{
+    var activeDispute = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+        DbContext.TranhChaps.Where(t => t.MaDonHang == Model.Id)
+    );
+}
+
+@if (activeDispute != null)
+{
+    <div class="alert alert-warning border border-warning p-3 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="fw-bold mb-1"><i class="bi bi-shield-exclamation"></i> Đơn hàng đang có khiếu nại từ người mua</h6>
+            <p class="small text-muted mb-0">Lý do: @activeDispute.LyDo (@(activeDispute.TrangThai == "OPEN" ? "Chờ bạn phản hồi" : "Đang xử lý"))</p>
+        </div>
+        <a asp-area="User" asp-controller="Disputes" asp-action="ChiTiet" asp-route-id="@activeDispute.MaTranhChap" class="btn btn-warning btn-sm fw-semibold rounded-pill px-3">
+            Xem & Phản hồi &rarr;
+        </a>
+    </div>
+}
 
 <div class="row g-4">
     <div class="col-lg-8">

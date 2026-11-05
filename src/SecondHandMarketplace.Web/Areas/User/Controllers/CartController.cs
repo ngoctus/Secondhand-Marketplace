@@ -54,6 +54,7 @@ public class CartController : UserBaseController
 
     /// <summary>Bật/tắt chọn một món hàng.</summary>
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChuyenTrangThaiChon(int maGioHang, bool daChon)
     {
         var userId = User.LayNguoiDungId()!.Value;
@@ -63,6 +64,7 @@ public class CartController : UserBaseController
 
     /// <summary>Bật/tắt chọn toàn bộ sản phẩm của một shop.</summary>
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChonTatCaShop(int maCuaHang, bool daChon)
     {
         var userId = User.LayNguoiDungId()!.Value;

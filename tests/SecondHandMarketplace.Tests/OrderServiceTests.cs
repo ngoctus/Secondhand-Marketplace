@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Cart;
+using SecondHandMarketplace.Web.Models.ViewModels.Orders;
 using SecondHandMarketplace.Web.Services.Carts;
 using SecondHandMarketplace.Web.Services.Orders;
 using Xunit;
@@ -108,5 +109,104 @@ public class OrderServiceTests
 
         Assert.False(thanhCong);
         Assert.Equal("Vui lòng nhập lý do hủy đơn.", thongBao);
+    }
+
+    [Fact]
+    public async Task MuaNgayAsync_HaiBuyerDuaKhoCungMotSanPham_BuyerSauBiChan()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_DuaKho");
+        var fakeCart = new FakeCartService();
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 99, TenShop = "Tech Store", TrangThai = "ACTIVE" };
+        var sp = new SanPham
+        {
+            MaSanPham = 500,
+            MaCuaHang = 1,
+            Ten = "iPhone 13 Pro Max",
+            Gia = 15000000,
+            TrangThai = "ACTIVE",
+            DaXoa = false,
+            CuaHang = shop
+        };
+        db.CuaHangs.Add(shop);
+        db.SanPhams.Add(sp);
+        await db.SaveChangesAsync();
+
+        var service = new OrderService(db, fakeCart);
+
+        var checkoutVm = new CheckoutViewModel
+        {
+            TenNguoiNhan = "Buyer Test",
+            SoDienThoaiNhan = "0901234567",
+            DiaChiNhan = "123 Nguyen Hue",
+            PhuongThucThanhToan = "COD"
+        };
+
+        // Buyer 1 (id 1) đặt mua trước
+        var res1 = await service.MuaNgayAsync(1, 500, checkoutVm);
+        Assert.True(res1.ThanhCong);
+        Assert.NotEmpty(res1.DanhSachMaDon);
+
+        // Kiểm tra sản phẩm đã chuyển trạng thái sang SOLD
+        var spSauKhiMua = await db.SanPhams.FindAsync(500);
+        Assert.Equal("SOLD", spSauKhiMua!.TrangThai);
+
+        // Buyer 2 (id 2) cũng cố mua ngay sản phẩm 500
+        var res2 = await service.MuaNgayAsync(2, 500, checkoutVm);
+        Assert.False(res2.ThanhCong);
+        Assert.Empty(res2.DanhSachMaDon);
+        Assert.Contains("không tồn tại hoặc đã được bán", res2.ThongBao);
+    }
+
+    [Fact]
+    public async Task HuyDonMuaAsync_DonDaHoanTat_KhongChoHuy()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_HuyDonSaiTrangThai");
+        var fakeCart = new FakeCartService();
+
+        var don = new DonHang
+        {
+            MaDonHang = 10,
+            MaNguoiDung = 1,
+            MaCuaHang = 2,
+            TrangThai = "COMPLETED",
+            TrangThaiThanhToan = "PAID",
+            TongTien = 200000,
+            NgayTao = DateTime.UtcNow
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var service = new OrderService(db, fakeCart);
+        var (ok, msg) = await service.HuyDonMuaAsync(1, 10, "Đổi ý muốn hủy");
+
+        Assert.False(ok);
+        Assert.Contains("Chỉ có thể hủy đơn hàng khi đơn ở trạng thái chờ duyệt hoặc đã xác nhận", msg);
+    }
+
+    [Fact]
+    public async Task XacNhanDaNhanHangAsync_DonChuaGiao_KhongChoXacNhan()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_NhanHangSaiTrangThai");
+        var fakeCart = new FakeCartService();
+
+        var don = new DonHang
+        {
+            MaDonHang = 20,
+            MaNguoiDung = 1,
+            MaCuaHang = 2,
+            TrangThai = "SHIPPING", // Chưa DELIVERED
+            TrangThaiThanhToan = "PAID",
+            TongTien = 500000,
+            NgayTao = DateTime.UtcNow
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var service = new OrderService(db, fakeCart);
+        var (ok, msg) = await service.XacNhanDaNhanHangAsync(1, 20);
+
+        Assert.False(ok);
+        Assert.Contains("Chỉ có thể xác nhận khi đơn hàng đã được giao đến bạn", msg);
     }
 }
