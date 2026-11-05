@@ -386,6 +386,11 @@ BEGIN
         IF LEN(LTRIM(RTRIM(ISNULL(@DiaChi, N'')))) = 0
             SET @DiaChi = N'Người thắng chưa cập nhật địa chỉ, vui lòng liên hệ để xác nhận.';
 
+         -- Đóng phiên (ghi người thắng) TRƯỚC khi trả sản phẩm về ACTIVE để trigger chặn rút sản phẩm không vướng
+        UPDATE PhienDauGia
+        SET TrangThai = 'ENDED', MaNguoiThang = @NguoiThang, GiaThang = @GiaThang, NgayCapNhat = @Now
+        WHERE MaPhienDauGia = @MaPhienDauGia;
+
         UPDATE SanPham SET Gia = @GiaThang WHERE MaSanPham = @MaSP;
 
         EXEC sp_ChuyenTrangThaiSanPham @MaSanPham = @MaSP, @TrangThaiMoi = 'ACTIVE',
@@ -401,15 +406,12 @@ BEGIN
 
         SELECT @MaDon = MaDon FROM DonHang WHERE MaDonHang = @MaDonHang;
 
-        UPDATE PhienDauGia
-        SET TrangThai = 'ENDED', MaNguoiThang = @NguoiThang, GiaThang = @GiaThang, MaDonHang = @MaDonHang, NgayCapNhat = @Now
-        WHERE MaPhienDauGia = @MaPhienDauGia;
+        UPDATE PhienDauGia SET MaDonHang = @MaDonHang, NgayCapNhat = @Now WHERE MaPhienDauGia = @MaPhienDauGia;
 
         INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu)
         VALUES (@NguoiThang, 'ORDER', N'Chúc mừng! Bạn đã thắng đấu giá',
                 CONCAT(N'Bạn thắng "', @TenSP, N'" với giá ', FORMAT(@GiaThang, 'N0', 'vi-VN'), N'đ. Đơn hàng ', @MaDon, N' đã được tạo.'),
                 @MaDonHang);
-
 
         INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu)
         SELECT DISTINCT l.MaNguoiDung, 'PRODUCT', N'Phiên đấu giá đã kết thúc',
@@ -429,6 +431,78 @@ BEGIN
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
         THROW;
     END CATCH;
+END
+GO
+
+-- Hủy phiên do hệ thống khi không thể chốt đơn (BackgroundService gọi sau nhiều lần lỗi liên tiếp)
+CREATE OR ALTER PROCEDURE sp_HuyPhienDauGiaHeThong
+    @MaPhienDauGia int,
+    @LyDo          nvarchar(500)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @Now datetime2(3) = SYSUTCDATETIME(), @TrangThai varchar(12), @MaSP int,
+            @ChuShopId int, @TenSP nvarchar(200);
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        SELECT @TrangThai = p.TrangThai, @MaSP = p.MaSanPham
+        FROM PhienDauGia p WITH (UPDLOCK, HOLDLOCK)
+        WHERE p.MaPhienDauGia = @MaPhienDauGia;
+
+        IF @TrangThai IS NULL OR @TrangThai NOT IN ('SCHEDULED','RUNNING')
+        BEGIN
+            COMMIT TRANSACTION;
+            RETURN;
+        END
+
+        SELECT @ChuShopId = ch.MaNguoiDung, @TenSP = sp.Ten
+        FROM SanPham sp JOIN CuaHang ch ON ch.MaCuaHang = sp.MaCuaHang WHERE sp.MaSanPham = @MaSP;
+
+        UPDATE PhienDauGia
+        SET TrangThai = 'CANCELLED', NguoiHuy = 'SYSTEM', LyDoHuy = @LyDo, ThoiGianHuy = @Now, NgayCapNhat = @Now
+        WHERE MaPhienDauGia = @MaPhienDauGia;
+
+        IF EXISTS (SELECT 1 FROM SanPham WHERE MaSanPham = @MaSP AND TrangThai = 'RESERVED' AND DaXoa = 0)
+            EXEC sp_ChuyenTrangThaiSanPham @MaSanPham = @MaSP, @TrangThaiMoi = 'ACTIVE',
+                 @LoaiNguoiThucHien = 'SYSTEM', @LyDo = N'Hệ thống hủy phiên đấu giá do lỗi chốt đơn';
+
+        INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu)
+        SELECT DISTINCT x.Id, 'PRODUCT', N'Phiên đấu giá bị hủy',
+               CONCAT(N'Phiên đấu giá "', @TenSP, N'" bị hủy do hệ thống không thể chốt đơn. Xin lỗi vì sự bất tiện.'), @MaSP
+        FROM (SELECT @ChuShopId AS Id UNION SELECT MaNguoiDung FROM LuotDatGia WHERE MaPhienDauGia = @MaPhienDauGia) x;
+
+        EXEC sp_GhiNhatKy @HanhDong = 'CANCEL_AUCTION', @LoaiDoiTuong = 'PhienDauGia', @DoiTuongId = @MaPhienDauGia,
+                          @KetQua = 'FAILED', @LyDo = @LyDo;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END
+GO
+
+-- =====================================================================
+-- Chặn đưa sản phẩm đang nằm trong phiên đấu giá (SCHEDULED/RUNNING) ra khỏi RESERVED hoặc xóa mềm.
+-- Muốn thay đổi thì phải hủy phiên trước (sp_HuyPhienDauGia).
+-- =====================================================================
+CREATE OR ALTER TRIGGER trg_SanPham_ChanRutKhoiDauGia ON SanPham AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT (UPDATE(TrangThai) OR UPDATE(DaXoa)) RETURN;
+
+    IF EXISTS (SELECT 1
+               FROM inserted i
+               JOIN deleted d ON d.MaSanPham = i.MaSanPham
+               JOIN PhienDauGia p ON p.MaSanPham = i.MaSanPham AND p.TrangThai IN ('SCHEDULED','RUNNING')
+               WHERE d.TrangThai = 'RESERVED' AND (i.TrangThai <> 'RESERVED' OR i.DaXoa = 1))
+        THROW 52060, N'Sản phẩm đang nằm trong phiên đấu giá. Hãy hủy phiên đấu giá trước khi thay đổi trạng thái sản phẩm.', 1;
 END
 GO
 

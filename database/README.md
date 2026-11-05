@@ -19,8 +19,9 @@ Chạy `run-db.bat` để tạo database `SecondHandMarketplace` và nạp dữ 
 - `11_danhgia.sql`: phần Đánh giá (người C phụ trách).
 - `12_tranhchap_baocao.sql`: phần Tranh chấp và Báo cáo (người D phụ trách).
 - `13_daugia.sql`: phần Đấu giá (người E phụ trách).
+- `14_donhang_admin.sql`: thủ tục Admin can thiệp đơn hàng `sp_AdminCapNhatTrangThaiDon` (người E phụ trách).
 
-Bốn file `10`–`13` được tạo sẵn chỉ có `USE SecondHandMarketplace; GO`. Thành viên phụ trách bổ sung SQL vào đúng file của mình, không sửa `02_create_tables.sql` hoặc `09_seed_data.sql`.
+Bốn file `10`–`13` được tạo sẵn chỉ có `USE SecondHandMarketplace; GO`; file `14` do người E bổ sung thêm. Thành viên phụ trách bổ sung SQL vào đúng file của mình, không sửa `02_create_tables.sql` hoặc `09_seed_data.sql`.
 
 ## Thứ tự thực thi
 

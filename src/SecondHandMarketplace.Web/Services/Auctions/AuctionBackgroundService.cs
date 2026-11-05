@@ -11,9 +11,11 @@ namespace SecondHandMarketplace.Web.Services.Auctions;
 public sealed class AuctionBackgroundService(IServiceScopeFactory scopes, IConfiguration config, ILogger<AuctionBackgroundService> log)
     : BackgroundService
 {
+    private const int ToiDaLanThu = 3;
+    private readonly Dictionary<int, int> _soLanLoi = new();
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var giay = Math.Max(10, config.GetValue("Auction:SweepSeconds", 30));
+        var giay = Math.Max(10, config.GetValue("Auction:SweepSeconds", 60));
         try
         {
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);   // chờ app khởi động xong
@@ -50,11 +52,33 @@ public sealed class AuctionBackgroundService(IServiceScopeFactory scopes, IConfi
             {
                 await db.Database.ExecuteSqlRawAsync("EXEC dbo.sp_KetThucPhienDauGia @MaPhienDauGia",
                     new object[] { new SqlParameter("@MaPhienDauGia", id) }, ct);
+                _soLanLoi.Remove(id);
                 log.LogInformation("Đã chốt phiên đấu giá {Id}.", id);
             }
             catch (SqlException ex)
             {
-                log.LogError(ex, "Không chốt được phiên đấu giá {Id}.", id);
+                var lan = _soLanLoi.GetValueOrDefault(id) + 1;
+                _soLanLoi[id] = lan;
+                log.LogError(ex, "Không chốt được phiên đấu giá {Id} (lần {Lan}/{Max}).", id, lan, ToiDaLanThu);
+
+                if (lan >= ToiDaLanThu)
+                {
+                    try
+                    {
+                        await db.Database.ExecuteSqlRawAsync("EXEC dbo.sp_HuyPhienDauGiaHeThong @MaPhienDauGia, @LyDo",
+                            new object[]
+                            {
+                                new SqlParameter("@MaPhienDauGia", id),
+                                new SqlParameter("@LyDo", "Hệ thống không thể chốt đơn cho phiên này nên phiên được hủy để bảo vệ quyền lợi các bên.")
+                            }, ct);
+                        _soLanLoi.Remove(id);
+                        log.LogWarning("Đã hủy phiên đấu giá {Id} sau {Max} lần chốt lỗi.", id, ToiDaLanThu);
+                    }
+                    catch (SqlException ex2)
+                    {
+                        log.LogError(ex2, "Không hủy được phiên đấu giá lỗi {Id}.", id);
+                    }
+                }
             }
         }
     }

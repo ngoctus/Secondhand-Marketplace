@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
@@ -43,10 +44,11 @@ public sealed class ThongKeHeThongRow
     public decimal DoanhThu { get; set; }
 }
 
-public sealed class DashboardService(AppDbContext db) : IDashboardService
+public sealed class DashboardService(AppDbContext db, IConfiguration config, ILogger<DashboardService> log) : IDashboardService
 {
-    // TODO(D): bảng báo cáo do D tạo trong 12_tranhchap_baocao.sql. Sửa tên bảng/cột/giá trị "chưa xử lý" cho khớp khi D chốt.
-    private const string DemBaoCaoChuaXuLySql =
+    // Chốt với D tên bảng/cột/giá trị "chưa xử lý". Khi D đã tạo bảng, chỉ cần đặt Dashboard:PendingReportsSql
+    // trong appsettings (câu SELECT trả về 1 cột tên Value) mà không phải sửa code.
+    private const string DemBaoCaoMacDinh =
         "SELECT COUNT(*) AS Value FROM dbo.BaoCao WHERE TrangThai IN ('NEW', 'INVESTIGATING')";
 
     public async Task<SellerDashboardVm?> GetSellerAsync(int userId, CancellationToken ct = default)
@@ -120,8 +122,21 @@ public sealed class DashboardService(AppDbContext db) : IDashboardService
 
     private async Task<int?> DemBaoCaoAsync(CancellationToken ct)
     {
-        try { return await db.Database.SqlQueryRaw<int>(DemBaoCaoChuaXuLySql).SingleAsync(ct); }
-        catch { return null; }   // bảng báo cáo chưa có hoặc khác tên: hiển thị "—"
+        var sql = config["Dashboard:PendingReportsSql"] ?? DemBaoCaoMacDinh;
+        try
+        {
+            return await db.Database.SqlQueryRaw<int>(sql).SingleAsync(ct);
+        }
+        catch (SqlException ex) when (ex.Number is 207 or 208)   // 207: sai tên cột, 208: chưa có bảng
+        {
+            log.LogWarning("Chưa đếm được báo cáo chưa xử lý, bảng/cột báo cáo chưa có hoặc khác tên ({Msg}). Chỉnh Dashboard:PendingReportsSql trong appsettings.", ex.Message);
+            return null;   // giao diện hiển thị "—"
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Lỗi khi đếm báo cáo chưa xử lý.");
+            return null;
+        }
     }
 
     public Task<ChartDataVm> GetSellerChartAsync(int userId, string mode, CancellationToken ct = default) =>

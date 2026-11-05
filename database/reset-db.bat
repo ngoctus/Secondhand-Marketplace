@@ -21,5 +21,5 @@ if errorlevel 1 (
     exit /b 1
 )
 
-rem run-db.bat se chay 01-09 va cac file 10_banner_yeuthich.sql, 11_danhgia.sql, 12_tranhchap_baocao.sql, 13_daugia.sql.
+rem run-db.bat se chay 01-09 va cac file 10_banner_yeuthich.sql, 11_danhgia.sql, 12_tranhchap_baocao.sql, 13_daugia.sql, 14_donhang_admin.sql.
 call run-db.bat

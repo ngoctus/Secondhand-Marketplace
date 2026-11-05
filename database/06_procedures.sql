@@ -665,7 +665,11 @@ BEGIN
 
         INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu)
         SELECT r.Id, 'ORDER', N'Cập nhật đơn hàng',
-               CONCAT(N'Đơn ', @MaDon, N' chuyển sang trạng thái ', @TrangThaiMoi, N'.'), @MaDonHang
+               CONCAT(N'Đơn ', @MaDon, N' chuyển sang trạng thái "',
+                      CASE @TrangThaiMoi
+                          WHEN 'CONFIRMED' THEN N'Đã xác nhận' WHEN 'SHIPPING'  THEN N'Đang giao'
+                          WHEN 'DELIVERED' THEN N'Đã giao'     WHEN 'COMPLETED' THEN N'Hoàn tất'
+                          WHEN 'CANCELLED' THEN N'Đã hủy'      ELSE @TrangThaiMoi END, N'".'), @MaDonHang
         FROM (VALUES (@MaNguoiMua), (@ChuShopId)) r (Id)
         WHERE r.Id <> @MaNguoiDung;
 
