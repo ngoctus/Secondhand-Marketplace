@@ -112,6 +112,39 @@ public class DisputeServiceTests
     }
 
     [Fact]
+    public async Task MoTranhChapAsync_BangChungAnhQuaDai_BaoLoi()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_AnhQuaDai");
+        var fakeNotify = new FakeNotificationService();
+        var fakeAudit = new FakeAuditLogService();
+        var service = new DisputeService(db, fakeNotify, fakeAudit);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Shop 1" };
+        db.CuaHangs.Add(shop);
+
+        db.DonHangs.Add(new DonHang
+        {
+            MaDonHang = 15,
+            MaDon = "DH015",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "DELIVERED",
+            CuaHang = shop
+        });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, thongBao) = await service.MoTranhChapAsync(20, new MoTranhChapViewModel
+        {
+            MaDonHang = 15,
+            LyDo = "Hàng trầy xước",
+            BangChungAnh = new string('x', 501)
+        });
+
+        Assert.False(thanhCong);
+        Assert.Contains("không được vượt quá 500 ký tự", thongBao);
+    }
+
+    [Fact]
     public async Task MoTranhChapAsync_ChongMoTrungTranhChap()
     {
         using var db = GetInMemoryDbContext("DisputeTest_ChongTrung");
@@ -257,5 +290,192 @@ public class DisputeServiceTests
         Assert.Contains(fakeAudit.Logs, l => l.Action == "RESOLVE_DISPUTE");
         Assert.Contains(fakeNotify.Notifications, n => n.UserId == 20);
         Assert.Contains(fakeNotify.Notifications, n => n.UserId == 30);
+    }
+
+    [Fact]
+    public async Task XuLyTranhChapAdminAsync_RefundBuyer_DonCompleted_SanPhamSoldChuyenLaiActive()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_RefundCompletedOrder");
+        var fakeNotify = new FakeNotificationService();
+        var fakeAudit = new FakeAuditLogService();
+        var service = new DisputeService(db, fakeNotify, fakeAudit);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop" };
+        var sp = new SanPham
+        {
+            MaSanPham = 50,
+            MaCuaHang = 1,
+            Ten = "Tai nghe Bluetooth",
+            Gia = 300000,
+            TrangThai = "SOLD", // Đã bán vì đơn COMPLETED
+            DaXoa = false
+        };
+        db.CuaHangs.Add(shop);
+        db.SanPhams.Add(sp);
+
+        var don = new DonHang
+        {
+            MaDonHang = 20,
+            MaDon = "DH020",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "COMPLETED",
+            TrangThaiThanhToan = "PAID",
+            TongTien = 300000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+
+        db.ChiTietDonHangs.Add(new ChiTietDonHang
+        {
+            MaChiTietDonHang = 1,
+            MaDonHang = 20,
+            MaSanPham = 50,
+            TenSanPham = "Tai nghe Bluetooth",
+            Gia = 300000,
+            DangGiuCho = false,
+            SanPham = sp
+        });
+
+        db.TranhChaps.Add(new TranhChap
+        {
+            MaTranhChap = 6,
+            MaDonHang = 20,
+            MaNguoiTao = 20,
+            LyDo = "Hàng bị lỗi sau 1 ngày sử dụng",
+            TrangThai = "PROCESSING",
+            DonHang = don
+        });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, _) = await service.XuLyTranhChapAdminAsync(6, 999, "REFUND_BUYER", "Hoàn tiền cho khách");
+        Assert.True(thanhCong);
+
+        // Đơn bị hủy, tiền được hoàn
+        Assert.Equal("CANCELLED", don.TrangThai);
+        Assert.Equal("REFUNDED", don.TrangThaiThanhToan);
+
+        // Sản phẩm SOLD được khôi phục về ACTIVE
+        var spSauXuLy = await db.SanPhams.FindAsync(50);
+        Assert.Equal("ACTIVE", spSauXuLy!.TrangThai);
+
+        // Lịch sử trạng thái sản phẩm được ghi nhận
+        var lichSuSp = await db.LichSuTrangThaiSanPhams.FirstOrDefaultAsync(l => l.MaSanPham == 50);
+        Assert.NotNull(lichSuSp);
+        Assert.Equal("SOLD", lichSuSp.TrangThaiCu);
+        Assert.Equal("ACTIVE", lichSuSp.TrangThaiMoi);
+    }
+
+    [Fact]
+    public async Task XuLyTranhChapAdminAsync_PaySeller_CapNhatTrangThaiCompletedVaSold()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_PaySeller");
+        var fakeNotify = new FakeNotificationService();
+        var fakeAudit = new FakeAuditLogService();
+        var service = new DisputeService(db, fakeNotify, fakeAudit);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop" };
+        var sp = new SanPham
+        {
+            MaSanPham = 55,
+            MaCuaHang = 1,
+            Ten = "Đồng hồ thông minh",
+            Gia = 500000,
+            TrangThai = "RESERVED",
+            DaXoa = false
+        };
+        db.CuaHangs.Add(shop);
+        db.SanPhams.Add(sp);
+
+        var don = new DonHang
+        {
+            MaDonHang = 30,
+            MaDon = "DH030",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "SHIPPING",
+            TrangThaiThanhToan = "UNPAID",
+            TongTien = 500000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+
+        db.ChiTietDonHangs.Add(new ChiTietDonHang
+        {
+            MaChiTietDonHang = 2,
+            MaDonHang = 30,
+            MaSanPham = 55,
+            TenSanPham = "Đồng hồ thông minh",
+            Gia = 500000,
+            DangGiuCho = true,
+            SanPham = sp
+        });
+
+        db.TranhChaps.Add(new TranhChap
+        {
+            MaTranhChap = 7,
+            MaDonHang = 30,
+            MaNguoiTao = 20,
+            LyDo = "Buyer khiếu nại vô căn cứ",
+            TrangThai = "PROCESSING",
+            DonHang = don
+        });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, _) = await service.XuLyTranhChapAdminAsync(7, 999, "RELEASE_SELLER", "Người bán đúng, chuyển tiền");
+        Assert.True(thanhCong);
+
+        // Đơn chuyển sang COMPLETED, tiền PAID
+        Assert.Equal("COMPLETED", don.TrangThai);
+        Assert.Equal("PAID", don.TrangThaiThanhToan);
+
+        // Sản phẩm chuyển sang SOLD
+        var spSauXuLy = await db.SanPhams.FindAsync(55);
+        Assert.Equal("SOLD", spSauXuLy!.TrangThai);
+    }
+
+    [Fact]
+    public async Task XuLyTranhChapAdminAsync_Reject_GiuNguyenTrangThaiDonHang()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_Reject");
+        var fakeNotify = new FakeNotificationService();
+        var fakeAudit = new FakeAuditLogService();
+        var service = new DisputeService(db, fakeNotify, fakeAudit);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop" };
+        db.CuaHangs.Add(shop);
+
+        var don = new DonHang
+        {
+            MaDonHang = 40,
+            MaDon = "DH040",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "DELIVERED",
+            TrangThaiThanhToan = "UNPAID",
+            TongTien = 150000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+
+        db.TranhChaps.Add(new TranhChap
+        {
+            MaTranhChap = 8,
+            MaDonHang = 40,
+            MaNguoiTao = 20,
+            LyDo = "Khiếu nại không hợp lý",
+            TrangThai = "PROCESSING",
+            DonHang = don
+        });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, _) = await service.XuLyTranhChapAdminAsync(8, 999, "REJECT", "Bác bỏ");
+        Assert.True(thanhCong);
+
+        var tc = await db.TranhChaps.FindAsync(8);
+        Assert.Equal("REJECTED", tc!.TrangThai);
+
+        // Trạng thái đơn giữ nguyên DELIVERED
+        Assert.Equal("DELIVERED", don.TrangThai);
     }
 }

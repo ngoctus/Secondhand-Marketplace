@@ -1,4 +1,4 @@
-﻿namespace SecondHandMarketplace.Web.Models.ViewModels.Orders;
+namespace SecondHandMarketplace.Web.Models.ViewModels.Orders;
 
 public sealed class OrderRowVm
 {
@@ -10,6 +10,7 @@ public sealed class OrderRowVm
     public int ItemCount { get; set; }
     public string? FirstItem { get; set; }
     public string? FirstImage { get; set; }
+    public int BuyerId { get; set; }
     public string BuyerName { get; set; } = "";
     public string ShopName { get; set; } = "";
     public string PaymentMethod { get; set; } = "";
@@ -55,6 +56,7 @@ public sealed class OrderDetailVm
     public string RecipientName { get; set; } = "";
     public string RecipientPhone { get; set; } = "";
     public string RecipientAddress { get; set; } = "";
+    public int BuyerId { get; set; }
     public string BuyerName { get; set; } = "";
     public string ShopName { get; set; } = "";
     public string SellerName { get; set; } = "";

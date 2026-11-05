@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Cart;
@@ -104,7 +105,7 @@ public class OrderService : IOrderService
         {
             // Kiến trúc: Stored procedure sp_DatHangTuGio trong database/06_procedures.sql đã tự động
             // tạo thông báo (NotificationTypes.Order) cho người bán và người mua trong cùng transaction,
-            // đảm bảo tính toàn vẹn và nguyên tử (ACID).
+            // đồng thời ghi nhận bản ghi ThanhToan với trạng thái tương ứng, đảm bảo tính toàn vẹn (ACID).
             if (_db.Database.IsRelational())
             {
                 var conn = _db.Database.GetDbConnection();
@@ -143,7 +144,7 @@ public class OrderService : IOrderService
                     PhiVanChuyen = model.PhiVanChuyen,
                     TongTien = model.TongThanhToan,
                     TrangThai = "PENDING",
-                    TrangThaiThanhToan = "UNPAID",
+                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "PAID" : "UNPAID",
                     PhuongThucThanhToan = model.PhuongThucThanhToan,
                     TenNguoiNhan = model.TenNguoiNhan.Trim(),
                     SoDienThoaiNhan = model.SoDienThoaiNhan.Trim(),
@@ -152,6 +153,21 @@ public class OrderService : IOrderService
                 };
                 _db.DonHangs.Add(don);
                 await _db.SaveChangesAsync();
+
+                // Ghi nhận bản ghi thanh toán
+                var tt = new ThanhToan
+                {
+                    MaDonHang = don.MaDonHang,
+                    MaGiaoDich = "TXN_" + don.MaDon,
+                    PhuongThucThanhToan = model.PhuongThucThanhToan,
+                    SoTien = don.TongTien,
+                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "SUCCESS" : "PENDING",
+                    ThoiGianThanhToan = model.PhuongThucThanhToan == "ONLINE" ? DateTime.UtcNow : null,
+                    NgayTao = DateTime.UtcNow
+                };
+                _db.ThanhToans.Add(tt);
+                await _db.SaveChangesAsync();
+
                 danhSachMaDon.Add(don.MaDon);
             }
 
@@ -242,7 +258,7 @@ public class OrderService : IOrderService
                     TongTien = (sp.Gia ?? 0) + model.PhiVanChuyen,
                     PhiVanChuyen = model.PhiVanChuyen,
                     TrangThai = "PENDING",
-                    TrangThaiThanhToan = "UNPAID",
+                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "PAID" : "UNPAID",
                     PhuongThucThanhToan = model.PhuongThucThanhToan,
                     TenNguoiNhan = model.TenNguoiNhan.Trim(),
                     SoDienThoaiNhan = model.SoDienThoaiNhan.Trim(),
@@ -250,6 +266,19 @@ public class OrderService : IOrderService
                     NgayTao = DateTime.UtcNow
                 };
                 _db.DonHangs.Add(don);
+                await _db.SaveChangesAsync();
+
+                var tt = new ThanhToan
+                {
+                    MaDonHang = don.MaDonHang,
+                    MaGiaoDich = "TXN_" + don.MaDon,
+                    PhuongThucThanhToan = model.PhuongThucThanhToan,
+                    SoTien = don.TongTien,
+                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "SUCCESS" : "PENDING",
+                    ThoiGianThanhToan = model.PhuongThucThanhToan == "ONLINE" ? DateTime.UtcNow : null,
+                    NgayTao = DateTime.UtcNow
+                };
+                _db.ThanhToans.Add(tt);
                 await _db.SaveChangesAsync();
 
                 return new DatHangResultViewModel
@@ -272,6 +301,8 @@ public class OrderService : IOrderService
 
     public async Task<List<DonHangItemViewModel>> LayDanhSachDonMuaAsync(int maNguoiDung, string? trangThai)
     {
+        // Kiến trúc: Sử dụng EF Core LINQ trên _db.DonHangs (tương đương logic vw_DonHangTongQuan)
+        // để hỗ trợ cả truy vấn quan hệ và môi trường kiểm thử tự động.
         var query = _db.DonHangs
             .Include(d => d.CuaHang)
             .Include(d => d.ChiTiet)
@@ -312,6 +343,7 @@ public class OrderService : IOrderService
 
     public async Task<DonHangChiTietViewModel?> LayChiTietDonMuaAsync(int maNguoiDung, int maDonHang)
     {
+        // Kiến trúc: Sử dụng EF Core LINQ trên _db.DonHangs tương đương vw_ChiTietDonHang.
         var d = await _db.DonHangs
             .Include(x => x.CuaHang)
             .Include(x => x.ChiTiet)
@@ -430,33 +462,5 @@ public class OrderService : IOrderService
         }
     }
 
-    private static string LayThongBaoLoi(Exception ex)
-    {
-        if (ex is SqlException sqlEx)
-        {
-            return sqlEx.Number switch
-            {
-                51101 => "Tài khoản người mua không hợp lệ hoặc đã bị khóa.",
-                51102 => "Không có sản phẩm nào được chọn trong giỏ hàng.",
-                51103 => "Bạn không thể đặt mua sản phẩm của chính cửa hàng mình.",
-                51104 => "Sản phẩm không còn bán hoặc đã có người khác nhanh tay đặt mua trước.",
-                51105 => "Giá sản phẩm đã được người bán cập nhật thay đổi. Vui lòng kiểm tra lại giỏ hàng.",
-                51107 => "Cửa hàng bán sản phẩm này hiện đang tạm ngừng hoạt động.",
-                51201 => "Đơn hàng không tồn tại trên hệ thống.",
-                51203 => "Không thể chuyển trạng thái đơn hàng này.",
-                51204 => "Bạn không có quyền thao tác trên đơn hàng này.",
-                51205 => "Chỉ chủ cửa hàng mới có quyền xác nhận giao hàng.",
-                51206 => "Chỉ người mua mới có quyền xác nhận hoàn tất đơn hàng.",
-                51207 => "Hủy đơn hàng bắt buộc phải cung cấp lý do cụ thể.",
-                >= 50000 and <= 53999 => sqlEx.Message,
-                2601 or 2627 => "Dữ liệu bị trùng lặp hoặc đã có người khác thao tác trước. Vui lòng tải lại trang.",
-                1205 => "Hệ thống đang bận xử lý giao dịch khác, vui lòng thử lại sau giây lát.",
-                _ => "Đã xảy ra lỗi khi xử lý cơ sở dữ liệu. Vui lòng thử lại sau."
-            };
-        }
-
-        return !string.IsNullOrWhiteSpace(ex.Message) && !ex.Message.Contains("Microsoft.") && !ex.Message.Contains("System.")
-            ? ex.Message
-            : "Đã xảy ra lỗi không mong muốn trong quá trình xử lý đơn hàng. Vui lòng thử lại sau.";
-    }
+    private static string LayThongBaoLoi(Exception ex) => SqlLoi.ThongBao(ex);
 }

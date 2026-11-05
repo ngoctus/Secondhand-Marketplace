@@ -15,9 +15,9 @@ public class DisputesController : AdminBaseController
 
     /// <summary>Danh sách tranh chấp và khiếu nại trong toàn sàn.</summary>
     [HttpGet]
-    public async Task<IActionResult> Index(string? trangThai = null)
+    public async Task<IActionResult> Index(string? trangThai = null, int page = 1)
     {
-        var vm = await _disputeService.LayDanhSachTranhChapAdminAsync(trangThai);
+        var vm = await _disputeService.LayDanhSachTranhChapAdminAsync(trangThai, page);
         return View(vm);
     }
 

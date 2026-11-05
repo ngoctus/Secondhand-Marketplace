@@ -15,9 +15,9 @@ public class ReportsController : AdminBaseController
 
     /// <summary>Danh sách báo cáo vi phạm trong hệ thống.</summary>
     [HttpGet]
-    public async Task<IActionResult> Index(string? trangThai = null, string? loaiDoiTuong = null)
+    public async Task<IActionResult> Index(string? trangThai = null, string? loaiDoiTuong = null, int page = 1)
     {
-        var vm = await _reportService.LayDanhSachBaoCaoAdminAsync(trangThai, loaiDoiTuong);
+        var vm = await _reportService.LayDanhSachBaoCaoAdminAsync(trangThai, loaiDoiTuong, page);
         return View(vm);
     }
 

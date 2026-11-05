@@ -40,11 +40,15 @@ public class BaoCaoItemViewModel
     public DateTime? NgayXuLy { get; set; }
 }
 
-/// <summary>Danh sách báo cáo quản trị Admin.</summary>
+/// <summary>Danh sách báo cáo quản trị Admin có phân trang.</summary>
 public class AdminReportListViewModel
 {
     public string? TrangThaiFilter { get; set; }
     public string? LoaiFilter { get; set; }
     public List<BaoCaoItemViewModel> Items { get; set; } = new();
     public int TongChuaXuLy { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+    public int TotalItems { get; set; }
+    public int TotalPages => (int)Math.Ceiling((double)TotalItems / (PageSize > 0 ? PageSize : 10));
 }

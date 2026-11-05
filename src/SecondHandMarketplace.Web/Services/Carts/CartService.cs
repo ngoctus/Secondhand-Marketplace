@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.ViewModels.Cart;
 
@@ -12,41 +13,52 @@ public class CartService : ICartService
 
     public async Task<CartIndexViewModel> LayGioHangAsync(int maNguoiDung)
     {
+        // Kiến trúc: Sử dụng EF Core LINQ với Include/ThenInclude tương đương logic view vw_GioHangChiTiet,
+        // đồng thời tương thích hoàn toàn trên cả SQL Server và môi trường test In-Memory.
         var rawItems = await _db.GioHangs
+            .AsNoTracking()
+            .Include(x => x.SanPham)
+                .ThenInclude(s => s.CuaHang)
+            .Include(x => x.SanPham)
+                .ThenInclude(s => s.Anh)
             .Where(x => x.MaNguoiDung == maNguoiDung)
             .OrderByDescending(x => x.ThoiGianThem)
-            .Select(x => new CartItemViewModel
-            {
-                MaGioHang = x.MaGioHang,
-                MaSanPham = x.MaSanPham,
-                TenSanPham = x.SanPham.Ten,
-                Gia = x.SanPham.Gia ?? 0,
-                DaChon = x.DaChon,
-                MaCuaHang = x.SanPham.MaCuaHang,
-                TenShop = x.SanPham.CuaHang.TenShop,
-                AnhDaiDien = x.SanPham.Anh
-                    .Where(a => a.LaAnhChinh)
-                    .Select(a => a.DuongDan)
-                    .FirstOrDefault()
-                    ?? x.SanPham.Anh.Select(a => a.DuongDan).FirstOrDefault(),
-                TrangThaiSanPham = x.SanPham.TrangThai,
-                CoTheMua = x.SanPham.TrangThai == "ACTIVE" && !x.SanPham.DaXoa && x.SanPham.CuaHang.TrangThai == "ACTIVE"
-            })
             .ToListAsync();
 
-        var groups = rawItems
+        var cartItems = rawItems.Select(gh =>
+        {
+            var sp = gh.SanPham;
+            var ch = sp?.CuaHang;
+            var coTheMua = sp != null && !sp.DaXoa && sp.TrangThai == "ACTIVE" && ch != null && ch.TrangThai == "ACTIVE";
+
+            return new CartItemViewModel
+            {
+                MaGioHang = gh.MaGioHang,
+                MaSanPham = gh.MaSanPham,
+                TenSanPham = sp?.Ten ?? "Sản phẩm không tồn tại",
+                Gia = sp?.Gia ?? 0,
+                DaChon = gh.DaChon,
+                CoTheMua = coTheMua,
+                TrangThaiSanPham = sp?.TrangThai ?? "UNKNOWN",
+                MaCuaHang = sp?.MaCuaHang ?? 0,
+                TenShop = ch?.TenShop ?? "Cửa hàng không xác định",
+                AnhDaiDien = sp?.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault()
+                             ?? sp?.Anh.Select(a => a.DuongDan).FirstOrDefault()
+            };
+        }).ToList();
+
+        var shopGroups = cartItems
             .GroupBy(x => new { x.MaCuaHang, x.TenShop })
             .Select(g => new CartShopGroupViewModel
             {
                 MaCuaHang = g.Key.MaCuaHang,
                 TenShop = g.Key.TenShop,
                 Items = g.ToList()
-            })
-            .ToList();
+            }).ToList();
 
         return new CartIndexViewModel
         {
-            DanhSachNhomShop = groups
+            DanhSachNhomShop = shopGroups
         };
     }
 
@@ -62,7 +74,7 @@ public class CartService : ICartService
         }
         catch (Exception ex)
         {
-            return (false, ex.Message);
+            return (false, SqlLoi.ThongBao(ex));
         }
     }
 
@@ -81,10 +93,11 @@ public class CartService : ICartService
     public async Task<bool> CapNhatChonTatCaTheoShopAsync(int maNguoiDung, int maCuaHang, bool daChon)
     {
         var items = await _db.GioHangs
+            .Include(x => x.SanPham)
             .Where(x => x.MaNguoiDung == maNguoiDung && x.SanPham.MaCuaHang == maCuaHang)
             .ToListAsync();
 
-        if (items.Count == 0) return false;
+        if (!items.Any()) return false;
 
         foreach (var item in items)
         {

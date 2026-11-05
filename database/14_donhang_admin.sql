@@ -59,8 +59,9 @@ BEGIN
             ThoiGianBatDauGiao = CASE WHEN @TrangThaiMoi = 'SHIPPING'  THEN @Now ELSE ThoiGianBatDauGiao END,
             ThoiGianDaGiao     = CASE WHEN @TrangThaiMoi = 'DELIVERED' THEN @Now ELSE ThoiGianDaGiao END,
             ThoiGianHoanTat    = CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN @Now ELSE ThoiGianHoanTat END,
-            TrangThaiThanhToan = CASE WHEN @TrangThaiMoi = 'COMPLETED' AND PhuongThucThanhToan = 'COD' AND TrangThaiThanhToan = 'UNPAID'
-                                      THEN 'PAID' ELSE TrangThaiThanhToan END
+            TrangThaiThanhToan = CASE WHEN @TrangThaiMoi = 'CANCELLED' THEN 'REFUNDED'
+                                      WHEN @TrangThaiMoi = 'COMPLETED' THEN 'PAID'
+                                      ELSE TrangThaiThanhToan END
         WHERE MaDonHang = @MaDonHang;
 
         INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
@@ -77,11 +78,15 @@ BEGIN
             OUTPUT inserted.MaSanPham INTO @SanPhamDoi (MaSanPham)
             FROM SanPham sp
             JOIN ChiTietDonHang ct ON ct.MaSanPham = sp.MaSanPham
-            WHERE ct.MaDonHang = @MaDonHang AND sp.TrangThai = 'RESERVED';
+            WHERE ct.MaDonHang = @MaDonHang
+              AND (
+                  (@TrangThaiMoi = 'CANCELLED' AND sp.TrangThai IN ('RESERVED', 'SOLD'))
+                  OR (@TrangThaiMoi = 'COMPLETED' AND sp.TrangThai = 'RESERVED')
+              );
 
             INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
-            SELECT x.MaSanPham, 'RESERVED', @TrangThaiSanPhamMoi, 'ADMIN', @QuanTriVienId,
-                   CONCAT(N'Admin cập nhật đơn ', @MaDon, CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN N' hoàn tất' ELSE N' bị hủy' END, N': ', @LyDo)
+            SELECT x.MaSanPham, CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN 'RESERVED' ELSE 'SOLD' END, @TrangThaiSanPhamMoi, 'ADMIN', @QuanTriVienId,
+                   CONCAT(N'Admin cập nhật đơn ', @MaDon, CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN N' hoàn tất' ELSE N' bị hủy/hoàn tiền' END, N': ', @LyDo)
             FROM @SanPhamDoi x;
         END
 

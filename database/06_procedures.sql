@@ -443,6 +443,16 @@ BEGIN
             @TienHang, @PhiVanChuyen, @TienHang + @PhiVanChuyen, @PhuongThucThanhToan);
     SET @MaDonHangMoi = SCOPE_IDENTITY();
 
+    INSERT ThanhToan (MaDonHang, MaGiaoDich, PhuongThucThanhToan, SoTien, TrangThaiThanhToan, ThoiGianThanhToan)
+    VALUES (@MaDonHangMoi, 'TXN_' + @MaDon, @PhuongThucThanhToan, @TienHang + @PhiVanChuyen,
+            CASE WHEN @PhuongThucThanhToan = 'ONLINE' THEN 'SUCCESS' ELSE 'PENDING' END,
+            CASE WHEN @PhuongThucThanhToan = 'ONLINE' THEN SYSUTCDATETIME() ELSE NULL END);
+
+    IF @PhuongThucThanhToan = 'ONLINE'
+    BEGIN
+        UPDATE DonHang SET TrangThaiThanhToan = 'PAID' WHERE MaDonHang = @MaDonHangMoi;
+    END
+
     INSERT ChiTietDonHang (MaDonHang, MaSanPham, TenSanPham, AnhDaiDien, Gia, DangGiuCho)
     SELECT @MaDonHangMoi, sp.MaSanPham, sp.Ten, a.DuongDan, sp.Gia, 1
     FROM SanPham sp

@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Reports;
@@ -13,17 +14,17 @@ namespace SecondHandMarketplace.Web.Services.Reports;
 public class ReportService : IReportService
 {
     private readonly AppDbContext _db;
-    private readonly IUserAdminService? _userAdmin;
-    private readonly IShopService? _shopService;
-    private readonly IAuditLogService? _audit;
-    private readonly INotificationService? _notifications;
+    private readonly IUserAdminService _userAdmin;
+    private readonly IShopService _shopService;
+    private readonly IAuditLogService _audit;
+    private readonly INotificationService _notifications;
 
     public ReportService(
         AppDbContext db,
-        IUserAdminService? userAdmin = null,
-        IShopService? shopService = null,
-        IAuditLogService? audit = null,
-        INotificationService? notifications = null)
+        IUserAdminService userAdmin,
+        IShopService shopService,
+        IAuditLogService audit,
+        INotificationService notifications)
     {
         _db = db;
         _userAdmin = userAdmin;
@@ -50,10 +51,17 @@ public class ReportService : IReportService
             return (false, "Mô tả chi tiết không được vượt quá 1000 ký tự.");
         }
 
+        // Chuẩn hóa loại đối tượng thành chữ in hoa trước khi so sánh chống trùng
+        var loaiDoiTuong = (vm.LoaiDoiTuong ?? string.Empty).Trim().ToUpper();
+        if (loaiDoiTuong != "PRODUCT" && loaiDoiTuong != "USER" && loaiDoiTuong != "SHOP")
+        {
+            return (false, "Loại đối tượng báo cáo không hợp lệ.");
+        }
+
         // 2. Chống gửi trùng khi đang có báo cáo PENDING
         var daTonTai = await _db.BaoCaos.AnyAsync(x =>
             x.MaNguoiBaoCao == maNguoiBaoCao &&
-            x.LoaiDoiTuong == vm.LoaiDoiTuong &&
+            x.LoaiDoiTuong == loaiDoiTuong &&
             x.MaDoiTuong == vm.MaDoiTuong &&
             x.TrangThai == "PENDING");
 
@@ -63,7 +71,7 @@ public class ReportService : IReportService
         }
 
         // 3. Kiểm tra đối tượng báo cáo tồn tại
-        switch (vm.LoaiDoiTuong.ToUpper())
+        switch (loaiDoiTuong)
         {
             case "PRODUCT":
                 var sp = await _db.SanPhams.FindAsync(vm.MaDoiTuong);
@@ -79,14 +87,12 @@ public class ReportService : IReportService
                 if (ch == null) return (false, "Cửa hàng không tồn tại.");
                 if (ch.MaNguoiDung == maNguoiBaoCao) return (false, "Không thể tự báo cáo cửa hàng của mình.");
                 break;
-            default:
-                return (false, "Loại đối tượng báo cáo không hợp lệ.");
         }
 
         // 4. Tạo bản ghi báo cáo
         var baoCao = new BaoCao
         {
-            LoaiDoiTuong = vm.LoaiDoiTuong.ToUpper(),
+            LoaiDoiTuong = loaiDoiTuong,
             MaDoiTuong = vm.MaDoiTuong,
             MaNguoiBaoCao = maNguoiBaoCao,
             LyDo = lyDoTrim,
@@ -95,10 +101,20 @@ public class ReportService : IReportService
             NgayTao = DateTime.UtcNow
         };
 
-        _db.BaoCaos.Add(baoCao);
-        await _db.SaveChangesAsync();
-
-        return (true, "Đã gửi báo cáo vi phạm thành công. Ban quản trị sẽ sớm xem xét.");
+        try
+        {
+            _db.BaoCaos.Add(baoCao);
+            await _db.SaveChangesAsync();
+            return (true, "Đã gửi báo cáo vi phạm thành công. Ban quản trị sẽ sớm xem xét.");
+        }
+        catch (DbUpdateException ex)
+        {
+            if (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+            {
+                return (false, "Bạn đã gửi báo cáo cho đối tượng này và đang chờ ban quản trị xử lý.");
+            }
+            return (false, SqlLoi.ThongBao(ex));
+        }
     }
 
     public async Task<List<BaoCaoItemViewModel>> LayLichSuBaoCaoCuaToiAsync(int maNguoiBaoCao)
@@ -113,8 +129,11 @@ public class ReportService : IReportService
         return await NapTenDoiTuongVaMapVm(rawList);
     }
 
-    public async Task<AdminReportListViewModel> LayDanhSachBaoCaoAdminAsync(string? trangThai, string? loaiDoiTuong)
+    public async Task<AdminReportListViewModel> LayDanhSachBaoCaoAdminAsync(string? trangThai, string? loaiDoiTuong, int page = 1, int pageSize = 10)
     {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+
         var query = _db.BaoCaos
             .Include(x => x.NguoiBaoCao)
             .Include(x => x.NguoiXuLy)
@@ -130,7 +149,13 @@ public class ReportService : IReportService
             query = query.Where(x => x.LoaiDoiTuong == loaiDoiTuong);
         }
 
-        var rawList = await query.OrderByDescending(x => x.NgayTao).ToListAsync();
+        var totalItems = await query.CountAsync();
+        var rawList = await query
+            .OrderByDescending(x => x.NgayTao)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
         var items = await NapTenDoiTuongVaMapVm(rawList);
         var tongChuaXuLy = await _db.BaoCaos.CountAsync(x => x.TrangThai == "PENDING");
 
@@ -139,7 +164,10 @@ public class ReportService : IReportService
             TrangThaiFilter = trangThai,
             LoaiFilter = loaiDoiTuong,
             Items = items,
-            TongChuaXuLy = tongChuaXuLy
+            TongChuaXuLy = tongChuaXuLy,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
         };
     }
 
@@ -150,124 +178,146 @@ public class ReportService : IReportService
         if (bc.TrangThai != "PENDING") return (false, "Báo cáo này đã được xử lý trước đó.");
 
         var now = DateTime.UtcNow;
-        bc.NguoiXuLyId = adminId;
-        bc.NgayXuLy = now;
 
         if (hanhDong == "DISMISS")
         {
+            var lyDoBoQua = string.IsNullOrWhiteSpace(ghiChu) ? "Bỏ qua báo cáo (không vi phạm)." : ghiChu.Trim();
             bc.TrangThai = "DISMISSED";
-            bc.GhiChuXuLy = string.IsNullOrWhiteSpace(ghiChu) ? "Bỏ qua báo cáo (không vi phạm)." : ghiChu.Trim();
+            bc.GhiChuXuLy = lyDoBoQua;
+            bc.NguoiXuLyId = adminId;
+            bc.NgayXuLy = now;
             await _db.SaveChangesAsync();
 
-            // Ghi Audit Log
-            if (_audit != null)
-            {
-                await _audit.LogAsync(adminId, "DISMISS_REPORT", "BaoCao", maBaoCao, "SUCCESS", bc.GhiChuXuLy);
-            }
+            // Ghi Audit Log thành công
+            await _audit.LogAsync(adminId, "DISMISS_REPORT", "BaoCao", maBaoCao, "SUCCESS", lyDoBoQua);
 
             // Gửi thông báo cho người báo cáo
-            if (_notifications != null)
-            {
-                await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
-                    "Kết quả xem xét báo cáo",
-                    $"Báo cáo của bạn đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} đã được ban quản trị xem xét và ghi nhận không vi phạm quy định.",
-                    bc.MaBaoCao);
-            }
+            await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
+                "Kết quả xem xét báo cáo",
+                $"Báo cáo của bạn đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} đã được ban quản trị xem xét và ghi nhận không vi phạm quy định.",
+                bc.MaBaoCao);
+
+            return (true, "Đã bỏ qua báo cáo thành công.");
         }
         else if (hanhDong == "RESOLVE")
         {
-            bc.TrangThai = "RESOLVED";
-            bc.GhiChuXuLy = string.IsNullOrWhiteSpace(ghiChu) ? "Đã xử lý đối tượng vi phạm." : ghiChu.Trim();
-            await _db.SaveChangesAsync();
+            var lyDoXuLy = string.IsNullOrWhiteSpace(ghiChu) ? $"Vi phạm quy định theo báo cáo #{bc.MaBaoCao}" : ghiChu.Trim();
+            if (lyDoXuLy.Length > 500)
+            {
+                return (false, "Lý do / Ghi chú xử lý không được vượt quá 500 ký tự.");
+            }
 
-            // Thực thi hành động tương ứng đối tượng thông qua service của bên A/C hoặc procedure chuẩn
+            // Thực thi hành động tương ứng đối tượng thông qua service của bên A/C
+            // CHỈ đánh dấu RESOLVED khi hành động thành công thực sự!
             if (bc.LoaiDoiTuong == "USER")
             {
-                // Gọi IUserAdminService của bên A để khóa người dùng
-                if (_userAdmin != null)
+                var (okUser, errUser) = await _userAdmin.LockUserAsync(adminId, bc.MaDoiTuong, lyDoXuLy);
+                if (!okUser)
                 {
-                    await _userAdmin.LockUserAsync(adminId, bc.MaDoiTuong, bc.GhiChuXuLy);
+                    await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errUser);
+                    return (false, errUser ?? "Không thể khóa tài khoản người dùng.");
                 }
-                if (_notifications != null)
-                {
-                    await _notifications.CreateAsync(bc.MaDoiTuong, NotificationTypes.System,
-                        "Tài khoản của bạn đã bị khóa",
-                        $"Tài khoản của bạn đã bị khóa do vi phạm quy định sàn: {bc.GhiChuXuLy}");
-                }
+
+                await _notifications.CreateAsync(bc.MaDoiTuong, NotificationTypes.System,
+                    "Tài khoản của bạn đã bị khóa",
+                    $"Tài khoản của bạn đã bị khóa do vi phạm quy định sàn: {lyDoXuLy}");
             }
             else if (bc.LoaiDoiTuong == "SHOP")
             {
-                // Gọi IShopService của bên A để khóa cửa hàng
-                if (_shopService != null)
+                var (okShop, errShop) = await _shopService.LockShopAsync(adminId, bc.MaDoiTuong, lyDoXuLy);
+                if (!okShop)
                 {
-                    await _shopService.LockShopAsync(adminId, bc.MaDoiTuong, bc.GhiChuXuLy);
+                    await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errShop);
+                    return (false, errShop ?? "Không thể khóa cửa hàng.");
                 }
+
                 var shop = await _db.CuaHangs.FindAsync(bc.MaDoiTuong);
-                if (shop != null && _notifications != null)
+                if (shop != null)
                 {
                     await _notifications.CreateAsync(shop.MaNguoiDung, NotificationTypes.System,
                         "Cửa hàng của bạn đã bị khóa",
-                        $"Cửa hàng '{shop.TenShop}' đã bị tạm khóa do vi phạm chính sách: {bc.GhiChuXuLy}");
+                        $"Cửa hàng '{shop.TenShop}' đã bị tạm khóa do vi phạm chính sách: {lyDoXuLy}");
                 }
             }
             else if (bc.LoaiDoiTuong == "PRODUCT")
             {
-                // Gọi sp_ChuyenTrangThaiSanPham của bên C để gỡ sản phẩm chuẩn nghiệp vụ
-                try
+                if (_db.Database.IsRelational())
                 {
-                    await _db.Database.ExecuteSqlRawAsync(
-                        "EXEC dbo.sp_ChuyenTrangThaiSanPham @MaSanPham, @TrangThaiMoi, @LoaiNguoiThucHien, @NguoiThucHienId, @LyDo",
-                        new SqlParameter("@MaSanPham", bc.MaDoiTuong),
-                        new SqlParameter("@TrangThaiMoi", "REMOVED"),
-                        new SqlParameter("@LoaiNguoiThucHien", "ADMIN"),
-                        new SqlParameter("@NguoiThucHienId", adminId),
-                        new SqlParameter("@LyDo", bc.GhiChuXuLy));
-                }
-                catch
-                {
-                    // Dự phòng nếu DB test in-memory không chạy được ExecuteSqlRaw: cập nhật entity
-                    var sp = await _db.SanPhams.FindAsync(bc.MaDoiTuong);
-                    if (sp != null)
+                    try
                     {
-                        sp.TrangThai = "REMOVED";
-                        sp.LyDoGo = bc.GhiChuXuLy;
-                        sp.NgayCapNhat = now;
-                        await _db.SaveChangesAsync();
+                        await _db.Database.ExecuteSqlRawAsync(
+                            "EXEC dbo.sp_ChuyenTrangThaiSanPham @MaSanPham, @TrangThaiMoi, @LoaiNguoiThucHien, @NguoiThucHienId, @LyDo",
+                            new SqlParameter("@MaSanPham", bc.MaDoiTuong),
+                            new SqlParameter("@TrangThaiMoi", "REMOVED"),
+                            new SqlParameter("@LoaiNguoiThucHien", "ADMIN"),
+                            new SqlParameter("@NguoiThucHienId", adminId),
+                            new SqlParameter("@LyDo", lyDoXuLy));
                     }
+                    catch (Exception ex)
+                    {
+                        await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", ex.Message);
+                        return (false, "Không thể gỡ sản phẩm: " + SqlLoi.ThongBao(ex));
+                    }
+                }
+                else
+                {
+                    var sp = await _db.SanPhams.FindAsync(bc.MaDoiTuong);
+                    if (sp == null || sp.DaXoa)
+                    {
+                        await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", "Sản phẩm không tồn tại.");
+                        return (false, "Sản phẩm không tồn tại.");
+                    }
+
+                    var spCu = sp.TrangThai;
+                    sp.TrangThai = "REMOVED";
+                    sp.LyDoGo = lyDoXuLy;
+                    sp.NgayCapNhat = now;
+
+                    _db.LichSuTrangThaiSanPhams.Add(new LichSuTrangThaiSanPham
+                    {
+                        MaSanPham = sp.MaSanPham,
+                        TrangThaiCu = spCu,
+                        TrangThaiMoi = "REMOVED",
+                        LoaiNguoiThucHien = "ADMIN",
+                        NguoiThucHienId = adminId,
+                        LyDo = lyDoXuLy,
+                        ThoiGian = now
+                    });
                 }
 
                 // Gửi thông báo cho chủ shop của sản phẩm bị gỡ
                 var product = await _db.SanPhams.Include(p => p.CuaHang).FirstOrDefaultAsync(p => p.MaSanPham == bc.MaDoiTuong);
-                if (product?.CuaHang != null && _notifications != null)
+                if (product?.CuaHang != null)
                 {
                     await _notifications.CreateAsync(product.CuaHang.MaNguoiDung, NotificationTypes.Product,
                         "Sản phẩm bị gỡ bỏ do vi phạm",
-                        $"Sản phẩm '{product.Ten}' đã bị ban quản trị gỡ bỏ khỏi sàn. Lý do: {bc.GhiChuXuLy}",
+                        $"Sản phẩm '{product.Ten}' đã bị ban quản trị gỡ bỏ khỏi sàn. Lý do: {lyDoXuLy}",
                         bc.MaDoiTuong);
                 }
             }
 
-            // Ghi Audit Log xử lý báo cáo
-            if (_audit != null)
-            {
-                await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "SUCCESS", bc.GhiChuXuLy);
-            }
+            // Chỉ cập nhật trạng thái báo cáo sau khi hành động đã thành công
+            bc.TrangThai = "RESOLVED";
+            bc.GhiChuXuLy = lyDoXuLy;
+            bc.NguoiXuLyId = adminId;
+            bc.NgayXuLy = now;
+            await _db.SaveChangesAsync();
+
+            // Ghi Audit Log xử lý báo cáo thành công
+            await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "SUCCESS", lyDoXuLy);
 
             // Gửi thông báo cảm ơn người báo cáo
-            if (_notifications != null)
-            {
-                await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
-                    "Báo cáo của bạn đã được xử lý",
-                    $"Ban quản trị đã tiến hành xử lý vi phạm đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} theo báo cáo của bạn. Cảm ơn sự đóng góp của bạn!",
-                    bc.MaBaoCao);
-            }
+            await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
+                "Báo cáo của bạn đã được xử lý",
+                $"Ban quản trị đã tiến hành xử lý vi phạm đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} theo báo cáo của bạn. Cảm ơn sự đóng góp của bạn!",
+                bc.MaBaoCao);
+
+            return (true, "Đã cập nhật xử lý báo cáo thành công.");
         }
         else
         {
             return (false, "Hành động xử lý không hợp lệ.");
         }
-
-        return (true, "Đã cập nhật xử lý báo cáo thành công.");
     }
 
     private async Task<List<BaoCaoItemViewModel>> NapTenDoiTuongVaMapVm(List<BaoCao> list)
@@ -284,9 +334,9 @@ public class ReportService : IReportService
         {
             var tenDoiTuong = x.LoaiDoiTuong switch
             {
-                "PRODUCT" => products.GetValueOrDefault(x.MaDoiTuong, $"Sản phẩm #{x.MaDoiTuong}"),
-                "USER" => users.GetValueOrDefault(x.MaDoiTuong, $"Người dùng #{x.MaDoiTuong}"),
-                "SHOP" => shops.GetValueOrDefault(x.MaDoiTuong, $"Cửa hàng #{x.MaDoiTuong}"),
+                "PRODUCT" => products.TryGetValue(x.MaDoiTuong, out var tenSp) ? tenSp : $"Sản phẩm #{x.MaDoiTuong}",
+                "USER" => users.TryGetValue(x.MaDoiTuong, out var tenUser) ? tenUser : $"Người dùng #{x.MaDoiTuong}",
+                "SHOP" => shops.TryGetValue(x.MaDoiTuong, out var tenShop) ? tenShop : $"Cửa hàng #{x.MaDoiTuong}",
                 _ => $"#{x.MaDoiTuong}"
             };
 
@@ -297,7 +347,7 @@ public class ReportService : IReportService
                 MaDoiTuong = x.MaDoiTuong,
                 TenDoiTuong = tenDoiTuong,
                 MaNguoiBaoCao = x.MaNguoiBaoCao,
-                TenNguoiBaoCao = x.NguoiBaoCao?.HoTen ?? "Người dùng",
+                TenNguoiBaoCao = x.NguoiBaoCao?.HoTen ?? $"User #{x.MaNguoiBaoCao}",
                 LyDo = x.LyDo,
                 MoTa = x.MoTa,
                 TrangThai = x.TrangThai,

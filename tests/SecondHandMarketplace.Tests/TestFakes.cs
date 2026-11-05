@@ -51,11 +51,12 @@ public class FakeAuditLogService : IAuditLogService
 public class FakeUserAdminService : IUserAdminService
 {
     public List<(int? ActorId, int UserId, string? Reason)> LockedUsers { get; } = new();
+    public (bool Success, string? Error) LockResult { get; set; } = (true, null);
 
     public Task<(bool Success, string? Error)> LockUserAsync(int? actorId, int userId, string? reason, CancellationToken cancellationToken = default)
     {
         LockedUsers.Add((actorId, userId, reason));
-        return Task.FromResult((true, (string?)null));
+        return Task.FromResult(LockResult);
     }
 
     public Task<(bool Success, string? Error)> UnlockUserAsync(int? actorId, int userId, CancellationToken cancellationToken = default)
@@ -67,6 +68,7 @@ public class FakeUserAdminService : IUserAdminService
 public class FakeShopService : IShopService
 {
     public List<(int? ActorId, int ShopId, string? Reason)> LockedShops { get; } = new();
+    public (bool Success, string? Error) LockResult { get; set; } = (true, null);
 
     public Task<CuaHang?> GetByOwnerAsync(int userId, CancellationToken cancellationToken = default) => Task.FromResult<CuaHang?>(null);
     public Task<(bool Success, string? Error)> SaveAsync(int userId, string name, string phone, string? description, string? logo, CancellationToken cancellationToken = default) => Task.FromResult((true, (string?)null));
@@ -74,7 +76,7 @@ public class FakeShopService : IShopService
     public Task<(bool Success, string? Error)> LockShopAsync(int? actorId, int shopId, string? reason, CancellationToken cancellationToken = default)
     {
         LockedShops.Add((actorId, shopId, reason));
-        return Task.FromResult((true, (string?)null));
+        return Task.FromResult(LockResult);
     }
 
     public Task<(bool Success, string? Error)> UnlockShopAsync(int? actorId, int shopId, CancellationToken cancellationToken = default)
