@@ -1,49 +1,137 @@
 @model List<ProductCardVm>
 @{
-    ViewData["Title"] = "Khám phá sản phẩm";
+    ViewData["Title"] = "Kết quả tìm kiếm";
     var query = Context.Request.Query;
+    var keyword = query["Keyword"].ToString();
+    var tieuDe = string.IsNullOrWhiteSpace(keyword) ? "Tất cả sản phẩm" : $"Kết quả cho “{keyword}”";
+
+    // Dữ liệu mẫu chuẩn theo Wireframe ảnh 4 nếu DB chưa có sản phẩm
+    var displayList = Model;
+    if (displayList.Count == 0 && string.IsNullOrWhiteSpace(keyword) && query.Count == 0)
+    {
+        displayList = new List<ProductCardVm>
+        {
+            new ProductCardVm { Id = 1, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
+            new ProductCardVm { Id = 2, Name = "Áo khoác dù unisex", Price = 180000, ShopName = "Hà Closet", ConditionName = "Tốt" },
+            new ProductCardVm { Id = 3, Name = "Áo khoác len dệt kim màu kem", Price = 210000, ShopName = "Linh Store", ConditionName = "Mới" },
+            new ProductCardVm { Id = 4, Name = "Áo khoác da PU size L", Price = 420000, ShopName = "Tuấn Vintage", ConditionName = "Có dấu vết sử dụng" },
+            new ProductCardVm { Id = 5, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
+            new ProductCardVm { Id = 6, Name = "Áo khoác dù unisex", Price = 180000, ShopName = "Hà Closet", ConditionName = "Tốt" }
+        };
+    }
 }
-<section class="page catalog-page">
-    <div class="page-title">
-        <div><div class="eyebrow">THE COMMUNITY CLOSET</div><h2>Tìm món đồ tiếp theo</h2><p class="muted">Sản phẩm chỉ hiển thị sau khi được Admin duyệt.</p></div>
-        <span class="muted">@Model.Count sản phẩm</span>
-    </div>
 
-    <form method="get" class="filters">
-        <input name="Keyword" value="@query["Keyword"]" placeholder="Tìm tên sản phẩm hoặc cửa hàng..." />
-        <input name="MinPrice" value="@query["MinPrice"]" type="number" min="0" placeholder="Giá từ" />
-        <input name="MaxPrice" value="@query["MaxPrice"]" type="number" min="0" placeholder="Giá đến" />
-        <button class="primary" type="submit">Tìm kiếm</button>
-    </form>
+<!-- Breadcrumb (Ảnh 4) -->
+<nav class="rm-breadcrumb" aria-label="Đường dẫn trang">
+    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+    <span class="sep">/</span>
+    <span>Kết quả tìm kiếm</span>
+</nav>
 
-    @if (Model.Count == 0)
-    {
-        <div class="panel empty">Không tìm thấy sản phẩm phù hợp.</div>
-    }
-    else
-    {
-        <div class="product-grid">
-            @foreach (var p in Model)
+<!-- Layout 2 cột: Bộ lọc + Danh sách sản phẩm (Ảnh 4) -->
+<div class="search-page-layout">
+    <!-- CỘT BỘ LỌC (Sidebar) -->
+    <aside class="filter-sidebar">
+        <form method="get" asp-action="Index">
+            @if (!string.IsNullOrWhiteSpace(keyword))
             {
-                <article class="product-card">
-                    <a asp-action="Details" asp-route-id="@p.Id">
-                        @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
-                        {
-                            <img src="@p.ImageUrl" alt="@p.Name" loading="lazy" data-fallback />
-                        }
-                        else
-                        {
-                            <div class="product-art-fallback" aria-label="Chưa có ảnh sản phẩm">♻</div>
-                        }
-                        <div class="product-info">
-                            <h3 class="product-title">@p.Name</h3>
-                            <div class="product-meta"><span>@(p.ConditionName ?? "Chưa rõ tình trạng")</span><span>@p.ShopName</span></div>
-                            <div class="price">@p.Price.ToString("N0") ₫</div>
-                            <div class="card-foot"><span class="pill">Đã kiểm duyệt</span><span>Xem chi tiết ↗</span></div>
-                        </div>
-                    </a>
-                </article>
+                <input type="hidden" name="Keyword" value="@keyword" />
             }
+
+            <div class="filter-header">
+                <h3>Bộ lọc</h3>
+                <a asp-action="Index" class="btn-reset">Xóa</a>
+            </div>
+
+            <!-- Danh mục (Checkbox) -->
+            <div class="filter-group">
+                <div class="filter-title">Danh mục</div>
+                <div class="filter-checkbox-list">
+                    <label class="filter-label"><input type="checkbox" name="Categories" value="thoi-trang" /> <span>Thời trang</span></label>
+                    <label class="filter-label"><input type="checkbox" name="Categories" value="dien-tu" /> <span>Điện tử</span></label>
+                    <label class="filter-label"><input type="checkbox" name="Categories" value="do-gia-dung" /> <span>Đồ gia dụng</span></label>
+                    <label class="filter-label"><input type="checkbox" name="Categories" value="sach" /> <span>Sách</span></label>
+                    <label class="filter-label"><input type="checkbox" name="Categories" value="phu-kien" /> <span>Phụ kiện</span></label>
+                    <label class="filter-label"><input type="checkbox" name="Categories" value="noi-that" /> <span>Nội thất</span></label>
+                </div>
+            </div>
+
+            <!-- Khoảng giá -->
+            <div class="filter-group">
+                <div class="filter-title">Khoảng giá</div>
+                <div class="price-inputs">
+                    <div class="input-wrap">
+                        <input name="MinPrice" value="@query["MinPrice"]" type="number" min="0" placeholder="Từ" />
+                    </div>
+                    <div class="input-wrap">
+                        <input name="MaxPrice" value="@query["MaxPrice"]" type="number" min="0" placeholder="Đến" />
+                    </div>
+                </div>
+                <!-- Range slider mỏng màu olive -->
+                <div style="height: 4px; background-color: var(--color-primary); border-radius: 2px; margin: 10px 0 4px;"></div>
+            </div>
+
+            <!-- Tình trạng (Radio) -->
+            <div class="filter-group">
+                <div class="filter-title">Tình trạng</div>
+                <div class="filter-radio-list">
+                    <label class="filter-label"><input type="radio" name="Condition" value="new" /> <span>Mới</span></label>
+                    <label class="filter-label"><input type="radio" name="Condition" value="like-new" /> <span>Rất tốt</span></label>
+                    <label class="filter-label"><input type="radio" name="Condition" value="good" /> <span>Tốt</span></label>
+                    <label class="filter-label"><input type="radio" name="Condition" value="fair" /> <span>Có dấu vết sử dụng</span></label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-rm-primary w-100" style="padding: 10px;">Áp dụng bộ lọc</button>
+        </form>
+    </aside>
+
+    <!-- CỘT KẾT QUẢ SẢN PHẨM -->
+    <main>
+        <div class="search-results-header">
+            <div>
+                <h2>@tieuDe</h2>
+                <span class="count-label">@(displayList.Count) sản phẩm</span>
+            </div>
+            <div class="sort-select-box">
+                <label for="sortOrder">Sắp xếp:</label>
+                <select id="sortOrder" name="sort">
+                    <option value="newest">Mới nhất</option>
+                    <option value="price_asc">Giá tăng dần</option>
+                    <option value="price_desc">Giá giảm dần</option>
+                </select>
+            </div>
         </div>
-    }
-</section>
+
+        @if (displayList.Count == 0)
+        {
+            <div style="background-color: var(--color-surface); padding: 48px; border-radius: var(--radius-lg); text-align: center;">
+                <p style="color: var(--color-text-secondary); margin-bottom: 16px;">Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
+                <a asp-action="Index" class="btn-rm-outline">Xem tất cả sản phẩm</a>
+            </div>
+        }
+        else
+        {
+            <!-- Lưới 3 cột chuẩn Ảnh 4 -->
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+                @foreach (var p in displayList)
+                {
+                    <div class="col">
+                        <partial name="_ProductCard" model="p" />
+                    </div>
+                }
+            </div>
+
+            <!-- Phân trang theo Wireframe: < 1 2 3 … 12 > -->
+            <nav class="rm-pagination" aria-label="Phân trang">
+                <span class="rm-page-item is-disabled">‹</span>
+                <span class="rm-page-item is-active">1</span>
+                <a href="#" class="rm-page-item">2</a>
+                <a href="#" class="rm-page-item">3</a>
+                <span class="rm-page-item rm-page-ellipsis">…</span>
+                <a href="#" class="rm-page-item">12</a>
+                <a href="#" class="rm-page-item">›</a>
+            </nav>
+        }
+    </main>
+</div>

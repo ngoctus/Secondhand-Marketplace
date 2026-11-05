@@ -1,42 +1,88 @@
+/**
+ * JavaScript dùng chung cho Re:Market
+ * Quản lý dropdowns, mobile menu, fallback ảnh, thông báo toast
+ */
 (() => {
-    const button = document.getElementById('accountButton');
-    const panel = document.getElementById('accountPanel');
-
-    if (!button || !panel) return;
-
-    const closePanel = () => {
-        panel.hidden = true;
-        button.setAttribute('aria-expanded', 'false');
+    // Helper đóng toàn bộ dropdown đang mở
+    const closeAllDropdowns = () => {
+        document.querySelectorAll('.rm-dropdown-menu, .account-panel, #mobileDrawer').forEach(el => {
+            el.hidden = true;
+        });
+        document.querySelectorAll('[aria-expanded="true"]').forEach(btn => {
+            btn.setAttribute('aria-expanded', 'false');
+        });
     };
 
-    button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        panel.hidden = !panel.hidden;
-        button.setAttribute('aria-expanded', String(!panel.hidden));
-    });
+    // Thiết lập một dropdown toggle
+    const setupDropdown = (btnId, menuId) => {
+        const btn = document.getElementById(btnId);
+        const menu = document.getElementById(menuId);
+        if (!btn || !menu) return;
 
-    document.addEventListener('click', (event) => {
-        if (!panel.contains(event.target) && !button.contains(event.target)) {
-            closePanel();
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const willOpen = menu.hidden;
+            closeAllDropdowns();
+            if (willOpen) {
+                menu.hidden = false;
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        });
+    };
+
+    // Đăng ký các dropdown
+    setupDropdown('catMenuBtn', 'catDropdownMenu');
+    setupDropdown('adminMenuBtn', 'adminDropdownMenu');
+    setupDropdown('userMenuBtn', 'userDropdownMenu');
+    setupDropdown('accountButton', 'accountPanel');
+
+    // Toggle menu mobile
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileDrawer = document.getElementById('mobileDrawer');
+    if (mobileBtn && mobileDrawer) {
+        mobileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const willOpen = mobileDrawer.hidden;
+            closeAllDropdowns();
+            if (willOpen) {
+                mobileDrawer.hidden = false;
+                mobileBtn.setAttribute('aria-expanded', 'true');
+            }
+        });
+    }
+
+    // Đóng dropdown khi click ra ngoài
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.rm-dropdown') &&
+            !e.target.closest('.rm-user-menu') &&
+            !e.target.closest('.account-menu') &&
+            !e.target.closest('.rm-mobile-drawer') &&
+            !e.target.closest('.rm-mobile-toggle')) {
+            closeAllDropdowns();
         }
     });
 
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') closePanel();
+    // Đóng dropdown khi nhấn Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeAllDropdowns();
+        }
     });
 })();
 
-// Ảnh sản phẩm bị lỗi / chưa có file: thay bằng khung dự phòng thay vì hiện icon ảnh hỏng.
+// Xử lý ảnh sản phẩm fallback (4:5) khi đường dẫn ảnh lỗi hoặc chưa có ảnh
 (() => {
     const thayBangKhungDuPhong = (img) => {
+        if (img.dataset.hasFallback) return;
+        img.dataset.hasFallback = 'true';
+
         const fallback = document.createElement('div');
         fallback.className = 'product-art-fallback';
         fallback.setAttribute('aria-label', 'Chưa có ảnh sản phẩm');
-        fallback.textContent = '♻';
+        fallback.innerHTML = '<span class="fallback-icon">♻</span><span class="fallback-text">Ảnh sản phẩm 4:5</span>';
         img.replaceWith(fallback);
     };
 
-    // Sự kiện error của <img> không nổi bọt lên, nên lắng nghe ở pha capture.
     document.addEventListener('error', (event) => {
         const img = event.target;
         if (img instanceof HTMLImageElement && img.hasAttribute('data-fallback')) {
@@ -44,10 +90,26 @@
         }
     }, true);
 
-    // Ảnh đã lỗi trước khi script chạy thì không còn bắn sự kiện, nên kiểm tra lại một lần.
     window.addEventListener('load', () => {
         document.querySelectorAll('img[data-fallback]').forEach((img) => {
-            if (img.complete && img.naturalWidth === 0) thayBangKhungDuPhong(img);
+            if (img.complete && img.naturalWidth === 0) {
+                thayBangKhungDuPhong(img);
+            }
+        });
+    });
+})();
+
+// Tự động ẩn thông báo thành công sau 4 giây
+(() => {
+    window.addEventListener('DOMContentLoaded', () => {
+        const successAlerts = document.querySelectorAll('.rm-alert-success');
+        successAlerts.forEach(alert => {
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-8px)';
+                setTimeout(() => alert.remove(), 400);
+            }, 4000);
         });
     });
 })();
