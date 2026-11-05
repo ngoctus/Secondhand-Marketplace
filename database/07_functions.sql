@@ -98,6 +98,10 @@ BEGIN
             ('HIDDEN',         'PENDING_REVIEW'),
             ('RESERVED',       'ACTIVE'),
             ('RESERVED',       'SOLD'),
+            ('RESERVED',       'REMOVED'),
+            ('SOLD',           'REMOVED'),
+            ('HIDDEN',         'REMOVED'),
+            ('PENDING_REVIEW', 'REMOVED'),
             ('REMOVED',        'ACTIVE'),
             ('REMOVED',        'PENDING_REVIEW')
         ) t (Cu, Moi)
@@ -117,7 +121,11 @@ BEGIN
             ('CONFIRMED', 'SHIPPING'),
             ('CONFIRMED', 'CANCELLED'),
             ('SHIPPING',  'DELIVERED'),
-            ('DELIVERED', 'COMPLETED')
+            ('SHIPPING',  'COMPLETED'),
+            ('SHIPPING',  'CANCELLED'),
+            ('DELIVERED', 'COMPLETED'),
+            ('DELIVERED', 'CANCELLED'),
+            ('COMPLETED', 'CANCELLED')
         ) t (Cu, Moi)
         WHERE t.Cu = @Cu AND t.Moi = @Moi) THEN 1 ELSE 0 END;
 END

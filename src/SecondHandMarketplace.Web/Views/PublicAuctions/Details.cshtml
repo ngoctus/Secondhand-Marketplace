@@ -1,0 +1,126 @@
+@model AuctionDetailVm
+@{
+    ViewData["Title"] = Model.ProductName + " - Đấu giá";
+    var isOpen = Model.Status is "RUNNING" or "SCHEDULED" or "ENDING";
+    var logged = User.Identity?.IsAuthenticated == true;
+}
+
+<div class="auction-page">
+    <p class="muted mt-4"><a asp-action="Index">← Sàn đấu giá</a></p>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            @if (Model.Images.Count == 0)
+            {
+                <div class="product-art-fallback">♻</div>
+            }
+            else
+            {
+                <img id="mainImage" class="auction-main-img" src="@Model.Images[0]" alt="@Model.ProductName" data-fallback />
+                @if (Model.Images.Count > 1)
+                {
+                    <div class="auction-thumbs">
+                        @foreach (var img in Model.Images)
+                        {
+                            <img src="@img" alt="" data-fallback onclick="document.getElementById('mainImage').src=this.src" />
+                        }
+                    </div>
+                }
+            }
+            <div class="panel">
+                <h3>Mô tả sản phẩm</h3>
+                <p class="detail-desc">@(Model.Description ?? "Người bán chưa nhập mô tả.")</p>
+                <p class="muted">Danh mục: @(Model.CategoryName ?? "Chưa phân loại") · Tình trạng: @(Model.ConditionName ?? "Chưa rõ") · Cửa hàng: @Model.ShopName</p>
+                <p class="muted">Giá niêm yết ban đầu: @HienThi.Tien(Model.ListPrice)</p>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="bid-panel" id="auction"
+                 data-id="@Model.Id"
+                 data-status="@Model.Status"
+                 data-status-url="@Url.Action("Status", "PublicAuctions", new { id = Model.Id })"
+                 data-bid-url="@Url.Action("PlaceBid", "PublicAuctions", new { id = Model.Id })"
+                 data-start="@HienThi.Iso(Model.StartAt)"
+                 data-end="@HienThi.Iso(Model.EndAt)"
+                 data-now="@HienThi.Iso(Model.ServerNowUtc)"
+                 data-min="@((long)Model.MinNextBid)"
+                 data-step="@((long)Model.Step)">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="bid-title">@Model.ProductName</h2>
+                    <span id="status-badge" class="@HienThi.LopTrangThai(Model.Status)">@HienThi.TrangThaiPhien(Model.Status)</span>
+                </div>
+
+                <div class="bid-price-label">Giá hiện tại</div>
+                <div class="bid-price" id="current-price">@HienThi.Tien(Model.CurrentPrice)</div>
+                <div class="muted"><span id="bid-count">@Model.BidCount</span> lượt đặt giá · Giá khởi điểm @HienThi.Tien(Model.StartPrice) · Bước giá @HienThi.Tien(Model.Step)</div>
+
+                <div class="countdown-box">
+                    <div class="countdown-label" id="countdown-label">@(Model.Status == "SCHEDULED" ? "Bắt đầu sau" : "Kết thúc sau")</div>
+                    <div class="countdown" id="countdown">--:--:--</div>
+                    <div class="muted">Kết thúc lúc @HienThi.NgayGio(Model.EndAt)</div>
+                </div>
+
+                <div id="leader-badge" class="leader-badge" @(Model.IsLeader && isOpen ? "" : "hidden")>🏆 Bạn đang dẫn đầu phiên này</div>
+
+                @if (Model.Status is "ENDED")
+                {
+                    <div class="note">
+                        @if (Model.WinnerName is not null)
+                        {
+                            <text>Phiên đã kết thúc. Người thắng: <b>@Model.WinnerName</b> với giá <b>@HienThi.Tien(Model.WinningPrice ?? 0)</b>.</text>
+                        }
+                        else { <text>Phiên đã kết thúc mà không có người đặt giá.</text> }
+                    </div>
+                }
+                else if (Model.Status == "CANCELLED")
+                {
+                    <div class="note">Phiên đã bị hủy@(Model.CancelBy == "ADMIN" ? " bởi quản trị viên" : "")@(string.IsNullOrEmpty(Model.CancelReason) ? "" : ". Lý do: " + Model.CancelReason).</div>
+                }
+                else if (Model.IsOwner)
+                {
+                    <div class="note">Đây là phiên đấu giá của bạn nên bạn không thể đặt giá.</div>
+                }
+                else if (!logged)
+                {
+                    <a class="primary full text-center text-decoration-none d-block"
+                       asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Đăng nhập để đặt giá</a>
+                }
+                else
+                {
+                    <form id="bid-form" autocomplete="off">
+                        @Html.AntiForgeryToken()
+                        <label for="bid-amount">Số tiền đặt (tối thiểu <b id="min-bid">@HienThi.Tien(Model.MinNextBid)</b>)</label>
+                        <div class="bid-input">
+                            <input id="bid-amount" name="soTien" inputmode="numeric" placeholder="Nhập số tiền..." />
+                            <span>đ</span>
+                        </div>
+                        <div class="quick-bids">
+                            <button type="button" data-k="0">Tối thiểu</button>
+                            <button type="button" data-k="1">+1 bước</button>
+                            <button type="button" data-k="3">+3 bước</button>
+                        </div>
+                        <button id="bid-submit" class="primary full" type="submit">Đặt giá ngay</button>
+                        <div id="bid-msg" class="bid-msg" role="status"></div>
+                    </form>
+                    <p class="muted mt-2">Đặt giá là cam kết mua. Nếu thắng, đơn hàng được tạo tự động theo địa chỉ mặc định trong hồ sơ của bạn.</p>
+                }
+            </div>
+
+            <div class="panel">
+                <div class="panel-head"><h3>Lịch sử đặt giá</h3></div>
+                <table class="table">
+                    <thead><tr><th>NGƯỜI ĐẶT</th><th>SỐ TIỀN</th><th>THỜI GIAN</th></tr></thead>
+                    <tbody id="bid-list">
+                        @foreach (var b in Model.Bids)
+                        {
+                            <tr class="@(b.IsMine ? "mine" : "")"><td>@b.Bidder</td><td><b>@HienThi.Tien(b.Amount)</b></td><td>@HienThi.GioGiay(b.At)</td></tr>
+                        }
+                    </tbody>
+                </table>
+                <div id="bid-empty" class="empty" @(Model.Bids.Count > 0 ? "hidden" : "")>Chưa có lượt đặt giá nào.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <script src="~/js/auction.js" asp-append-version="true"></script> }

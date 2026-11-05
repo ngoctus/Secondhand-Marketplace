@@ -1,21 +1,60 @@
-@* Thông báo dùng chung: đặt bằng this.ThongBaoThanhCong("...") / this.ThongBaoLoi("...") trong Controller *@
+@* Thông báo dùng chung chuẩn UI kit Re:Market
+   Hỗ trợ: TempData["ThanhCong"] / TempData["Success"], TempData["Loi"] / TempData["Error"], TempData["CanhBao"] / TempData["Info"] *@
 @{
-    var thanhCong = TempData["ThanhCong"] as string;
-    var loi = TempData["Loi"] as string;
+    var thanhCong = (TempData["ThanhCong"] ?? TempData["Success"]) as string;
+    var loi = (TempData["Loi"] ?? TempData["Error"]) as string;
+    var canhBao = (TempData["CanhBao"] ?? TempData["Info"]) as string;
 }
 
-@if (!string.IsNullOrEmpty(thanhCong))
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @thanhCong
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
-    </div>
-}
+<div class="rm-alerts-container" aria-live="polite">
+    @if (!string.IsNullOrWhiteSpace(thanhCong))
+    {
+        <div class="rm-alert rm-alert-success" role="status">
+            <div class="rm-alert-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="rm-alert-content">
+                <span class="rm-alert-message">@thanhCong</span>
+            </div>
+            <button type="button" class="rm-alert-close" aria-label="Đóng thông báo" onclick="this.closest('.rm-alert').remove()">
+                &times;
+            </button>
+        </div>
+    }
 
-@if (!string.IsNullOrEmpty(loi))
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @loi
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
-    </div>
-}
+    @if (!string.IsNullOrWhiteSpace(loi))
+    {
+        <div class="rm-alert rm-alert-error" role="alert">
+            <div class="rm-alert-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="rm-alert-content">
+                <span class="rm-alert-message">@loi</span>
+            </div>
+            <button type="button" class="rm-alert-close" aria-label="Đóng thông báo" onclick="this.closest('.rm-alert').remove()">
+                &times;
+            </button>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(canhBao))
+    {
+        <div class="rm-alert rm-alert-warning" role="status">
+            <div class="rm-alert-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="rm-alert-content">
+                <span class="rm-alert-message">@canhBao</span>
+            </div>
+            <button type="button" class="rm-alert-close" aria-label="Đóng thông báo" onclick="this.closest('.rm-alert').remove()">
+                &times;
+            </button>
+        </div>
+    }
+</div>

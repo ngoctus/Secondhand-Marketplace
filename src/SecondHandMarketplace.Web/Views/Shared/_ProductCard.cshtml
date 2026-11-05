@@ -1,0 +1,48 @@
+@model ProductCardVm
+@{
+    var conditionText = Model.ConditionName ?? "Tốt";
+}
+
+<article class="rm-product-card" data-product-id="@Model.Id">
+    <div class="rm-card-media">
+        <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@Model.Id" class="rm-card-image-link" tabindex="-1">
+            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" alt="@Model.Name" class="rm-card-image" loading="lazy" data-fallback />
+            }
+            else
+            {
+                <div class="wireframe-placeholder">
+                    <span>Ảnh sản phẩm 4:5</span>
+                </div>
+            }
+        </a>
+
+        <!-- Badge tình trạng ở góc trên trái -->
+        <span class="rm-card-badge">@conditionText</span>
+
+        <!-- Nút yêu thích ở góc trên phải -->
+        <button type="button" class="rm-card-favorite-btn" data-product-id="@Model.Id" aria-label="Thêm vào yêu thích">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="rm-card-body">
+        <h3 class="rm-card-title">
+            <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@Model.Id" title="@Model.Name">
+                @Model.Name
+            </a>
+        </h3>
+
+        <div class="rm-card-pricing">
+            <span class="rm-card-price">@Model.Price.ToString("N0")đ</span>
+        </div>
+
+        <div class="rm-card-seller">
+            <span class="seller-circle" aria-hidden="true"></span>
+            <span>@(string.IsNullOrWhiteSpace(Model.ShopName) ? "Cửa hàng" : Model.ShopName)</span>
+        </div>
+    </div>
+</article>

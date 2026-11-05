@@ -1,0 +1,53 @@
+@model OrderListVm
+@{
+    ViewData["Title"] = "Đơn bán hàng";
+    var tatCa = new[] { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" };
+}
+<div class="page-head">
+    <div><h2>Đơn bán hàng</h2><p class="muted">Đơn của khách gửi tới cửa hàng của bạn.</p></div>
+</div>
+
+<div class="status-tabs">
+    <a class="@(Model.Status is null ? "on" : "")" asp-action="Index">Tất cả <b>@Model.Counts.Values.Sum()</b></a>
+    @foreach (var s in tatCa)
+    {
+        <a class="@(Model.Status == s ? "on" : "")" asp-action="Index" asp-route-status="@s">@HienThi.TrangThaiDon(s) <b>@Model.Counts.GetValueOrDefault(s)</b></a>
+    }
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <input type="hidden" name="status" value="@Model.Status" />
+    <div class="col-md-6"><input name="q" value="@Model.Q" class="form-control" placeholder="Tìm theo mã đơn hoặc tên người mua" /></div>
+    <div class="col-auto"><button class="btn btn-primary">Tìm</button></div>
+</form>
+
+@if (Model.Result.Items.Count == 0)
+{
+    <div class="empty panel">Chưa có đơn hàng nào.</div>
+}
+else
+{
+    <div class="panel table-wrap">
+        <table class="table align-middle">
+            <thead><tr><th>ĐƠN HÀNG</th><th>NGƯỜI MUA</th><th>TỔNG TIỀN</th><th>THANH TOÁN</th><th>TRẠNG THÁI</th><th>NGÀY ĐẶT</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var o in Model.Result.Items)
+            {
+                <tr>
+                    <td class="d-flex align-items-center gap-2">
+                        @if (!string.IsNullOrEmpty(o.FirstImage)) { <img class="thumb" src="@o.FirstImage" alt="" data-fallback /> }
+                        <div><b>@o.MaDon</b><div class="small text-muted">@o.FirstItem@(o.ItemCount > 1 ? $" +{o.ItemCount - 1} sản phẩm" : "")</div></div>
+                    </td>
+                    <td>@o.BuyerName</td>
+                    <td><b>@HienThi.Tien(o.Total)</b></td>
+                    <td class="small">@HienThi.PhuongThucThanhToan(o.PaymentMethod)<br />@HienThi.TrangThaiThanhToan(o.PaymentStatus)</td>
+                    <td><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td>
+                    <td class="small">@HienThi.NgayGio(o.CreatedAt)</td>
+                    <td><a class="smallbtn text-decoration-none" asp-action="Details" asp-route-id="@o.Id">Xử lý</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <partial name="_Pager" model="new PagerVm(Model.Result.Page, Model.Result.TotalPages)" />
+}

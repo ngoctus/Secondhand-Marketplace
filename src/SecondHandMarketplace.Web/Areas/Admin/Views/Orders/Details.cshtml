@@ -1,0 +1,46 @@
+@model OrderDetailVm
+@{
+    ViewData["Title"] = "Đơn " + Model.MaDon;
+    var tiep = OrderRules.TiepTheoChoAdmin(Model.Status);
+}
+<p class="muted mt-3"><a asp-action="Index">← Danh sách đơn</a></p>
+<div class="page-head">
+    <div>
+        <h2>Đơn @Model.MaDon</h2>
+        <p class="muted">Người mua: @Model.BuyerName · Cửa hàng: @Model.ShopName (chủ shop: @Model.SellerName) · @HienThi.NgayGio(Model.CreatedAt)</p>
+    </div>
+    <span class="@HienThi.LopTrangThai(Model.Status)">@HienThi.TrangThaiDon(Model.Status)</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8"><partial name="_ChiTietDon" model="Model" /></div>
+    <div class="col-lg-4">
+        <div class="panel">
+            <h3>Can thiệp đơn hàng</h3>
+            @if (Model.Status == "CANCELLED")
+            {
+                <div class="note">Đơn đã bị hủy bởi <b>@HienThi.NguoiThucHien(Model.CancelledBy ?? "")</b>. Lý do: @Model.CancelReason</div>
+            }
+            else if (tiep.Length == 0)
+            {
+                <div class="note">Đơn đã hoàn tất, không còn thao tác nào.</div>
+            }
+            else
+            {
+                <form asp-action="UpdateStatus" method="post" onsubmit="return confirm('Xác nhận thay đổi trạng thái đơn?');">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <label>Chuyển sang trạng thái
+                        <select name="status" class="form-select">
+                            @foreach (var s in tiep) { <option value="@s">@OrderRules.NhanHanhDong(s) → @HienThi.TrangThaiDon(s)</option> }
+                        </select>
+                    </label>
+                    <label>Lý do (bắt buộc, gửi tới cả người mua và người bán)
+                        <textarea name="reason" rows="3" required minlength="5" maxlength="500"></textarea>
+                    </label>
+                    <button class="primary full" type="submit">Cập nhật trạng thái</button>
+                </form>
+                <p class="muted mt-2">Mọi can thiệp được ghi vào nhật ký hệ thống.</p>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,60 @@
+@model CreateAuctionVm
+@{ ViewData["Title"] = "Tạo phiên đấu giá"; }
+
+<div class="form-page" style="max-width:720px">
+    <div class="modal-box">
+        <div class="eyebrow">ĐẤU GIÁ</div>
+        <h2>Tạo phiên đấu giá</h2>
+
+        @if (Model.Products.Count == 0)
+        {
+            <div class="note">Bạn chưa có sản phẩm nào đủ điều kiện (sản phẩm phải đang bán và chưa nằm trong phiên khác).</div>
+        }
+        else
+        {
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <label>Sản phẩm
+                    <select asp-for="ProductId" class="form-select" id="productSelect">
+                        <option value="">-- Chọn sản phẩm đang bán --</option>
+                        @foreach (var p in Model.Products)
+                        {
+                            <option value="@p.Id" data-price="@((long)p.Price)">@p.Name — @HienThi.Tien(p.Price)</option>
+                        }
+                    </select>
+                </label>
+                <div class="form-row">
+                    <label>Giá khởi điểm (đ)<input asp-for="StartPrice" type="number" min="1000" step="1000" id="startPrice" /></label>
+                    <label>Bước giá (đ)<input asp-for="Step" type="number" min="1000" step="1000" value="@(Model.Step ?? 10000)" /></label>
+                </div>
+                <div class="form-row">
+                    <label>Bắt đầu lúc (để trống = ngay bây giờ)
+                        <input asp-for="StartAt" type="datetime-local" value="@HienThi.ChoInputGio(null)" />
+                    </label>
+                    <label>Kết thúc lúc
+                        <input asp-for="EndAt" type="datetime-local" value="@(Model.EndAt?.ToString("yyyy-MM-dd'T'HH:mm"))" />
+                    </label>
+                </div>
+                <div class="note">
+                    Giờ theo múi giờ Việt Nam. Phiên kéo dài từ 5 phút đến 30 ngày. Trong lúc đấu giá, sản phẩm được giữ riêng nên
+                    không ai mua trực tiếp được. Bạn chỉ hủy được khi chưa có người đặt giá. Khi kết thúc, hệ thống tự tạo đơn cho
+                    người trả giá cao nhất.
+                </div>
+                <button class="primary full" type="submit">Tạo phiên đấu giá</button>
+            </form>
+        }
+        <p class="mt-3"><a asp-action="Index">← Quay lại</a></p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Gợi ý giá khởi điểm = 70% giá niêm yết khi chọn sản phẩm
+        const sel = document.getElementById('productSelect'), price = document.getElementById('startPrice');
+        sel?.addEventListener('change', () => {
+            const p = Number(sel.selectedOptions[0]?.dataset.price || 0);
+            if (p && !price.value) price.value = Math.max(1000, Math.round(p * 0.7 / 1000) * 1000);
+        });
+    </script>
+}

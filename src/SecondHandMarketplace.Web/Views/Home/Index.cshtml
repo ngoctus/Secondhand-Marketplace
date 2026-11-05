@@ -1,42 +1,266 @@
+@using SecondHandMarketplace.Web.Services.Products
+@inject IProductService ProductService
 @{
-    ViewData["Title"] = "Khám phá";
+    ViewData["Title"] = "Trang chủ";
+    
+    // Lấy sản phẩm thật từ database nếu có, nếu chưa có thì dùng danh sách mẫu chuẩn theo Wireframe
+    List<ProductCardVm> sanPhams = new();
+    try
+    {
+        sanPhams = await ProductService.SearchAsync(new ProductSearchVm());
+    }
+    catch { }
+
+    if (sanPhams.Count == 0)
+    {
+        sanPhams = new List<ProductCardVm>
+        {
+            new ProductCardVm { Id = 1, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
+            new ProductCardVm { Id = 2, Name = "Máy ảnh film Olympus đã test hoạt động", Price = 1800000, ShopName = "Minh Camera", ConditionName = "Tốt" },
+            new ProductCardVm { Id = 3, Name = "Bộ nồi inox 5 món", Price = 320000, ShopName = "Nhà Bếp Xinh", ConditionName = "Mới" },
+            new ProductCardVm { Id = 4, Name = "Sách Nhà giả kim bản bìa mềm", Price = 60000, ShopName = "Book Corner", ConditionName = "Có dấu vết sử dụng" }
+        };
+    }
 }
-<section class="page">
-    <div class="hero">
-        <div>
-            <div class="eyebrow">SECOND LIFE, BETTER CHOICE</div>
-            <h1>Món đồ tốt<br />xứng đáng <em>vòng đời mới.</em></h1>
-            <p>Khám phá những món đồ đã qua sử dụng được kiểm duyệt trước khi xuất hiện trên sàn.</p>
-            <a class="primary" asp-controller="Products" asp-action="Index">Khám phá ngay <span>↗</span></a>
+
+<!-- 1. HERO SECTION (Ảnh 2) -->
+<section class="landing-hero">
+    <div>
+        <div class="hero-sublabel">SECONDHAND - TÁI SỬ DỤNG</div>
+        <h1 class="hero-heading">Món đồ cũ,<br />giá trị mới.</h1>
+        <p class="hero-desc">
+            Mua bán đồ đã qua sử dụng an toàn, tiết kiệm và thân thiện với môi trường. Mọi tin đăng đều được kiểm duyệt.
+        </p>
+        <div class="hero-actions">
+            <a asp-controller="Products" asp-action="Index" class="btn-rm-primary">Khám phá ngay</a>
+            <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn-rm-secondary">Đăng bán sản phẩm</a>
         </div>
-        <div class="hero-art" aria-hidden="true">
-            <div class="sun"></div>
-            <div class="art-card art-one">PRE-LOVED<br /><b>GOOD FINDS</b></div>
-            <div class="art-card art-two">REUSE<br />RELOVE</div>
-            <div class="art-sticker">GIVE<br />IT<br />AGAIN</div>
+        <div class="hero-stats">
+            <div class="hero-stat-item">
+                <b>10.000+</b>
+                <span>Sản phẩm</span>
+            </div>
+            <div class="hero-stat-item">
+                <b>5.000+</b>
+                <span>Người bán</span>
+            </div>
+            <div class="hero-stat-item">
+                <b>100%</b>
+                <span>Kiểm duyệt</span>
+            </div>
         </div>
     </div>
-
-    <div class="trust-row">
-        <div><b>01</b><span>Kiểm duyệt trước khi đăng</span></div>
-        <div><b>02</b><span>Mỗi món đồ, một chủ nhân mới</span></div>
-        <div><b>03</b><span>Mua bán có trách nhiệm</span></div>
+    <div class="hero-image-box">
+        <div class="wireframe-placeholder">
+            <span>Hình minh họa hero</span>
+        </div>
     </div>
-
-    <section class="catalog">
-        <div class="section-head">
-            <div><div class="eyebrow">THE COMMUNITY CLOSET</div><h2>Tìm món đồ tiếp theo</h2></div>
-            <span class="muted">Sản phẩm đã được Admin duyệt</span>
-        </div>
-        <form asp-controller="Products" asp-action="Index" method="get" class="filters">
-            <input name="Keyword" placeholder="Tìm tên sản phẩm hoặc người bán..." />
-            <input name="MinPrice" type="number" min="0" placeholder="Giá từ" />
-            <input name="MaxPrice" type="number" min="0" placeholder="Giá đến" />
-            <button class="primary" type="submit">Tìm kiếm</button>
-        </form>
-        <div class="panel">
-            <p class="muted">Danh sách sản phẩm được tải từ dữ liệu của hệ thống tại mục Khám phá.</p>
-            <a class="primary" asp-controller="Products" asp-action="Index">Xem sản phẩm <span>↗</span></a>
-        </div>
-    </section>
 </section>
+
+<!-- 2. DANH MỤC (Ảnh 2) -->
+<section class="landing-section">
+    <div class="landing-section-header">
+        <div>
+            <div class="section-label">DANH MỤC</div>
+            <h2 class="section-title">Tìm nhanh theo danh mục</h2>
+        </div>
+        <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">Xem tất cả</a>
+    </div>
+
+    <div class="category-grid">
+        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Thời trang" class="category-card">
+            <div class="cat-circle"></div>
+            <span class="cat-name">Thời trang</span>
+        </a>
+        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Điện tử" class="category-card">
+            <div class="cat-circle"></div>
+            <span class="cat-name">Điện tử</span>
+        </a>
+        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Đồ gia dụng" class="category-card">
+            <div class="cat-circle"></div>
+            <span class="cat-name">Đồ gia dụng</span>
+        </a>
+        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Sách" class="category-card">
+            <div class="cat-circle"></div>
+            <span class="cat-name">Sách</span>
+        </a>
+        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Phụ kiện" class="category-card">
+            <div class="cat-circle"></div>
+            <span class="cat-name">Phụ kiện</span>
+        </a>
+        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Nội thất" class="category-card">
+            <div class="cat-circle"></div>
+            <span class="cat-name">Nội thất</span>
+        </a>
+    </div>
+</section>
+
+<!-- 3. SẢN PHẨM NỔI BẬT (Ảnh 2) -->
+<section class="landing-section">
+    <div class="landing-section-header">
+        <div>
+            <div class="section-label">SẢN PHẨM NỔI BẬT</div>
+            <h2 class="section-title">Có thể bạn sẽ thích</h2>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="btn-rm-primary" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Mới đăng</span>
+            <a asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tốt</a>
+            <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Được quan tâm</a>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 mb-4">
+        @foreach (var p in sanPhams.Take(4))
+        {
+            <div class="col">
+                <partial name="_ProductCard" model="p" />
+            </div>
+        }
+    </div>
+
+    <div class="text-center pt-2">
+        <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 10px 24px;">Xem thêm sản phẩm</a>
+    </div>
+</section>
+
+<!-- 4. CÁCH THỨC HOẠT ĐỘNG (Ảnh 3) -->
+<section class="landing-section">
+    <div class="section-label">CÁCH THỨC HOẠT ĐỘNG</div>
+    <h2 class="section-title">3 bước đơn giản</h2>
+
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-num">1</div>
+            <h3 class="step-title">Tìm sản phẩm</h3>
+            <p class="step-desc">Duyệt danh mục hoặc dùng thanh tìm kiếm và bộ lọc.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">2</div>
+            <h3 class="step-title">Liên hệ người bán</h3>
+            <p class="step-desc">Trao đổi, hỏi thêm ảnh và tình trạng thực tế.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">3</div>
+            <h3 class="step-title">Giao dịch</h3>
+            <p class="step-desc">Gặp mặt hoặc vận chuyển, nhận hàng và đánh giá.</p>
+        </div>
+    </div>
+    <div class="step-seller-note">
+        Dành cho người bán: Đăng sản phẩm → Kiểm duyệt → Tiếp cận người mua
+    </div>
+</section>
+
+<!-- 5. GIÁ TRỊ BỀN VỮNG (Ảnh 3) -->
+<section class="landing-section">
+    <div class="sustainability-row">
+        <div style="aspect-ratio: 16 / 10; width: 100%;">
+            <div class="wireframe-placeholder">
+                <span>Ảnh tái sử dụng</span>
+            </div>
+        </div>
+        <div>
+            <div class="section-label">GIÁ TRỊ BỀN VỮNG</div>
+            <h2 class="section-title" style="font-size: 26px; line-height: 1.25; margin-bottom: 12px;">
+                Mỗi món đồ được dùng lại là một lần giảm lãng phí.
+            </h2>
+            <p style="color: var(--color-text-secondary); font-size: 14px; margin-bottom: 20px;">
+                Tái sử dụng giúp tiết kiệm chi phí và giảm rác thải ra môi trường.
+            </p>
+            <div class="sustainability-stats">
+                <div class="sust-stat-card">
+                    <b>00 kg</b>
+                    <span>Rác thải giảm</span>
+                </div>
+                <div class="sust-stat-card">
+                    <b>00 triệu đ</b>
+                    <span>Tiết kiệm</span>
+                </div>
+                <div class="sust-stat-card">
+                    <b>0.000</b>
+                    <span>Món đồ được dùng lại</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 6. ĐỘ TIN CẬY (Ảnh 3) -->
+<section class="landing-section">
+    <div class="section-label">ĐỘ TIN CẬY</div>
+    <h2 class="section-title">Mua bán an tâm hơn</h2>
+
+    <div class="trust-grid">
+        <div class="trust-card">
+            <div class="trust-dot"></div>
+            <h4>Kiểm duyệt sản phẩm</h4>
+            <p>Mọi tin đăng được duyệt trước khi hiển thị.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-dot"></div>
+            <h4>Giao dịch an toàn</h4>
+            <p>Hướng dẫn gặp mặt, thanh toán, kiểm hàng.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-dot"></div>
+            <h4>Quy định cộng đồng</h4>
+            <p>Nguyên tắc đăng bán và ứng xử rõ ràng.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-dot"></div>
+            <h4>Báo cáo vi phạm</h4>
+            <p>Gửi báo cáo nhanh, có đội ngũ xử lý.</p>
+        </div>
+    </div>
+</section>
+
+<!-- 7. ĐÁNH GIÁ (Ảnh 3) -->
+<section class="landing-section">
+    <div class="section-label">ĐÁNH GIÁ</div>
+    <h2 class="section-title">Người dùng nói gì</h2>
+    <p style="color: var(--color-text-muted); font-size: 13px; margin: 4px 0 20px;">Chỉ hiển thị đánh giá thật từ giao dịch đã hoàn tất</p>
+
+    <div class="reviews-grid">
+        <div class="review-card">
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
+            <div class="review-author">
+                <div class="author-circle"></div>
+                <div class="author-info">
+                    <b>Tên người dùng</b>
+                    <span>Đã mua: Tên sản phẩm</span>
+                </div>
+            </div>
+        </div>
+        <div class="review-card">
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
+            <div class="review-author">
+                <div class="author-circle"></div>
+                <div class="author-info">
+                    <b>Tên người dùng</b>
+                    <span>Đã mua: Tên sản phẩm</span>
+                </div>
+            </div>
+        </div>
+        <div class="review-card">
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
+            <div class="review-author">
+                <div class="author-circle"></div>
+                <div class="author-info">
+                    <b>Tên người dùng</b>
+                    <span>Đã mua: Tên sản phẩm</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 8. BANNER CTA CUỐI TRANG (Ảnh 3) -->
+<div class="landing-cta-banner">
+    <div class="cta-banner-text">
+        <h3>Có món đồ không còn dùng? Đăng bán ngay!</h3>
+        <p>Đăng tin miễn phí, được kiểm duyệt trong thời gian ngắn.</p>
+    </div>
+    <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn-cta-white">Đăng bán ngay</a>
+</div>

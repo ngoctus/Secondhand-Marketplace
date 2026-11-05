@@ -1,6 +1,145 @@
+@model List<SecondHandMarketplace.Web.Models.ViewModels.Orders.DonHangItemViewModel>
 @{
-    ViewData["Title"] = "Đơn hàng của tôi";
+    ViewData["Title"] = "Đơn mua của tôi";
+    var currentFilter = ViewBag.TrangThaiHienTai as string;
 }
 
-<h2>Đơn hàng của tôi</h2>
-<p class="text-muted">TODO: Areas/User/Controllers/OrdersController.cs &rarr; Index</p>
+<div class="container my-4" style="max-width: 1050px;">
+    <!-- Tiêu đề trang -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-box-seam text-success"></i> Đơn mua của tôi</h2>
+            <p class="text-muted small mb-0">Theo dõi hành trình và trạng thái các đơn hàng bạn đã đặt mua.</p>
+        </div>
+        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-cart3 me-1"></i> Xem giỏ hàng
+        </a>
+    </div>
+
+    <partial name="_ThongBao" />
+
+    <!-- Thanh bộ lọc trạng thái đơn hàng -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-2">
+        <div class="d-flex flex-nowrap overflow-auto gap-2 py-1 px-2">
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(string.IsNullOrEmpty(currentFilter) ? "btn-success" : "btn-light text-secondary")" 
+               style="@(string.IsNullOrEmpty(currentFilter) ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
+               asp-area="User" asp-controller="Orders" asp-action="Index">Tất cả đơn</a>
+
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "PENDING" ? "btn-success" : "btn-light text-secondary")" 
+               style="@(currentFilter == "PENDING" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="PENDING">Chờ xác nhận</a>
+
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "CONFIRMED" ? "btn-success" : "btn-light text-secondary")" 
+               style="@(currentFilter == "CONFIRMED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="CONFIRMED">Shop đã xác nhận</a>
+
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "SHIPPING" ? "btn-success" : "btn-light text-secondary")" 
+               style="@(currentFilter == "SHIPPING" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="SHIPPING">Đang giao hàng</a>
+
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "DELIVERED" ? "btn-success" : "btn-light text-secondary")" 
+               style="@(currentFilter == "DELIVERED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="DELIVERED">Đã giao</a>
+
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "COMPLETED" ? "btn-success" : "btn-light text-secondary")" 
+               style="@(currentFilter == "COMPLETED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="COMPLETED">Hoàn tất</a>
+
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "CANCELLED" ? "btn-success" : "btn-light text-secondary")" 
+               style="@(currentFilter == "CANCELLED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="CANCELLED">Đã hủy</a>
+        </div>
+    </div>
+
+    <!-- Danh sách các đơn hàng -->
+    @if (!Model.Any())
+    {
+        <div class="card text-center p-5 border-0 rounded-4 shadow-sm bg-white my-4">
+            <div class="card-body">
+                <div class="display-3 text-muted mb-3">&#128230;</div>
+                <h4 class="fw-bold text-dark mb-2">Chưa có đơn hàng nào ở mục này</h4>
+                <p class="text-secondary small mb-4">Bạn chưa có đơn mua nào tương ứng với bộ lọc đã chọn.</p>
+                <a asp-area="" asp-controller="Products" asp-action="Index" class="btn btn-success px-4 py-2 rounded-pill fw-semibold"
+                   style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
+                    Khám phá đồ cũ ngay
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        @foreach (var don in Model)
+        {
+            <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <!-- Header của đơn hàng -->
+                <div class="card-header bg-light py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="fw-bold text-dark"><i class="bi bi-shop text-success me-1"></i> @don.TenShop</span>
+                        <span class="text-muted mx-2">|</span>
+                        <span class="font-monospace text-secondary small">Mã đơn: #@don.MaDon</span>
+                    </div>
+                    <div>
+                        @switch (don.TrangThai)
+                        {
+                            case "PENDING":
+                                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill small">Chờ xác nhận</span>
+                                break;
+                            case "CONFIRMED":
+                                <span class="badge bg-info text-dark px-3 py-1 rounded-pill small">Shop đã xác nhận</span>
+                                break;
+                            case "SHIPPING":
+                                <span class="badge bg-primary px-3 py-1 rounded-pill small">Đang giao hàng</span>
+                                break;
+                            case "DELIVERED":
+                                <span class="badge bg-success-subtle text-success border border-success px-3 py-1 rounded-pill small">Đã giao hàng</span>
+                                break;
+                            case "COMPLETED":
+                                <span class="badge bg-success px-3 py-1 rounded-pill small">Hoàn tất</span>
+                                break;
+                            case "CANCELLED":
+                                <span class="badge bg-secondary px-3 py-1 rounded-pill small">Đã hủy</span>
+                                break;
+                        }
+                    </div>
+                </div>
+
+                <!-- Danh sách món hàng trong đơn -->
+                <div class="card-body p-4">
+                    @foreach (var sp in don.ChiTiet)
+                    {
+                        <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                            <img src="@(string.IsNullOrEmpty(sp.AnhDaiDien) ? "https://placehold.co/60x60?text=SP" : sp.AnhDaiDien)" 
+                                 class="rounded-3 border" style="width: 60px; height: 60px; object-fit: cover;" alt="@sp.TenSanPham" />
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-semibold text-truncate text-dark">@sp.TenSanPham</div>
+                                <div class="text-muted small" style="font-size: 11px;">Số lượng: 1 (đồ cũ độc nhất)</div>
+                            </div>
+                            <div class="fw-bold text-success text-nowrap">@sp.Gia.ToString("N0") ₫</div>
+                        </div>
+                    }
+
+                    <!-- Footer của thẻ đơn hàng -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3">
+                        <div class="text-muted small">
+                            Ngày đặt: @don.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            @if (!string.IsNullOrEmpty(don.LyDoHuy))
+                            {
+                                <div class="text-danger small mt-1">Lý do hủy: @don.LyDoHuy</div>
+                            }
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div>
+                                <span class="text-muted small">Tổng tiền:</span>
+                                <span class="h5 fw-bold text-success ms-1 mb-0">@don.TongTien.ToString("N0") ₫</span>
+                            </div>
+                            <a asp-area="User" asp-controller="Orders" asp-action="ChiTiet" asp-route-id="@don.MaDonHang" 
+                               class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold">
+                                Xem chi tiết &rarr;
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

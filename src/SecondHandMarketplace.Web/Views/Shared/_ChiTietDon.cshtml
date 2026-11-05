@@ -1,0 +1,66 @@
+@model OrderDetailVm
+
+<div class="panel">
+    <div class="panel-head"><h3>Sản phẩm trong đơn</h3><span class="muted">@Model.Items.Count sản phẩm</span></div>
+    <table class="table align-middle">
+        <tbody>
+        @foreach (var it in Model.Items)
+        {
+            <tr>
+                <td style="width:64px">
+                    @if (!string.IsNullOrEmpty(it.Image)) { <img class="thumb" src="@it.Image" alt="" data-fallback /> }
+                </td>
+                <td><a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@it.ProductId">@it.Name</a></td>
+                <td class="text-end"><b>@HienThi.Tien(it.Price)</b></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div class="order-sum">
+        <div><span>Tiền hàng</span><span>@HienThi.Tien(Model.ItemsTotal)</span></div>
+        <div><span>Phí vận chuyển</span><span>@HienThi.Tien(Model.ShippingFee)</span></div>
+        <div class="total"><span>Tổng thanh toán</span><span>@HienThi.Tien(Model.Total)</span></div>
+    </div>
+</div>
+
+<div class="panel">
+    <h3>Giao hàng và thanh toán</h3>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="muted">NGƯỜI NHẬN</div>
+            <b>@Model.RecipientName</b> · @Model.RecipientPhone<br />@Model.RecipientAddress
+            @if (Model.BuyerId > 0)
+            {
+                <div class="mt-1">
+                    <a asp-area="User" asp-controller="Reports" asp-action="Tao" asp-route-loai="USER" asp-route-id="@Model.BuyerId" asp-route-ten="@Model.BuyerName"
+                       class="text-danger small text-decoration-none" title="Báo cáo người mua vi phạm">
+                        🚩 Báo cáo người mua
+                    </a>
+                </div>
+            }
+        </div>
+        <div class="col-md-6">
+            <div class="muted">THANH TOÁN</div>
+            @HienThi.PhuongThucThanhToan(Model.PaymentMethod) ·
+            <span class="@(Model.PaymentStatus == "PAID" ? "st st-completed" : "st st-pending")">@HienThi.TrangThaiThanhToan(Model.PaymentStatus)</span>
+            @foreach (var p in Model.Payments)
+            {
+                <div class="small text-muted">@HienThi.TrangThaiThanhToan(p.Status) · @HienThi.Tien(p.Amount)@(p.TransactionCode is null ? "" : " · Mã GD " + p.TransactionCode)@(p.PaidAt is null ? "" : " · " + HienThi.NgayGio(p.PaidAt))</div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="panel">
+    <h3>Lịch sử trạng thái</h3>
+    <ol class="timeline">
+        @foreach (var h in Model.History.AsEnumerable().Reverse())
+        {
+            <li>
+                <span class="@HienThi.LopTrangThai(h.To)">@HienThi.TrangThaiDon(h.To)</span>
+                <div class="small text-muted">@HienThi.NgayGio(h.At) · @h.Actor</div>
+                @if (!string.IsNullOrWhiteSpace(h.Reason)) { <div class="small">Lý do: @h.Reason</div> }
+            </li>
+        }
+    </ol>
+</div>

@@ -60,6 +60,8 @@ dotnet restore
 dotnet run
 ```
 
+- `Auction:SweepSeconds` (mặc định 60): chu kỳ (giây) service nền quét và chốt các phiên đấu giá hết giờ. Tối thiểu 10.
+
 Hoặc mở `Secondhand-Marketplace.sln` bằng Visual Studio và chạy project `SecondHandMarketplace.Web`.
 
 ## 4. Tài khoản seed

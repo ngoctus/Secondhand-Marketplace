@@ -1,6 +1,238 @@
+﻿@model SecondHandMarketplace.Web.Models.ViewModels.Cart.CartIndexViewModel
 @{
-    ViewData["Title"] = "Giỏ hàng";
+    ViewData["Title"] = "Giỏ hàng của bạn";
 }
 
-<h2>Giỏ hàng</h2>
-<p class="text-muted">TODO: Areas/User/Controllers/CartController.cs &rarr; Index</p>
+<div class="container my-4" style="max-width: 1100px;">
+    <form id="antiForgeryCartForm" style="display:none;">@Html.AntiForgeryToken()</form>
+    <!-- Tiêu đề trang -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-cart3 text-success"></i> Giỏ hàng của bạn</h2>
+            <p class="text-muted small mb-0">Các món đồ cũ độc nhất bạn đã chọn mua từ các cửa hàng.</p>
+        </div>
+        <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            &larr; Tiếp tục mua sắm
+        </a>
+    </div>
+
+    <partial name="_ThongBao" />
+
+    @if (!Model.DanhSachNhomShop.Any())
+    {
+        <div class="card text-center p-5 border-0 rounded-4 shadow-sm bg-white my-4">
+            <div class="card-body">
+                <div class="display-3 text-muted mb-3">&#128722;</div>
+                <h4 class="fw-bold text-dark mb-2">Giỏ hàng của bạn đang trống</h4>
+                <p class="text-secondary small mb-4">Hãy dạo quanh sàn Re:Market để tìm những món đồ cũ chất lượng và độc đáo nhé!</p>
+                <a asp-area="" asp-controller="Products" asp-action="Index" class="btn btn-success px-4 py-2 rounded-pill fw-semibold"
+                   style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
+                    Khám phá đồ cũ ngay
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <!-- Danh sách sản phẩm phân nhóm theo từng shop -->
+            <div class="col-lg-8">
+                @foreach (var shop in Model.DanhSachNhomShop)
+                {
+                    <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                        <!-- Shop Header -->
+                        <div class="card-header bg-light py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input shop-select-all" type="checkbox" 
+                                       id="shop_@shop.MaCuaHang" data-shop-id="@shop.MaCuaHang"
+                                       @(shop.Items.All(i => i.DaChon) ? "checked" : "") />
+                                <label class="form-check-label fw-bold text-dark ms-1" for="shop_@shop.MaCuaHang">
+                                    <i class="bi bi-shop me-1 text-success"></i> @shop.TenShop
+                                </label>
+                            </div>
+                            <span class="badge bg-white text-muted border rounded-pill px-2 py-1 small">@shop.Items.Count sản phẩm</span>
+                        </div>
+
+                        <!-- Shop Items Table -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0">
+                                    <thead class="table-light small text-muted">
+                                        <tr>
+                                            <th style="width: 45px;" class="ps-4"></th>
+                                            <th>Sản phẩm</th>
+                                            <th style="width: 140px;">Đơn giá</th>
+                                            <th style="width: 100px;" class="text-center">Số lượng</th>
+                                            <th style="width: 70px;" class="text-end pe-4">Xóa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in shop.Items)
+                                        {
+                                            <tr class="@(!item.CoTheMua ? "table-light text-muted opacity-75" : "")">
+                                                <td class="ps-4">
+                                                    @if (item.CoTheMua)
+                                                    {
+                                                        <input class="form-check-input item-checkbox" type="checkbox"
+                                                               data-id="@item.MaGioHang" data-price="@item.Gia"
+                                                               data-shop-id="@shop.MaCuaHang"
+                                                               @(item.DaChon ? "checked" : "") />
+                                                    }
+                                                    else
+                                                    {
+                                                        <input class="form-check-input" type="checkbox" disabled />
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center py-2">
+                                                        <img src="@(string.IsNullOrEmpty(item.AnhDaiDien) ? "https://placehold.co/60x60?text=SP" : item.AnhDaiDien)"
+                                                             alt="@item.TenSanPham" class="rounded-3 me-3 border"
+                                                             style="width: 60px; height: 60px; object-fit: cover;"
+                                                             onerror="this.src='https://placehold.co/60x60?text=SP'" />
+                                                        <div>
+                                                            <div class="fw-semibold text-truncate" style="max-width: 270px;" title="@item.TenSanPham">
+                                                                <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@item.MaSanPham" 
+                                                                   class="text-decoration-none text-dark">
+                                                                    @item.TenSanPham
+                                                                </a>
+                                                            </div>
+                                                            @if (!item.CoTheMua)
+                                                            {
+                                                                <span class="badge bg-danger-subtle text-danger small mt-1">Không khả dụng (đã bán hoặc đã gỡ)</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="badge bg-success-subtle text-success small mt-1">Sẵn sàng đặt mua</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="fw-bold text-success">@item.Gia.ToString("N0") ₫</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-light text-dark border px-2 py-1">1</span>
+                                                    <div class="text-muted small" style="font-size: 10px;">Duy nhất</div>
+                                                </td>
+                                                <td class="text-end pe-4">
+                                                    <form asp-area="User" asp-controller="Cart" asp-action="Xoa" method="post" class="d-inline"
+                                                          onsubmit="return confirm('Bạn có chắc muốn xóa món đồ này khỏi giỏ hàng?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="maGioHang" value="@item.MaGioHang" />
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle p-1" style="width: 28px; height: 28px; line-height: 1;" title="Xóa món">
+                                                            &times;
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Tóm tắt đơn hàng & Checkout -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 bg-white sticky-top p-4" style="top: 90px;">
+                    <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom">Tóm tắt giỏ hàng</h5>
+
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-muted">Món đồ đã chọn:</span>
+                        <strong class="text-dark" id="lbl-tong-mon">@Model.TongSoMonChon sản phẩm</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-baseline mb-3">
+                        <span class="text-muted">Tổng tạm tính:</span>
+                        <span class="h4 fw-bold text-success mb-0" id="lbl-tong-tien">@Model.TongTienTamTinh.ToString("N0") ₫</span>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 border small mb-4">
+                        <i class="bi bi-info-circle text-success me-1"></i>
+                        <strong>Lưu ý:</strong> Đồ cũ mỗi món chỉ có 1 cái duy nhất. Nếu nhiều người cùng thêm vào giỏ, ai đặt hàng trước sẽ sở hữu món đồ.
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a asp-area="User" asp-controller="Orders" asp-action="Checkout" id="btn-checkout"
+                           class="btn btn-success py-2 fw-semibold rounded-pill @(Model.TongSoMonChon == 0 ? "disabled" : "")"
+                           style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
+                            Tiến hành Đặt hàng &rarr;
+                        </a>
+                        <a asp-area="" asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary py-2 rounded-pill small">
+                            Tìm thêm món đồ khác
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Checkbox từng sản phẩm
+            const afToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            document.querySelectorAll('.item-checkbox').forEach(function (chk) {
+                chk.addEventListener('change', function () {
+                    const id = this.getAttribute('data-id');
+                    const daChon = this.checked;
+
+                    fetch('@Url.Action("ChuyenTrangThaiChon", "Cart", new { area = "User" })', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': afToken },
+                        body: 'maGioHang=' + encodeURIComponent(id) + '&daChon=' + encodeURIComponent(daChon) + '&__RequestVerificationToken=' + encodeURIComponent(afToken)
+                    }).then(res => res.json()).then(data => {
+                        capNhatGiaoDien();
+                    });
+                });
+            });
+
+            // Checkbox chọn tất cả theo từng Shop
+            document.querySelectorAll('.shop-select-all').forEach(function (chkShop) {
+                chkShop.addEventListener('change', function () {
+                    const shopId = this.getAttribute('data-shop-id');
+                    const daChon = this.checked;
+
+                    document.querySelectorAll('.item-checkbox[data-shop-id="' + shopId + '"]').forEach(function (c) {
+                        c.checked = daChon;
+                    });
+
+                    fetch('@Url.Action("ChonTatCaShop", "Cart", new { area = "User" })', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': afToken },
+                        body: 'maCuaHang=' + encodeURIComponent(shopId) + '&daChon=' + encodeURIComponent(daChon) + '&__RequestVerificationToken=' + encodeURIComponent(afToken)
+                    }).then(res => res.json()).then(data => {
+                        capNhatGiaoDien();
+                    });
+                });
+            });
+
+            function capNhatGiaoDien() {
+                let tongTien = 0;
+                let tongMon = 0;
+
+                document.querySelectorAll('.item-checkbox:checked').forEach(function (chk) {
+                    tongMon += 1;
+                    tongTien += parseFloat(chk.getAttribute('data-price') || 0);
+                });
+
+                document.getElementById('lbl-tong-mon').innerText = tongMon + ' sản phẩm';
+                document.getElementById('lbl-tong-tien').innerText = new Intl.NumberFormat('vi-VN').format(tongTien) + ' ₫';
+
+                const btnCheckout = document.getElementById('btn-checkout');
+                if (btnCheckout) {
+                    if (tongMon === 0) {
+                        btnCheckout.classList.add('disabled');
+                    } else {
+                        btnCheckout.classList.remove('disabled');
+                    }
+                }
+            }
+        });
+    </script>
+}

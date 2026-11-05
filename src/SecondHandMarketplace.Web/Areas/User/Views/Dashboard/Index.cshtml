@@ -1,6 +1,53 @@
+@model SellerDashboardVm
 @{
     ViewData["Title"] = "Thống kê cửa hàng";
+    var tt = new[] { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" };
 }
+<div class="page-head"><div><h2>Thống kê cửa hàng</h2><p class="muted">@Model.ShopName</p></div>
+    <a class="primary text-decoration-none" asp-controller="SellerOrders" asp-action="Index">Xử lý đơn hàng</a></div>
 
-<h2>Thống kê cửa hàng</h2>
-<p class="text-muted">TODO: Areas/User/Controllers/DashboardController.cs &rarr; Index</p>
+<div class="kpi-grid">
+    <div class="kpi"><span>Doanh thu (đơn hoàn tất)</span><b>@HienThi.Tien(Model.DoanhThu)</b></div>
+    <div class="kpi"><span>Đơn chờ xác nhận</span><b>@Model.DonChoXuLy</b></div>
+    <div class="kpi"><span>Đơn hoàn tất / tổng đơn</span><b>@Model.DonHoanTat / @Model.TongDon</b></div>
+    <div class="kpi"><span>Sản phẩm đang bán</span><b>@Model.SanPhamDangBan</b><small>@Model.SanPhamDaBan đã bán · @Model.TongSanPham tổng</small></div>
+    <div class="kpi"><span>Phiên đấu giá đang mở</span><b>@Model.PhienDangMo</b></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8"><partial name="_BieuDo" /></div>
+    <div class="col-lg-4">
+        <div class="panel">
+            <h3>Đơn theo trạng thái</h3>
+            @foreach (var s in tt)
+            {
+                var n = Model.DonTheoTrangThai.GetValueOrDefault(s);
+                <div class="bar-row">
+                    <span class="@HienThi.LopTrangThai(s)">@HienThi.TrangThaiDon(s)</span>
+                    <div class="bar"><i style="width:@(Model.TongDon == 0 ? 0 : n * 100 / Model.TongDon)%"></i></div>
+                    <b>@n</b>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="panel">
+    <h3>Sản phẩm bán chạy (theo doanh thu)</h3>
+    @if (Model.SanPhamBanChay.Count == 0) { <div class="empty">Chưa có đơn hoàn tất nào.</div> }
+    else
+    {
+        <table class="table">
+            <thead><tr><th>#</th><th>SẢN PHẨM</th><th class="text-end">DOANH THU</th></tr></thead>
+            <tbody>
+            @for (var i = 0; i < Model.SanPhamBanChay.Count; i++)
+            {
+                var p = Model.SanPhamBanChay[i];
+                <tr><td>@(i + 1)</td><td><a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@p.ProductId">@p.Name</a></td><td class="text-end"><b>@HienThi.Tien(p.Revenue)</b></td></tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
+
+@section Scripts { <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script> }

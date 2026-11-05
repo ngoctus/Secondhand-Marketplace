@@ -1,7 +1,14 @@
+using SecondHandMarketplace.Web.Models.ViewModels.Cart;
+
 namespace SecondHandMarketplace.Web.Services.Carts;
 
-/// <summary>Giỏ hàng: thêm / xem / xóa / chọn sản phẩm, mua ngay (CRT-01..03)</summary>
+/// <summary>Giao diện nghiệp vụ Giỏ hàng của người mua.</summary>
 public interface ICartService
 {
-    // TODO: khai báo hàm ở đây, rồi cài đặt trong CartService
+    Task<CartIndexViewModel> LayGioHangAsync(int maNguoiDung);
+    Task<(bool ThanhCong, string? ThongBao)> ThemVaoGioAsync(int maNguoiDung, int maSanPham);
+    Task<bool> CapNhatTrangThaiChonAsync(int maNguoiDung, int maGioHang, bool daChon);
+    Task<bool> CapNhatChonTatCaTheoShopAsync(int maNguoiDung, int maCuaHang, bool daChon);
+    Task<bool> XoaKhoiGioAsync(int maNguoiDung, int maGioHang);
+    Task<int> DemSoLuongMonAsync(int maNguoiDung);
 }

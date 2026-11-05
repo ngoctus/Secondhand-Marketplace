@@ -1,0 +1,46 @@
+@* Dùng: <partial name="_BieuDo" /> trong view có action Chart. Cần nhúng Chart.js ở @section Scripts của view cha. *@
+<div class="panel">
+    <div class="panel-head">
+        <h3>Doanh thu và số đơn</h3>
+        <div class="seg">
+            <button type="button" class="on" data-mode="day">30 ngày</button>
+            <button type="button" data-mode="month">12 tháng</button>
+        </div>
+    </div>
+    <div class="chart-box"><canvas id="revenueChart"></canvas></div>
+</div>
+
+<script>
+    window.addEventListener('load', () => {
+        if (typeof Chart === 'undefined') return;
+        const ctx = document.getElementById('revenueChart');
+        const chart = new Chart(ctx, {
+            data: { labels: [], datasets: [
+                { type: 'bar', label: 'Doanh thu (đ)', data: [], backgroundColor: '#9fc079', borderRadius: 4, yAxisID: 'y' },
+                { type: 'line', label: 'Số đơn', data: [], borderColor: '#285b43', backgroundColor: '#285b43', tension: .3, yAxisID: 'y1' }
+            ]},
+            options: {
+                responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y:  { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('vi-VN') } },
+                    y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { precision: 0 } }
+                }
+            }
+        });
+        async function load(mode) {
+            const res = await fetch('@Url.Action("Chart")?mode=' + mode, { headers: { Accept: 'application/json' } });
+            if (!res.ok) return;
+            const d = await res.json();
+            chart.data.labels = d.labels;
+            chart.data.datasets[0].data = d.revenue;
+            chart.data.datasets[1].data = d.orders;
+            chart.update();
+        }
+        document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+            document.querySelectorAll('.seg button').forEach(x => x.classList.remove('on'));
+            b.classList.add('on');
+            load(b.dataset.mode);
+        }));
+        load('day');
+    });
+</script>

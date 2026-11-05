@@ -1,0 +1,44 @@
+@{
+    ViewData["Title"] = "Đặt hàng thành công";
+    var danhSachMaDon = ViewBag.DanhSachMaDon as string[] ?? Array.Empty<string>();
+}
+
+<div class="container my-5 text-center" style="max-width: 600px;">
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 p-md-5">
+        <div class="card-body">
+            <div class="mb-3">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success" 
+                      style="width: 80px; height: 80px; font-size: 38px;">
+                    &#10004;
+                </span>
+            </div>
+            <h2 class="fw-bold text-dark mb-2">Đặt hàng thành công!</h2>
+            <p class="text-secondary small mb-4">Cảm ơn bạn đã lựa chọn mua đồ cũ trên Re:Market. Đơn hàng của bạn đã được chuyển tới người bán để đóng gói và giao hàng.</p>
+
+            @if (danhSachMaDon.Length > 0)
+            {
+                <div class="p-3 bg-light rounded-3 border text-start mb-4">
+                    <div class="small fw-bold text-dark mb-2"><i class="bi bi-receipt text-success me-1"></i> Mã đơn hàng của bạn:</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var ma in danhSachMaDon)
+                        {
+                            <span class="badge bg-white text-dark border font-monospace px-3 py-2 fs-6">
+                                #@ma
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-success px-4 py-2 rounded-pill fw-semibold"
+                   style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
+                    Xem đơn mua của tôi &rarr;
+                </a>
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary px-4 py-2 rounded-pill small">
+                    Tiếp tục khám phá
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

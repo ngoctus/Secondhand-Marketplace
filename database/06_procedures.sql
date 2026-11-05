@@ -121,6 +121,7 @@ BEGIN
             THROW 50010, N'Sản phẩm không tồn tại.', 1;
 
         IF dbo.fn_ChuyenTrangThaiSanPhamHopLe(@TrangThaiCu, @TrangThaiMoi) = 0
+           AND NOT (@LoaiNguoiThucHien = 'ADMIN' AND @TrangThaiMoi = 'REMOVED')
             THROW 50011, N'Không thể chuyển trạng thái sản phẩm này.', 1;
 
         IF @TrangThaiMoi = 'REMOVED' AND LEN(LTRIM(RTRIM(ISNULL(@LyDo, N'')))) = 0
@@ -134,6 +135,9 @@ BEGIN
 
         IF @@ROWCOUNT = 0
             THROW 50013, N'Trạng thái sản phẩm vừa bị thay đổi, vui lòng tải lại.', 1;
+
+        IF @TrangThaiMoi = 'REMOVED'
+            UPDATE ChiTietDonHang SET DangGiuCho = 0 WHERE MaSanPham = @MaSanPham AND DangGiuCho = 1;
 
         INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
         VALUES (@MaSanPham, @TrangThaiCu, @TrangThaiMoi, @LoaiNguoiThucHien, @NguoiThucHienId, @LyDo);
@@ -346,17 +350,18 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    DECLARE @ChuShopId int, @TrangThai varchar(20), @TrangThaiShop varchar(10);
+    DECLARE @ChuShopId int, @TrangThai varchar(20), @TrangThaiShop varchar(10), @TrangThaiChuShop varchar(10);
 
     IF NOT EXISTS (SELECT 1 FROM NguoiDung WHERE MaNguoiDung = @MaNguoiDung AND VaiTro = 'USER' AND TrangThai = 'ACTIVE')
         THROW 50030, N'Chỉ tài khoản USER đang hoạt động mới có giỏ hàng.', 1;
 
-    SELECT @ChuShopId = ch.MaNguoiDung, @TrangThai = sp.TrangThai, @TrangThaiShop = ch.TrangThai
+    SELECT @ChuShopId = ch.MaNguoiDung, @TrangThai = sp.TrangThai, @TrangThaiShop = ch.TrangThai, @TrangThaiChuShop = nd.TrangThai
     FROM SanPham sp
     JOIN CuaHang ch ON ch.MaCuaHang = sp.MaCuaHang
+    JOIN NguoiDung nd ON nd.MaNguoiDung = ch.MaNguoiDung
     WHERE sp.MaSanPham = @MaSanPham AND sp.DaXoa = 0;
 
-    IF @ChuShopId IS NULL OR @TrangThai <> 'ACTIVE' OR @TrangThaiShop <> 'ACTIVE'
+    IF @ChuShopId IS NULL OR @TrangThai <> 'ACTIVE' OR @TrangThaiShop <> 'ACTIVE' OR @TrangThaiChuShop <> 'ACTIVE'
         THROW 50032, N'Sản phẩm không còn bán.', 1;
     IF @ChuShopId = @MaNguoiDung
         THROW 50031, N'Không thể thêm sản phẩm của chính mình vào giỏ hàng.', 1;
@@ -403,6 +408,8 @@ BEGIN
         THROW 51104, N'Cửa hàng không tồn tại.', 1;
     IF @TrangThaiShop <> 'ACTIVE'
         THROW 51107, N'Cửa hàng đang bị khóa, không thể tạo đơn mới.', 1;
+    IF EXISTS (SELECT 1 FROM NguoiDung WHERE MaNguoiDung = @ChuShopId AND TrangThai <> 'ACTIVE')
+        THROW 51108, N'Chủ cửa hàng đang bị khóa tài khoản, không thể tạo đơn mới.', 1;
     IF @ChuShopId = @MaNguoiDung
         THROW 51105, N'Không thể mua sản phẩm của chính shop mình.', 1;
 
@@ -442,6 +449,16 @@ BEGIN
     VALUES (@MaDon, @MaNguoiDung, @MaCuaHang, LTRIM(RTRIM(@TenNguoiNhan)), @SoDienThoaiNhan, LTRIM(RTRIM(@DiaChiNhan)),
             @TienHang, @PhiVanChuyen, @TienHang + @PhiVanChuyen, @PhuongThucThanhToan);
     SET @MaDonHangMoi = SCOPE_IDENTITY();
+
+    INSERT ThanhToan (MaDonHang, MaGiaoDich, PhuongThucThanhToan, SoTien, TrangThaiThanhToan, ThoiGianThanhToan)
+    VALUES (@MaDonHangMoi, 'TXN_' + @MaDon, @PhuongThucThanhToan, @TienHang + @PhiVanChuyen,
+            CASE WHEN @PhuongThucThanhToan = 'ONLINE' THEN 'SUCCESS' ELSE 'PENDING' END,
+            CASE WHEN @PhuongThucThanhToan = 'ONLINE' THEN SYSUTCDATETIME() ELSE NULL END);
+
+    IF @PhuongThucThanhToan = 'ONLINE'
+    BEGIN
+        UPDATE DonHang SET TrangThaiThanhToan = 'PAID' WHERE MaDonHang = @MaDonHangMoi;
+    END
 
     INSERT ChiTietDonHang (MaDonHang, MaSanPham, TenSanPham, AnhDaiDien, Gia, DangGiuCho)
     SELECT @MaDonHangMoi, sp.MaSanPham, sp.Ten, a.DuongDan, sp.Gia, 1
@@ -520,8 +537,18 @@ BEGIN
     DECLARE @DonDaTao TABLE (MaDonHang int PRIMARY KEY);
     DECLARE @MaCuaHang int, @MaDonHangMoi int, @DanhSach dbo.DanhSachId;
 
-    IF NOT EXISTS (SELECT 1 FROM GioHang WHERE MaNguoiDung = @MaNguoiDung AND DaChon = 1)
-        THROW 51120, N'Chưa chọn sản phẩm nào trong giỏ hàng.', 1;
+    -- Fix #4: Tự động bỏ chọn các sản phẩm trong giỏ không còn khả dụng
+    UPDATE gh
+    SET gh.DaChon = 0
+    FROM GioHang gh
+    JOIN SanPham sp ON sp.MaSanPham = gh.MaSanPham
+    JOIN CuaHang ch ON ch.MaCuaHang = sp.MaCuaHang
+    JOIN NguoiDung nd ON nd.MaNguoiDung = ch.MaNguoiDung
+    WHERE gh.MaNguoiDung = @MaNguoiDung AND gh.DaChon = 1
+      AND (sp.TrangThai <> 'ACTIVE' OR sp.DaXoa = 1 OR ch.TrangThai <> 'ACTIVE' OR nd.TrangThai <> 'ACTIVE');
+
+    IF NOT EXISTS (SELECT 1 FROM GioHang gh JOIN SanPham sp ON sp.MaSanPham = gh.MaSanPham WHERE gh.MaNguoiDung = @MaNguoiDung AND gh.DaChon = 1 AND sp.TrangThai = 'ACTIVE' AND sp.DaXoa = 0)
+        THROW 51120, N'Không có sản phẩm khả dụng nào được chọn trong giỏ hàng.', 1;
 
     BEGIN TRY
         BEGIN TRANSACTION;
@@ -530,7 +557,7 @@ BEGIN
             SELECT DISTINCT sp.MaCuaHang
             FROM GioHang gh
             JOIN SanPham sp ON sp.MaSanPham = gh.MaSanPham
-            WHERE gh.MaNguoiDung = @MaNguoiDung AND gh.DaChon = 1;
+            WHERE gh.MaNguoiDung = @MaNguoiDung AND gh.DaChon = 1 AND sp.TrangThai = 'ACTIVE' AND sp.DaXoa = 0;
 
         OPEN cur_Shop;
         FETCH NEXT FROM cur_Shop INTO @MaCuaHang;
@@ -624,8 +651,18 @@ BEGIN
         IF @TrangThaiMoi = 'COMPLETED' AND @Loai <> 'BUYER'
             THROW 51206, N'Chỉ người mua mới được xác nhận hoàn tất.', 1;
 
-        IF @TrangThaiMoi = 'CANCELLED' AND LEN(LTRIM(RTRIM(ISNULL(@LyDo, N'')))) = 0
-            THROW 51207, N'Hủy đơn bắt buộc phải có lý do.', 1;
+        -- Fix #2: Chặn Buyer và Seller hủy đơn khi đã giao hoặc hoàn tất
+        IF @TrangThaiMoi = 'CANCELLED'
+        BEGIN
+            IF LEN(LTRIM(RTRIM(ISNULL(@LyDo, N'')))) = 0
+                THROW 51207, N'Hủy đơn bắt buộc phải có lý do.', 1;
+
+            IF @Loai = 'BUYER' AND @TrangThaiCu NOT IN ('PENDING', 'CONFIRMED')
+                THROW 51208, N'Người mua chỉ được hủy đơn khi shop chưa giao hàng.', 1;
+
+            IF @Loai = 'SELLER' AND @TrangThaiCu NOT IN ('PENDING', 'CONFIRMED')
+                THROW 51209, N'Người bán chỉ được hủy đơn khi chưa giao hàng.', 1;
+        END;
 
         UPDATE DonHang
         SET TrangThai          = @TrangThaiMoi,
@@ -638,7 +675,10 @@ BEGIN
             ThoiGianDaGiao     = CASE WHEN @TrangThaiMoi = 'DELIVERED' THEN @Now ELSE ThoiGianDaGiao END,
             ThoiGianHoanTat    = CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN @Now ELSE ThoiGianHoanTat END,
             TrangThaiThanhToan = CASE WHEN @TrangThaiMoi = 'COMPLETED' AND PhuongThucThanhToan = 'COD' AND TrangThaiThanhToan = 'UNPAID'
-                                      THEN 'PAID' ELSE TrangThaiThanhToan END
+                                      THEN 'PAID'
+                                      WHEN @TrangThaiMoi = 'CANCELLED' AND TrangThaiThanhToan = 'PAID'
+                                      THEN 'REFUNDED'
+                                      ELSE TrangThaiThanhToan END
         WHERE MaDonHang = @MaDonHang;
 
         INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
@@ -663,9 +703,28 @@ BEGIN
             FROM @SanPhamDoi x;
         END
 
+        -- Fix #8: Đồng bộ bảng ThanhToan khi hoàn tất hoặc hủy đơn đã thanh toán
+        IF @TrangThaiMoi = 'COMPLETED'
+        BEGIN
+            UPDATE ThanhToan
+            SET TrangThaiThanhToan = 'SUCCESS',
+                ThoiGianThanhToan = ISNULL(ThoiGianThanhToan, @Now)
+            WHERE MaDonHang = @MaDonHang;
+        END
+        ELSE IF @TrangThaiMoi = 'CANCELLED' AND EXISTS (SELECT 1 FROM DonHang WHERE MaDonHang = @MaDonHang AND TrangThaiThanhToan = 'REFUNDED')
+        BEGIN
+            UPDATE ThanhToan
+            SET TrangThaiThanhToan = 'REFUNDED'
+            WHERE MaDonHang = @MaDonHang;
+        END
+
         INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu)
         SELECT r.Id, 'ORDER', N'Cập nhật đơn hàng',
-               CONCAT(N'Đơn ', @MaDon, N' chuyển sang trạng thái ', @TrangThaiMoi, N'.'), @MaDonHang
+               CONCAT(N'Đơn ', @MaDon, N' chuyển sang trạng thái "',
+                      CASE @TrangThaiMoi
+                          WHEN 'CONFIRMED' THEN N'Đã xác nhận' WHEN 'SHIPPING'  THEN N'Đang giao'
+                          WHEN 'DELIVERED' THEN N'Đã giao'     WHEN 'COMPLETED' THEN N'Hoàn tất'
+                          WHEN 'CANCELLED' THEN N'Đã hủy'      ELSE @TrangThaiMoi END, N'".'), @MaDonHang
         FROM (VALUES (@MaNguoiMua), (@ChuShopId)) r (Id)
         WHERE r.Id <> @MaNguoiDung;
 

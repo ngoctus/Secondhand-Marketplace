@@ -1,6 +1,51 @@
+@model AdminDashboardVm
 @{
     ViewData["Title"] = "Thống kê hệ thống";
+    var tt = new[] { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" };
 }
+<div class="page-head"><div><h2>Thống kê hệ thống</h2><p class="muted">Tổng quan hoạt động của sàn.</p></div></div>
 
-<h2>Thống kê hệ thống</h2>
-<p class="text-muted">TODO: Areas/Admin/Controllers/DashboardController.cs &rarr; Index</p>
+<div class="kpi-grid">
+    <div class="kpi"><span>Doanh thu (đơn hoàn tất)</span><b>@HienThi.Tien(Model.DoanhThu)</b></div>
+    <div class="kpi"><span>Người dùng</span><b>@Model.TongNguoiDung</b></div>
+    <div class="kpi"><span>Cửa hàng</span><b>@Model.TongCuaHang</b></div>
+    <div class="kpi"><span>Sản phẩm</span><b>@Model.TongSanPham</b></div>
+    <div class="kpi"><span>Tổng đơn hàng</span><b>@Model.TongDonHang</b><small>@Model.DonHoanTat đã hoàn tất</small></div>
+    <a class="kpi warn" asp-controller="Products" asp-action="Index"><span>Sản phẩm chờ duyệt</span><b>@Model.SanPhamChoDuyet</b></a>
+    <a class="kpi warn" asp-controller="Reports" asp-action="Index"><span>Báo cáo chưa xử lý</span><b>@(Model.BaoCaoChuaXuLy?.ToString() ?? "—")</b></a>
+    <a class="kpi" asp-controller="Auctions" asp-action="Index"><span>Phiên đấu giá đang mở</span><b>@Model.PhienDangMo</b></a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8"><partial name="_BieuDo" /></div>
+    <div class="col-lg-4">
+        <div class="panel">
+            <h3>Đơn theo trạng thái</h3>
+            @foreach (var s in tt)
+            {
+                var n = Model.DonTheoTrangThai.GetValueOrDefault(s);
+                <div class="bar-row">
+                    <span class="@HienThi.LopTrangThai(s)">@HienThi.TrangThaiDon(s)</span>
+                    <div class="bar"><i style="width:@(Model.TongDonHang == 0 ? 0 : n * 100 / Model.TongDonHang)%"></i></div>
+                    <b>@n</b>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-head"><h3>Đơn hàng mới nhất</h3><a asp-controller="Orders" asp-action="Index">Xem tất cả</a></div>
+    <table class="table">
+        <thead><tr><th>MÃ ĐƠN</th><th>NGƯỜI MUA</th><th>CỬA HÀNG</th><th>TỔNG</th><th>TRẠNG THÁI</th></tr></thead>
+        <tbody>
+        @foreach (var o in Model.DonMoiNhat)
+        {
+            <tr><td><a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">@o.MaDon</a></td><td>@o.BuyerName</td><td>@o.ShopName</td><td>@HienThi.Tien(o.Total)</td>
+                <td><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts { <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script> }

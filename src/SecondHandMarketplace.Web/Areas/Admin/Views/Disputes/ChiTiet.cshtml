@@ -1,0 +1,140 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Disputes.TranhChapDetailViewModel
+@{
+    ViewData["Title"] = $"Chi tiết tranh chấp #{Model.MaTranhChap}";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-area="Admin" asp-controller="Disputes" asp-action="Index">Quản lý tranh chấp</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Tranh chấp #@Model.MaTranhChap</li>
+                </ol>
+            </nav>
+            <h4 class="fw-bold mb-0">Chi tiết tranh chấp #@Model.MaTranhChap</h4>
+        </div>
+        <a asp-area="Admin" asp-controller="Disputes" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2">Nội dung khiếu nại của người mua</h5>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">Lý do khiếu nại</label>
+                        <div class="p-3 bg-light rounded-3 fw-medium text-danger">@Model.LyDo</div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.BangChungAnh))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label text-muted small mb-1">Bằng chứng hình ảnh</label>
+                            <div>
+                                <a href="@Model.BangChungAnh" target="_blank">
+                                    <img src="@Model.BangChungAnh" class="img-thumbnail rounded-3" style="max-height: 250px;" alt="Bằng chứng tranh chấp" />
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    <div class="text-muted small">Thời gian tạo: @Model.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2">Phản hồi của người bán</h5>
+                    @if (!string.IsNullOrWhiteSpace(Model.PhanHoiNguoiBan))
+                    {
+                        <div class="p-3 bg-light rounded-3 mb-2">@Model.PhanHoiNguoiBan</div>
+                        <div class="text-muted small">Thời gian phản hồi: @Model.NgayPhanHoi?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    }
+                    else
+                    {
+                        <div class="text-muted fst-italic">Người bán chưa gửi nội dung phản hồi.</div>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.PhanQuyet))
+            {
+                <div class="card border-0 shadow-sm rounded-4 mb-4 border-start border-4 border-success">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-2 text-success"><i class="bi bi-hammer me-1"></i> Phán quyết của Ban quản trị</h5>
+                        <p class="fw-semibold mb-2">@Model.PhanQuyet</p>
+                        @if (!string.IsNullOrWhiteSpace(Model.GhiChuAdmin))
+                        {
+                            <div class="small text-secondary mb-2"><strong>Ghi chú nội bộ:</strong> @Model.GhiChuAdmin</div>
+                        }
+                        <div class="text-muted small">Thời gian giải quyết: @Model.NgayGiaiQuyet?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") bởi Admin #@Model.NguoiXuLyId</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2">Thông tin đơn hàng</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Mã đơn hàng:</span>
+                        <span class="fw-bold">@Model.MaDon</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tổng tiền:</span>
+                        <span class="fw-bold text-success">@Model.TongTien.ToString("N0") đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Người mua:</span>
+                        <span>@Model.TenNguoiMua (#@Model.MaNguoiMua)</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Cửa hàng:</span>
+                        <span>@Model.TenShop</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Trạng thái tranh chấp:</span>
+                        <span class="badge @(Model.TrangThai == "OPEN" ? "bg-warning text-dark" : Model.TrangThai == "RESOLVED" ? "bg-success" : Model.TrangThai == "REJECTED" ? "bg-secondary" : "bg-info")">
+                            @Model.TrangThai
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.TrangThai == "OPEN" || Model.TrangThai == "PROCESSING")
+            {
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-hammer text-success me-1"></i> Đưa ra phán quyết</h5>
+                        <form asp-area="Admin" asp-controller="Disputes" asp-action="PhanQuyet" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="maTranhChap" value="@Model.MaTranhChap" />
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Quyết định xử lý <span class="text-danger">*</span></label>
+                                <select name="phanQuyet" class="form-select form-select-sm rounded-2" required>
+                                    <option value="">-- Chọn quyết định --</option>
+                                    <option value="REFUND_BUYER">Hoàn tiền cho người mua (Hủy đơn hàng)</option>
+                                    @if (Model.TrangThaiDonHang != "COMPLETED")
+                                    {
+                                        <option value="RELEASE_SELLER">Thanh toán cho người bán (Hoàn tất đơn)</option>
+                                    }
+                                    <option value="REJECT">Bác bỏ khiếu nại (Giữ nguyên trạng thái)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Ghi chú / Căn cứ phân xử</label>
+                                <textarea name="ghiChu" rows="3" class="form-control form-control-sm rounded-2" maxlength="500" placeholder="Nhập căn cứ xử lý..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 btn-sm rounded-pill py-2 fw-semibold"
+                                    style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
+                                Lưu phán quyết
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
