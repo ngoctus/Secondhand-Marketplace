@@ -86,7 +86,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<SanPham>(e =>
         {
-            e.ToTable("SanPham");
+            e.ToTable("SanPham", t => t.HasTrigger("trg_SanPham_ChanRutKhoiDauGia"));
             e.HasKey(x => x.MaSanPham);
             e.Property(x => x.Gia).HasPrecision(18, 2);
 

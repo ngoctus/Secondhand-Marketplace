@@ -29,7 +29,7 @@ public static class OrderRules
     public static string NhanHanhDong(string moi) => moi switch
     {
         "CONFIRMED" => "Xác nhận đơn",
-        "SHIPPING" => "Bắt đầu giao hàng",
+        "SHIPPING" => "Đóng gói và giao hàng",
         "DELIVERED" => "Giao thành công",
         "COMPLETED" => "Hoàn tất đơn",
         "CANCELLED" => "Hủy đơn",
