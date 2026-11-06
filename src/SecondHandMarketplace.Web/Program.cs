@@ -27,6 +27,10 @@ public class Program
         if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
             throw new InvalidOperationException("Jwt:Key phải có tối thiểu 32 byte.");
 
+        var jwtKeyIsPlaceholder = jwtKey.StartsWith("CHANGE_THIS", StringComparison.OrdinalIgnoreCase);
+        if (jwtKeyIsPlaceholder && !builder.Environment.IsDevelopment())
+            throw new InvalidOperationException("Phải đặt Jwt:Key thật (biến môi trường Jwt__Key) khi chạy ngoài Development.");
+
         // Chỉ gọi AddAuthentication một lần: Cookie là mặc định cho MVC, API chọn JWT bằng AuthenticationSchemes.
         builder.Services.AddAuthentication(options =>
         {
@@ -77,6 +81,8 @@ public class Program
         });
 
         var app = builder.Build();
+        if (jwtKeyIsPlaceholder)
+            app.Logger.LogWarning("Đang dùng Jwt:Key mặc định. Chỉ chấp nhận khi phát triển local.");
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Home/Error");

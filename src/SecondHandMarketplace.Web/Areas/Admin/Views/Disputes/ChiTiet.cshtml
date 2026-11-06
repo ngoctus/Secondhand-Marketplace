@@ -28,12 +28,12 @@
                         <label class="form-label text-muted small mb-1">Lý do khiếu nại</label>
                         <div class="p-3 bg-light rounded-3 fw-medium text-danger">@Model.LyDo</div>
                     </div>
-                    @if (!string.IsNullOrWhiteSpace(Model.BangChungAnh))
+                    @if (UrlAnToan.HopLe(Model.BangChungAnh))
                     {
                         <div class="mb-3">
                             <label class="form-label text-muted small mb-1">Bằng chứng hình ảnh</label>
                             <div>
-                                <a href="@Model.BangChungAnh" target="_blank">
+                                <a href="@Model.BangChungAnh" target="_blank" rel="noopener noreferrer">
                                     <img src="@Model.BangChungAnh" class="img-thumbnail rounded-3" style="max-height: 250px;" alt="Bằng chứng tranh chấp" />
                                 </a>
                             </div>

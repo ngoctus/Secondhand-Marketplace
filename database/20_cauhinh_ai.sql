@@ -35,7 +35,7 @@ BEGIN
     VALUES (
         1,
         1,
-        'claude-haiku-5-5',
+        'gemini-3.6-flash',
         N'Bạn là trợ lý của Re:market, sàn mua bán đồ đã qua sử dụng. Hãy trả lời bằng tiếng Việt, ngắn gọn, thân thiện. Bạn giúp người dùng tìm sản phẩm, gợi ý sản phẩm theo nhu cầu và soạn mô tả sản phẩm.'
     );
 END

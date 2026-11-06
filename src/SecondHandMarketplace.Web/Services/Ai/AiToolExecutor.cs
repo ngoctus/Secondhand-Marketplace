@@ -67,10 +67,12 @@ public sealed class AiToolExecutor
     /// <summary>Định nghĩa công cụ (theo định dạng tools của Messages API) mà vai trò này được phép dùng.</summary>
     public static JsonArray BuildToolDefinitions(string role)
     {
-        var array = new JsonArray();
-        if (!ToolsByRole.TryGetValue(role, out var tools)) return array;
-        foreach (var name in tools) array.Add(Definition(name));
-        return array;
+        var declarations = new JsonArray();
+        if (ToolsByRole.TryGetValue(role, out var tools))
+            foreach (var name in tools) declarations.Add(Definition(name));
+
+        if (declarations.Count == 0) return new JsonArray();
+        return new JsonArray(new JsonObject { ["functionDeclarations"] = declarations });
     }
 
     public async Task<AiToolResult> ExecuteAsync(string role, string toolName, JsonElement input, CancellationToken cancellationToken)
@@ -343,7 +345,7 @@ public sealed class AiToolExecutor
             {
               "name": "search_products",
               "description": "Tìm sản phẩm đang được bán trên Re:market theo từ khóa và bộ lọc. Chỉ trả về sản phẩm có thật trong hệ thống. Dùng khi người dùng muốn tìm một món đồ cụ thể.",
-              "input_schema": {
+              "parameters": {
                 "type": "object",
                 "properties": {
                   "keyword": { "type": "string", "description": "Từ khóa ngắn 1-4 từ, ví dụ: iphone 12, bàn học, giày chạy bộ. Không đưa giá hay tình trạng vào từ khóa." },
@@ -360,7 +362,7 @@ public sealed class AiToolExecutor
             {
               "name": "recommend_products",
               "description": "Lấy các sản phẩm thật đang bán, kèm mô tả, để gợi ý theo nhu cầu của người dùng (ví dụ ngân sách, mục đích sử dụng). Chỉ được gợi ý trong số sản phẩm công cụ này trả về.",
-              "input_schema": {
+              "parameters": {
                 "type": "object",
                 "properties": {
                   "keyword": { "type": "string", "description": "Từ khóa ngắn 1-4 từ mô tả loại đồ cần tìm. Bỏ trống nếu chỉ lọc theo danh mục hoặc ngân sách." },
@@ -377,7 +379,7 @@ public sealed class AiToolExecutor
             {
               "name": "draft_product_description",
               "description": "Nhận thông tin sản phẩm do người dùng cung cấp để soạn mô tả đăng bán. Chỉ dùng thông tin người dùng đã đưa; không đăng hay sửa sản phẩm.",
-              "input_schema": {
+              "parameters": {
                 "type": "object",
                 "properties": {
                   "name": { "type": "string", "description": "Tên sản phẩm (bắt buộc)." },

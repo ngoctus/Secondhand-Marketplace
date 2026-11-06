@@ -1884,3 +1884,84 @@ a.kpi:hover {
         flex: 1
     }
 }
+
+/* ===== Mobile header ===== */
+.rm-mobile-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-white);
+    color: var(--color-text-primary);
+    cursor: pointer;
+}
+
+.rm-mobile-drawer {
+    display: none;
+}
+
+.rm-mobile-heading {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    padding: 6px 12px 2px;
+}
+
+/* Focus hiển thị rõ cho điều hướng bàn phím */
+.rm-mobile-toggle:focus-visible,
+.rm-nav-link:focus-visible,
+.rm-dropdown-item:focus-visible,
+.rm-user-trigger:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+@media (max-width: 992px) {
+    .rm-nav, .rm-header-search {
+        display: none;
+    }
+
+    .rm-mobile-toggle {
+        display: inline-flex;
+    }
+
+    .rm-header-inner {
+        padding: 0 16px;
+        gap: 12px;
+    }
+
+    .rm-mobile-drawer:not([hidden]) {
+        display: block;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: calc(100vh - 70px);
+        overflow-y: auto;
+        background: var(--color-bg);
+        border-bottom: 1px solid var(--color-border);
+        box-shadow: var(--shadow-md);
+        padding: 14px 16px 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .rm-header-actions {
+        gap: 6px;
+    }
+
+        .rm-header-actions .btn-rm-outline {
+            display: none;
+        }
+    /* Đăng nhập/Đăng ký đã có trong drawer */
+    .rm-user-trigger > span:not(.user-avatar) {
+        display: none;
+    }
+    /* chỉ giữ avatar cho đỡ tràn */
+}

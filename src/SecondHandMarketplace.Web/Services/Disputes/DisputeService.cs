@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Disputes;
@@ -37,6 +38,11 @@ public class DisputeService : IDisputeService
         if (!string.IsNullOrWhiteSpace(vm.BangChungAnh) && vm.BangChungAnh.Trim().Length > 500)
         {
             return (false, "Đường dẫn ảnh bằng chứng không được vượt quá 500 ký tự.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(vm.BangChungAnh) && !UrlAnToan.HopLe(vm.BangChungAnh))
+        {
+            return (false, "Đường dẫn ảnh bằng chứng phải là URL http/https.");
         }
 
         // 2. Kiểm tra đơn hàng và quyền sở hữu

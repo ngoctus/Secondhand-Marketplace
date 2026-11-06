@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 
@@ -36,6 +37,9 @@ public class BannerService : IBannerService
         if (tieuDe.Length is < 3 or > 200) return (false, "Tiêu đề phải từ 3 đến 200 ký tự.", 0);
         if (string.IsNullOrWhiteSpace(duongDanAnh)) return (false, "Đường dẫn ảnh là bắt buộc.", 0);
         if (duongDanAnh.Length > 500) return (false, "Đường dẫn ảnh tối đa 500 ký tự.", 0);
+        if (!UrlAnToan.HopLe(duongDanAnh)) return (false, "Đường dẫn ảnh phải là URL http/https hoặc đường dẫn bắt đầu bằng '/'.", 0);
+        if (!string.IsNullOrWhiteSpace(lienKet) && !UrlAnToan.HopLe(lienKet))
+            return (false, "Liên kết phải là URL http/https hoặc đường dẫn bắt đầu bằng '/'.", 0);
         if (moTa != null && moTa.Length > 500) return (false, "Mô tả tối đa 500 ký tự.", 0);
         if (thuTu < 1) return (false, "Thứ tự hiển thị phải từ 1 trở lên.", 0);
         if (batDauTu != null && ketThucLuc != null && ketThucLuc <= batDauTu)

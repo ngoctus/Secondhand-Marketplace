@@ -12,10 +12,10 @@ namespace SecondHandMarketplace.Web.Services.Ai;
 public sealed class AiOptions
 {
     public const string SectionName = "Ai";
-    public const string DefaultEndpoint = "https://api.anthropic.com/v1/messages";
+    public const string DefaultEndpoint = "https://generativelanguage.googleapis.com/v1beta/models";
 
     public static readonly IReadOnlyList<string> DefaultAllowedModels =
-        new[] { "gemini-3.1-flash-lite", "gemini-2.5-flash", "claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5" };
+    new[] { "gemini-3.6-flash" };
 
     public const string DefaultSystemPromptText =
         "Bạn là trợ lý của Re:market, sàn mua bán đồ đã qua sử dụng. " +
@@ -26,7 +26,7 @@ public sealed class AiOptions
     public string ApiKey { get; init; } = string.Empty;
 
     public string Endpoint { get; init; } = DefaultEndpoint;
-    public string AnthropicVersion { get; init; } = "2023-06-01";
+
 
     /// <summary>Model dùng khi database chưa có cấu hình hoặc model trong database không còn hợp lệ.</summary>
     public string DefaultModel { get; init; } = DefaultAllowedModels[0];
@@ -69,7 +69,7 @@ public sealed class AiOptions
         {
             ApiKey = section["ApiKey"]?.Trim() ?? string.Empty,
             Endpoint = endpoint,
-            AnthropicVersion = string.IsNullOrWhiteSpace(section["AnthropicVersion"]) ? "2023-06-01" : section["AnthropicVersion"]!.Trim(),
+
             DefaultModel = defaultModel,
             AllowedModels = allowed,
             DefaultEnabled = !bool.TryParse(section["DefaultEnabled"], out var enabled) || enabled,

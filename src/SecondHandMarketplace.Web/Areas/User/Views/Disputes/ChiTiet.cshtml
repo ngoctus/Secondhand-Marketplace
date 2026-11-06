@@ -80,7 +80,10 @@
         {
             <div class="mt-2">
                 <span class="text-muted small d-block mb-2">Ảnh bằng chứng đính kèm:</span>
-                <img src="@Model.BangChungAnh" alt="Bằng chứng khiếu nại" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
+                @if (UrlAnToan.HopLe(Model.BangChungAnh))
+                {
+                    <img src="@Model.BangChungAnh" alt="Bằng chứng khiếu nại" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
+                }
             </div>
         }
     </div>
