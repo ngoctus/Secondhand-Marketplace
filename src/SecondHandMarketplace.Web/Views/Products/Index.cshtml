@@ -38,7 +38,13 @@
             <div class="filter-group">
                 <div class="filter-title">Danh mục</div>
                 <div class="filter-checkbox-list">
-                    @foreach (var categoryItem in categories) { <label class="filter-label"><input type="radio" name="CategoryId" value="@categoryItem.MaDanhMuc" checked="@(Model.Items.Any() && query["CategoryId"] == categoryItem.MaDanhMuc.ToString() ? "checked" : null)" /> <span>@categoryItem.Ten</span></label> }
+                    @foreach (var categoryItem in categories)
+                    {
+                        <label class="filter-label">
+                            <input type="radio" name="CategoryId" value="@categoryItem.MaDanhMuc" @(query["CategoryId"] == categoryItem.MaDanhMuc.ToString() ? "checked" : null) />
+                            <span>@categoryItem.Ten</span>
+                        </label>
+                    }
                 </div>
             </div>
 
@@ -61,7 +67,13 @@
             <div class="filter-group">
                 <div class="filter-title">Tình trạng</div>
                 <div class="filter-radio-list">
-                    @foreach (var conditionItem in conditions) { <label class="filter-label"><input type="radio" name="ConditionId" value="@conditionItem.MaTinhTrang" checked="@(query["ConditionId"] == conditionItem.MaTinhTrang.ToString() ? "checked" : null)" /> <span>@conditionItem.Ten</span></label> }
+                    @foreach (var conditionItem in conditions)
+                    {
+                        <label class="filter-label">
+                            <input type="radio" name="ConditionId" value="@conditionItem.MaTinhTrang" @(query["ConditionId"] == conditionItem.MaTinhTrang.ToString() ? "checked" : null) />
+                            <span>@conditionItem.Ten</span>
+                        </label>
+                    }
                 </div>
             </div>
 

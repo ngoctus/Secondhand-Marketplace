@@ -381,6 +381,8 @@ appsettings.Local.json
 **/wwwroot/uploads/*
 !**/wwwroot/uploads/banners/
 !**/wwwroot/uploads/.gitkeep
+!**/wwwroot/uploads/seed/
+!**/wwwroot/uploads/seed/*.jpg
 
 # Cấu hình máy cá nhân (copy từ appsettings.Example.json, không commit)
 appsettings.Development.json
