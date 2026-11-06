@@ -303,10 +303,29 @@ public class ReportService : IReportService
                 var product = await _db.SanPhams.Include(p => p.CuaHang).FirstOrDefaultAsync(p => p.MaSanPham == bc.MaDoiTuong);
                 if (product?.CuaHang != null)
                 {
-                    await _notifications.CreateAsync(product.CuaHang.MaNguoiDung, NotificationTypes.Product,
+                    var chuShopId = product.CuaHang.MaNguoiDung;
+                    await _notifications.CreateAsync(chuShopId, NotificationTypes.Product,
                         "Sản phẩm bị gỡ bỏ do vi phạm",
                         $"Sản phẩm '{product.Ten}' đã bị ban quản trị gỡ bỏ khỏi sàn. Lý do: {lyDoXuLy}",
                         bc.MaDoiTuong);
+
+                    // Kiểm tra tổng số vi phạm của người bán (báo cáo đã xử lý + vi phạm kiểm duyệt)
+                    var countViPham = await _db.LichSuViPhams.CountAsync(v => v.MaNguoiBan == chuShopId);
+                    var countBaoCao = await _db.BaoCaos.CountAsync(b => b.TrangThai == "RESOLVED" &&
+                        ((b.LoaiDoiTuong == "PRODUCT" && _db.SanPhams.Any(p => p.MaSanPham == b.MaDoiTuong && p.CuaHang.MaNguoiDung == chuShopId)) ||
+                         (b.LoaiDoiTuong == "USER" && b.MaDoiTuong == chuShopId) ||
+                         (b.LoaiDoiTuong == "SHOP" && _db.CuaHangs.Any(c => c.MaCuaHang == b.MaDoiTuong && c.MaNguoiDung == chuShopId))));
+
+                    var tongViPham = countViPham + countBaoCao + 1; // +1 cho báo cáo hiện tại
+                    if (tongViPham >= 3)
+                    {
+                        var lyDoKhoa = $"Tự động khóa: Đạt {tongViPham} lần vi phạm/bị gỡ do báo cáo và kiểm duyệt (ngưỡng 3 gậy).";
+                        await _userAdmin.LockUserAsync(adminId, chuShopId, lyDoKhoa);
+                        await _shopService.LockShopAsync(adminId, product.MaCuaHang, lyDoKhoa);
+                        await _notifications.CreateAsync(chuShopId, NotificationTypes.System,
+                            "Tài khoản của bạn đã bị khóa",
+                            $"Tài khoản và cửa hàng của bạn đã bị khóa tự động vì tích lũy {tongViPham} lần vi phạm (đạt ngưỡng 3 gậy). Vui lòng liên hệ ban quản trị để được hỗ trợ.");
+                    }
                 }
             }
 

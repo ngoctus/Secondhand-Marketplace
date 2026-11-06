@@ -360,6 +360,47 @@ public class ProductService : IProductService
         return (true, null);
     }
 
+    public async Task<(bool Success, string? Error)> DeleteAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
+    {
+        var (loi, shop) = await KiemTraTruDangBanAsync(maNguoiDung, cancellationToken);
+        if (loi is not null) return (false, loi);
+
+        var cuaHangId = shop!.MaCuaHang;
+        var thuocSo = await _db.SanPhams.AsNoTracking()
+            .AnyAsync(x => x.MaSanPham == maSanPham && x.MaCuaHang == cuaHangId && !x.DaXoa, cancellationToken);
+        if (!thuocSo) return (false, "Không tìm thấy sản phẩm hoặc sản phẩm không thuộc cửa hàng của bạn.");
+
+        if (!_db.Database.IsRelational())
+        {
+            var sp = await _db.SanPhams.FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && !x.DaXoa, cancellationToken);
+            if (sp is null) return (false, "Sản phẩm không tồn tại.");
+            if (sp.TrangThai is "SOLD" or "RESERVED")
+                return (false, "Sản phẩm đã có đơn hàng hoặc đã bán, không thể xóa.");
+
+            sp.DaXoa = true;
+            sp.ThoiGianXoa = DateTime.UtcNow;
+            sp.NgayCapNhat = DateTime.UtcNow;
+
+            var cartItems = await _db.GioHangs.Where(g => g.MaSanPham == maSanPham).ToListAsync(cancellationToken);
+            _db.GioHangs.RemoveRange(cartItems);
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return (true, null);
+        }
+
+        try
+        {
+            await _db.Database.ExecuteSqlInterpolatedAsync(
+                $@"EXEC dbo.sp_XoaMemSanPham @MaSanPham={maSanPham}, @MaNguoiDung={maNguoiDung}",
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            return (false, SqlLoi.ThongBao(ex));
+        }
+        return (true, null);
+    }
+
     public async Task<(bool Success, string? Error)> GuiDuyetAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
     {
         var (loi, _) = await KiemTraTruDangBanAsync(maNguoiDung, cancellationToken);

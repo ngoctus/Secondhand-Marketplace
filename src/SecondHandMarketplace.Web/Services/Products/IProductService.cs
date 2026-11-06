@@ -35,6 +35,9 @@ public interface IProductService
     /// <summary>Gửi duyệt qua sp_GuiDuyetSanPham. Khi rule fail, Error chứa các lỗi gộp từ procedure.</summary>
     Task<(bool Success, string? Error)> GuiDuyetAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default);
 
+    /// <summary>Xóa mềm sản phẩm qua sp_XoaMemSanPham (không xóa được khi đã bán hoặc có đơn hàng).</summary>
+    Task<(bool Success, string? Error)> DeleteAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default);
+
     /// <summary>Đặt một ảnh làm ảnh chính (unique theo sản phẩm).</summary>
     Task<(bool Success, string? Error)> DatAnhChinhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default);
 
