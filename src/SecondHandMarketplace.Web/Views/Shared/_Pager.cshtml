@@ -1,6 +1,7 @@
 @model PagerVm
-@if (Model.TotalPages > 1)
-{
+@{
+    if (Model.TotalPages <= 0) return;
+
     string Link(int p)
     {
         var q = Context.Request.Query.Where(k => k.Key != "page")
@@ -8,15 +9,94 @@
         q.Add(new KeyValuePair<string, string?>("page", p.ToString()));
         return Context.Request.Path + QueryString.Create(q);
     }
-    <nav class="pager" aria-label="Phân trang">
-        @if (Model.Page > 1)
-        {
-            <a href="@Link(Model.Page - 1)">‹ Trước</a>
-        }
-        <span>Trang @Model.Page / @Model.TotalPages</span>
-        @if (Model.Page < Model.TotalPages)
-        {
-            <a href="@Link(Model.Page + 1)">Sau ›</a>
-        }
-    </nav>
+
+    var startPage = Math.Max(1, Model.Page - 2);
+    var endPage = Math.Min(Model.TotalPages, Model.Page + 2);
 }
+
+<nav class="rm-pagination" aria-label="Phân trang sản phẩm">
+    @if (Model.Page > 1)
+    {
+        <a href="@Link(Model.Page - 1)" class="rm-page-btn rm-page-prev">‹ Trước</a>
+    }
+
+    @if (startPage > 1)
+    {
+        <a href="@Link(1)" class="rm-page-btn">1</a>
+        @if (startPage > 2)
+        {
+            <span class="rm-page-dots">…</span>
+        }
+    }
+
+    @for (int p = startPage; p <= endPage; p++)
+    {
+        if (p == Model.Page)
+        {
+            <span class="rm-page-btn rm-page-active" aria-current="page">@p</span>
+        }
+        else
+        {
+            <a href="@Link(p)" class="rm-page-btn">@p</a>
+        }
+    }
+
+    @if (endPage < Model.TotalPages)
+    {
+        @if (endPage < Model.TotalPages - 1)
+        {
+            <span class="rm-page-dots">…</span>
+        }
+        <a href="@Link(Model.TotalPages)" class="rm-page-btn">@Model.TotalPages</a>
+    }
+
+    @if (Model.Page < Model.TotalPages)
+    {
+        <a href="@Link(Model.Page + 1)" class="rm-page-btn rm-page-next">Sau ›</a>
+    }
+</nav>
+
+<style>
+.rm-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin: 32px 0 16px;
+}
+.rm-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    color: #334155;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.rm-page-btn:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+.rm-page-active {
+    background-color: #1f5c3d !important;
+    border-color: #1f5c3d !important;
+    color: #ffffff !important;
+    cursor: default;
+}
+.rm-page-dots {
+    color: #94a3b8;
+    padding: 0 4px;
+    font-weight: bold;
+}
+.rm-page-prev, .rm-page-next {
+    padding: 0 16px;
+}
+</style>

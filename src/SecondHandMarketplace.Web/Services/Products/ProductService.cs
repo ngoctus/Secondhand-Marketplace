@@ -37,19 +37,49 @@ public class ProductService : IProductService
             var tuKhoa = f.Keyword.Trim();
             var tuKhoaChuanHoa = TextHelper.ChuanHoa(tuKhoa);
             query = query.Where(p => p.ChuoiTimKiem.Contains(tuKhoaChuanHoa)
-                                     || p.CuaHang.TenShop.Contains(tuKhoa));
+                                     || p.CuaHang.TenShop.Contains(tuKhoa)
+                                     || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
         }
 
         // Lọc 1 danh mục (đúng tên cột trong DB)
         if (f.CategoryId != null)
             query = query.Where(p => p.MaDanhMuc == f.CategoryId);
 
-        // Lọc nhiều danh mục từ checkbox sidebar (values là Ten DanhMuc, ví dụ "thoi-trang", "dien-tu")
+        // Lọc danh mục từ checkbox sidebar (chấp nhận cả slug "thoi-trang", ID số, hoặc tên tiếng Việt "Thời trang")
         if (f.Categories is { Length: > 0 })
         {
-            var cats = f.Categories.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
-            if (cats.Count > 0)
-                query = query.Where(p => p.DanhMuc != null && cats.Contains(p.DanhMuc.Ten));
+            var catInputs = f.Categories.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).ToList();
+            if (catInputs.Count > 0)
+            {
+                var mappedNames = new List<string>();
+                var mappedIds = new List<int>();
+
+                foreach (var input in catInputs)
+                {
+                    if (int.TryParse(input, out var cid))
+                    {
+                        mappedIds.Add(cid);
+                    }
+                    else
+                    {
+                        mappedNames.Add(input);
+                        var slug = input.ToLowerInvariant();
+                        if (slug == "thoi-trang") { mappedNames.Add("Thời trang"); mappedIds.Add(1); }
+                        else if (slug == "dien-tu") { mappedNames.Add("Đồ điện tử"); mappedIds.Add(2); }
+                        else if (slug == "do-gia-dung") { mappedNames.Add("Đồ gia dụng"); mappedIds.Add(3); }
+                        else if (slug == "sach") { mappedNames.Add("Sách & văn phòng phẩm"); mappedIds.Add(4); }
+                        else if (slug == "phu-kien" || slug == "xe-co") { mappedNames.Add("Xe cộ & phụ kiện"); mappedIds.Add(5); }
+                        else if (slug == "do-choi") { mappedNames.Add("Đồ chơi & mẹ bé"); mappedIds.Add(6); }
+                        else if (slug == "the-thao") { mappedNames.Add("Thể thao & dã ngoại"); mappedIds.Add(7); }
+                        else if (slug == "noi-that") { mappedNames.Add("Nội thất"); mappedIds.Add(8); }
+                        else if (slug == "khac") { mappedNames.Add("Khác"); mappedIds.Add(9); }
+                    }
+                }
+
+                query = query.Where(p =>
+                    (p.MaDanhMuc != null && mappedIds.Contains(p.MaDanhMuc.Value))
+                    || (p.DanhMuc != null && mappedNames.Contains(p.DanhMuc.Ten)));
+            }
         }
 
         // Lọc 1 tình trạng theo mã (LIKE_NEW, GOOD, ...)

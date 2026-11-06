@@ -130,14 +130,10 @@
                 }
             </div>
 
-            <!-- Phân trang thực sự (chỉ khi có dữ liệu từ DB) -->
-            @if (!showSample && Model.TotalPages > 1)
+            <!-- Phân trang dạng số chuẩn (1, 2, 3...) -->
+            @if (!showSample && Model.TotalPages >= 1)
             {
                 <partial name="_Pager" model="new PagerVm(Model.Page, Model.TotalPages)" />
-            }
-            else if (!showSample && Model.TotalPages <= 1)
-            {
-                <div class="text-center mt-3" style="color: var(--color-text-secondary); font-size: 0.9rem;">Trang 1 / 1</div>
             }
         }
     </main>

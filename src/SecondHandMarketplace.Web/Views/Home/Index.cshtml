@@ -96,11 +96,12 @@
                     {
                         <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100" style="aspect-ratio:10/3; object-fit:cover;" data-fallback />
                     }
-                    @if (!string.IsNullOrWhiteSpace(b.MoTa))
+                    @* Chỉ hiển thị caption HTML khi ảnh không phải là banner SVG (vì banner SVG đã có chữ thiết kế sẵn bên trong ảnh) *@
+                    @if (!string.IsNullOrWhiteSpace(b.MoTa) && !b.DuongDanAnh.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
                     {
-                        <div class="carousel-caption d-none d-md-block text-start" style="background:rgba(0,0,0,.35); border-radius:10px; padding:8px 14px;">
-                            <h5 class="mb-1">@b.TieuDe</h5>
-                            <p class="mb-0 small">@b.MoTa</p>
+                        <div class="carousel-caption d-none d-md-block text-start" style="background:rgba(15,23,42,.75); backdrop-filter:blur(6px); border-radius:10px; padding:10px 16px; bottom:20px; left:30px; max-width:60%;">
+                            <h5 class="mb-1 text-white fw-bold">@b.TieuDe</h5>
+                            <p class="mb-0 small text-white-50">@b.MoTa</p>
                         </div>
                     }
                 </div>

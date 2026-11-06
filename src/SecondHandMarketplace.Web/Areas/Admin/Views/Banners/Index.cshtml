@@ -4,62 +4,142 @@
 }
 
 <div class="container-fluid py-4">
-    <h2>Banner trang chủ</h2>
-
-    <form asp-action="Save" method="post" class="row g-2 mb-4">
-        <input type="hidden" name="id" value="" />
-        <div class="col-md-4"><input name="tieuDe" class="form-control" placeholder="Tiêu đề banner" required maxlength="200" /></div>
-        <div class="col-md-3"><input name="moTa" class="form-control" placeholder="Mô tả (tùy chọn)" maxlength="500" /></div>
-        <div class="col-md-3"><input name="duongDanAnh" class="form-control" placeholder="/uploads/banners/ten.svg" required maxlength="500" /></div>
-        <div class="col-md-2"><input name="lienKet" class="form-control" placeholder="/Products (tùy chọn)" maxlength="500" /></div>
-        <div class="col-md-1"><input name="thuTu" type="number" min="1" value="1" class="form-control" /></div>
-        <div class="col-md-2">
-            <select name="dangHienThi" class="form-select">
-                <option value="true" selected>Hiện</option>
-                <option value="false">Ẩn</option>
-            </select>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Quản lý Banner trang chủ</h2>
+            <p class="text-muted mb-0">Cấu hình các banner quảng cáo và chiến dịch khuyến mãi xuất hiện tại slider trang chủ.</p>
         </div>
-        <div class="col-md-2"><input name="batDauTu" type="datetime-local" class="form-control" title="Bắt đầu từ (giờ VN, để trống = luôn)" /></div>
-        <div class="col-md-2"><input name="ketThucLuc" type="datetime-local" class="form-control" title="Kết thúc lúc (giờ VN, để trống = không hết hạn)" /></div>
-        <div class="col-auto"><button class="btn btn-primary">Thêm banner</button></div>
-    </form>
+    </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr><th style="width:180px">ẢNH</th><th>TIÊU ĐỀ</th><th>THỨ TỰ</th><th>HIỂN THỊ</th><th>HIỆU LỰC (giờ VN)</th><th></th></tr>
-            </thead>
-            <tbody>
-                @foreach (var b in Model.Banners)
-                {
-                    <tr>
-                        <td><img src="@b.DuongDanAnh" alt="" class="rounded" style="width:160px;height:60px;object-fit:cover;" /></td>
-                        <td colspan="5">
-                            <form asp-action="Save" method="post" class="row g-2">
+    <!-- Form thêm banner mới -->
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-plus-circle me-2"></i>Thêm banner mới</h5>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Save" method="post">
+                <input type="hidden" name="id" value="" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Tiêu đề banner <span class="text-danger">*</span></label>
+                        <input name="tieuDe" class="form-control" placeholder="Ví dụ: Tuần lễ đồ cũ — giá tốt" required maxlength="200" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Đường dẫn ảnh <span class="text-danger">*</span></label>
+                        <input name="duongDanAnh" class="form-control" placeholder="/uploads/banners/banner-1.svg hoặc URL ảnh" required maxlength="500" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Mô tả phụ</label>
+                        <input name="moTa" class="form-control" placeholder="Mô tả ngắn gọn về chương trình (tùy chọn)" maxlength="500" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Liên kết khi click (URL)</label>
+                        <input name="lienKet" class="form-control" placeholder="/Products hoặc liên kết trang đích" maxlength="500" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Thứ tự hiển thị</label>
+                        <input name="thuTu" type="number" min="1" value="1" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Trạng thái</label>
+                        <select name="dangHienThi" class="form-select">
+                            <option value="true" selected>Hiển thị</option>
+                            <option value="false">Tạm ẩn</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Bắt đầu từ</label>
+                        <input name="batDauTu" type="datetime-local" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Kết thúc lúc</label>
+                        <input name="ketThucLuc" type="datetime-local" class="form-control" />
+                    </div>
+                    <div class="col-12 text-end mt-3">
+                        <button class="btn btn-primary px-4 fw-semibold"><i class="bi bi-save me-1"></i>Thêm banner</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Danh sách banner hiện tại -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-images me-2"></i>Danh sách banner đang có (@Model.Banners.Count)</h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Banners.Count == 0)
+            {
+                <div class="p-4 text-center text-muted">Chưa có banner nào.</div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var b in Model.Banners)
+                    {
+                        <div class="list-group-item p-4">
+                            <form asp-action="Save" method="post">
                                 <input type="hidden" name="id" value="@b.MaBanner" />
-                                <div class="col-md-3"><input name="tieuDe" value="@b.TieuDe" class="form-control" required maxlength="200" /></div>
-                                <div class="col-md-2"><input name="moTa" value="@b.MoTa" class="form-control" maxlength="500" /></div>
-                                <div class="col-md-2"><input name="duongDanAnh" value="@b.DuongDanAnh" class="form-control" required maxlength="500" /></div>
-                                <div class="col-md-1"><input name="lienKet" value="@b.LienKet" class="form-control" maxlength="500" placeholder="Link" /></div>
-                                <div class="col-md-1"><input name="thuTu" type="number" min="1" value="@b.ThuTuHienThi" class="form-control" /></div>
-                                <div class="col-md-1">
-                                    <select name="dangHienThi" class="form-select">
-                                        <option value="true" selected="@b.DangHienThi">Hiện</option>
-                                        <option value="false" selected="@(!b.DangHienThi)">Ẩn</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2"><input name="batDauTu" type="datetime-local" value="@HienThi.ChoInputGio(b.BatDauTu)" class="form-control" /></div>
-                                <div class="col-md-2"><input name="ketThucLuc" type="datetime-local" value="@HienThi.ChoInputGio(b.KetThucLuc)" class="form-control" /></div>
-                                <div class="col-auto d-flex gap-1 align-items-center">
-                                    <button class="btn btn-sm btn-outline-primary">Lưu</button>
-                                    <button formaction="@Url.Action("Delete")" name="id" value="@b.MaBanner" formmethod="post"
-                                            class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa banner này?')">Xóa</button>
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-lg-3 col-md-4 text-center">
+                                        <div class="border rounded p-1 bg-light">
+                                            <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="img-fluid rounded" style="max-height: 110px; width: 100%; object-fit: cover;" onerror="this.src='/uploads/banners/banner-1.svg'" />
+                                        </div>
+                                        <span class="badge @(b.DangHienThi ? "bg-success" : "bg-secondary") mt-2">
+                                            @(b.DangHienThi ? "Đang hiển thị" : "Đang ẩn")
+                                        </span>
+                                    </div>
+                                    <div class="col-lg-9 col-md-8">
+                                        <div class="row g-2">
+                                            <div class="col-md-8">
+                                                <label class="form-label small fw-semibold text-muted mb-1">Tiêu đề</label>
+                                                <input name="tieuDe" value="@b.TieuDe" class="form-control form-control-sm fw-bold" required maxlength="200" />
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label small fw-semibold text-muted mb-1">Thứ tự & Trạng thái</label>
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">#</span>
+                                                    <input name="thuTu" type="number" min="1" value="@b.ThuTuHienThi" class="form-control" style="max-width: 70px;" />
+                                                    <select name="dangHienThi" class="form-select">
+                                                        <option value="true" selected="@b.DangHienThi">Hiện</option>
+                                                        <option value="false" selected="@(!b.DangHienThi)">Ẩn</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-semibold text-muted mb-1">Đường dẫn ảnh</label>
+                                                <input name="duongDanAnh" value="@b.DuongDanAnh" class="form-control form-control-sm" required maxlength="500" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-semibold text-muted mb-1">Liên kết đích</label>
+                                                <input name="lienKet" value="@b.LienKet" class="form-control form-control-sm" placeholder="/Products" maxlength="500" />
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="form-label small fw-semibold text-muted mb-1">Mô tả phụ</label>
+                                                <input name="moTa" value="@b.MoTa" class="form-control form-control-sm" maxlength="500" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-semibold text-muted mb-1">Bắt đầu từ</label>
+                                                <input name="batDauTu" type="datetime-local" value="@HienThi.ChoInputGio(b.BatDauTu)" class="form-control form-control-sm" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-semibold text-muted mb-1">Kết thúc lúc</label>
+                                                <input name="ketThucLuc" type="datetime-local" value="@HienThi.ChoInputGio(b.KetThucLuc)" class="form-control form-control-sm" />
+                                            </div>
+                                            <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+                                                <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold"><i class="bi bi-check-lg me-1"></i>Lưu thay đổi</button>
+                                                <button formaction="@Url.Action("Delete")" name="id" value="@b.MaBanner" formmethod="post"
+                                                        class="btn btn-sm btn-outline-danger px-3" onclick="return confirm('Bạn có chắc muốn xóa banner này?')"><i class="bi bi-trash me-1"></i>Xóa</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
     </div>
 </div>
