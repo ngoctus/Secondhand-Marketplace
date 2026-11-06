@@ -849,6 +849,14 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--color-error);
 }
 
+.rm-card-favorite-btn.is-favorite {
+    color: var(--color-error);
+}
+
+.rm-card-favorite-btn.is-favorite svg {
+    fill: currentColor;
+}
+
 .rm-card-body {
     padding-top: 12px;
     display: flex;

@@ -1,8 +1,17 @@
 @using SecondHandMarketplace.Web.Services.Products
+@using SecondHandMarketplace.Web.Services.Banners
 @inject IProductService ProductService
+@inject IBannerService BannerService
 @{
     ViewData["Title"] = "Trang chủ";
-    
+
+    List<SecondHandMarketplace.Web.Models.Entities.Banner> banners = new();
+    try
+    {
+        banners = (await BannerService.LayBannerHienThiAsync()).ToList();
+    }
+    catch { }
+
     // Lấy sản phẩm thật từ database nếu có, nếu chưa có thì dùng danh sách mẫu chuẩn theo Wireframe
     List<ProductCardVm> sanPhams = new();
     try
@@ -56,6 +65,59 @@
         </div>
     </div>
 </section>
+
+@if (banners.Count > 0)
+{
+<!-- 1b. BANNER (B5) -->
+<section class="landing-section" style="padding-top:0">
+    <div id="rmBannerCarousel" class="carousel slide rounded-4 overflow-hidden shadow-sm" data-bs-ride="carousel">
+        @if (banners.Count > 1)
+        {
+            <div class="carousel-indicators">
+                @for (var i = 0; i < banners.Count; i++)
+                {
+                    <button type="button" data-bs-target="#rmBannerCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : null)" aria-label="Banner @(i + 1)"></button>
+                }
+            </div>
+        }
+        <div class="carousel-inner">
+            @for (var i = 0; i < banners.Count; i++)
+            {
+                var b = banners[i];
+                <div class="carousel-item @(i == 0 ? "active" : null)">
+                    @if (!string.IsNullOrWhiteSpace(b.LienKet))
+                    {
+                        <a href="@b.LienKet" class="d-block">
+                            <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100 d-none d-md-block" style="aspect-ratio:10/3; object-fit:cover;" data-fallback />
+                            <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100 d-md-none" style="aspect-ratio:16/9; object-fit:cover;" data-fallback />
+                        </a>
+                    }
+                    else
+                    {
+                        <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100" style="aspect-ratio:10/3; object-fit:cover;" data-fallback />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(b.MoTa))
+                    {
+                        <div class="carousel-caption d-none d-md-block text-start" style="background:rgba(0,0,0,.35); border-radius:10px; padding:8px 14px;">
+                            <h5 class="mb-1">@b.TieuDe</h5>
+                            <p class="mb-0 small">@b.MoTa</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        @if (banners.Count > 1)
+        {
+            <button class="carousel-control-prev" type="button" data-bs-target="#rmBannerCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Trước</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#rmBannerCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Sau</span>
+            </button>
+        }
+    </div>
+</section>
+}
 
 <!-- 2. DANH MỤC (Ảnh 2) -->
 <section class="landing-section">

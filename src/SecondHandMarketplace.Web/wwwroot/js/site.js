@@ -113,3 +113,53 @@
         });
     });
 })();
+
+// Nút tim yêu thích (B4): cần đăng nhập; meta[name=rm-csrf] chỉ được layout cấp khi đã đăng nhập.
+(() => {
+    const csrf = document.querySelector('meta[name="rm-csrf"]')?.content;
+    const toggleUrl = '/User/Favorites/Toggle';
+    const idsUrl = '/User/Favorites/DanhSachIds';
+
+    const danhDau = (productId, isFavorite) => {
+        document.querySelectorAll(`.rm-card-favorite-btn[data-product-id="${productId}"]`).forEach(btn => {
+            btn.classList.toggle('is-favorite', isFavorite);
+            btn.setAttribute('aria-label', isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích');
+        });
+    };
+
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.rm-card-favorite-btn');
+        if (!btn) return;
+        e.preventDefault();
+
+        if (!csrf) {
+            window.location.href = '/Account/Login?ReturnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            return;
+        }
+
+        const productId = btn.dataset.productId;
+        const body = new URLSearchParams({ maSanPham: productId, __RequestVerificationToken: csrf });
+        try {
+            const res = await fetch(toggleUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+                body
+            });
+            const data = await res.json();
+            if (data.success) danhDau(productId, data.isFavorite);
+        } catch {
+            // Mạng lỗi: giữ nguyên trạng thái, không đổi tim.
+        }
+    });
+
+    if (csrf) {
+        window.addEventListener('load', async () => {
+            if (!document.querySelector('.rm-card-favorite-btn')) return;
+            try {
+                const res = await fetch(idsUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const ids = await res.json();
+                ids.forEach(id => danhDau(id, true));
+            } catch { /* chưa đăng nhập hoặc lỗi mạng: bỏ qua */ }
+        });
+    }
+})();

@@ -1,0 +1,78 @@
+@model ProductFormVm
+
+<div asp-validation-summary="All" class="text-danger small mb-2"></div>
+
+<input type="hidden" asp-for="Id" />
+
+<div class="row g-3">
+    <div class="col-12">
+        <label asp-for="Ten" class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+        <input asp-for="Ten" class="form-control" maxlength="200" placeholder="VD: Áo khoác denim nam size L" />
+        <span asp-validation-for="Ten" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Gia" class="form-label">Giá (đồng) <span class="text-danger">*</span></label>
+        <input asp-for="Gia" type="number" min="1000" step="1000" class="form-control" placeholder="VD: 250000" />
+        <span asp-validation-for="Gia" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="MaDanhMuc" class="form-label">Danh mục <span class="text-danger">*</span></label>
+        <select asp-for="MaDanhMuc" class="form-select" asp-items="@(new SelectList(Model.DanhSachDanhMuc.Where(d => d.DangHienThi), "MaDanhMuc", "Ten"))">
+            <option value="">— Chọn danh mục —</option>
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="MaTinhTrang" class="form-label">Tình trạng <span class="text-danger">*</span></label>
+        <select asp-for="MaTinhTrang" class="form-select" asp-items="@(new SelectList(Model.DanhSachTinhTrang.Where(t => t.DangSuDung), "MaTinhTrang", "Ten"))">
+            <option value="">— Chọn tình trạng —</option>
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="MoTa" class="form-label">Mô tả <span class="text-danger">*</span></label>
+        <textarea asp-for="MoTa" class="form-control" rows="5" maxlength="4000"
+                  placeholder="Nêu rõ tình trạng, nguồn gốc, lỗi/hư hại (nếu có)... Tối thiểu 20 ký tự khi gửi duyệt."></textarea>
+        <span asp-validation-for="MoTa" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Ảnh sản phẩm (tối đa 10, bắt buộc ≥ 1 khi gửi duyệt)</label>
+        <input type="file" name="AnhMoi" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif" multiple />
+        <div class="form-text">Mỗi ảnh tối đa 5MB. Ảnh đầu tiên trong đợt tải lên sẽ là ảnh chính nếu sản phẩm chưa có ảnh chính.</div>
+    </div>
+
+    @if (Model.AnhHienTai.Count > 0)
+    {
+        <div class="col-12">
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var a in Model.AnhHienTai)
+                {
+                    <div class="border rounded-3 p-1 text-center" style="width:110px;">
+                        <img src="@a.DuongDan" alt="" class="rounded-2 w-100" style="height:84px; object-fit:cover;" />
+                        @if (a.LaAnhChinh)
+                        {
+                            <div class="small fw-semibold mt-1">Ảnh chính</div>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-link btn-sm p-0" formaction="@Url.Action("DatAnhChinh", new { id = Model.Id, maAnh = a.MaAnh })">
+                                Đặt làm chính
+                            </button>
+                        }
+                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 d-block mx-auto"
+                                formaction="@Url.Action("XoaAnh", new { id = Model.Id, maAnh = a.MaAnh })"
+                                onclick="return confirm('Xóa ảnh này?');">Xóa</button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn-rm-primary">Lưu nháp</button>
+    <button type="submit" name="GuiDuyet" value="true" class="btn-rm-secondary">Lưu và gửi duyệt</button>
+</div>

@@ -1,6 +1,30 @@
+@model PagedResult<ProductCardVm>
 @{
     ViewData["Title"] = "Sản phẩm yêu thích";
 }
 
-<h2>Sản phẩm yêu thích</h2>
-<p class="text-muted">TODO: Areas/User/Controllers/FavoritesController.cs &rarr; Index</p>
+<div class="rm-main-content" style="padding-top:8px">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 style="font-family:'Playfair Display',serif; font-size:24px;">Sản phẩm yêu thích</h2>
+        <a asp-area="" asp-controller="Products" asp-action="Index" class="btn-rm-outline">Tiếp tục khám phá</a>
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="card text-center p-5 shadow-sm border-0 rounded-3">
+            <p class="text-muted mb-0">Bạn chưa yêu thích sản phẩm nào. Nhấn nút tim trên mỗi sản phẩm để lưu lại đây.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-4">
+            @foreach (var p in Model.Items)
+            {
+                <div class="col">
+                    <partial name="_ProductCard" model="p" />
+                </div>
+            }
+        </div>
+        <partial name="_Pager" model="new PagerVm(Model.Page, Model.TotalPages)" />
+    }
+</div>

@@ -1,6 +1,65 @@
+@model SecondHandMarketplace.Web.Areas.Admin.Controllers.BannerManagementVm
 @{
     ViewData["Title"] = "Quản lý banner";
 }
 
-<h2>Quản lý banner</h2>
-<p class="text-muted">TODO: Areas/Admin/Controllers/BannersController.cs &rarr; Index</p>
+<div class="container-fluid py-4">
+    <h2>Banner trang chủ</h2>
+
+    <form asp-action="Save" method="post" class="row g-2 mb-4">
+        <input type="hidden" name="id" value="" />
+        <div class="col-md-4"><input name="tieuDe" class="form-control" placeholder="Tiêu đề banner" required maxlength="200" /></div>
+        <div class="col-md-3"><input name="moTa" class="form-control" placeholder="Mô tả (tùy chọn)" maxlength="500" /></div>
+        <div class="col-md-3"><input name="duongDanAnh" class="form-control" placeholder="/uploads/banners/ten.svg" required maxlength="500" /></div>
+        <div class="col-md-2"><input name="lienKet" class="form-control" placeholder="/Products (tùy chọn)" maxlength="500" /></div>
+        <div class="col-md-1"><input name="thuTu" type="number" min="1" value="1" class="form-control" /></div>
+        <div class="col-md-2">
+            <select name="dangHienThi" class="form-select">
+                <option value="true" selected>Hiện</option>
+                <option value="false">Ẩn</option>
+            </select>
+        </div>
+        <div class="col-md-2"><input name="batDauTu" type="datetime-local" class="form-control" title="Bắt đầu từ (giờ VN, để trống = luôn)" /></div>
+        <div class="col-md-2"><input name="ketThucLuc" type="datetime-local" class="form-control" title="Kết thúc lúc (giờ VN, để trống = không hết hạn)" /></div>
+        <div class="col-auto"><button class="btn btn-primary">Thêm banner</button></div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr><th style="width:180px">ẢNH</th><th>TIÊU ĐỀ</th><th>THỨ TỰ</th><th>HIỂN THỊ</th><th>HIỆU LỰC (giờ VN)</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.Banners)
+                {
+                    <tr>
+                        <td><img src="@b.DuongDanAnh" alt="" class="rounded" style="width:160px;height:60px;object-fit:cover;" /></td>
+                        <td colspan="5">
+                            <form asp-action="Save" method="post" class="row g-2">
+                                <input type="hidden" name="id" value="@b.MaBanner" />
+                                <div class="col-md-3"><input name="tieuDe" value="@b.TieuDe" class="form-control" required maxlength="200" /></div>
+                                <div class="col-md-2"><input name="moTa" value="@b.MoTa" class="form-control" maxlength="500" /></div>
+                                <div class="col-md-2"><input name="duongDanAnh" value="@b.DuongDanAnh" class="form-control" required maxlength="500" /></div>
+                                <div class="col-md-1"><input name="lienKet" value="@b.LienKet" class="form-control" maxlength="500" placeholder="Link" /></div>
+                                <div class="col-md-1"><input name="thuTu" type="number" min="1" value="@b.ThuTuHienThi" class="form-control" /></div>
+                                <div class="col-md-1">
+                                    <select name="dangHienThi" class="form-select">
+                                        <option value="true" selected="@b.DangHienThi">Hiện</option>
+                                        <option value="false" selected="@(!b.DangHienThi)">Ẩn</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2"><input name="batDauTu" type="datetime-local" value="@HienThi.ChoInputGio(b.BatDauTu)" class="form-control" /></div>
+                                <div class="col-md-2"><input name="ketThucLuc" type="datetime-local" value="@HienThi.ChoInputGio(b.KetThucLuc)" class="form-control" /></div>
+                                <div class="col-auto d-flex gap-1 align-items-center">
+                                    <button class="btn btn-sm btn-outline-primary">Lưu</button>
+                                    <button formaction="@Url.Action("Delete")" name="id" value="@b.MaBanner" formmethod="post"
+                                            class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa banner này?')">Xóa</button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

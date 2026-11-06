@@ -111,7 +111,7 @@
         @if (phienDauGiaId.HasValue)
         {
             <div class="alert alert-warning py-2 px-3 my-2 d-flex align-items-center justify-content-between rounded-3 border-warning" style="font-size: 13px;">
-                <span>🔨 <strong>Sản phẩm này đang được đấu giá!</strong></span>
+                <span><strong>Sản phẩm này đang được đấu giá!</strong></span>
                 <a asp-controller="PublicAuctions" asp-action="Details" asp-route-id="@phienDauGiaId" class="btn btn-sm btn-outline-dark fw-semibold">Xem phiên đấu giá →</a>
             </div>
         }

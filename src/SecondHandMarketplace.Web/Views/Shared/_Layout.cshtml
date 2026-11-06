@@ -1,10 +1,16 @@
 @using SecondHandMarketplace.Web.Common
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Re:Market</title>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <meta name="rm-csrf" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+    }
     
     <!-- Google Fonts: Be Vietnam Pro & Playfair Display (hỗ trợ 100% tiếng Việt không lỗi dấu) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +27,7 @@
             <!-- Brand Logo -->
             <a class="rm-brand" asp-area="" asp-controller="Home" asp-action="Index">
                 <span class="rm-brand-badge" aria-hidden="true"></span>
-                <span>Tên website</span>
+                <span>Re:Market</span>
             </a>
 
             <!-- Search Bar pill theo Wireframe -->
@@ -57,7 +63,7 @@
 
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000">Giá tốt</a>
-                <a class="rm-nav-link" asp-area="" asp-controller="PublicAuctions" asp-action="Index">🔨 Đấu giá</a>
+                <a class="rm-nav-link" asp-area="" asp-controller="PublicAuctions" asp-action="Index">Đấu giá</a>
 
                 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
                 {
@@ -74,8 +80,10 @@
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Sellers" asp-action="Index">Cửa hàng</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Products" asp-action="Index">Duyệt sản phẩm</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Categories" asp-action="Index">Danh mục</a>
+                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Banners" asp-action="Index">Banner</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Disputes" asp-action="Index">Tranh chấp</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Reports" asp-action="Index">Báo cáo vi phạm</a>
+                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="ForbiddenKeywords" asp-action="Index">Từ khóa cấm</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">Nhật ký hệ thống</a>
                             <a class="rm-dropdown-item" asp-area="Admin" asp-controller="AiSettings" asp-action="Index">Cấu hình AI</a>
                         </div>
@@ -164,7 +172,7 @@
                 <div>
                     <a class="rm-footer-brand" asp-area="" asp-controller="Home" asp-action="Index">
                         <span class="rm-brand-badge" style="background-color: var(--color-primary);" aria-hidden="true"></span>
-                        <span>Tên website</span>
+                        <span>Re:Market</span>
                     </a>
                     <p class="rm-footer-slogan">
                         Chợ đồ cũ giúp món đồ có thêm một vòng đời mới.
@@ -213,7 +221,7 @@
             </div>
 
             <div class="rm-footer-bottom">
-                © 2026 Tên website. Bảo lưu mọi quyền.
+                © 2026 Re:Market. Bảo lưu mọi quyền.
             </div>
         </div>
     </footer>
@@ -224,5 +232,6 @@
     <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <partial name="_AiChatWidget" />
 </body>
 </html>

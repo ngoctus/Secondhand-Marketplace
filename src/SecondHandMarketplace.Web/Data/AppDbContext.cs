@@ -33,6 +33,8 @@ public class AppDbContext : DbContext
     public DbSet<BaoCao> BaoCaos => Set<BaoCao>();
     public DbSet<PhienDauGia> PhienDauGias => Set<PhienDauGia>();
     public DbSet<LuotDatGia> LuotDatGias => Set<LuotDatGia>();
+    public DbSet<YeuThich> YeuThichs => Set<YeuThich>();
+    public DbSet<Banner> Banners => Set<Banner>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -114,6 +116,30 @@ public class AppDbContext : DbContext
             // Bảng có trigger (giới hạn 10 ảnh) nên phải khai báo để EF không dùng OUTPUT khi INSERT.
             e.ToTable("AnhSanPham", t => t.HasTrigger("trg_AnhSanPham_GioiHan"));
             e.HasKey(x => x.MaAnhSP);
+        });
+
+        modelBuilder.Entity<YeuThich>(e =>
+        {
+            e.ToTable("YeuThich");
+            e.HasKey(x => x.MaYeuThich);
+            e.HasOne(x => x.NguoiDung)
+                .WithMany()
+                .HasForeignKey(x => x.MaNguoiDung)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.SanPham)
+                .WithMany()
+                .HasForeignKey(x => x.MaSanPham)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Banner>(e =>
+        {
+            e.ToTable("Banner");
+            e.HasKey(x => x.MaBanner);
+            e.Property(x => x.TieuDe).HasMaxLength(200);
+            e.Property(x => x.MoTa).HasMaxLength(500);
+            e.Property(x => x.DuongDanAnh).HasMaxLength(500);
+            e.Property(x => x.LienKet).HasMaxLength(500);
         });
 
         modelBuilder.Entity<NhatKyHeThong>(e =>

@@ -1,6 +1,109 @@
+@model PagedResult<MyProductVm>
 @{
     ViewData["Title"] = "Sản phẩm của tôi";
+
+    static string TrangThaiSp(string s) => s switch
+    {
+        "DRAFT" => "Bản nháp",
+        "PENDING_REVIEW" => "Đang chờ duyệt",
+        "ACTIVE" => "Đang bán",
+        "REJECTED" => "Bị từ chối",
+        "HIDDEN" => "Đang ẩn",
+        "RESERVED" => "Đã có đơn",
+        "SOLD" => "Đã bán",
+        "REMOVED" => "Đã gỡ",
+        _ => s
+    };
 }
 
-<h2>Sản phẩm của tôi</h2>
-<p class="text-muted">TODO: Areas/User/Controllers/ProductsController.cs &rarr; Index</p>
+<div class="rm-main-content" style="padding-top:8px">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h2 style="font-family:'Playfair Display',serif; font-size:24px;">Sản phẩm của tôi</h2>
+            <p class="text-muted mb-0" style="font-size:13.5px;">Quản lý danh sách sản phẩm của cửa hàng bạn.</p>
+        </div>
+        <a asp-action="Create" class="btn-rm-primary">+ Đăng bán</a>
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="card text-center p-5 shadow-sm border-0 rounded-3">
+            <p class="text-muted mb-3">Bạn chưa có sản phẩm nào. Hãy tạo cửa hàng và đăng bán món đồ đầu tiên.</p>
+            <div class="d-flex justify-content-center gap-2">
+                <a asp-area="User" asp-controller="Shop" asp-action="Index" class="btn-rm-outline">Tạo cửa hàng</a>
+                <a asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card p-0 overflow-hidden shadow-sm border-0 rounded-3">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>SẢN PHẨM</th>
+                            <th>GIÁ</th>
+                            <th>TRẠNG THÁI</th>
+                            <th>CẬP NHẬT</th>
+                            <th class="text-end">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (!string.IsNullOrEmpty(p.AnhDaiDien))
+                                        {
+                                            <img src="@p.AnhDaiDien" alt="" class="rounded" width="48" height="48" style="object-fit:cover;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="rounded bg-light d-inline-block" style="width:48px;height:48px;"></span>
+                                        }
+                                        <div>
+                                            <b>@p.Ten</b>
+                                            <div class="text-muted small">@p.SoLuongAnh ảnh</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@(p.Gia is null ? "—" : HienThi.Tien(p.Gia.Value))</td>
+                                <td><span class="st st-@p.TrangThai.ToLowerInvariant()">@TrangThaiSp(p.TrangThai)</span></td>
+                                <td class="small text-muted">@HienThi.NgayGio(p.NgayCapNhat)</td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
+                                        @if (p.TrangThai is "DRAFT" or "REJECTED" or "HIDDEN" or "REMOVED")
+                                        {
+                                            <form asp-action="GuiDuyet" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@p.Id" />
+                                                <button type="submit" class="btn-rm-outline btn-sm">Gửi duyệt</button>
+                                            </form>
+                                        }
+                                        @if (p.TrangThai == "ACTIVE")
+                                        {
+                                            <form asp-action="An" method="post" class="d-inline" onsubmit="return confirm('Ẩn sản phẩm này khỏi trang bán?');">
+                                                <input type="hidden" name="id" value="@p.Id" />
+                                                <button type="submit" class="btn-rm-secondary btn-sm">Ẩn</button>
+                                            </form>
+                                        }
+                                        @if (p.TrangThai != "PENDING_REVIEW" && p.TrangThai != "RESERVED" && p.TrangThai != "SOLD")
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">Sửa</a>
+                                        }
+                                        @if (p.TrangThai is "ACTIVE" or "RESERVED" or "SOLD")
+                                        {
+                                            <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">Xem trang bán</a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <partial name="_Pager" model="new PagerVm(Model.Page, Model.TotalPages)" />
+    }
+</div>
