@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SecondHandMarketplace.Web.Models.ViewModels;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Services.Products;
 
@@ -15,13 +16,13 @@ public class ProductsController : Controller
     {
         try
         {
-            var list = await _products.SearchAsync(filter);
-            return View(list);
+            var result = await _products.SearchAsync(filter);
+            return View(result);
         }
         catch
         {
             // Dự phòng nếu kết nối DB bị lỗi thì trang vẫn load tức thì không bị treo
-            return View(new List<ProductCardVm>());
+            return View(new PagedResult<ProductCardVm> { Items = Array.Empty<ProductCardVm>(), Page = 1, PageSize = 12 });
         }
     }
 

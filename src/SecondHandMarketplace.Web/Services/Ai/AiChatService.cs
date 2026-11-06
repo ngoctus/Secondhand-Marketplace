@@ -118,16 +118,67 @@ public sealed class AiChatService : IAiChatService
 
     // ------------------------------------------------------------------ Vòng lặp function calling
 
+    private bool IsGemini =>
+        _options.Endpoint.Contains("googleapis.com", StringComparison.OrdinalIgnoreCase)
+        || _options.ApiKey.StartsWith("AQ.", StringComparison.OrdinalIgnoreCase)
+        || _options.ApiKey.StartsWith("AIza", StringComparison.OrdinalIgnoreCase);
+
     private async Task<AiChatResult> RunConversationAsync(string role, string userText, string model, string systemPrompt, CancellationToken ct)
     {
-        var contents = new List<JsonNode>
-    {
-        new JsonObject
+        if (IsGemini)
         {
-            ["role"] = "user",
-            ["parts"] = new JsonArray(new JsonObject { ["text"] = userText })
+            var geminiModel = ResolveModel(model);
+            if (geminiModel.StartsWith("claude-", StringComparison.OrdinalIgnoreCase))
+                geminiModel = "gemini-3.1-flash-lite";
+
+            var endpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+            request.Headers.Add("Authorization", $"Bearer {_options.ApiKey.Trim()}");
+
+            var geminiMessages = new JsonArray
+            {
+                new JsonObject { ["role"] = "system", ["content"] = systemPrompt },
+                new JsonObject { ["role"] = "user", ["content"] = userText }
+            };
+
+            var geminiBody = new JsonObject
+            {
+                ["model"] = geminiModel,
+                ["messages"] = geminiMessages
+            };
+
+            request.Content = new StringContent(geminiBody.ToJsonString(), Encoding.UTF8, "application/json");
+
+            using var response = await _http.SendAsync(request, ct);
+            var payload = await response.Content.ReadAsStringAsync(ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Gemini API lỗi HTTP {Status}: {Detail}", (int)response.StatusCode, payload);
+                throw new AiProviderException(AiChatStatus.ProviderError, UnavailableMessage);
+            }
+
+            using var doc = ParseJson(payload);
+            if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+            {
+                var choice = choices[0];
+                if (choice.TryGetProperty("message", out var msg) && msg.TryGetProperty("content", out var contentElem))
+                {
+                    var replyRaw = contentElem.GetString() ?? "";
+                    var reply = SanitizeReply(replyRaw);
+                    if (reply.Length == 0)
+                        throw new AiProviderException(AiChatStatus.InvalidResponse, "Trợ lý AI không trả về nội dung. Vui lòng thử lại.");
+                    return AiChatResult.Ok(reply);
+                }
+            }
+
+            throw new AiProviderException(AiChatStatus.InvalidResponse, "Trợ lý AI trả về phản hồi không hợp lệ.");
         }
-    };
+
+        var messages = new List<JsonNode>
+        {
+            new JsonObject { ["role"] = "user", ["content"] = userText }
+        };
 
         for (var round = 0; round <= _options.MaxToolRounds; round++)
         {
@@ -321,6 +372,13 @@ public sealed class AiChatService : IAiChatService
     /// <summary>Model lưu trong database chỉ được dùng nếu còn nằm trong danh sách cho phép; ngược lại dùng model mặc định.</summary>
     private string ResolveModel(string? configured)
     {
+        if (IsGemini)
+        {
+            if (configured is not null && (configured.StartsWith("gemini-", StringComparison.OrdinalIgnoreCase) || configured.Contains("flash") || configured.Contains("pro")))
+                return configured;
+            return "gemini-3.1-flash-lite";
+        }
+
         if (configured is not null && _options.AllowedModels.Contains(configured, StringComparer.Ordinal))
             return configured;
 

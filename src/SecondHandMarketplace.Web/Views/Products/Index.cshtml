@@ -1,15 +1,19 @@
-@model List<ProductCardVm>
+@model PagedResult<ProductCardVm>
+@removeTagHelper Microsoft.AspNetCore.Mvc.TagHelpers.OptionTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     ViewData["Title"] = "Kết quả tìm kiếm";
     var query = Context.Request.Query;
     var keyword = query["Keyword"].ToString();
+    var sort = query["sort"].ToString();
+    var condition = query["Condition"].ToString();
     var tieuDe = string.IsNullOrWhiteSpace(keyword) ? "Tất cả sản phẩm" : $"Kết quả cho “{keyword}”";
 
     // Dữ liệu mẫu chuẩn theo Wireframe ảnh 4 nếu DB chưa có sản phẩm
-    var displayList = Model;
-    if (displayList.Count == 0 && string.IsNullOrWhiteSpace(keyword) && query.Count == 0)
+    var displayItems = Model.Items;
+    var showSample = displayItems.Count == 0 && string.IsNullOrWhiteSpace(keyword) && query.Count == 0;
+    if (showSample)
     {
-        displayList = new List<ProductCardVm>
+        displayItems = new List<ProductCardVm>
         {
             new ProductCardVm { Id = 1, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
             new ProductCardVm { Id = 2, Name = "Áo khoác dù unisex", Price = 180000, ShopName = "Hà Closet", ConditionName = "Tốt" },
@@ -47,12 +51,13 @@
             <div class="filter-group">
                 <div class="filter-title">Danh mục</div>
                 <div class="filter-checkbox-list">
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="thoi-trang" /> <span>Thời trang</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="dien-tu" /> <span>Điện tử</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="do-gia-dung" /> <span>Đồ gia dụng</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="sach" /> <span>Sách</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="phu-kien" /> <span>Phụ kiện</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="noi-that" /> <span>Nội thất</span></label>
+                    @foreach (var cat in new[] { ("thoi-trang", "Thời trang"), ("dien-tu", "Điện tử"), ("do-gia-dung", "Đồ gia dụng"), ("sach", "Sách"), ("phu-kien", "Phụ kiện"), ("noi-that", "Nội thất") })
+                    {
+                        var isChecked = query["Categories"].ToString().Contains(cat.Item1, StringComparison.OrdinalIgnoreCase);
+                        <label class="filter-label">
+                            <input type="checkbox" name="Categories" value="@cat.Item1" @(isChecked ? "checked" : null) /> <span>@cat.Item2</span>
+                        </label>
+                    }
                 </div>
             </div>
 
@@ -75,10 +80,13 @@
             <div class="filter-group">
                 <div class="filter-title">Tình trạng</div>
                 <div class="filter-radio-list">
-                    <label class="filter-label"><input type="radio" name="Condition" value="new" /> <span>Mới</span></label>
-                    <label class="filter-label"><input type="radio" name="Condition" value="like-new" /> <span>Rất tốt</span></label>
-                    <label class="filter-label"><input type="radio" name="Condition" value="good" /> <span>Tốt</span></label>
-                    <label class="filter-label"><input type="radio" name="Condition" value="fair" /> <span>Có dấu vết sử dụng</span></label>
+                    @foreach (var cond in new[] { ("new", "Mới 100%"), ("like-new", "Như mới"), ("good", "Tốt"), ("fair", "Khá"), ("worn", "Cũ") })
+                    {
+                        var isChecked = string.Equals(condition, cond.Item1, StringComparison.OrdinalIgnoreCase);
+                        <label class="filter-label">
+                            <input type="radio" name="Condition" value="@cond.Item1" @(isChecked ? "checked" : null) /> <span>@cond.Item2</span>
+                        </label>
+                    }
                 </div>
             </div>
 
@@ -91,19 +99,19 @@
         <div class="search-results-header">
             <div>
                 <h2>@tieuDe</h2>
-                <span class="count-label">@(displayList.Count) sản phẩm</span>
+                <span class="count-label">@(showSample ? displayItems.Count : Model.TotalItems) sản phẩm</span>
             </div>
             <div class="sort-select-box">
                 <label for="sortOrder">Sắp xếp:</label>
-                <select id="sortOrder" name="sort">
-                    <option value="newest">Mới nhất</option>
-                    <option value="price_asc">Giá tăng dần</option>
-                    <option value="price_desc">Giá giảm dần</option>
+                <select id="sortOrder" name="sort" onchange="this.form.submit()">
+                    <option value="newest" @(sort == "newest" ? "selected=\"selected\"" : "")>Mới nhất</option>
+                    <option value="price_asc" @(sort == "price_asc" ? "selected=\"selected\"" : "")>Giá tăng dần</option>
+                    <option value="price_desc" @(sort == "price_desc" ? "selected=\"selected\"" : "")>Giá giảm dần</option>
                 </select>
             </div>
         </div>
 
-        @if (displayList.Count == 0)
+        @if (displayItems.Count == 0)
         {
             <div style="background-color: var(--color-surface); padding: 48px; border-radius: var(--radius-lg); text-align: center;">
                 <p style="color: var(--color-text-secondary); margin-bottom: 16px;">Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
@@ -114,7 +122,7 @@
         {
             <!-- Lưới 3 cột chuẩn Ảnh 4 -->
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-                @foreach (var p in displayList)
+                @foreach (var p in displayItems)
                 {
                     <div class="col">
                         <partial name="_ProductCard" model="p" />
@@ -122,16 +130,11 @@
                 }
             </div>
 
-            <!-- Phân trang theo Wireframe: < 1 2 3 … 12 > -->
-            <nav class="rm-pagination" aria-label="Phân trang">
-                <span class="rm-page-item is-disabled">‹</span>
-                <span class="rm-page-item is-active">1</span>
-                <a href="#" class="rm-page-item">2</a>
-                <a href="#" class="rm-page-item">3</a>
-                <span class="rm-page-item rm-page-ellipsis">…</span>
-                <a href="#" class="rm-page-item">12</a>
-                <a href="#" class="rm-page-item">›</a>
-            </nav>
+            <!-- Phân trang dạng số chuẩn (1, 2, 3...) -->
+            @if (!showSample && Model.TotalPages >= 1)
+            {
+                <partial name="_Pager" model="new PagerVm(Model.Page, Model.TotalPages)" />
+            }
         }
     </main>
 </div>
