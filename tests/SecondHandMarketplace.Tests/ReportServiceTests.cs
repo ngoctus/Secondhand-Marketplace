@@ -330,4 +330,39 @@ public class ReportServiceTests
         var bc = await db.BaoCaos.FindAsync(15);
         Assert.Equal("PENDING", bc!.TrangThai);
     }
+
+    [Fact]
+    public async Task XuLyBaoCaoAdminAsync_Product3Strikes_AutoLocksUserAndShop()
+    {
+        using var db = GetInMemoryDbContext("ReportTest_3StrikesAutoLock");
+        var fakeUserAdmin = new FakeUserAdminService();
+        var fakeShop = new FakeShopService();
+        var fakeAudit = new FakeAuditLogService();
+        var fakeNotify = new FakeNotificationService();
+        var service = new ReportService(db, fakeUserAdmin, fakeShop, fakeAudit, fakeNotify);
+
+        const int sellerId = 77;
+        const int shopId = 88;
+        db.CuaHangs.Add(new CuaHang { MaCuaHang = shopId, MaNguoiDung = sellerId, TenShop = "Shop Vi Pham", TrangThai = "ACTIVE" });
+        db.SanPhams.Add(new SanPham { MaSanPham = 101, MaCuaHang = shopId, Ten = "SP 1", TrangThai = "ACTIVE", DaXoa = false });
+        db.SanPhams.Add(new SanPham { MaSanPham = 102, MaCuaHang = shopId, Ten = "SP 2", TrangThai = "ACTIVE", DaXoa = false });
+        db.SanPhams.Add(new SanPham { MaSanPham = 103, MaCuaHang = shopId, Ten = "SP 3", TrangThai = "ACTIVE", DaXoa = false });
+
+        // Hai báo cáo trước đã RESOLVED
+        db.BaoCaos.Add(new BaoCao { MaBaoCao = 1, LoaiDoiTuong = "PRODUCT", MaDoiTuong = 101, TrangThai = "RESOLVED", LyDo = "Hàng giả", NgayTao = DateTime.UtcNow });
+        db.BaoCaos.Add(new BaoCao { MaBaoCao = 2, LoaiDoiTuong = "PRODUCT", MaDoiTuong = 102, TrangThai = "RESOLVED", LyDo = "Lừa đảo", NgayTao = DateTime.UtcNow });
+
+        // Báo cáo thứ 3 đang PENDING
+        db.BaoCaos.Add(new BaoCao { MaBaoCao = 3, LoaiDoiTuong = "PRODUCT", MaDoiTuong = 103, TrangThai = "PENDING", LyDo = "Hàng cấm", NgayTao = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, _) = await service.XuLyBaoCaoAdminAsync(3, 999, "RESOLVE", "Gỡ hàng cấm lần 3");
+        Assert.True(thanhCong);
+
+        // Người bán và shop đã bị tự động khóa do đạt 3 gậy!
+        Assert.Single(fakeUserAdmin.LockedUsers);
+        Assert.Equal(sellerId, fakeUserAdmin.LockedUsers[0].UserId);
+        Assert.Single(fakeShop.LockedShops);
+        Assert.Equal(shopId, fakeShop.LockedShops[0].ShopId);
+    }
 }

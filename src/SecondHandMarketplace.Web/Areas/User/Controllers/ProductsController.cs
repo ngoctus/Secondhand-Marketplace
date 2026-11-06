@@ -141,6 +141,17 @@ public class ProductsController : UserBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var userId = User.LayNguoiDungId()!.Value;
+        var (ok, loi) = await _products.DeleteAsync(userId, id);
+        if (ok) this.ThongBaoThanhCong("Đã xóa sản phẩm thành công.");
+        else this.ThongBaoLoi(loi ?? "Không thể xóa sản phẩm.");
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DatAnhChinh(int id, int maAnh)
     {
         var userId = User.LayNguoiDungId()!.Value;

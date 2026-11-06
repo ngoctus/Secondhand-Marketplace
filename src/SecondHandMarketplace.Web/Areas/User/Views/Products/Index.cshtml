@@ -97,6 +97,13 @@
                                         {
                                             <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">Xem trang bán</a>
                                         }
+                                        @if (p.TrangThai != "RESERVED" && p.TrangThai != "SOLD")
+                                        {
+                                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này không? Thao tác này không thể hoàn tác.');">
+                                                <input type="hidden" name="id" value="@p.Id" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" style="padding: 4px 10px; font-size: 13px; border-radius: 6px;">Xóa</button>
+                                            </form>
+                                        }
                                     </div>
                                 </td>
                             </tr>

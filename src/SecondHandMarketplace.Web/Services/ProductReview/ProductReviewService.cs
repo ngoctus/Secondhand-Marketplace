@@ -257,7 +257,20 @@ public class ProductReviewService(
         await TryAuditAsync(adminId, "REMOVE_PRODUCT", maSanPham, cleanReason, cancellationToken);
         await TryNotifyAsync(product.SellerId, "Sản phẩm của bạn đã bị gỡ",
             Truncate($"Sản phẩm \"{Truncate(product.Ten, 120)}\" đã bị quản trị viên gỡ khỏi sàn. Lý do: {cleanReason}", 1000), maSanPham, cancellationToken);
-        return new ProductDecisionResult(true, null, false, "REMOVED", null, null);
+        AdminDecisionFollowUp? followUp = null;
+        try
+        {
+            var lockedNow = await moderation.EnforceViolationThresholdAsync(product.SellerId, cancellationToken);
+            var count = await moderation.GetViolationCountAsync(product.SellerId, cancellationToken);
+            var isLocked = await db.NguoiDungs.AsNoTracking().Where(u => u.MaNguoiDung == product.SellerId).Select(u => u.TrangThai == "LOCKED").SingleOrDefaultAsync(cancellationToken);
+            followUp = new AdminDecisionFollowUp(false, count, lockedNow, isLocked);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "EnforceViolationThresholdAsync lỗi sau khi gỡ sản phẩm {ProductId}.", maSanPham);
+        }
+
+        return new ProductDecisionResult(true, null, false, "REMOVED", followUp, null);
     }
 
     /// <summary>Gọi sp_DuyetSanPham / sp_TuChoiSanPham (transaction + UPDLOCK nằm trong procedure). Tách ra để kiểm thử.</summary>
