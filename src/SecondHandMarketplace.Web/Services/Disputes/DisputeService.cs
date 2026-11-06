@@ -241,9 +241,10 @@ public class DisputeService : IDisputeService
             .Include(t => t.NguoiXuLy)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(trangThai))
+        var ttChuan = trangThai?.Trim().ToUpperInvariant();
+        if (ttChuan is "OPEN" or "PROCESSING" or "RESOLVED" or "REJECTED")
         {
-            query = query.Where(t => t.TrangThai == trangThai);
+            query = query.Where(t => t.TrangThai == ttChuan);
         }
 
         var totalItems = await query.CountAsync();

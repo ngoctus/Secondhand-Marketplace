@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.ViewModels.Admin;
 
@@ -18,8 +19,8 @@ public sealed class AuditLogsController(AppDbContext db) : AdminBaseController
                     select new { log, UserName = user == null ? null : user.HoTen };
         if (int.TryParse(userId, out var id)) query = query.Where(x => x.log.MaNguoiDung == id);
         if (!string.IsNullOrWhiteSpace(action)) query = query.Where(x => x.log.HanhDong.Contains(action.Trim()));
-        if (from.HasValue) { var start = from.Value.Date; query = query.Where(x => x.log.ThoiGian >= start); }
-        if (to.HasValue) { var end = to.Value.Date.AddDays(1); query = query.Where(x => x.log.ThoiGian < end); }
+        if (from.HasValue) { var start = HienThi.TuGioVnSangUtc(from.Value.Date); query = query.Where(x => x.log.ThoiGian >= start); }
+        if (to.HasValue) { var end = HienThi.TuGioVnSangUtc(to.Value.Date.AddDays(1)); query = query.Where(x => x.log.ThoiGian < end); }
         var total = await query.CountAsync(cancellationToken);
         var items = await query.OrderByDescending(x => x.log.ThoiGian).ThenByDescending(x => x.log.MaNhatKyHeThong)
             .Skip((page - 1) * pageSize).Take(pageSize)

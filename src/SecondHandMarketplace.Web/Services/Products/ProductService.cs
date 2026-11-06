@@ -122,7 +122,9 @@ public class ProductService : IProductService
                 NgayCapNhat = p.NgayCapNhat,
                 AnhDaiDien = p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault()
                                  ?? p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).FirstOrDefault(),
-                SoLuongAnh = p.Anh.Count
+                SoLuongAnh = p.Anh.Count,
+                PhanTichThatBai = _db.LuotKiemDuyets.Any(l => l.MaSanPham == p.MaSanPham
+                    && l.QuyetDinh == null && l.PhanTich != null && l.PhanTich.TrangThai == "FAILED")
             })
             .ToListAsync(cancellationToken);
 
@@ -145,6 +147,7 @@ public class ProductService : IProductService
                 Gia = p.Gia,
                 MaDanhMuc = p.MaDanhMuc,
                 MaTinhTrang = p.MaTinhTrang,
+                TrangThai = p.TrangThai,
                 AnhHienTai = p.Anh.OrderBy(a => a.ThuTu)
                     .Select(a => new ProductImageVm { MaAnh = a.MaAnhSP, DuongDan = a.DuongDan, LaAnhChinh = a.LaAnhChinh })
                     .ToList()
@@ -213,7 +216,7 @@ public class ProductService : IProductService
             .FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && x.MaCuaHang == shop!.MaCuaHang && !x.DaXoa, cancellationToken);
         if (sp is null) return (false, "Không tìm thấy sản phẩm hoặc sản phẩm không thuộc cửa hàng của bạn.");
         if (sp.TrangThai == "PENDING_REVIEW") return (false, "Sản phẩm đang chờ duyệt, không thể chỉnh sửa.");
-        if (sp.TrangThai is "RESERVED" or "SOLD") return (false, "Sản phẩm đã có đơn đặt/đã bán, không thể chỉnh sửa.");
+        if (sp.TrangThai is "RESERVED" or "SOLD" or "REMOVED") return (false, "Sản phẩm đã có đơn đặt/đã bán hoặc đã bị gỡ, không thể chỉnh sửa.");
 
         var (hopLe, thongBao) = await KiemTraDanhMucTinhTrangAsync(form, cancellationToken);
         if (!hopLe) return (false, thongBao);
@@ -343,10 +346,12 @@ public class ProductService : IProductService
         if (loi is not null) return (false, loi);
 
         var anh = await _db.AnhSanPhams
-            .Where(a => a.MaAnhSP == maAnh && a.MaSanPham == maSanPham
-                        && a.SanPham.MaCuaHang == shop!.MaCuaHang && !a.SanPham.DaXoa)
-            .FirstOrDefaultAsync(cancellationToken);
+            .Include(a => a.SanPham)
+            .FirstOrDefaultAsync(a => a.MaAnhSP == maAnh && a.MaSanPham == maSanPham
+                                      && a.SanPham.MaCuaHang == shop!.MaCuaHang && !a.SanPham.DaXoa, cancellationToken);
         if (anh is null) return (false, "Không tìm thấy ảnh.");
+        var loiTrangThai = LoiTrangThaiKhongChoSuaAnh(anh.SanPham.TrangThai);
+        if (loiTrangThai is not null) return (false, loiTrangThai);
         if (anh.LaAnhChinh) return (true, null);
 
         // Index UNIQUE filtered (MaSanPham WHERE LaAnhChinh=1): phải bỏ ảnh chính cũ TRƯỚC khi bật ảnh mới.
@@ -364,9 +369,12 @@ public class ProductService : IProductService
         if (loi is not null) return (false, loi);
 
         var anh = await _db.AnhSanPhams
+            .Include(a => a.SanPham)
             .FirstOrDefaultAsync(a => a.MaAnhSP == maAnh && a.MaSanPham == maSanPham
                                       && a.SanPham.MaCuaHang == shop!.MaCuaHang && !a.SanPham.DaXoa, cancellationToken);
         if (anh is null) return (false, "Không tìm thấy ảnh.");
+        var loiTrangThai = LoiTrangThaiKhongChoSuaAnh(anh.SanPham.TrangThai);
+        if (loiTrangThai is not null) return (false, loiTrangThai);
 
         var wasMain = anh.LaAnhChinh;
         _db.AnhSanPhams.Remove(anh);
@@ -386,6 +394,15 @@ public class ProductService : IProductService
         }
         return (true, null);
     }
+
+    private static string? LoiTrangThaiKhongChoSuaAnh(string trangThai) => trangThai switch
+    {
+        "PENDING_REVIEW" => "Sản phẩm đang chờ duyệt, không thể chỉnh sửa ảnh.",
+        "RESERVED" or "SOLD" => "Sản phẩm đã có đơn đặt/đã bán, không thể chỉnh sửa ảnh.",
+        "REMOVED" => "Sản phẩm đã bị gỡ, không thể chỉnh sửa ảnh.",
+        "ACTIVE" => "Sản phẩm đang bán, hãy ẩn sản phẩm trước khi chỉnh sửa ảnh.",
+        _ => null
+    };
 
     private async Task<(string? Error, CuaHang? Shop)> KiemTraTruDangBanAsync(int maNguoiDung, CancellationToken ct)
     {

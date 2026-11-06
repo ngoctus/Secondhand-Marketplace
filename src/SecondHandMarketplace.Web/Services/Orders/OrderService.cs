@@ -137,7 +137,7 @@ public class OrderService : IOrderService
             // đồng thời ghi nhận bản ghi ThanhToan với trạng thái tương ứng, đảm bảo tính toàn vẹn (ACID).
             if (_db.Database.IsRelational())
             {
-                using var conn = _db.Database.GetDbConnection();
+                var conn = _db.Database.GetDbConnection();
                 if (conn.State != ConnectionState.Open) await conn.OpenAsync();
 
                 using var cmd = conn.CreateCommand();
@@ -164,11 +164,15 @@ public class OrderService : IOrderService
             else
             {
                 // Fallback phục vụ test môi trường In-Memory
+                var maCuaHangFallback = await _db.GioHangs.AsNoTracking()
+                    .Where(g => g.MaNguoiDung == maNguoiDung && g.DaChon)
+                    .Select(g => g.SanPham.MaCuaHang)
+                    .FirstOrDefaultAsync();
                 var don = new DonHang
                 {
                     MaDon = "DH" + DateTime.UtcNow.Ticks.ToString()[^8..],
                     MaNguoiDung = maNguoiDung,
-                    MaCuaHang = 1,
+                    MaCuaHang = maCuaHangFallback,
                     TienHang = model.TienHang,
                     PhiVanChuyen = model.PhiVanChuyen,
                     TongTien = model.TongThanhToan,
@@ -337,9 +341,10 @@ public class OrderService : IOrderService
             .Include(d => d.ChiTiet)
             .Where(d => d.MaNguoiDung == maNguoiDung);
 
-        if (!string.IsNullOrEmpty(trangThai))
+        var ttChuan = trangThai?.Trim().ToUpperInvariant();
+        if (ttChuan is "PENDING" or "CONFIRMED" or "SHIPPING" or "DELIVERED" or "COMPLETED" or "CANCELLED")
         {
-            query = query.Where(d => d.TrangThai == trangThai);
+            query = query.Where(d => d.TrangThai == ttChuan);
         }
 
         var list = await query.OrderByDescending(d => d.NgayTao).ToListAsync();

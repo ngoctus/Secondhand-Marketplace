@@ -163,7 +163,7 @@ BEGIN
     SET XACT_ABORT ON;
 
     DECLARE @ChuShopId int, @TrangThaiShop varchar(10), @TrangThaiNguoiDung varchar(10),
-            @TrangThai varchar(20), @LuotId int;
+            @TrangThai varchar(20), @LuotId int, @LaPhanTichLai bit = 0;
 
     SELECT @ChuShopId = ch.MaNguoiDung, @TrangThaiShop = ch.TrangThai, @TrangThai = sp.TrangThai
     FROM SanPham sp
@@ -178,7 +178,17 @@ BEGIN
     IF @TrangThaiNguoiDung <> 'ACTIVE' OR @TrangThaiShop <> 'ACTIVE'
         THROW 50014, N'Tài khoản hoặc cửa hàng đang bị khóa, không thể gửi duyệt.', 1;
 
-    IF @TrangThai NOT IN ('DRAFT','REJECTED','ACTIVE','HIDDEN','REMOVED')
+    -- Cho phép gửi lại khi sản phẩm đang PENDING_REVIEW nhưng lần phân tích trước bị FAILED
+    -- (lỗi hệ thống, không phải vi phạm). Dùng lại đúng lượt đang mở để tránh UX_LuotKiemDuyet_DangCho.
+    IF @TrangThai = 'PENDING_REVIEW'
+       AND EXISTS (SELECT 1
+                   FROM LuotKiemDuyet l
+                   JOIN PhanTichAI p ON p.MaLuotKiemDuyet = l.MaLuotKiemDuyet
+                   WHERE l.MaSanPham = @MaSanPham AND l.QuyetDinh IS NULL
+                     AND p.TrangThai = 'FAILED')
+        SET @LaPhanTichLai = 1;
+
+    IF @TrangThai NOT IN ('DRAFT','REJECTED','ACTIVE','HIDDEN','REMOVED') AND @LaPhanTichLai = 0
         THROW 50015, N'Sản phẩm ở trạng thái hiện tại không thể gửi duyệt.', 1;
 
     DECLARE @Loi TABLE (MaLoi nvarchar(50), Truong nvarchar(50), ThongBao nvarchar(500));
@@ -194,16 +204,43 @@ BEGIN
 
     BEGIN TRANSACTION;
 
-    EXEC sp_ChuyenTrangThaiSanPham @MaSanPham = @MaSanPham, @TrangThaiMoi = 'PENDING_REVIEW',
-                                   @LoaiNguoiThucHien = 'SELLER', @NguoiThucHienId = @MaNguoiDung,
-                                   @LyDo = N'Gửi kiểm duyệt';
+    IF @LaPhanTichLai = 0
+    BEGIN
+        EXEC sp_ChuyenTrangThaiSanPham @MaSanPham = @MaSanPham, @TrangThaiMoi = 'PENDING_REVIEW',
+                                       @LoaiNguoiThucHien = 'SELLER', @NguoiThucHienId = @MaNguoiDung,
+                                       @LyDo = N'Gửi kiểm duyệt';
 
-    INSERT LuotKiemDuyet (MaSanPham, KetQuaRule)
-    VALUES (@MaSanPham, N'{"passed":true,"errors":[]}');
-    SET @LuotId = SCOPE_IDENTITY();
+        INSERT LuotKiemDuyet (MaSanPham, KetQuaRule)
+        VALUES (@MaSanPham, N'{"passed":true,"errors":[]}');
+        SET @LuotId = SCOPE_IDENTITY();
 
-    IF @TaoPhanTichAI = 1
-        INSERT PhanTichAI (MaLuotKiemDuyet, TrangThai) VALUES (@LuotId, 'QUEUED');
+        IF @TaoPhanTichAI = 1
+            INSERT PhanTichAI (MaLuotKiemDuyet, TrangThai) VALUES (@LuotId, 'QUEUED');
+    END
+    ELSE
+    BEGIN
+        -- Phân tích lại: giữ nguyên lượt mở, chỉ làm mới kết quả rule.
+        SELECT @LuotId = l.MaLuotKiemDuyet
+        FROM LuotKiemDuyet l WITH (UPDLOCK, ROWLOCK)
+        WHERE l.MaSanPham = @MaSanPham AND l.QuyetDinh IS NULL;
+
+        UPDATE LuotKiemDuyet
+        SET KetQuaRule = N'{"passed":true,"errors":[]}', ThoiGianGui = SYSUTCDATETIME()
+        WHERE MaLuotKiemDuyet = @LuotId;
+
+        IF @TaoPhanTichAI = 1
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM PhanTichAI WHERE MaLuotKiemDuyet = @LuotId)
+                INSERT PhanTichAI (MaLuotKiemDuyet, TrangThai) VALUES (@LuotId, 'QUEUED');
+            ELSE
+                -- Lần trước lỗi hệ thống: đưa dòng phân tích về QUEUED để chạy lại sạch.
+                UPDATE PhanTichAI
+                SET TrangThai = 'QUEUED', LoiXuLy = NULL, MucDoTuKhoa = NULL, MucRuiRo = NULL,
+                    DeXuat = NULL, DauHieu = NULL, GiaiThich = NULL, ThoiGianHoanThanh = NULL,
+                    ThoiGianXuLyMs = NULL
+                WHERE MaLuotKiemDuyet = @LuotId AND TrangThai = 'FAILED';
+        END
+    END
 
     COMMIT TRANSACTION;
 
@@ -384,6 +421,7 @@ CREATE OR ALTER PROCEDURE sp_TaoDonHangTheoShop
     @DiaChiNhan          nvarchar(500),
     @PhiVanChuyen        decimal(18,2) = 0,
     @PhuongThucThanhToan varchar(20)   = 'COD',
+    @GiaTuyChon          decimal(18,2) = NULL,   -- giá chốt từ đấu giá (NULL = lấy SanPham.Gia)
     @MaDonHangMoi        int OUTPUT
 AS
 BEGIN
@@ -436,7 +474,7 @@ BEGIN
     IF @SoHopLe <> @SoSanPham
         THROW 51106, N'Có sản phẩm không còn bán hoặc không thuộc cửa hàng này.', 1;
 
-    SELECT @TienHang = SUM(sp.Gia)
+    SELECT @TienHang = SUM(COALESCE(@GiaTuyChon, sp.Gia))
     FROM SanPham sp
     JOIN @DanhSachSanPham d ON d.Id = sp.MaSanPham;
 
@@ -461,7 +499,7 @@ BEGIN
     END
 
     INSERT ChiTietDonHang (MaDonHang, MaSanPham, TenSanPham, AnhDaiDien, Gia, DangGiuCho)
-    SELECT @MaDonHangMoi, sp.MaSanPham, sp.Ten, a.DuongDan, sp.Gia, 1
+    SELECT @MaDonHangMoi, sp.MaSanPham, sp.Ten, a.DuongDan, COALESCE(@GiaTuyChon, sp.Gia), 1
     FROM SanPham sp
     JOIN @DanhSachSanPham d ON d.Id = sp.MaSanPham
     LEFT JOIN AnhSanPham a  ON a.MaSanPham = sp.MaSanPham AND a.LaAnhChinh = 1;
@@ -613,7 +651,8 @@ BEGIN
 
     DECLARE @TrangThaiCu varchar(15), @MaNguoiMua int, @ChuShopId int, @MaDon varchar(30),
             @VaiTro varchar(10), @TrangThaiTaiKhoan varchar(10), @Loai varchar(10),
-            @Now datetime2(3) = SYSUTCDATETIME(), @TrangThaiSanPhamMoi varchar(20);
+            @Now datetime2(3) = SYSUTCDATETIME(), @TrangThaiSanPhamMoi varchar(20),
+            @TrangThaiShop varchar(10);
 
     DECLARE @SanPhamDoi TABLE (MaSanPham int PRIMARY KEY);
 
@@ -621,7 +660,7 @@ BEGIN
         BEGIN TRANSACTION;
 
         SELECT @TrangThaiCu = dh.TrangThai, @MaNguoiMua = dh.MaNguoiDung,
-               @ChuShopId = ch.MaNguoiDung, @MaDon = dh.MaDon
+               @ChuShopId = ch.MaNguoiDung, @MaDon = dh.MaDon, @TrangThaiShop = ch.TrangThai
         FROM DonHang dh WITH (UPDLOCK, HOLDLOCK)
         JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
         WHERE dh.MaDonHang = @MaDonHang;
@@ -647,6 +686,11 @@ BEGIN
 
         IF @TrangThaiMoi IN ('CONFIRMED','SHIPPING','DELIVERED') AND @Loai <> 'SELLER'
             THROW 51205, N'Chỉ chủ shop mới được cập nhật xác nhận và giao hàng.', 1;
+
+        -- Chốt chặn cuối: shop bị khóa thì chỉ được hủy đơn, không được xác nhận/giao.
+        -- C# (OrderManagementService.SellerUpdateStatusAsync) kiểm tra trước để báo lỗi sớm.
+        IF @TrangThaiMoi IN ('CONFIRMED','SHIPPING','DELIVERED') AND @TrangThaiShop <> 'ACTIVE'
+            THROW 51210, N'Cửa hàng đang bị khóa, chỉ có thể hủy đơn.', 1;
 
         IF @TrangThaiMoi = 'COMPLETED' AND @Loai <> 'BUYER'
             THROW 51206, N'Chỉ người mua mới được xác nhận hoàn tất.', 1;

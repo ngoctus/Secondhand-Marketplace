@@ -49,7 +49,11 @@ public class FavoriteService : IFavoriteService
 
         var query = _db.YeuThichs
             .AsNoTracking()
-            .Where(f => f.MaNguoiDung == maNguoiDung && !f.SanPham.DaXoa);
+            .Where(f => f.MaNguoiDung == maNguoiDung
+                        && !f.SanPham.DaXoa
+                        && (f.SanPham.TrangThai == "ACTIVE" || f.SanPham.TrangThai == "RESERVED" || f.SanPham.TrangThai == "SOLD")
+                        && f.SanPham.CuaHang.TrangThai == "ACTIVE"
+                        && f.SanPham.CuaHang.NguoiDung.TrangThai == "ACTIVE");
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query

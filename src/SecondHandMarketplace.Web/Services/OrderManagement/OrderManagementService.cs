@@ -140,9 +140,16 @@ public sealed class OrderManagementService(AppDbContext db, IAuditLogService aud
 
 
 
-        var order = await db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == orderId && d.CuaHang.MaNguoiDung == userId, ct);
+        var order = await db.DonHangs.Include(d => d.CuaHang)
+            .FirstOrDefaultAsync(d => d.MaDonHang == orderId && d.CuaHang.MaNguoiDung == userId, ct);
 
         if (order is null) return (false, "Không tìm thấy đơn hàng.");
+
+        // Shop bị khóa vẫn được hủy đơn (trả sản phẩm về trạng thái bán) nhưng không được xác nhận/giao.
+        // sp_CapNhatTrangThaiDon kiểm tra lại lần nữa (chốt chặn cuối).
+        if (newStatus != "CANCELLED" && order.CuaHang.TrangThai != "ACTIVE")
+
+            return (false, "Cửa hàng đang bị khóa, chỉ có thể hủy đơn.");
 
         if (newStatus == "CANCELLED" && order.TrangThai is not ("PENDING" or "CONFIRMED"))
 
@@ -190,7 +197,9 @@ public sealed class OrderManagementService(AppDbContext db, IAuditLogService aud
 
         var query = db.DonHangs.AsNoTracking().AsQueryable();
 
-        if (!string.IsNullOrEmpty(f.Status)) query = query.Where(d => d.TrangThai == f.Status);
+        var statusChuan = f.Status?.Trim().ToUpperInvariant();
+        if (statusChuan is "PENDING" or "CONFIRMED" or "SHIPPING" or "DELIVERED" or "COMPLETED" or "CANCELLED")
+            query = query.Where(d => d.TrangThai == statusChuan);
 
         if (f.ShopId is int shopId) query = query.Where(d => d.MaCuaHang == shopId);
 

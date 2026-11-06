@@ -153,7 +153,8 @@ BEGIN
     DECLARE @Now datetime2(3) = SYSUTCDATETIME(), @TrangThai varchar(12), @Bat datetime2(3), @Ket datetime2(3),
             @GiaHienTai decimal(18,2), @GiaKhoiDiem decimal(18,2), @Buoc decimal(18,2), @SoLuot int,
             @DanDau int, @MaSP int, @ChuShopId int, @TenSP nvarchar(200), @GiaToiThieu decimal(18,2),
-            @SDT varchar(15), @DiaChi nvarchar(500), @Msg nvarchar(300);
+            @SDT varchar(15), @DiaChi nvarchar(500), @Msg nvarchar(300),
+            @TrangThaiSP varchar(20), @TrangThaiShop varchar(10), @DaXoa bit;
 
     BEGIN TRY
         BEGIN TRANSACTION;
@@ -174,9 +175,20 @@ BEGIN
         IF NOT EXISTS (SELECT 1 FROM NguoiDung WHERE MaNguoiDung = @MaNguoiDung AND VaiTro = 'USER' AND TrangThai = 'ACTIVE')
             THROW 52023, N'Chỉ tài khoản người dùng đang hoạt động mới được đặt giá.', 1;
 
-        SELECT @ChuShopId = ch.MaNguoiDung, @TenSP = sp.Ten
+        SELECT @ChuShopId = ch.MaNguoiDung, @TenSP = sp.Ten,
+               @TrangThaiSP = sp.TrangThai, @TrangThaiShop = ch.TrangThai, @DaXoa = sp.DaXoa
         FROM SanPham sp JOIN CuaHang ch ON ch.MaCuaHang = sp.MaCuaHang
         WHERE sp.MaSanPham = @MaSP;
+
+        IF @ChuShopId IS NULL
+            THROW 52020, N'Phiên đấu giá không tồn tại.', 1;
+
+        -- Chốt chặn cuối: sản phẩm đang đấu giá được giữ ở RESERVED (sp_TaoPhienDauGia),
+        -- nên chỉ chấp nhận ACTIVE hoặc RESERVED; chặn sản phẩm đã gỡ/ngừng bán và shop bị khóa.
+        IF @DaXoa = 1 OR @TrangThaiSP NOT IN ('ACTIVE','RESERVED')
+            THROW 52029, N'Sản phẩm đã bị gỡ hoặc không còn bán, không thể đặt giá.', 1;
+        IF @TrangThaiShop <> 'ACTIVE'
+            THROW 52030, N'Cửa hàng đang bị khóa, không thể đặt giá.', 1;
 
         IF @ChuShopId = @MaNguoiDung
             THROW 52024, N'Bạn không thể đặt giá cho sản phẩm của chính mình.', 1;
@@ -382,7 +394,8 @@ BEGIN
             RETURN;
         END
 
-        -- Tạo đơn cho người thắng. sp_TaoDonHangTheoShop lấy giá từ SanPham.Gia nên đặt tạm giá thắng rồi khôi phục.
+        -- Tạo đơn cho người thắng. Truyền thẳng giá thắng vào sp_TaoDonHangTheoShop
+        -- để không phải ghi đè tạm SanPham.Gia (tránh đè giá seller và bắn trigger giả).
         IF LEN(LTRIM(RTRIM(ISNULL(@DiaChi, N'')))) = 0
             SET @DiaChi = N'Người thắng chưa cập nhật địa chỉ, vui lòng liên hệ để xác nhận.';
 
@@ -391,8 +404,6 @@ BEGIN
         SET TrangThai = 'ENDED', MaNguoiThang = @NguoiThang, GiaThang = @GiaThang, NgayCapNhat = @Now
         WHERE MaPhienDauGia = @MaPhienDauGia;
 
-        UPDATE SanPham SET Gia = @GiaThang WHERE MaSanPham = @MaSP;
-
         EXEC sp_ChuyenTrangThaiSanPham @MaSanPham = @MaSP, @TrangThaiMoi = 'ACTIVE',
              @LoaiNguoiThucHien = 'SYSTEM', @LyDo = N'Chốt đơn cho người thắng đấu giá';
 
@@ -400,9 +411,7 @@ BEGIN
 
         EXEC sp_TaoDonHangTheoShop @MaNguoiDung = @NguoiThang, @MaCuaHang = @MaCuaHang, @DanhSachSanPham = @DanhSach,
              @TenNguoiNhan = @Ten, @SoDienThoaiNhan = @SDT, @DiaChiNhan = @DiaChi,
-             @PhiVanChuyen = 0, @PhuongThucThanhToan = 'COD', @MaDonHangMoi = @MaDonHang OUTPUT;
-
-        UPDATE SanPham SET Gia = @GiaNiemYet WHERE MaSanPham = @MaSP;
+             @PhiVanChuyen = 0, @PhuongThucThanhToan = 'COD', @GiaTuyChon = @GiaThang, @MaDonHangMoi = @MaDonHang OUTPUT;
 
         SELECT @MaDon = MaDon FROM DonHang WHERE MaDonHang = @MaDonHang;
 

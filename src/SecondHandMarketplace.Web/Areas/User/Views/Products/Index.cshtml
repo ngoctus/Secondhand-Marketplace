@@ -74,11 +74,12 @@
                                 <td class="small text-muted">@HienThi.NgayGio(p.NgayCapNhat)</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
-                                        @if (p.TrangThai is "DRAFT" or "REJECTED" or "HIDDEN" or "REMOVED")
+                                        @if (p.TrangThai is "DRAFT" or "REJECTED" or "HIDDEN" or "REMOVED"
+                                             || (p.TrangThai == "PENDING_REVIEW" && p.PhanTichThatBai))
                                         {
                                             <form asp-action="GuiDuyet" method="post" class="d-inline">
                                                 <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit" class="btn-rm-outline btn-sm">Gửi duyệt</button>
+                                                <button type="submit" class="btn-rm-outline btn-sm">@(p.TrangThai == "PENDING_REVIEW" ? "Phân tích lại" : "Gửi duyệt")</button>
                                             </form>
                                         }
                                         @if (p.TrangThai == "ACTIVE")

@@ -26,9 +26,14 @@ for %%F in (
     12_tranhchap_baocao.sql
     13_daugia.sql
     14_donhang_admin.sql
+    15_kiemduyet_tukhoa.sql
+    16_luot_kiem_duyet_tu_choi_he_thong.sql
+    17_bo_chan_tu_cam_khi_gui_duyet.sql
+    18_ghi_vi_pham_low_khi_tu_choi.sql
+    20_cauhinh_ai.sql
 ) do (
     echo Running %%F...
-    sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -b -f 65001 -i "%%F"
+    sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "%%F"
     if errorlevel 1 (
         echo ERROR: %%F failed.
         pause

@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Services.AuditLogs;
@@ -30,7 +31,10 @@ public sealed partial class ForbiddenKeywordService(AppDbContext db, IAuditLogSe
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(k => k.CumTu.Contains(term) || (k.Nhom != null && k.Nhom.Contains(term)));
+            var termChuan = TextHelper.ChuanHoa(term);
+            query = query.Where(k => k.CumTu.Contains(term)
+                                     || k.CumTuChuanHoa.Contains(termChuan)
+                                     || (k.Nhom != null && k.Nhom.Contains(term)));
         }
 
         var rows = await query

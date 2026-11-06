@@ -64,7 +64,8 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
         IQueryable<PhienDauGia> sorted = tab switch
         {
             "sap-dien-ra" => query.Where(p => p.TrangThai == "SCHEDULED" && p.ThoiGianBatDau > now).OrderBy(p => p.ThoiGianBatDau),
-            "da-ket-thuc" => query.Where(p => p.TrangThai == "ENDED").OrderByDescending(p => p.ThoiGianKetThuc),
+            "da-ket-thuc" => query.Where(p => p.TrangThai == "ENDED" || p.TrangThai == "CANCELLED" || p.ThoiGianKetThuc <= now)
+                                   .OrderByDescending(p => p.ThoiGianKetThuc),
             _ => query.Where(p => (p.TrangThai == "SCHEDULED" || p.TrangThai == "RUNNING")
                                   && p.ThoiGianBatDau <= now && p.ThoiGianKetThuc > now).OrderBy(p => p.ThoiGianKetThuc)
         };
@@ -95,7 +96,10 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
             .Include(x => x.SanPham).ThenInclude(s => s.TinhTrang)
             .Include(x => x.NguoiThang)
             .AsSplitQuery()
-            .FirstOrDefaultAsync(x => x.MaPhienDauGia == id, ct);
+            .FirstOrDefaultAsync(x => x.MaPhienDauGia == id
+                                      && !x.SanPham.DaXoa
+                                      && x.SanPham.CuaHang.TrangThai == "ACTIVE"
+                                      && x.SanPham.CuaHang.NguoiDung.TrangThai == "ACTIVE", ct);
         if (p is null) return null;
 
         var now = DateTime.UtcNow;
@@ -167,6 +171,25 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
     public async Task<(bool Ok, string? Error)> PlaceBidAsync(int id, int userId, decimal amount, CancellationToken ct = default)
     {
         if (amount <= 0) return (false, "Số tiền đặt giá không hợp lệ.");
+
+        // Báo lỗi sớm ở C#; sp_DatGia kiểm tra lại trong transaction (chốt chặn cuối).
+        var thongTin = await db.PhienDauGias.AsNoTracking()
+            .Where(p => p.MaPhienDauGia == id)
+            .Select(p => new
+            {
+                SanPhamTrangThai = p.SanPham.TrangThai,
+                SanPhamDaXoa = p.SanPham.DaXoa,
+                ShopTrangThai = p.SanPham.CuaHang.TrangThai
+            })
+            .FirstOrDefaultAsync(ct);
+        if (thongTin is not null)
+        {
+            if (thongTin.SanPhamDaXoa || thongTin.SanPhamTrangThai is not ("ACTIVE" or "RESERVED"))
+                return (false, "Sản phẩm đã bị gỡ hoặc không còn bán, không thể đặt giá.");
+            if (thongTin.ShopTrangThai != "ACTIVE")
+                return (false, "Cửa hàng đang bị khóa, không thể đặt giá.");
+        }
+
         try
         {
             await db.Database.ExecuteSqlRawAsync(
@@ -239,14 +262,18 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
 
     public Task<PagedResult<AuctionCardVm>> SearchAdminAsync(string? status, string? q, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = db.PhienDauGias.AsNoTracking().AsQueryable();
-        if (status is "SCHEDULED" or "RUNNING" or "ENDED" or "CANCELLED") query = query.Where(p => p.TrangThai == status);
+        var query = db.PhienDauGias.AsNoTracking().Where(p => !p.SanPham.DaXoa);
+        var statusChuan = status?.Trim().ToUpperInvariant();
+        if (statusChuan is "SCHEDULED" or "RUNNING" or "ENDED" or "CANCELLED") query = query.Where(p => p.TrangThai == statusChuan);
         if (!string.IsNullOrWhiteSpace(q))
         {
             var k = q.Trim();
+            var kChuan = TextHelper.ChuanHoa(k);
             query = int.TryParse(k, out var idPhien)
-                ? query.Where(p => p.MaPhienDauGia == idPhien || p.SanPham.Ten.Contains(k))
-                : query.Where(p => p.SanPham.Ten.Contains(k) || p.SanPham.CuaHang.TenShop.Contains(k));
+                ? query.Where(p => p.MaPhienDauGia == idPhien
+                                   || p.SanPham.ChuoiTimKiem.Contains(kChuan)
+                                   || p.SanPham.CuaHang.TenShop.Contains(k))
+                : query.Where(p => p.SanPham.ChuoiTimKiem.Contains(kChuan) || p.SanPham.CuaHang.TenShop.Contains(k));
         }
         return PageAsync(query.OrderByDescending(p => p.NgayTao), page, pageSize, ct);
     }

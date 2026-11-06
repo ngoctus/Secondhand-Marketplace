@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  web:
+    image: secondhand-marketplace:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: secondhand_web
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      # Su dung host.docker.internal de ket noi toi SQL Server tren may Windows host
+      - ConnectionStrings__DefaultConnection=Server=host.docker.internal;Database=SecondHandMarketplace;User Id=sa;Password=Admin@12345;TrustServerCertificate=True;
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

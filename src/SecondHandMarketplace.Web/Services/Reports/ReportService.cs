@@ -52,7 +52,7 @@ public class ReportService : IReportService
         }
 
         // Chuẩn hóa loại đối tượng thành chữ in hoa trước khi so sánh chống trùng
-        var loaiDoiTuong = (vm.LoaiDoiTuong ?? string.Empty).Trim().ToUpper();
+        var loaiDoiTuong = (vm.LoaiDoiTuong ?? string.Empty).Trim().ToUpperInvariant();
         if (loaiDoiTuong != "PRODUCT" && loaiDoiTuong != "USER" && loaiDoiTuong != "SHOP")
         {
             return (false, "Loại đối tượng báo cáo không hợp lệ.");
@@ -76,6 +76,11 @@ public class ReportService : IReportService
             case "PRODUCT":
                 var sp = await _db.SanPhams.FindAsync(vm.MaDoiTuong);
                 if (sp == null || sp.DaXoa) return (false, "Sản phẩm không tồn tại.");
+                var chuShop = await _db.CuaHangs.AsNoTracking()
+                    .Where(c => c.MaCuaHang == sp.MaCuaHang)
+                    .Select(c => c.MaNguoiDung)
+                    .FirstOrDefaultAsync();
+                if (chuShop == maNguoiBaoCao) return (false, "Không thể tự báo cáo sản phẩm của cửa hàng mình.");
                 break;
             case "USER":
                 var nd = await _db.NguoiDungs.FindAsync(vm.MaDoiTuong);
@@ -139,14 +144,16 @@ public class ReportService : IReportService
             .Include(x => x.NguoiXuLy)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(trangThai))
+        var ttChuan = trangThai?.Trim().ToUpperInvariant();
+        if (ttChuan is "PENDING" or "RESOLVED" or "DISMISSED")
         {
-            query = query.Where(x => x.TrangThai == trangThai);
+            query = query.Where(x => x.TrangThai == ttChuan);
         }
 
-        if (!string.IsNullOrEmpty(loaiDoiTuong))
+        var loaiChuan = loaiDoiTuong?.Trim().ToUpperInvariant();
+        if (loaiChuan is "PRODUCT" or "USER" or "SHOP")
         {
-            query = query.Where(x => x.LoaiDoiTuong == loaiDoiTuong);
+            query = query.Where(x => x.LoaiDoiTuong == loaiChuan);
         }
 
         var totalItems = await query.CountAsync();

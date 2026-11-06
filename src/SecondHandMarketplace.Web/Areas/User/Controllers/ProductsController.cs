@@ -52,6 +52,7 @@ public class ProductsController : UserBaseController
 
         if (!ModelState.IsValid)
         {
+            XoaAnhDaLuu(anh);
             await DienDanhMucAsync(form);
             return View(form);
         }
@@ -59,6 +60,7 @@ public class ProductsController : UserBaseController
         var (ok, loi, maSanPham) = await _products.CreateAsync(userId, form, anh);
         if (!ok)
         {
+            XoaAnhDaLuu(anh);
             ModelState.AddModelError(string.Empty, loi!);
             await DienDanhMucAsync(form);
             return View(form);
@@ -87,12 +89,15 @@ public class ProductsController : UserBaseController
         var userId = User.LayNguoiDungId()!.Value;
         if (form.Id is null || form.Id != id) form.Id = id;
 
+        var truoc = await _products.GetFormAsync(userId, id);
+
         var (anh, loiLuu) = await LuuAnhLenDiaAsync(AnhMoi);
         if (loiLuu is not null) ModelState.AddModelError(string.Empty, loiLuu);
 
         if (!ModelState.IsValid)
         {
-            form.AnhHienTai = (await _products.GetFormAsync(userId, id))?.AnhHienTai ?? new();
+            XoaAnhDaLuu(anh);
+            form.AnhHienTai = truoc?.AnhHienTai ?? new();
             await DienDanhMucAsync(form);
             return View(form);
         }
@@ -100,12 +105,16 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.UpdateAsync(userId, id, form, anh);
         if (!ok)
         {
+            XoaAnhDaLuu(anh);
             ModelState.AddModelError(string.Empty, loi!);
+            form.AnhHienTai = truoc?.AnhHienTai ?? new();
             await DienDanhMucAsync(form);
             return View(form);
         }
 
-        if (GuiDuyet == true) return await GuiDuyetVaChuyenVeIndexAsync(userId, id);
+        // Sản phẩm đang bán mà sửa nội dung/ảnh thì phải duyệt lại để không lách kiểm duyệt.
+        if (GuiDuyet == true || truoc?.TrangThai == "ACTIVE")
+            return await GuiDuyetVaChuyenVeIndexAsync(userId, id);
 
         this.ThongBaoThanhCong("Đã cập nhật sản phẩm.");
         return RedirectToAction(nameof(Index));
@@ -173,6 +182,22 @@ public class ProductsController : UserBaseController
     {
         form.DanhSachDanhMuc = (await _categories.GetCategoriesAsync()).ToList();
         form.DanhSachTinhTrang = (await _categories.GetConditionsAsync()).ToList();
+    }
+
+    /// <summary>Xóa file vừa lưu nhưng không dùng được (validate/DB thất bại) để tránh file rác.</summary>
+    private void XoaAnhDaLuu(IEnumerable<ProductImageInput> anh)
+    {
+        foreach (var a in anh)
+        {
+            var tuongDoi = a.DuongDan.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var duongDan = Path.Combine(_env.WebRootPath, tuongDoi);
+            try
+            {
+                if (System.IO.File.Exists(duongDan)) System.IO.File.Delete(duongDan);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
     }
 
     /// <summary>Lưu file lên wwwroot/uploads/products; trả về danh sách (đường dẫn, dung lượng) cho service.</summary>
