@@ -175,9 +175,13 @@ public sealed class AiChatService : IAiChatService
             throw new AiProviderException(AiChatStatus.InvalidResponse, "Trợ lý AI trả về phản hồi không hợp lệ.");
         }
 
-        var messages = new List<JsonNode>
+        var contents = new List<JsonNode>
         {
-            new JsonObject { ["role"] = "user", ["content"] = userText }
+            new JsonObject
+            {
+                ["role"] = "user",
+                ["parts"] = new JsonArray(new JsonObject { ["text"] = userText })
+            }
         };
 
         for (var round = 0; round <= _options.MaxToolRounds; round++)
