@@ -1,9 +1,18 @@
 @using SecondHandMarketplace.Web.Services.Products
 @using SecondHandMarketplace.Web.Services.Banners
+@using SecondHandMarketplace.Web.Services.Categories
 @inject IProductService ProductService
 @inject IBannerService BannerService
+@inject ICategoryService CategoryService
 @{
     ViewData["Title"] = "Trang chủ";
+
+    List<SecondHandMarketplace.Web.Models.Entities.DanhMuc> danhMuc = new();
+    try
+    {
+        danhMuc = (await CategoryService.GetCategoriesAsync()).ToList();
+    }
+    catch { }
 
     List<SecondHandMarketplace.Web.Models.Entities.Banner> banners = new();
     try
@@ -19,17 +28,6 @@
         sanPhams = await ProductService.SearchAsync(new ProductSearchVm());
     }
     catch { }
-
-    if (sanPhams.Count == 0)
-    {
-        sanPhams = new List<ProductCardVm>
-        {
-            new ProductCardVm { Id = 1, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
-            new ProductCardVm { Id = 2, Name = "Máy ảnh film Olympus đã test hoạt động", Price = 1800000, ShopName = "Minh Camera", ConditionName = "Tốt" },
-            new ProductCardVm { Id = 3, Name = "Bộ nồi inox 5 món", Price = 320000, ShopName = "Nhà Bếp Xinh", ConditionName = "Mới" },
-            new ProductCardVm { Id = 4, Name = "Sách Nhà giả kim bản bìa mềm", Price = 60000, ShopName = "Book Corner", ConditionName = "Có dấu vết sử dụng" }
-        };
-    }
 }
 
 <!-- 1. HERO SECTION (Ảnh 2) -->
@@ -130,30 +128,13 @@
     </div>
 
     <div class="category-grid">
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Thời trang" class="category-card">
-            <div class="cat-circle"></div>
-            <span class="cat-name">Thời trang</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Điện tử" class="category-card">
-            <div class="cat-circle"></div>
-            <span class="cat-name">Điện tử</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Đồ gia dụng" class="category-card">
-            <div class="cat-circle"></div>
-            <span class="cat-name">Đồ gia dụng</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Sách" class="category-card">
-            <div class="cat-circle"></div>
-            <span class="cat-name">Sách</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Phụ kiện" class="category-card">
-            <div class="cat-circle"></div>
-            <span class="cat-name">Phụ kiện</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Nội thất" class="category-card">
-            <div class="cat-circle"></div>
-            <span class="cat-name">Nội thất</span>
-        </a>
+        @foreach (var c in danhMuc.Take(6))
+        {
+            <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" class="category-card">
+                <div class="cat-circle"></div>
+                <span class="cat-name">@c.Ten</span>
+            </a>
+        }
     </div>
 </section>
 
@@ -166,7 +147,7 @@
         </div>
         <div class="d-flex gap-2">
             <span class="btn-rm-primary" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Mới đăng</span>
-            <a asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tốt</a>
+            <a asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tốt</a>
             <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Được quan tâm</a>
         </div>
     </div>

@@ -1884,3 +1884,186 @@ a.kpi:hover {
         flex: 1
     }
 }
+
+/* 16. BO LOC + SAN DAU GIA (dong bo theo design system rm-*) */
+.rm-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.rm-filter-chip {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background-color: var(--color-primary-subtle);
+    color: var(--color-primary-active);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.rm-filter-clear {
+    font-size: 12.5px;
+    color: var(--color-text-muted);
+    text-decoration: underline;
+}
+
+    .rm-filter-clear:hover {
+        color: var(--color-error);
+    }
+
+.rm-page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.rm-page-title {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    margin: 0;
+    color: var(--color-text-primary);
+}
+
+.rm-empty-state {
+    background-color: var(--color-surface);
+    padding: 48px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.rm-panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    margin-top: 18px;
+}
+
+.rm-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+    .rm-panel-head h3, .rm-panel h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 10px;
+        color: var(--color-text-primary);
+    }
+
+.rm-note {
+    background-color: var(--color-warning-bg);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--color-warning);
+    margin: 12px 0;
+}
+
+.rm-auction-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--color-border);
+}
+
+.rm-auction-time {
+    font-size: 12.5px;
+    color: var(--color-text-secondary);
+}
+
+.rm-auction-cta {
+    padding: 6px 14px;
+    font-size: 12.5px;
+    border-radius: 999px;
+}
+
+.muted {
+    color: var(--color-text-muted);
+    font-size: 13px;
+}
+
+.empty {
+    color: var(--color-text-muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 16px 0;
+}
+
+.auction-page {
+    padding-bottom: 40px;
+}
+
+.status-tabs {
+    border-bottom-color: var(--color-border);
+}
+
+    .status-tabs a {
+        color: var(--color-text-muted);
+        font-size: 13px;
+    }
+
+        .status-tabs a.on {
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+.auction-search input {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-white);
+    color: var(--color-text-primary);
+    font: 13px var(--font-main);
+    padding: 9px 12px;
+}
+
+.bid-panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+}
+
+.quick-bids button {
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background-color: var(--color-surface-white);
+    color: var(--color-text-secondary);
+    font-size: 12.5px;
+    padding: 6px 12px;
+}
+
+    .quick-bids button:hover {
+        background-color: var(--color-primary-subtle);
+        color: var(--color-primary-active);
+    }
+
+.bid-input input {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-white);
+    color: var(--color-text-primary);
+    font-size: 14px;
+    padding: 10px 12px;
+    width: 100%;
+    outline: none;
+}
+
+@media(max-width:900px) {
+    .rm-page-head {
+        align-items: stretch;
+    }
+}

@@ -8,6 +8,9 @@ public interface IProductService
     /// <summary>Tìm sản phẩm công khai (ACTIVE, chưa xóa, shop và chủ shop đang ACTIVE).</summary>
     Task<List<ProductCardVm>> SearchAsync(ProductSearchVm filter);
 
+    /// <summary>Như SearchAsync nhưng có sắp xếp và phân trang thật cho trang kết quả tìm kiếm.</summary>
+    Task<PagedResult<ProductCardVm>> SearchPagedAsync(ProductSearchVm filter);
+
     /// <summary>Chi tiết sản phẩm công khai (ACTIVE / RESERVED / SOLD). Không có hoặc không được xem thì trả về null.</summary>
     Task<ProductDetailVm?> GetDetailAsync(int id);
 

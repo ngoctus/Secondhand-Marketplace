@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using SecondHandMarketplace.Web.Models.ViewModels;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Products;
 
 namespace SecondHandMarketplace.Web.Controllers;
@@ -8,21 +10,34 @@ namespace SecondHandMarketplace.Web.Controllers;
 public class ProductsController : Controller
 {
     private readonly IProductService _products;
+    private readonly ICategoryService _categories;
 
-    public ProductsController(IProductService products) => _products = products;
+    public ProductsController(IProductService products, ICategoryService categories)
+    {
+        _products = products;
+        _categories = categories;
+    }
 
     public async Task<IActionResult> Index([FromQuery] ProductSearchVm filter)
     {
+        PagedResult<ProductCardVm> ketQua;
         try
         {
-            var list = await _products.SearchAsync(filter);
-            return View(list);
+            ketQua = await _products.SearchPagedAsync(filter);
         }
         catch
         {
             // Dự phòng nếu kết nối DB bị lỗi thì trang vẫn load tức thì không bị treo
-            return View(new List<ProductCardVm>());
+            ketQua = new PagedResult<ProductCardVm>();
         }
+
+        return View(new ProductSearchResultVm
+        {
+            Filter = filter,
+            Result = ketQua,
+            DanhSachDanhMuc = await _categories.GetCategoriesAsync(),
+            DanhSachTinhTrang = await _categories.GetConditionsAsync()
+        });
     }
 
     public async Task<IActionResult> Details(int id)

@@ -17,10 +17,45 @@ public class ProductService : IProductService
 
     public ProductService(AppDbContext db) => _db = db;
 
-    public async Task<List<ProductCardVm>> SearchAsync(ProductSearchVm f)
+    public async Task<List<ProductCardVm>> SearchAsync(ProductSearchVm f) =>
+        (await SearchPagedAsync(f)).Items.ToList();
+
+    public async Task<PagedResult<ProductCardVm>> SearchPagedAsync(ProductSearchVm f)
     {
-        // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
-        // cửa hàng và chủ cửa hàng đều đang hoạt động.
+        f.GiaiPhanGia();
+        var query = TaoTruyVanTimKiem(f);
+        var total = await query.CountAsync();
+        var page = Math.Max(1, f.Page);
+        var pageSize = ProductSearchVm.PageSize;
+
+        var items = await SapXepTruyVan(query, f.Sort)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new ProductCardVm
+            {
+                Id = p.MaSanPham,
+                Name = p.Ten,
+                Price = p.Gia ?? 0m,
+                ImageUrl = p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
+                ShopName = p.CuaHang.TenShop,
+                ConditionName = p.TinhTrang != null ? p.TinhTrang.Ten : null,
+                CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null
+            })
+            .ToListAsync();
+
+        return new PagedResult<ProductCardVm>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = total
+        };
+    }
+
+    // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
+    // cửa hàng và chủ cửa hàng đều đang hoạt động.
+    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f)
+    {
         var query = _db.SanPhams
             .AsNoTracking()
             .Where(p => p.TrangThai == "ACTIVE"
@@ -44,22 +79,15 @@ public class ProductService : IProductService
         if (f.MaxPrice != null)
             query = query.Where(p => p.Gia <= f.MaxPrice);
 
-        return await query
-            .OrderByDescending(p => p.NgayTao)
-            .ThenByDescending(p => p.MaSanPham)
-            .Take(200)
-            .Select(p => new ProductCardVm
-            {
-                Id = p.MaSanPham,
-                Name = p.Ten,
-                Price = p.Gia ?? 0m,
-                ImageUrl = p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
-                ShopName = p.CuaHang.TenShop,
-                ConditionName = p.TinhTrang != null ? p.TinhTrang.Ten : null,
-                CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null
-            })
-            .ToListAsync();
+        return query;
     }
+
+    private static IQueryable<SanPham> SapXepTruyVan(IQueryable<SanPham> query, string? sort) => sort switch
+    {
+        "price_asc" => query.OrderBy(p => p.Gia).ThenByDescending(p => p.MaSanPham),
+        "price_desc" => query.OrderByDescending(p => p.Gia).ThenByDescending(p => p.MaSanPham),
+        _ => query.OrderByDescending(p => p.NgayTao).ThenByDescending(p => p.MaSanPham)
+    };
 
     public async Task<ProductDetailVm?> GetDetailAsync(int id)
     {

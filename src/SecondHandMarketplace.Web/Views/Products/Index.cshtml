@@ -1,24 +1,27 @@
-@model List<ProductCardVm>
+@model ProductSearchResultVm
 @{
     ViewData["Title"] = "Kết quả tìm kiếm";
-    var query = Context.Request.Query;
-    var keyword = query["Keyword"].ToString();
+    var f = Model.Filter;
+    var ketQua = Model.Result;
+    var keyword = f.Keyword?.Trim() ?? "";
     var tieuDe = string.IsNullOrWhiteSpace(keyword) ? "Tất cả sản phẩm" : $"Kết quả cho “{keyword}”";
 
-    // Dữ liệu mẫu chuẩn theo Wireframe ảnh 4 nếu DB chưa có sản phẩm
-    var displayList = Model;
-    if (displayList.Count == 0 && string.IsNullOrWhiteSpace(keyword) && query.Count == 0)
+    string LocUrl(string key, string? value)
     {
-        displayList = new List<ProductCardVm>
-        {
-            new ProductCardVm { Id = 1, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
-            new ProductCardVm { Id = 2, Name = "Áo khoác dù unisex", Price = 180000, ShopName = "Hà Closet", ConditionName = "Tốt" },
-            new ProductCardVm { Id = 3, Name = "Áo khoác len dệt kim màu kem", Price = 210000, ShopName = "Linh Store", ConditionName = "Mới" },
-            new ProductCardVm { Id = 4, Name = "Áo khoác da PU size L", Price = 420000, ShopName = "Tuấn Vintage", ConditionName = "Có dấu vết sử dụng" },
-            new ProductCardVm { Id = 5, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
-            new ProductCardVm { Id = 6, Name = "Áo khoác dù unisex", Price = 180000, ShopName = "Hà Closet", ConditionName = "Tốt" }
-        };
+        var pairs = Context.Request.Query
+            .Where(k => !k.Key.Equals(key, StringComparison.OrdinalIgnoreCase))
+            .SelectMany(k => k.Value, (k, v) => new KeyValuePair<string, string?>(k.Key, v))
+            .ToList();
+        if (!string.IsNullOrEmpty(value)) pairs.Add(new KeyValuePair<string, string?>(key, value));
+        return Context.Request.Path + QueryString.Create(pairs);
     }
+
+    var chips = new List<string>();
+    if (f.CategoryId is int maDanhMuc)
+        chips.Add(Model.DanhSachDanhMuc.FirstOrDefault(c => c.MaDanhMuc == maDanhMuc)?.Ten ?? "Danh mục");
+    if (!string.IsNullOrWhiteSpace(f.TenPhanGia)) chips.Add(f.TenPhanGia);
+    if (f.ConditionId is int maTinhTrang)
+        chips.Add(Model.DanhSachTinhTrang.FirstOrDefault(t => t.MaTinhTrang == maTinhTrang)?.Ten ?? "Tình trạng");
 }
 
 <!-- Breadcrumb (Ảnh 4) -->
@@ -40,45 +43,56 @@
 
             <div class="filter-header">
                 <h3>Bộ lọc</h3>
-                <a asp-action="Index" class="btn-reset">Xóa</a>
+                <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-reset">Xóa</a>
             </div>
 
-            <!-- Danh mục (Checkbox) -->
+            <!-- Danh mục -->
             <div class="filter-group">
                 <div class="filter-title">Danh mục</div>
-                <div class="filter-checkbox-list">
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="thoi-trang" /> <span>Thời trang</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="dien-tu" /> <span>Điện tử</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="do-gia-dung" /> <span>Đồ gia dụng</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="sach" /> <span>Sách</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="phu-kien" /> <span>Phụ kiện</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="noi-that" /> <span>Nội thất</span></label>
+                <div class="filter-radio-list">
+                    <label class="filter-label">
+                        <input type="radio" name="CategoryId" value="" checked="@(f.CategoryId == null)" />
+                        <span>Tất cả</span>
+                    </label>
+                    @foreach (var c in Model.DanhSachDanhMuc)
+                    {
+                        <label class="filter-label">
+                            <input type="radio" name="CategoryId" value="@c.MaDanhMuc" checked="@(f.CategoryId == c.MaDanhMuc)" />
+                            <span>@c.Ten</span>
+                        </label>
+                    }
                 </div>
             </div>
 
-            <!-- Khoảng giá -->
+            <!-- Khoảng giá: phân khúc cố định, không nhập tay -->
             <div class="filter-group">
                 <div class="filter-title">Khoảng giá</div>
-                <div class="price-inputs">
-                    <div class="input-wrap">
-                        <input name="MinPrice" value="@query["MinPrice"]" type="number" min="0" placeholder="Từ" />
-                    </div>
-                    <div class="input-wrap">
-                        <input name="MaxPrice" value="@query["MaxPrice"]" type="number" min="0" placeholder="Đến" />
-                    </div>
+                <div class="filter-radio-list">
+                    @for (var i = 0; i < ProductSearchVm.KhoPhanGia.Length; i++)
+                    {
+                        <label class="filter-label">
+                            <input type="radio" name="PriceRange" value="@i" checked="@((f.PriceRange ?? 0) == i)" />
+                            <span>@ProductSearchVm.KhoPhanGia[i].Label</span>
+                        </label>
+                    }
                 </div>
-                <!-- Range slider mỏng màu olive -->
-                <div style="height: 4px; background-color: var(--color-primary); border-radius: 2px; margin: 10px 0 4px;"></div>
             </div>
 
-            <!-- Tình trạng (Radio) -->
+            <!-- Tình trạng -->
             <div class="filter-group">
                 <div class="filter-title">Tình trạng</div>
                 <div class="filter-radio-list">
-                    <label class="filter-label"><input type="radio" name="Condition" value="new" /> <span>Mới</span></label>
-                    <label class="filter-label"><input type="radio" name="Condition" value="like-new" /> <span>Rất tốt</span></label>
-                    <label class="filter-label"><input type="radio" name="Condition" value="good" /> <span>Tốt</span></label>
-                    <label class="filter-label"><input type="radio" name="Condition" value="fair" /> <span>Có dấu vết sử dụng</span></label>
+                    <label class="filter-label">
+                        <input type="radio" name="ConditionId" value="" checked="@(f.ConditionId == null)" />
+                        <span>Tất cả</span>
+                    </label>
+                    @foreach (var t in Model.DanhSachTinhTrang)
+                    {
+                        <label class="filter-label">
+                            <input type="radio" name="ConditionId" value="@t.MaTinhTrang" checked="@(f.ConditionId == t.MaTinhTrang)" />
+                            <span>@t.Ten</span>
+                        </label>
+                    }
                 </div>
             </div>
 
@@ -91,19 +105,31 @@
         <div class="search-results-header">
             <div>
                 <h2>@tieuDe</h2>
-                <span class="count-label">@(displayList.Count) sản phẩm</span>
+                <span class="count-label">@ketQua.TotalItems sản phẩm</span>
             </div>
             <div class="sort-select-box">
                 <label for="sortOrder">Sắp xếp:</label>
-                <select id="sortOrder" name="sort">
-                    <option value="newest">Mới nhất</option>
-                    <option value="price_asc">Giá tăng dần</option>
-                    <option value="price_desc">Giá giảm dần</option>
+                <select id="sortOrder" onchange="location.href=this.selectedOptions[0].dataset.url">
+                    @foreach (var (key, label) in ProductSearchVm.KhoSapXep)
+                    {
+                        <option value="@key" data-url="@LocUrl("sort", key)" selected="@((f.Sort ?? "newest") == key)">@label</option>
+                    }
                 </select>
             </div>
         </div>
 
-        @if (displayList.Count == 0)
+        @if (chips.Count > 0)
+        {
+            <div class="rm-active-filters">
+                @foreach (var chip in chips)
+                {
+                    <span class="rm-filter-chip">@chip</span>
+                }
+                <a asp-action="Index" asp-route-Keyword="@keyword" class="rm-filter-clear">Xóa bộ lọc</a>
+            </div>
+        }
+
+        @if (ketQua.Items.Count == 0)
         {
             <div style="background-color: var(--color-surface); padding: 48px; border-radius: var(--radius-lg); text-align: center;">
                 <p style="color: var(--color-text-secondary); margin-bottom: 16px;">Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
@@ -114,7 +140,7 @@
         {
             <!-- Lưới 3 cột chuẩn Ảnh 4 -->
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-                @foreach (var p in displayList)
+                @foreach (var p in ketQua.Items)
                 {
                     <div class="col">
                         <partial name="_ProductCard" model="p" />
@@ -122,16 +148,50 @@
                 }
             </div>
 
-            <!-- Phân trang theo Wireframe: < 1 2 3 … 12 > -->
-            <nav class="rm-pagination" aria-label="Phân trang">
-                <span class="rm-page-item is-disabled">‹</span>
-                <span class="rm-page-item is-active">1</span>
-                <a href="#" class="rm-page-item">2</a>
-                <a href="#" class="rm-page-item">3</a>
-                <span class="rm-page-item rm-page-ellipsis">…</span>
-                <a href="#" class="rm-page-item">12</a>
-                <a href="#" class="rm-page-item">›</a>
-            </nav>
+            @if (ketQua.TotalPages > 1)
+            {
+                var tu = Math.Max(1, ketQua.Page - 2);
+                var den = Math.Min(ketQua.TotalPages, tu + 4);
+                <nav class="rm-pagination" aria-label="Phân trang">
+                    @if (ketQua.Page > 1)
+                    {
+                        <a href="@LocUrl("page", (ketQua.Page - 1).ToString())" class="rm-page-item">‹</a>
+                    }
+                    else
+                    {
+                        <span class="rm-page-item is-disabled">‹</span>
+                    }
+                    @if (tu > 1)
+                    {
+                        <a href="@LocUrl("page", "1")" class="rm-page-item">1</a>
+                        <span class="rm-page-item rm-page-ellipsis">…</span>
+                    }
+                    @for (var p = tu; p <= den; p++)
+                    {
+                        if (p == ketQua.Page)
+                        {
+                            <span class="rm-page-item is-active">@p</span>
+                        }
+                        else
+                        {
+                            <a href="@LocUrl("page", p.ToString())" class="rm-page-item">@p</a>
+                        }
+                    }
+                    @if (den < ketQua.TotalPages)
+                    {
+                        <span class="rm-page-item rm-page-ellipsis">…</span>
+                        <a href="@LocUrl("page", ketQua.TotalPages.ToString())" class="rm-page-item">@ketQua.TotalPages</a>
+                    }
+                    @if (ketQua.Page < ketQua.TotalPages)
+                    {
+                        <a href="@LocUrl("page", (ketQua.Page + 1).ToString())" class="rm-page-item">›</a>
+                    }
+                    else
+                    {
+                        <span class="rm-page-item is-disabled">›</span>
+                    }
+                </nav>
+            }
         }
     </main>
 </div>
