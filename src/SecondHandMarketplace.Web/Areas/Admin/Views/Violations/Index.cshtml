@@ -1,0 +1,49 @@
+@model SecondHandMarketplace.Web.Services.ProductReview.ViolationPage
+@{ ViewData["Title"] = "Lịch sử vi phạm"; }
+<div class="container-fluid py-4">
+    <h2>Lịch sử vi phạm kiểm duyệt</h2>
+    <p class="text-muted">
+        Mỗi dòng là một vi phạm tính vào bộ đếm của người bán (đủ @Model.Threshold vi phạm tài khoản bị khóa tự động).
+        HIGH: hệ thống tự ghi khi từ chối tự động. LOW: ghi khi Admin từ chối sản phẩm có cảnh báo LOW.
+        Mở khóa tài khoản không xóa lịch sử.
+    </p>
+    @if (Model.SellerId is not null)
+    {
+        <div class="alert alert-info d-flex justify-content-between">
+            <span>Đang lọc theo người bán: <strong>@Model.SellerName</strong> (#@Model.SellerId)</span>
+            <a asp-action="Index">Xem tất cả</a>
+        </div>
+    }
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Thời gian</th><th>Người bán</th><th>Tài khoản</th><th>Tổng vi phạm</th><th>Sản phẩm</th><th>Mức / Nguồn</th><th>Từ khóa</th><th>Người xác nhận</th></tr></thead>
+            <tbody>
+            @foreach (var v in Model.Items)
+            {
+                <tr>
+                    <td>@v.ThoiGian.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td><a asp-action="Index" asp-route-sellerId="@v.MaNguoiBan">@v.TenNguoiBan</a><div class="small text-muted">@v.EmailNguoiBan</div></td>
+                    <td>
+                        <span class="badge @(v.TrangThaiNguoiBan == "ACTIVE" ? "bg-success" : "bg-secondary")">@v.TrangThaiNguoiBan</span>
+                        @if (v.TrangThaiNguoiBan == "LOCKED") { <div><a class="small" asp-controller="Users" asp-action="Index" asp-route-search="@v.EmailNguoiBan">Mở khóa tại Quản lý người dùng</a></div> }
+                    </td>
+                    <td>@v.TongViPham / @Model.Threshold</td>
+                    <td><a asp-controller="Products" asp-action="Details" asp-route-id="@v.MaSanPham">@v.TenSanPham</a><div class="small text-muted">Lượt #@v.MaLuotKiemDuyet</div></td>
+                    <td><span class="badge @(v.MucDo == "HIGH" ? "bg-danger" : "bg-warning text-dark")">@v.MucDo</span><div class="small text-muted">@(v.NguonGhiNhan == "AUTO_HIGH" ? "Hệ thống tự động" : "Admin từ chối")</div></td>
+                    <td>@string.Join(", ", v.Matches.Select(m => m.Phrase).Distinct())</td>
+                    <td>@(v.TenQuanTriVien ?? "—")</td>
+                </tr>
+            }
+            @if (Model.Items.Count == 0) { <tr><td colspan="8" class="text-center text-muted">Chưa có vi phạm nào.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <div class="d-flex justify-content-between">
+        <span>Tổng @Model.TotalItems vi phạm</span>
+        <div class="d-flex gap-2">
+            @if (Model.Page > 1) { <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-sellerId="@Model.SellerId" asp-route-page="@(Model.Page - 1)">Trước</a> }
+            <span class="align-self-center">Trang @Model.Page / @Math.Max(1, Model.TotalPages)</span>
+            @if (Model.Page < Model.TotalPages) { <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-sellerId="@Model.SellerId" asp-route-page="@(Model.Page + 1)">Sau</a> }
+        </div>
+    </div>
+</div>

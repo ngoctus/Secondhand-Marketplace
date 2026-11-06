@@ -1,6 +1,62 @@
+@using SecondHandMarketplace.Web.Services.ProductReview
+@model SecondHandMarketplace.Web.Services.ProductReview.ProductListPage
 @{
     ViewData["Title"] = "Kiểm duyệt sản phẩm";
+    var pending = Model.Tab == ProductReviewTabs.Pending;
 }
+<div class="container-fluid py-4">
+    <h2>Kiểm duyệt sản phẩm</h2>
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><a class="nav-link @(pending ? "active" : "")" asp-action="Index" asp-route-tab="@ProductReviewTabs.Pending">Chờ duyệt</a></li>
+        <li class="nav-item"><a class="nav-link @(pending ? "" : "active")" asp-action="Index" asp-route-tab="@ProductReviewTabs.Active">Đang bán (gỡ vi phạm)</a></li>
+    </ul>
 
-<h2>Kiểm duyệt sản phẩm</h2>
-<p class="text-muted">TODO: Areas/Admin/Controllers/ProductsController.cs &rarr; Index</p>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th style="width:72px"></th><th>Sản phẩm</th><th>Người bán / Shop</th><th>Giá</th>
+                    <th>@(pending ? "Gửi lúc" : "Cập nhật")</th>
+                    @if (pending) { <th>Cảnh báo (phân tích)</th> }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                var badge = ReviewDisplay.Describe(item.AnalysisStatus, item.Level);
+                <tr>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(item.AnhDaiDien))
+                        {
+                            <img src="@item.AnhDaiDien" alt="@item.Ten" style="width:64px;height:64px;object-fit:cover" class="rounded" loading="lazy" data-fallback />
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.MaSanPham"><strong>@item.Ten</strong></a>
+                        <div class="small text-muted">@item.TenDanhMuc</div>
+                    </td>
+                    <td>@item.TenNguoiBan<div class="small text-muted">@item.EmailNguoiBan · @item.TenShop</div></td>
+                    <td>@(item.Gia?.ToString("N0"))</td>
+                    <td>@item.Moc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    @if (pending) { <td><span class="badge @badge.BadgeClass">@badge.Text</span></td> }
+                    <td><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@item.MaSanPham">@(pending ? "Xem & xử lý" : "Xem / gỡ")</a></td>
+                </tr>
+            }
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="@(pending ? 7 : 6)" class="text-center text-muted">@(pending ? "Không có sản phẩm nào đang chờ duyệt." : "Không có sản phẩm đang bán.")</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <span>Tổng @Model.TotalItems sản phẩm</span>
+        <div class="d-flex gap-2">
+            @if (Model.Page > 1) { <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-tab="@Model.Tab" asp-route-page="@(Model.Page - 1)">Trước</a> }
+            <span class="align-self-center">Trang @Model.Page / @Math.Max(1, Model.TotalPages)</span>
+            @if (Model.Page < Model.TotalPages) { <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-tab="@Model.Tab" asp-route-page="@(Model.Page + 1)">Sau</a> }
+        </div>
+    </div>
+</div>

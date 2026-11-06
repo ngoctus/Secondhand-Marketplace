@@ -1,0 +1,134 @@
+@using SecondHandMarketplace.Web.Services.ProductReview
+@model SecondHandMarketplace.Web.Services.ProductReview.ProductReviewDetail
+@{
+    ViewData["Title"] = "Chi tiết kiểm duyệt";
+    var review = Model.Review;
+    var badge = ReviewDisplay.Describe(review?.AnalysisStatus, review?.Level);
+}
+<div class="container-fluid py-4">
+    <a asp-action="Index" class="small">&larr; Quay lại danh sách</a>
+    <h2 class="mt-2">@Model.Ten <span class="badge bg-secondary fs-6">@ReviewDisplay.StatusText(Model.TrangThai)</span></h2>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            @if (Model.Anh.Count == 0) { <div class="text-muted">Sản phẩm chưa có ảnh.</div> }
+            else
+            {
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var url in Model.Anh)
+                    {
+                        <a href="@url" target="_blank" rel="noopener"><img src="@url" alt="@Model.Ten" style="width:150px;height:150px;object-fit:cover" class="rounded border" loading="lazy" data-fallback /></a>
+                    }
+                </div>
+            }
+        </div>
+        <div class="col-lg-7">
+            <table class="table table-sm">
+                <tr><th style="width:170px">Giá</th><td>@(Model.Gia?.ToString("N0"))</td></tr>
+                <tr><th>Danh mục / Tình trạng</th><td>@Model.TenDanhMuc / @Model.TenTinhTrang</td></tr>
+                <tr><th>Shop</th><td>@Model.TenShop <span class="text-muted">(@Model.TrangThaiShop)</span></td></tr>
+                <tr><th>Người bán</th><td>@Model.TenNguoiBan · @Model.EmailNguoiBan <span class="badge @(Model.TrangThaiNguoiBan == "ACTIVE" ? "bg-success" : "bg-secondary")">@Model.TrangThaiNguoiBan</span></td></tr>
+                <tr><th>Vi phạm của người bán</th><td><strong>@Model.SoViPhamNguoiBan / @Model.NguongKhoa</strong> · <a asp-controller="Violations" asp-action="Index" asp-route-sellerId="@Model.MaNguoiBan">xem lịch sử</a></td></tr>
+                <tr><th>Ngày tạo / cập nhật</th><td>@Model.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm") / @Model.NgayCapNhat.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
+                @if (!string.IsNullOrWhiteSpace(Model.LyDoGo)) { <tr><th>Lý do gỡ</th><td>@Model.LyDoGo</td></tr> }
+            </table>
+            <div style="white-space:pre-wrap">@Model.MoTa</div>
+        </div>
+    </div>
+
+    @if (review is not null)
+    {
+        <hr />
+        <h4>Phân tích cảnh báo <span class="badge @badge.BadgeClass">@badge.Text</span></h4>
+        @if (!string.IsNullOrWhiteSpace(review.Explanation)) { <p>@review.Explanation</p> }
+        @if (review.AnalysisStatus == "FAILED" && !string.IsNullOrWhiteSpace(review.ErrorMessage)) { <div class="alert alert-danger">Lỗi phân tích: @review.ErrorMessage</div> }
+        @if (review.Matches.Count > 0)
+        {
+            <table class="table table-sm w-auto">
+                <thead><tr><th>Từ khóa</th><th>Mức độ</th><th>Trường</th><th>Vị trí</th></tr></thead>
+                <tbody>
+                @foreach (var m in review.Matches)
+                {
+                    <tr><td>@m.Phrase</td><td><span class="badge @(m.Level == "HIGH" ? "bg-danger" : "bg-warning text-dark")">@m.Level</span></td><td>@(m.Field == "Ten" ? "Tên" : "Mô tả")</td><td>@m.Position</td></tr>
+                }
+                </tbody>
+            </table>
+        }
+        @if (Model.IsPending)
+        {
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <form asp-action="Approve" asp-route-id="@Model.MaSanPham" method="post">
+                        <button class="btn btn-success" type="submit" disabled="@(!Model.CanApprove)">Duyệt sản phẩm</button>
+                    </form>
+                    @if (!Model.CanApprove) { <div class="small text-danger mt-1">@Model.ApproveBlockedReason</div> }
+                    else if (review.RejectionRecordsViolation) { <div class="small text-muted mt-1">Cảnh báo LOW: duyệt thì không ghi vi phạm.</div> }
+                </div>
+                <div class="col-md-8">
+                    @if (Model.CanReject)
+                    {
+                        <form asp-action="Reject" asp-route-id="@Model.MaSanPham" method="post">
+                            <textarea name="Reason" class="form-control mb-2" rows="3" minlength="10" maxlength="500" required placeholder="Lý do từ chối (10–500 ký tự, bắt buộc)"></textarea>
+                            @if (review.RejectionRecordsViolation) { <div class="small text-danger mb-2">Từ chối sản phẩm có cảnh báo LOW sẽ ghi 1 vi phạm cho người bán (đủ @Model.NguongKhoa vi phạm sẽ khóa tài khoản).</div> }
+                            <button class="btn btn-danger" type="submit">Từ chối sản phẩm</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    @if (Model.CanRemove)
+    {
+        <hr />
+        <h4>Gỡ sản phẩm vi phạm</h4>
+        <form asp-action="Remove" asp-route-id="@Model.MaSanPham" method="post" onsubmit="return confirm('Gỡ sản phẩm này khỏi sàn?');">
+            <textarea name="Reason" class="form-control mb-2" rows="2" minlength="10" maxlength="500" required placeholder="Lý do gỡ (10–500 ký tự, bắt buộc)"></textarea>
+            <button class="btn btn-outline-danger" type="submit">Gỡ sản phẩm</button>
+        </form>
+    }
+
+    <hr />
+    <h4>Lịch sử các lượt kiểm duyệt</h4>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped">
+            <thead><tr><th>Lượt</th><th>Gửi lúc</th><th>Phân tích</th><th>Quyết định</th><th>Người quyết định</th><th>Lý do</th><th>Vi phạm</th></tr></thead>
+            <tbody>
+            @foreach (var t in Model.Turns)
+            {
+                var b = ReviewDisplay.Describe(t.AnalysisStatus, t.Level);
+                <tr>
+                    <td>#@t.MaLuotKiemDuyet</td>
+                    <td>@t.ThoiGianGui.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td><span class="badge @b.BadgeClass">@b.Text</span>@if (t.Matches.Count > 0) { <div class="small text-muted">@string.Join(", ", t.Matches.Select(m => $"{m.Phrase} ({m.Level})"))</div> }</td>
+                    <td>@(t.QuyetDinh ?? "Đang chờ") @if (t.ThoiGianQuyetDinh is not null) { <div class="small text-muted">@t.ThoiGianQuyetDinh.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div> }</td>
+                    <td>@if (t.QuyetDinhTuDong) { <span class="badge bg-info text-dark">Hệ thống (tự động)</span> } else { @t.TenQuanTriVien }</td>
+                    <td>@t.LyDo</td>
+                    <td>@(t.ViolationRecorded ? "Có (+1)" : "")</td>
+                </tr>
+            }
+            @if (Model.Turns.Count == 0) { <tr><td colspan="7" class="text-center text-muted">Chưa có lượt kiểm duyệt.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+
+    <h4>Lịch sử trạng thái sản phẩm</h4>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped">
+            <thead><tr><th>Thời gian</th><th>Từ</th><th>Sang</th><th>Thực hiện</th><th>Lý do</th></tr></thead>
+            <tbody>
+            @foreach (var h in Model.StatusHistory)
+            {
+                <tr>
+                    <td>@h.ThoiGian.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@ReviewDisplay.StatusText(h.TrangThaiCu)</td>
+                    <td>@ReviewDisplay.StatusText(h.TrangThaiMoi)</td>
+                    <td>@(h.LoaiNguoiThucHien == "SYSTEM" ? "Hệ thống" : h.TenNguoiThucHien ?? h.LoaiNguoiThucHien)</td>
+                    <td>@h.LyDo</td>
+                </tr>
+            }
+            @if (Model.StatusHistory.Count == 0) { <tr><td colspan="5" class="text-center text-muted">Chưa có lịch sử trạng thái.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>
