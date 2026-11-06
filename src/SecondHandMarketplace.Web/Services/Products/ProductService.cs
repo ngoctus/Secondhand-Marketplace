@@ -17,12 +17,16 @@ public class ProductService : IProductService
 
     public ProductService(AppDbContext db) => _db = db;
 
-    public async Task<List<ProductCardVm>> SearchAsync(ProductSearchVm f)
+    public async Task<PagedResult<ProductCardVm>> SearchAsync(ProductSearchVm f)
     {
         // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
         // cửa hàng và chủ cửa hàng đều đang hoạt động.
         var query = _db.SanPhams
             .AsNoTracking()
+            .Include(p => p.CuaHang)
+            .ThenInclude(ch => ch.NguoiDung)
+            .Include(p => p.Anh)
+            .Include(p => p.TinhTrang)
             .Where(p => p.TrangThai == "ACTIVE"
                         && !p.DaXoa
                         && p.CuaHang.TrangThai == "ACTIVE"
@@ -35,19 +39,50 @@ public class ProductService : IProductService
             query = query.Where(p => p.ChuoiTimKiem.Contains(tuKhoaChuanHoa)
                                      || p.CuaHang.TenShop.Contains(tuKhoa));
         }
+
+        // Lọc 1 danh mục (đúng tên cột trong DB)
         if (f.CategoryId != null)
             query = query.Where(p => p.MaDanhMuc == f.CategoryId);
+
+        // Lọc nhiều danh mục từ checkbox sidebar (values là Ten DanhMuc, ví dụ "thoi-trang", "dien-tu")
+        if (f.Categories is { Length: > 0 })
+        {
+            var cats = f.Categories.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
+            if (cats.Count > 0)
+                query = query.Where(p => p.DanhMuc != null && cats.Contains(p.DanhMuc.Ten));
+        }
+
+        // Lọc 1 tình trạng theo mã (LIKE_NEW, GOOD, ...)
         if (f.ConditionId != null)
             query = query.Where(p => p.MaTinhTrang == f.ConditionId);
+
+        // Lọc tình trạng từ radio sidebar (new / like-new / good / fair / worn) -> tra MaTinhTrang theo Ma
+        if (!string.IsNullOrWhiteSpace(f.Condition))
+        {
+            var condCode = f.Condition.Trim().ToUpperInvariant();
+            query = query.Where(p => p.TinhTrang != null && p.TinhTrang.Ma == condCode);
+        }
+
         if (f.MinPrice != null)
             query = query.Where(p => p.Gia >= f.MinPrice);
         if (f.MaxPrice != null)
             query = query.Where(p => p.Gia <= f.MaxPrice);
 
-        return await query
-            .OrderByDescending(p => p.NgayTao)
-            .ThenByDescending(p => p.MaSanPham)
-            .Take(200)
+        // Sắp xếp
+        query = f.Sort switch
+        {
+            "price_asc" => query.OrderBy(p => p.Gia).ThenByDescending(p => p.NgayTao),
+            "price_desc" => query.OrderByDescending(p => p.Gia).ThenByDescending(p => p.NgayTao),
+            _ => query.OrderByDescending(p => p.NgayTao).ThenByDescending(p => p.MaSanPham)
+        };
+
+        var page = Math.Max(1, f.Page);
+        var pageSize = Math.Clamp(f.PageSize, 1, 100);
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(p => new ProductCardVm
             {
                 Id = p.MaSanPham,
@@ -59,6 +94,14 @@ public class ProductService : IProductService
                 CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null
             })
             .ToListAsync();
+
+        return new PagedResult<ProductCardVm>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
+        };
     }
 
     public async Task<ProductDetailVm?> GetDetailAsync(int id)

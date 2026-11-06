@@ -20,8 +20,7 @@
     List<ProductCardVm> lienQuan = new();
     try
     {
-        lienQuan = await ProductService.SearchAsync(new ProductSearchVm());
-        lienQuan = lienQuan.Where(p => p.Id != Model.Id).Take(4).ToList();
+        lienQuan = (await ProductService.SearchAsync(new ProductSearchVm())).Items.Where(p => p.Id != Model.Id).Take(4).ToList();
     }
     catch { }
 

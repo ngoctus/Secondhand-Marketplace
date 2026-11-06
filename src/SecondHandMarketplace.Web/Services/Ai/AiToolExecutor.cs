@@ -97,13 +97,14 @@ public sealed class AiToolExecutor
         var limit = ReadLimit(args, defaultValue: 6, max: 10);
         var found = await _products.SearchAsync(filter);
 
-        var shown = found.Take(limit).Select(ToItem).ToList();
+        var items = found.Items;
+        var shown = items.Take(limit).Select(ToItem).ToList();
         return Ok(new
         {
-            matchedCount = found.Count,
+            matchedCount = found.TotalItems,
             shownCount = shown.Count,
             products = shown,
-            note = found.Count == 0
+            note = found.TotalItems == 0
                 ? "Không có sản phẩm nào khớp. Hãy báo rõ điều này; có thể thử từ khóa khác hoặc nới bộ lọc."
                 : null
         });
@@ -121,7 +122,7 @@ public sealed class AiToolExecutor
 
         // Lấy thêm mô tả thật của từng ứng viên để AI so sánh; vẫn chỉ đọc qua service hiện có.
         var candidates = new List<object>();
-        foreach (var card in found.Take(limit))
+        foreach (var card in found.Items.Take(limit))
         {
             ct.ThrowIfCancellationRequested();
             var detail = await _products.GetDetailAsync(card.Id);
@@ -140,7 +141,7 @@ public sealed class AiToolExecutor
 
         return Ok(new
         {
-            matchedCount = found.Count,
+            matchedCount = found.TotalItems,
             candidateCount = candidates.Count,
             candidates,
             note = candidates.Count == 0

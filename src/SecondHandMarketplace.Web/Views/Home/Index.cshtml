@@ -16,7 +16,7 @@
     List<ProductCardVm> sanPhams = new();
     try
     {
-        sanPhams = await ProductService.SearchAsync(new ProductSearchVm());
+        sanPhams = (await ProductService.SearchAsync(new ProductSearchVm())).Items.ToList();
     }
     catch { }
 

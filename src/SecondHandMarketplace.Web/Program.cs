@@ -86,6 +86,7 @@ public class Program
         app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api"),
             branch => branch.UseStatusCodePagesWithReExecute("/Home/TrangLoi", "?ma={0}"));
         app.UseHttpsRedirection();
+        app.UseStaticFiles();   // Phục vụ file trong wwwroot (ảnh seed, css, js...)
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
