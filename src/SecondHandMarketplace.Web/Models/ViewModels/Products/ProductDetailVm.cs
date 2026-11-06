@@ -12,6 +12,7 @@ public class ProductDetailVm
     public string? CategoryName { get; set; }
     public string? ConditionName { get; set; }
     public string ShopName { get; set; } = string.Empty;
+    public int ShopId { get; set; }
     public string? ShopDescription { get; set; }
     public DateTime CreatedAt { get; set; }
     public List<string> Images { get; set; } = new();

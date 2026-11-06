@@ -1,9 +1,11 @@
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Data;
@@ -23,7 +25,13 @@ public class Program
         builder.Services.AddSingleton<JwtTokenService>();
 
         var jwt = builder.Configuration.GetSection("Jwt");
-        var jwtKey = jwt["Key"] ?? throw new InvalidOperationException("Thiếu cấu hình Jwt:Key.");
+        var jwtKey = jwt["Key"];
+        if (string.IsNullOrWhiteSpace(jwtKey) && builder.Environment.IsDevelopment())
+        {
+            jwtKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+        }
+        if (string.IsNullOrWhiteSpace(jwtKey))
+            throw new InvalidOperationException("Thiếu cấu hình Jwt:Key. Hãy đặt Jwt__Key bằng User Secrets hoặc biến môi trường.");
         if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
             throw new InvalidOperationException("Jwt:Key phải có tối thiểu 32 byte.");
 
@@ -40,6 +48,7 @@ public class Program
             options.AccessDeniedPath = "/Account/AccessDenied";
             options.Cookie.Name = "SecondHand.Auth";
             options.Cookie.HttpOnly = true;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.ExpireTimeSpan = TimeSpan.FromDays(7);
             options.SlidingExpiration = true;
@@ -75,6 +84,20 @@ public class Program
                 }
             };
         });
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy("login", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                        AutoReplenishment = true
+                    }));
+        });
 
         var app = builder.Build();
         if (!app.Environment.IsDevelopment())
@@ -87,6 +110,7 @@ public class Program
             branch => branch.UseStatusCodePagesWithReExecute("/Home/TrangLoi", "?ma={0}"));
         app.UseHttpsRedirection();
         app.UseRouting();
+        app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapStaticAssets();

@@ -1,24 +1,15 @@
-@model List<ProductCardVm>
+@model PagedResult<ProductCardVm>
+@using SecondHandMarketplace.Web.Models.ViewModels
+@inject SecondHandMarketplace.Web.Services.Categories.ICategoryService CategoryService
 @{
     ViewData["Title"] = "Kết quả tìm kiếm";
-    var query = Context.Request.Query;
+    var query = ViewContext.HttpContext.Request.Query;
     var keyword = query["Keyword"].ToString();
     var tieuDe = string.IsNullOrWhiteSpace(keyword) ? "Tất cả sản phẩm" : $"Kết quả cho “{keyword}”";
 
-    // Dữ liệu mẫu chuẩn theo Wireframe ảnh 4 nếu DB chưa có sản phẩm
-    var displayList = Model;
-    if (displayList.Count == 0 && string.IsNullOrWhiteSpace(keyword) && query.Count == 0)
-    {
-        displayList = new List<ProductCardVm>
-        {
-            new ProductCardVm { Id = 1, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
-            new ProductCardVm { Id = 2, Name = "Áo khoác dù unisex", Price = 180000, ShopName = "Hà Closet", ConditionName = "Tốt" },
-            new ProductCardVm { Id = 3, Name = "Áo khoác len dệt kim màu kem", Price = 210000, ShopName = "Linh Store", ConditionName = "Mới" },
-            new ProductCardVm { Id = 4, Name = "Áo khoác da PU size L", Price = 420000, ShopName = "Tuấn Vintage", ConditionName = "Có dấu vết sử dụng" },
-            new ProductCardVm { Id = 5, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
-            new ProductCardVm { Id = 6, Name = "Áo khoác dù unisex", Price = 180000, ShopName = "Hà Closet", ConditionName = "Tốt" }
-        };
-    }
+    var displayList = Model.Items;
+    var categories = await CategoryService.GetCategoriesAsync();
+    var conditions = await CategoryService.GetConditionsAsync();
 }
 
 <!-- Breadcrumb (Ảnh 4) -->
@@ -32,7 +23,7 @@
 <div class="search-page-layout">
     <!-- CỘT BỘ LỌC (Sidebar) -->
     <aside class="filter-sidebar">
-        <form method="get" asp-action="Index">
+        <form id="product-filter" method="get" asp-action="Index">
             @if (!string.IsNullOrWhiteSpace(keyword))
             {
                 <input type="hidden" name="Keyword" value="@keyword" />
@@ -47,12 +38,7 @@
             <div class="filter-group">
                 <div class="filter-title">Danh mục</div>
                 <div class="filter-checkbox-list">
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="thoi-trang" /> <span>Thời trang</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="dien-tu" /> <span>Điện tử</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="do-gia-dung" /> <span>Đồ gia dụng</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="sach" /> <span>Sách</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="phu-kien" /> <span>Phụ kiện</span></label>
-                    <label class="filter-label"><input type="checkbox" name="Categories" value="noi-that" /> <span>Nội thất</span></label>
+                    @foreach (var categoryItem in categories) { <label class="filter-label"><input type="radio" name="CategoryId" value="@categoryItem.MaDanhMuc" checked="@(Model.Items.Any() && query["CategoryId"] == categoryItem.MaDanhMuc.ToString() ? "checked" : null)" /> <span>@categoryItem.Ten</span></label> }
                 </div>
             </div>
 
@@ -75,10 +61,7 @@
             <div class="filter-group">
                 <div class="filter-title">Tình trạng</div>
                 <div class="filter-radio-list">
-                    <label class="filter-label"><input type="radio" name="Condition" value="new" /> <span>Mới</span></label>
-                    <label class="filter-label"><input type="radio" name="Condition" value="like-new" /> <span>Rất tốt</span></label>
-                    <label class="filter-label"><input type="radio" name="Condition" value="good" /> <span>Tốt</span></label>
-                    <label class="filter-label"><input type="radio" name="Condition" value="fair" /> <span>Có dấu vết sử dụng</span></label>
+                    @foreach (var conditionItem in conditions) { <label class="filter-label"><input type="radio" name="ConditionId" value="@conditionItem.MaTinhTrang" checked="@(query["ConditionId"] == conditionItem.MaTinhTrang.ToString() ? "checked" : null)" /> <span>@conditionItem.Ten</span></label> }
                 </div>
             </div>
 
@@ -91,19 +74,19 @@
         <div class="search-results-header">
             <div>
                 <h2>@tieuDe</h2>
-                <span class="count-label">@(displayList.Count) sản phẩm</span>
+                <span class="count-label">@Model.TotalItems sản phẩm</span>
             </div>
             <div class="sort-select-box">
                 <label for="sortOrder">Sắp xếp:</label>
-                <select id="sortOrder" name="sort">
-                    <option value="newest">Mới nhất</option>
-                    <option value="price_asc">Giá tăng dần</option>
-                    <option value="price_desc">Giá giảm dần</option>
+                <select id="sortOrder" name="Sort" form="product-filter">
+                    <option value="newest" selected="@(query["Sort"] == "newest" || string.IsNullOrEmpty(query["Sort"]) ? "selected" : null)">Mới nhất</option>
+                    <option value="price_asc" selected="@(query["Sort"] == "price_asc" ? "selected" : null)">Giá tăng dần</option>
+                    <option value="price_desc" selected="@(query["Sort"] == "price_desc" ? "selected" : null)">Giá giảm dần</option>
                 </select>
             </div>
         </div>
 
-        @if (displayList.Count == 0)
+        @if (!displayList.Any())
         {
             <div style="background-color: var(--color-surface); padding: 48px; border-radius: var(--radius-lg); text-align: center;">
                 <p style="color: var(--color-text-secondary); margin-bottom: 16px;">Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
@@ -122,15 +105,18 @@
                 }
             </div>
 
-            <!-- Phân trang theo Wireframe: < 1 2 3 … 12 > -->
             <nav class="rm-pagination" aria-label="Phân trang">
-                <span class="rm-page-item is-disabled">‹</span>
-                <span class="rm-page-item is-active">1</span>
-                <a href="#" class="rm-page-item">2</a>
-                <a href="#" class="rm-page-item">3</a>
-                <span class="rm-page-item rm-page-ellipsis">…</span>
-                <a href="#" class="rm-page-item">12</a>
-                <a href="#" class="rm-page-item">›</a>
+                @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                {
+                    <a class="rm-page-item @(pageNumber == Model.Page ? "is-active" : "")"
+                       asp-route-page="@pageNumber"
+                       asp-route-Sort="@query["Sort"]"
+                       asp-route-Keyword="@query["Keyword"]"
+                       asp-route-CategoryId="@query["CategoryId"]"
+                       asp-route-ConditionId="@query["ConditionId"]"
+                       asp-route-MinPrice="@query["MinPrice"]"
+                       asp-route-MaxPrice="@query["MaxPrice"]">@pageNumber</a>
+                }
             </nav>
         }
     </main>

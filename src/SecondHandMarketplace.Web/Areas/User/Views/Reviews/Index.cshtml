@@ -1,6 +1,29 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Reviews.UserReviewListViewModel
 @{
     ViewData["Title"] = "Đánh giá người bán";
 }
 
 <h2>Đánh giá người bán</h2>
-<p class="text-muted">TODO: Areas/User/Controllers/ReviewsController.cs &rarr; Index</p>
+<p class="text-muted">Đánh giá chỉ khả dụng sau khi đơn hàng hoàn tất.</p>
+@if (!Model.ChoDanhGia.Any())
+{
+    <p>Hiện không có sản phẩm nào đang chờ đánh giá.</p>
+}
+else
+{
+    foreach (var item in Model.ChoDanhGia)
+    {
+        <form asp-action="Tao" method="post" class="card p-3 mb-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="MaChiTietDonHang" value="@item.MaChiTietDonHang" />
+            <strong>@item.TenSanPham</strong>
+            <span>Shop: @item.TenShop — Đơn: @item.MaDon</span>
+            <label class="mt-2" for="stars-@item.MaChiTietDonHang">Số sao</label>
+            <select id="stars-@item.MaChiTietDonHang" name="SoSao" class="form-select" required>
+                @for (var stars = 5; stars >= 1; stars--) { <option value="@stars">@stars sao</option> }
+            </select>
+            <textarea name="NoiDung" class="form-control mt-2" maxlength="1000" placeholder="Chia sẻ trải nghiệm của bạn"></textarea>
+            <button type="submit" class="btn btn-primary mt-2">Gửi đánh giá</button>
+        </form>
+    }
+}

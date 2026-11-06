@@ -95,7 +95,7 @@ public sealed class AiToolExecutor
         if (filter is null) return AiToolResult.Error(error!);
 
         var limit = ReadLimit(args, defaultValue: 6, max: 10);
-        var found = await _products.SearchAsync(filter);
+        var found = (await _products.SearchAsync(filter)).Items;
 
         var shown = found.Take(limit).Select(ToItem).ToList();
         return Ok(new
@@ -117,7 +117,7 @@ public sealed class AiToolExecutor
         if (filter is null) return AiToolResult.Error(error!);
 
         var limit = ReadLimit(args, defaultValue: 5, max: 8);
-        var found = await _products.SearchAsync(filter);
+        var found = (await _products.SearchAsync(filter)).Items;
 
         // Lấy thêm mô tả thật của từng ứng viên để AI so sánh; vẫn chỉ đọc qua service hiện có.
         var candidates = new List<object>();

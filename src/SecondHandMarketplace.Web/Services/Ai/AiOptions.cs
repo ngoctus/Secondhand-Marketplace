@@ -15,7 +15,7 @@ public sealed class AiOptions
     public const string DefaultEndpoint = "https://api.anthropic.com/v1/messages";
 
     public static readonly IReadOnlyList<string> DefaultAllowedModels =
-        new[] { "claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5" };
+        new[] { "claude-3-5-haiku-20241022", "claude-3-5-sonnet-20241022", "claude-3-opus-20240229" };
 
     public const string DefaultSystemPromptText =
         "Bạn là trợ lý của Re:market, sàn mua bán đồ đã qua sử dụng. " +

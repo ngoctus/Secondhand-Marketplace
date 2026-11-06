@@ -8,4 +8,7 @@ public class ProductSearchVm
     public int? ConditionId { get; set; }         // TinhTrangSanPham.MaTinhTrang
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
+    public int? ShopId { get; set; }
+    public string? Sort { get; set; } = "newest";
+    public int Page { get; set; } = 1;
 }

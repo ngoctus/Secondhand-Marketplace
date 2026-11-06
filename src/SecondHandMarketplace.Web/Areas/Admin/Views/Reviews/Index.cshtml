@@ -1,6 +1,39 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Reviews.AdminReviewListViewModel
 @{
     ViewData["Title"] = "Quản lý đánh giá";
 }
 
 <h2>Quản lý đánh giá</h2>
-<p class="text-muted">TODO: Areas/Admin/Controllers/ReviewsController.cs &rarr; Index</p>
+@if (!Model.Items.Any())
+{
+    <p>Chưa có đánh giá nào.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead><tr><th>Đơn</th><th>Sản phẩm</th><th>Người mua</th><th>Shop</th><th>Sao</th><th>Nội dung</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.MaDon</td><td>@item.TenSanPham</td><td>@item.TenNguoiMua</td><td>@item.TenShop</td>
+                    <td>@item.SoSao/5</td><td>@item.NoiDung</td><td>@item.TrangThai</td>
+                    <td>
+                        @if (item.TrangThai == "PENDING")
+                        {
+                            <form asp-action="XuLy" method="post" class="d-flex gap-1">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="maDanhGia" value="@item.MaDanhGia" />
+                                <input name="ghiChu" class="form-control" placeholder="Ghi chú" />
+                                <button name="trangThai" value="APPROVED" class="btn btn-success">Duyệt</button>
+                                <button name="trangThai" value="REJECTED" class="btn btn-danger">Từ chối</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

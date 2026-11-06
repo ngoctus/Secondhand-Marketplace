@@ -17,24 +17,7 @@
     };
 
     // Lấy thêm sản phẩm liên quan
-    List<ProductCardVm> lienQuan = new();
-    try
-    {
-        lienQuan = await ProductService.SearchAsync(new ProductSearchVm());
-        lienQuan = lienQuan.Where(p => p.Id != Model.Id).Take(4).ToList();
-    }
-    catch { }
-
-    if (lienQuan.Count == 0)
-    {
-        lienQuan = new List<ProductCardVm>
-        {
-            new ProductCardVm { Id = 10, Name = "Áo sơ mi linen size L", Price = 150000, ShopName = "Hà Closet", ConditionName = "Tốt" },
-            new ProductCardVm { Id = 11, Name = "Quần jeans ống rộng", Price = 220000, ShopName = "Shop An", ConditionName = "Rất tốt" },
-            new ProductCardVm { Id = 12, Name = "Áo khoác bomber", Price = 300000, ShopName = "Linh Store", ConditionName = "Mới" },
-            new ProductCardVm { Id = 13, Name = "Mũ lưỡi trai vintage", Price = 90000, ShopName = "Tuấn Vintage", ConditionName = "Tốt" }
-        };
-    }
+    var lienQuan = (await ProductService.SearchAsync(new ProductSearchVm())).Items.Where(p => p.Id != Model.Id).Take(4).ToList();
 }
 
 <!-- Breadcrumb (Ảnh 5) -->
@@ -173,7 +156,7 @@
                     <span>★ 4.8 · 125 đánh giá</span>
                 </div>
             </div>
-            <a href="#" class="btn-rm-outline" style="font-size: 12px; padding: 6px 12px;">Xem shop</a>
+            <a asp-controller="Products" asp-action="Index" asp-route-ShopId="@Model.ShopId" class="btn-rm-outline" style="font-size: 12px; padding: 6px 12px;">Xem shop</a>
         </div>
 
         <div class="mt-2 d-flex justify-content-between align-items-center">
@@ -210,7 +193,7 @@
                     </p>
                 </div>
             </div>
-            <a href="#" class="btn-rm-outline" style="font-size: 13px; padding: 6px 14px;">Xem shop</a>
+            <a asp-controller="Products" asp-action="Index" asp-route-ShopId="@Model.ShopId" class="btn-rm-outline" style="font-size: 13px; padding: 6px 14px;">Xem shop</a>
         </div>
     </div>
 

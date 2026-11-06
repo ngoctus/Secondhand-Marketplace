@@ -20,12 +20,17 @@ Chạy `run-db.bat` để tạo database `SecondHandMarketplace` và nạp dữ 
 - `12_tranhchap_baocao.sql`: phần Tranh chấp và Báo cáo (người D phụ trách).
 - `13_daugia.sql`: phần Đấu giá (người E phụ trách).
 - `14_donhang_admin.sql`: thủ tục Admin can thiệp đơn hàng `sp_AdminCapNhatTrangThaiDon` (người E phụ trách).
+- `15_kiemduyet_tukhoa.sql`: mở rộng kiểm duyệt từ khóa và lịch sử vi phạm.
+- `16_luot_kiem_duyet_tu_choi_he_thong.sql`: cho phép hệ thống tự từ chối sản phẩm có từ khóa HIGH.
+- `17_bo_chan_tu_cam_khi_gui_duyet.sql`: cập nhật rule để sản phẩm được phân tích từ khóa sau khi gửi duyệt.
+- `18_ghi_vi_pham_low_khi_tu_choi.sql`: ghi nhận vi phạm LOW khi Admin từ chối.
+- `20_cauhinh_ai.sql`: bảng cấu hình AI do Admin quản lý.
 
-Bốn file `10`–`13` được tạo sẵn chỉ có `USE SecondHandMarketplace; GO`; file `14` do người E bổ sung thêm. Thành viên phụ trách bổ sung SQL vào đúng file của mình, không sửa `02_create_tables.sql` hoặc `09_seed_data.sql`.
+Các file mở rộng được thiết kế chạy lặp an toàn; không sửa `02_create_tables.sql` hoặc `09_seed_data.sql` khi bổ sung tính năng.
 
 ## Thứ tự thực thi
 
-`run-db.bat` chạy theo thứ tự phụ thuộc: database, tables, constraints, indexes, functions, views, procedures, triggers, seed data, rồi các file mở rộng. `07_functions.sql` phải chạy trước `06_procedures.sql` vì stored procedure sử dụng các hàm đã định nghĩa.
+`run-db.bat` chạy theo thứ tự phụ thuộc: database, tables, constraints, indexes, functions, views, procedures, triggers, seed data, rồi các file mở rộng. `07_functions.sql` phải chạy trước `06_procedures.sql`, còn các file `15`–`18` phải chạy sau các schema kiểm duyệt tương ứng.
 
 ## Tài khoản dữ liệu mẫu
 

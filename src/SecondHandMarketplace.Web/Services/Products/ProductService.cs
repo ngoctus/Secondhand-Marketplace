@@ -17,7 +17,7 @@ public class ProductService : IProductService
 
     public ProductService(AppDbContext db) => _db = db;
 
-    public async Task<List<ProductCardVm>> SearchAsync(ProductSearchVm f)
+    public async Task<PagedResult<ProductCardVm>> SearchAsync(ProductSearchVm f)
     {
         // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
         // cửa hàng và chủ cửa hàng đều đang hoạt động.
@@ -43,11 +43,20 @@ public class ProductService : IProductService
             query = query.Where(p => p.Gia >= f.MinPrice);
         if (f.MaxPrice != null)
             query = query.Where(p => p.Gia <= f.MaxPrice);
+        if (f.ShopId != null)
+            query = query.Where(p => p.MaCuaHang == f.ShopId);
 
-        return await query
-            .OrderByDescending(p => p.NgayTao)
-            .ThenByDescending(p => p.MaSanPham)
-            .Take(200)
+        query = f.Sort switch
+        {
+            "price_asc" => query.OrderBy(p => p.Gia).ThenByDescending(p => p.MaSanPham),
+            "price_desc" => query.OrderByDescending(p => p.Gia).ThenByDescending(p => p.MaSanPham),
+            _ => query.OrderByDescending(p => p.NgayTao).ThenByDescending(p => p.MaSanPham)
+        };
+
+        const int pageSize = 12;
+        var page = Math.Max(1, f.Page);
+        var total = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(p => new ProductCardVm
             {
                 Id = p.MaSanPham,
@@ -59,6 +68,7 @@ public class ProductService : IProductService
                 CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null
             })
             .ToListAsync();
+        return new PagedResult<ProductCardVm> { Items = items, Page = page, PageSize = pageSize, TotalItems = total };
     }
 
     public async Task<ProductDetailVm?> GetDetailAsync(int id)
@@ -82,6 +92,7 @@ public class ProductService : IProductService
                 CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null,
                 ConditionName = p.TinhTrang != null ? p.TinhTrang.Ten : null,
                 ShopName = p.CuaHang.TenShop,
+                 ShopId = p.MaCuaHang,
                 ShopDescription = p.CuaHang.MoTa,
                 CreatedAt = p.NgayTao,
                 Images = p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()

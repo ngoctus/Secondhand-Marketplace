@@ -35,6 +35,7 @@ public class AppDbContext : DbContext
     public DbSet<LuotDatGia> LuotDatGias => Set<LuotDatGia>();
     public DbSet<YeuThich> YeuThichs => Set<YeuThich>();
     public DbSet<Banner> Banners => Set<Banner>();
+    public DbSet<DanhGia> DanhGias => Set<DanhGia>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,6 +54,21 @@ public class AppDbContext : DbContext
             e.Property(x => x.LyDoKhoa).HasMaxLength(500);
             e.Property(x => x.AnhDaiDien).IsUnicode(false).HasMaxLength(500);
             e.Property(x => x.DiaChiMacDinh).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<DanhGia>(e =>
+        {
+            e.ToTable("DanhGia");
+            e.HasKey(x => x.MaDanhGia);
+            e.Property(x => x.NoiDung).HasMaxLength(1000);
+            e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(15);
+            e.Property(x => x.GhiChuAdmin).HasMaxLength(1000);
+            e.HasIndex(x => x.MaChiTietDonHang).IsUnique();
+            e.HasOne(x => x.DonHang).WithMany().HasForeignKey(x => x.MaDonHang).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.ChiTietDonHang).WithMany().HasForeignKey(x => x.MaChiTietDonHang).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.NguoiMua).WithMany().HasForeignKey(x => x.MaNguoiMua).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.CuaHang).WithMany().HasForeignKey(x => x.MaCuaHang).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<NguoiDung>().WithMany().HasForeignKey(x => x.MaAdminXuLy).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<CuaHang>(e =>
