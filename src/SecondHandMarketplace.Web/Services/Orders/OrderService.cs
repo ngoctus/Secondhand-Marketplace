@@ -526,5 +526,84 @@ public class OrderService : IOrderService
         }
     }
 
+    public async Task<List<DonHangItemViewModel>> LayDanhSachDonTheoMaAsync(int maNguoiDung, List<string> danhSachMaDon)
+    {
+        if (danhSachMaDon == null || danhSachMaDon.Count == 0) return new();
+
+        var query = _db.DonHangs.AsNoTracking()
+            .Include(d => d.CuaHang)
+            .Include(d => d.ChiTiet)
+            .Where(d => d.MaNguoiDung == maNguoiDung && danhSachMaDon.Contains(d.MaDon));
+
+        var list = await query.ToListAsync();
+        return list.Select(d => new DonHangItemViewModel
+        {
+            MaDonHang = d.MaDonHang,
+            MaDon = d.MaDon,
+            MaCuaHang = d.MaCuaHang,
+            TenShop = d.CuaHang?.TenShop ?? "",
+            TienHang = d.TienHang,
+            PhiVanChuyen = d.PhiVanChuyen,
+            TongTien = d.TongTien,
+            TrangThai = d.TrangThai,
+            TrangThaiThanhToan = d.TrangThaiThanhToan,
+            PhuongThucThanhToan = d.PhuongThucThanhToan,
+            NgayTao = d.NgayTao,
+            ChiTiet = d.ChiTiet.Select(c => new ChiTietDonHangItemViewModel
+            {
+                MaChiTietDonHang = c.MaChiTietDonHang,
+                MaSanPham = c.MaSanPham,
+                TenSanPham = c.TenSanPham,
+                AnhDaiDien = c.AnhDaiDien,
+                Gia = c.Gia
+            }).ToList()
+        }).ToList();
+    }
+
+    public async Task<(bool ThanhCong, string? ThongBao)> XacNhanThanhToanChuyenKhoanAsync(int maNguoiDung, int maDonHang)
+    {
+        var don = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
+        if (don == null) return (false, "Đơn hàng không tồn tại.");
+        if (don.TrangThaiThanhToan == "PAID") return (true, "Đơn hàng đã được thanh toán trước đó.");
+
+        don.TrangThaiThanhToan = "PAID";
+        don.NgayCapNhat = DateTime.UtcNow;
+
+        var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
+        if (tt != null)
+        {
+            tt.TrangThaiThanhToan = "SUCCESS";
+            tt.ThoiGianThanhToan = DateTime.UtcNow;
+        }
+
+        await _db.SaveChangesAsync();
+        return (true, "Xác nhận chuyển khoản thành công! Cảm ơn bạn.");
+    }
+
+    public async Task<(bool ThanhCong, string? ThongBao)> XacNhanThanhToanTatCaChuyenKhoanAsync(int maNguoiDung, IEnumerable<int> maDonHangs)
+    {
+        var idList = maDonHangs.ToList();
+        if (idList.Count == 0) return (false, "Không có đơn hàng nào.");
+
+        var dons = await _db.DonHangs.Where(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung).ToListAsync();
+        if (dons.Count == 0) return (false, "Đơn hàng không tồn tại.");
+
+        foreach (var don in dons)
+        {
+            don.TrangThaiThanhToan = "PAID";
+            don.NgayCapNhat = DateTime.UtcNow;
+        }
+
+        var tts = await _db.ThanhToans.Where(t => idList.Contains(t.MaDonHang)).ToListAsync();
+        foreach (var tt in tts)
+        {
+            tt.TrangThaiThanhToan = "SUCCESS";
+            tt.ThoiGianThanhToan = DateTime.UtcNow;
+        }
+
+        await _db.SaveChangesAsync();
+        return (true, "Xác nhận chuyển khoản thành công cho các đơn hàng! Cảm ơn bạn.");
+    }
+
     private static string LayThongBaoLoi(Exception ex) => SqlLoi.ThongBao(ex);
 }

@@ -264,11 +264,37 @@
 
                 </div>
 
+                @if (Model.PhuongThucThanhToan == "BANK_TRANSFER" && Model.TrangThaiThanhToan != "PAID" && Model.TrangThai != "CANCELLED")
+                {
+                    <div class="mt-3 pt-2 border-top">
+                        <a href="#vietqrSection" class="btn btn-outline-primary btn-sm rounded-pill px-3 w-100">
+                            <i class="bi bi-qr-code-scan me-1"></i> Xem mã VietQR chuyển khoản
+                        </a>
+                    </div>
+                }
+
             </div>
 
         </div>
 
     </div>
+
+    @if (Model.PhuongThucThanhToan == "BANK_TRANSFER" && Model.TrangThaiThanhToan != "PAID" && Model.TrangThai != "CANCELLED")
+    {
+        <div id="vietqrSection" class="mb-4">
+            <partial name="_VietQRCard" model='new SecondHandMarketplace.Web.Models.ViewModels.Orders.VietQrViewModel {
+                SoTien = Model.TongTien,
+                NoiDung = "REMARKET " + Model.MaDon,
+                NganHang = "MB Bank (Quân Đội)",
+                SoTaiKhoan = "0987654321",
+                ChuTaiKhoan = "SAN THUONG MAI RE:MARKET",
+                MaDonHang = Model.MaDonHang,
+                MaDon = Model.MaDon,
+                ChoPhepXacNhan = true,
+                ReturnUrl = Context.Request.Path
+            }' />
+        </div>
+    }
 
     <!-- Danh sách món hàng trong đơn -->
 
