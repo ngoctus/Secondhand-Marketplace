@@ -1,0 +1,16 @@
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@* Widget Chatbox AI. Chỉ hiện cho người đã đăng nhập (API chat yêu cầu xác thực).
+   Tích hợp vào layout bằng đúng MỘT dòng, đặt trước </body> trong Views/Shared/_Layout.cshtml:
+       <partial name="_AiChatWidget" />
+   (ĐANG CHỜ B: B đang phụ trách _Layout.cshtml nên C3 không tự thêm dòng này.)
+   Antiforgery token được cấp ở đây và widget gửi lại qua header RequestVerificationToken (bắt buộc với yêu cầu dùng Cookie). *@
+@if (User.Identity?.IsAuthenticated == true)
+{
+    var csrfToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    <link rel="stylesheet" href="~/css/ai-chat.css" asp-append-version="true" />
+    <script src="~/js/ai-chat.js" asp-append-version="true" defer
+            data-chat-url="@Url.Content("~/api/ai/chat")"
+            data-status-url="@Url.Content("~/api/ai/status")"
+            data-csrf-token="@csrfToken"></script>
+}

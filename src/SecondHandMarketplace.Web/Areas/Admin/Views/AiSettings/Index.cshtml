@@ -1,6 +1,57 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Ai.AiSettingsVm
 @{
     ViewData["Title"] = "Cấu hình chatbox AI";
 }
+<div class="container py-4" style="max-width:820px">
+    <h2>Cấu hình chatbox AI</h2>
+    <p class="text-muted">Thay đổi được lưu vào database và áp dụng ngay cho các tin nhắn tiếp theo của người dùng.</p>
 
-<h2>Cấu hình chatbox AI</h2>
-<p class="text-muted">TODO: Areas/Admin/Controllers/AiSettingsController.cs &rarr; Index</p>
+    @if (!Model.IsPersisted)
+    {
+        <div class="alert alert-warning" role="alert">
+            Database chưa có cấu hình AI (bảng <code>CauHinhAI</code>). Đang hiển thị giá trị mặc định;
+            bạn chỉ lưu được sau khi bảng này được tạo.
+        </div>
+    }
+
+    <form asp-action="Save" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch" asp-for="Enabled" />
+            <label class="form-check-label" asp-for="Enabled"></label>
+            <div class="form-text">Khi tắt, nút chat ẩn đi và máy chủ từ chối mọi yêu cầu chat.</div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ModelName" class="form-label"></label>
+            <select asp-for="ModelName" class="form-select">
+                @foreach (var name in Model.AllowedModels)
+                {
+                    <option value="@name" selected="@(name == Model.ModelName)">@name</option>
+                }
+            </select>
+            <span asp-validation-for="ModelName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="SystemPrompt" class="form-label"></label>
+            <textarea asp-for="SystemPrompt" class="form-control" rows="10" maxlength="4000"></textarea>
+            <div class="form-text">
+                Tối đa 4000 ký tự. Hệ thống luôn tự nối thêm các quy tắc an toàn cố định (chỉ dùng dữ liệu thật,
+                không tự đặt hàng/đăng bán, không tiết lộ thông tin nội bộ) nên không cần lặp lại ở đây.
+            </div>
+            <span asp-validation-for="SystemPrompt" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
+        @if (Model.UpdatedAtUtc is { } updated)
+        {
+            <span class="text-muted ms-3">Cập nhật lần cuối: @updated.ToString("dd/MM/yyyy HH:mm") (UTC)</span>
+        }
+    </form>
+
+    <p class="text-muted mt-4 mb-0">
+        Khóa API không được cấu hình tại đây mà nằm trong User Secrets / biến môi trường của máy chủ.
+    </p>
+</div>

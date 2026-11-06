@@ -12,6 +12,7 @@ using SecondHandMarketplace.Web.Services.Dashboard;
 using SecondHandMarketplace.Web.Services.Disputes;
 using SecondHandMarketplace.Web.Services.Favorites;
 using SecondHandMarketplace.Web.Services.Moderation;
+using SecondHandMarketplace.Web.Services.ProductReview;
 using SecondHandMarketplace.Web.Services.Notifications;
 using SecondHandMarketplace.Web.Services.Orders;
 using SecondHandMarketplace.Web.Services.Products;
@@ -42,10 +43,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<INotificationService, NotificationService>();
-        services.AddScoped<IAiChatService, AiChatService>();
+        services.AddAiChat();   // C3: IAiChatService (typed HttpClient), IAiSettingsService, IAiRequestThrottle
         services.AddScoped<IKeywordScanner, SqlKeywordScanner>();
         services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<IForbiddenKeywordService, ForbiddenKeywordService>();
+        services.AddScoped<IProductReviewService, ProductReviewService>();
 
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();

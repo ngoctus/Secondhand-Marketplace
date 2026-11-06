@@ -1,0 +1,50 @@
+/* Widget Chatbox AI. Mọi class đều có tiền tố rmchat- để không đụng CSS chung (site.css).
+   Màu và font lấy từ biến của site.css, có giá trị dự phòng nếu biến chưa tồn tại. */
+.rmchat{position:fixed;right:20px;bottom:20px;z-index:12;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink,#202a24)}
+.rmchat[hidden]{display:none}
+.rmchat *{box-sizing:border-box}
+
+.rmchat-toggle{display:flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:13px 19px;background:var(--green,#285b43);color:#fff;font:600 13px 'DM Sans',sans-serif;cursor:pointer;box-shadow:0 10px 28px #283e2535;transition:background .2s,transform .2s}
+.rmchat-toggle:hover{background:#1d4532;transform:translateY(-1px)}
+.rmchat-toggle-icon{color:var(--lime,#d6ed8a);font-size:15px}
+.rmchat-toggle:focus-visible,.rmchat-close:focus-visible,.rmchat-send:focus-visible{outline:2px solid var(--lime,#d6ed8a);outline-offset:2px}
+
+.rmchat-panel{position:absolute;right:0;bottom:62px;width:370px;height:min(560px,calc(100vh - 120px));display:flex;flex-direction:column;background:#fff;border:1px solid var(--line,#e6e8df);border-radius:14px;overflow:hidden;box-shadow:0 18px 45px #283e2526}
+.rmchat-panel[hidden]{display:none}
+
+.rmchat-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;background:var(--green,#285b43);color:#fff}
+.rmchat-heading{display:flex;flex-direction:column;gap:2px}
+.rmchat-title{font-size:14px}
+.rmchat-subtitle{font-size:11px;color:#dbe9d7}
+.rmchat-close{border:0;background:transparent;color:#fff;font-size:24px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:6px}
+.rmchat-close:hover{background:#ffffff22}
+
+.rmchat-log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper,#f8f8f3)}
+.rmchat-msg{display:flex}
+.rmchat-msg-user{justify-content:flex-end}
+.rmchat-bubble{max-width:86%;padding:9px 12px;border-radius:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.rmchat-msg-bot .rmchat-bubble{background:#fff;border:1px solid var(--line,#e6e8df);border-top-left-radius:4px}
+.rmchat-msg-user .rmchat-bubble{background:var(--green,#285b43);color:#fff;border-top-right-radius:4px}
+.rmchat-msg-error .rmchat-bubble{background:#fce9e6;color:#a94c40;border:1px solid #f3d0ca;border-top-left-radius:4px}
+.rmchat-link{color:var(--green,#285b43);font-weight:600;text-decoration:underline}
+
+.rmchat-typing-text{color:var(--muted,#788078);margin-right:4px}
+.rmchat-dot{display:inline-block;width:5px;height:5px;margin:0 1.5px;border-radius:50%;background:var(--muted,#788078);animation:rmchat-blink 1.2s infinite ease-in-out}
+.rmchat-dot:nth-of-type(3){animation-delay:.2s}
+.rmchat-dot:nth-of-type(4){animation-delay:.4s}
+@keyframes rmchat-blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.rmchat-dot{animation:none}.rmchat-toggle{transition:none}}
+
+.rmchat-composer{display:flex;align-items:flex-end;gap:8px;padding:10px;border-top:1px solid var(--line,#e6e8df);background:#fff}
+.rmchat-input{flex:1;min-height:38px;max-height:110px;resize:none;padding:9px 10px;border:1px solid var(--line,#e6e8df);border-radius:8px;background:#fff;color:var(--ink,#202a24);font:13px/1.4 'DM Sans',sans-serif}
+.rmchat-input:focus{outline:2px solid var(--lime,#d6ed8a);border-color:var(--green,#285b43)}
+.rmchat-input:disabled{background:#f3f4ef}
+.rmchat-send{height:38px;padding:0 15px;border:0;border-radius:8px;background:var(--green,#285b43);color:#fff;font:600 13px 'DM Sans',sans-serif;cursor:pointer}
+.rmchat-send:hover:not(:disabled){background:#1d4532}
+.rmchat-send:disabled{opacity:.55;cursor:not-allowed}
+.rmchat-note{margin:0;padding:0 12px 9px;background:#fff;color:var(--muted,#788078);font-size:10.5px;text-align:center}
+
+@media (max-width:520px){
+  .rmchat{right:12px;bottom:12px}
+  .rmchat-panel{position:fixed;left:12px;right:12px;bottom:72px;width:auto;height:min(72vh,540px)}
+}
