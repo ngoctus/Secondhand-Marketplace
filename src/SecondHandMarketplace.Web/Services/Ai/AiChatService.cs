@@ -120,14 +120,18 @@ public sealed class AiChatService : IAiChatService
 
     private async Task<AiChatResult> RunConversationAsync(string role, string userText, string model, string systemPrompt, CancellationToken ct)
     {
-        var messages = new List<JsonNode>
+        var contents = new List<JsonNode>
+    {
+        new JsonObject
         {
-            new JsonObject { ["role"] = "user", ["content"] = userText }
-        };
+            ["role"] = "user",
+            ["parts"] = new JsonArray(new JsonObject { ["text"] = userText })
+        }
+    };
 
         for (var round = 0; round <= _options.MaxToolRounds; round++)
         {
-            var payload = await PostAsync(BuildRequestBody(role, model, systemPrompt, messages), ct);
+            var payload = await PostAsync(model, BuildRequestBody(role, systemPrompt, contents), ct);
 
             using var document = ParseJson(payload);
             var response = ReadResponse(document.RootElement);
@@ -142,21 +146,22 @@ public sealed class AiChatService : IAiChatService
 
             if (round == _options.MaxToolRounds) break;
 
-            messages.Add(new JsonObject { ["role"] = "assistant", ["content"] = response.AssistantContent });
+            // Giữ NGUYÊN content của model (gồm cả thoughtSignature): Gemini 3 báo lỗi 400 nếu thiếu.
+            contents.Add(response.ModelContent);
 
-            var results = new JsonArray();
+            var responseParts = new JsonArray();
             foreach (var use in response.ToolUses)
             {
                 var result = await ExecuteToolSafelyAsync(role, use, ct);
-                results.Add(new JsonObject
+                var functionResponse = new JsonObject
                 {
-                    ["type"] = "tool_result",
-                    ["tool_use_id"] = use.Id,
-                    ["content"] = result.Json,
-                    ["is_error"] = result.IsError
-                });
+                    ["name"] = use.Name,
+                    ["response"] = JsonNode.Parse(result.Json)   // luôn là object ({...} hoặc {"error":"..."})
+                };
+                if (use.Id is not null) functionResponse["id"] = use.Id;
+                responseParts.Add(new JsonObject { ["functionResponse"] = functionResponse });
             }
-            messages.Add(new JsonObject { ["role"] = "user", ["content"] = results });
+            contents.Add(new JsonObject { ["role"] = "user", ["parts"] = responseParts });
         }
 
         _logger.LogWarning("AI vẫn yêu cầu gọi công cụ sau {Rounds} vòng; dừng lượt chat.", _options.MaxToolRounds);
@@ -183,21 +188,30 @@ public sealed class AiChatService : IAiChatService
 
     // ------------------------------------------------------------------ Gọi API nhà cung cấp
 
-    private JsonObject BuildRequestBody(string role, string model, string systemPrompt, List<JsonNode> messages) => new()
+    private JsonObject BuildRequestBody(string role, string systemPrompt, List<JsonNode> contents)
     {
-        ["model"] = model,
-        ["max_tokens"] = _options.MaxTokens,
-        ["system"] = systemPrompt,
-        ["tools"] = AiToolExecutor.BuildToolDefinitions(role),
-        // DeepClone: một JsonNode chỉ được có một node cha, mà các tin nhắn được dùng lại ở mỗi vòng.
-        ["messages"] = new JsonArray(messages.Select(m => m.DeepClone()).ToArray())
-    };
+        var body = new JsonObject
+        {
+            ["systemInstruction"] = new JsonObject
+            {
+                ["parts"] = new JsonArray(new JsonObject { ["text"] = systemPrompt })
+            },
+            // DeepClone: một JsonNode chỉ được có một node cha, mà contents được dùng lại ở mỗi vòng.
+            ["contents"] = new JsonArray(contents.Select(c => c.DeepClone()).ToArray()),
+            ["generationConfig"] = new JsonObject { ["maxOutputTokens"] = _options.MaxTokens }
+        };
 
-    private async Task<string> PostAsync(JsonObject body, CancellationToken ct)
+        var tools = AiToolExecutor.BuildToolDefinitions(role);
+        if (tools.Count > 0) body["tools"] = tools;
+        return body;
+    }
+
+    private async Task<string> PostAsync(string model, JsonObject body, CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, _options.Endpoint);
-        request.Headers.Add("x-api-key", _options.ApiKey);
-        request.Headers.Add("anthropic-version", _options.AnthropicVersion);
+        var url = $"{_options.Endpoint.TrimEnd('/')}/{Uri.EscapeDataString(model)}:generateContent";
+        using var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Headers.Add("x-goog-api-key", _options.ApiKey);
+        request.Content = new StringContent(body.ToJsonString(AiToolExecutor.JsonOptions), Encoding.UTF8, "application/json");
         request.Content = new StringContent(body.ToJsonString(AiToolExecutor.JsonOptions), Encoding.UTF8, "application/json");
 
         using var response = await _http.SendAsync(request, ct);
@@ -239,53 +253,44 @@ public sealed class AiChatService : IAiChatService
         var invalid = new AiProviderException(AiChatStatus.InvalidResponse, "Trợ lý AI trả về phản hồi không hợp lệ. Vui lòng thử lại.");
 
         if (root.ValueKind != JsonValueKind.Object
-            || !root.TryGetProperty("content", out var content)
-            || content.ValueKind != JsonValueKind.Array)
+            || !root.TryGetProperty("candidates", out var candidates)
+            || candidates.ValueKind != JsonValueKind.Array
+            || candidates.GetArrayLength() == 0)
+            throw invalid;   // thường do bộ lọc an toàn chặn (promptFeedback.blockReason)
+
+        if (!candidates[0].TryGetProperty("content", out var content) || content.ValueKind != JsonValueKind.Object)
             throw invalid;
 
         var text = new StringBuilder();
         var toolUses = new List<ToolUse>();
-        var assistantContent = new JsonArray();
 
-        foreach (var block in content.EnumerateArray())
+        if (content.TryGetProperty("parts", out var parts) && parts.ValueKind == JsonValueKind.Array)
         {
-            if (block.ValueKind != JsonValueKind.Object
-                || !block.TryGetProperty("type", out var typeProperty)
-                || typeProperty.ValueKind != JsonValueKind.String)
-                throw invalid;
-
-            switch (typeProperty.GetString())
+            foreach (var part in parts.EnumerateArray())
             {
-                case "text":
-                    var blockText = block.TryGetProperty("text", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() : null;
-                    if (!string.IsNullOrEmpty(blockText))
-                    {
-                        text.Append(blockText);
-                        assistantContent.Add(new JsonObject { ["type"] = "text", ["text"] = blockText });
-                    }
-                    break;
+                if (part.ValueKind != JsonValueKind.Object) throw invalid;
 
-                case "tool_use":
-                    var id = block.TryGetProperty("id", out var idProperty) && idProperty.ValueKind == JsonValueKind.String ? idProperty.GetString() : null;
-                    var name = block.TryGetProperty("name", out var nameProperty) && nameProperty.ValueKind == JsonValueKind.String ? nameProperty.GetString() : null;
-                    if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(name)) throw invalid;
+                if (part.TryGetProperty("thought", out var thought) && thought.ValueKind == JsonValueKind.True)
+                    continue;   // bỏ phần "suy nghĩ" nếu có
 
-                    var input = block.TryGetProperty("input", out var inputProperty) && inputProperty.ValueKind == JsonValueKind.Object
-                        ? inputProperty
-                        : default;
-                    toolUses.Add(new ToolUse(id, name, input));
-                    assistantContent.Add(new JsonObject
-                    {
-                        ["type"] = "tool_use",
-                        ["id"] = id,
-                        ["name"] = name,
-                        ["input"] = input.ValueKind == JsonValueKind.Object ? JsonNode.Parse(input.GetRawText()) : new JsonObject()
-                    });
-                    break;
+                if (part.TryGetProperty("functionCall", out var call) && call.ValueKind == JsonValueKind.Object)
+                {
+                    var name = call.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String ? n.GetString() : null;
+                    if (string.IsNullOrEmpty(name)) throw invalid;
+                    var id = call.TryGetProperty("id", out var i) && i.ValueKind == JsonValueKind.String ? i.GetString() : null;
+                    var args = call.TryGetProperty("args", out var a) && a.ValueKind == JsonValueKind.Object ? a : default;
+                    toolUses.Add(new ToolUse(id, name, args));
+                }
+                else if (part.TryGetProperty("text", out var t) && t.ValueKind == JsonValueKind.String)
+                {
+                    text.Append(t.GetString());
+                }
             }
         }
 
-        return new ProviderResponse(text.ToString(), toolUses, assistantContent);
+        var modelContent = JsonNode.Parse(content.GetRawText())!.AsObject();
+        modelContent["role"] = "model";
+        return new ProviderResponse(text.ToString(), toolUses, modelContent);
     }
 
     private static string DescribeProviderError(string payload)
@@ -295,7 +300,7 @@ public sealed class AiChatService : IAiChatService
             using var doc = JsonDocument.Parse(payload);
             if (doc.RootElement.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.Object)
             {
-                var type = error.TryGetProperty("type", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() : "unknown";
+                var type = error.TryGetProperty("status", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() : "unknown";
                 var message = error.TryGetProperty("message", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() : null;
                 return message is null ? type! : $"{type}: {(message.Length > 200 ? message[..200] : message)}";
             }
@@ -337,9 +342,9 @@ public sealed class AiChatService : IAiChatService
 
     // ------------------------------------------------------------------ Kiểu nội bộ
 
-    private sealed record ToolUse(string Id, string Name, JsonElement Input);
+    private sealed record ToolUse(string? Id, string Name, JsonElement Input);
 
-    private sealed record ProviderResponse(string Text, List<ToolUse> ToolUses, JsonArray AssistantContent);
+    private sealed record ProviderResponse(string Text, List<ToolUse> ToolUses, JsonObject ModelContent);
 
     private sealed class AiProviderException : Exception
     {

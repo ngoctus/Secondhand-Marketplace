@@ -87,7 +87,7 @@
                 <div class="carousel-item @(i == 0 ? "active" : null)">
                     @if (!string.IsNullOrWhiteSpace(b.LienKet))
                     {
-                        <a href="@b.LienKet" class="d-block">
+                        <a href="@(SecondHandMarketplace.Web.Common.UrlAnToan.HopLe(b.LienKet) ? b.LienKet : "#")" class="d-block">
                             <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100 d-none d-md-block" style="aspect-ratio:10/3; object-fit:cover;" data-fallback />
                             <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100 d-md-none" style="aspect-ratio:16/9; object-fit:cover;" data-fallback />
                         </a>

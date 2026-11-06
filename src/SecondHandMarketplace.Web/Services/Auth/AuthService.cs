@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Security;
@@ -76,6 +77,8 @@ public sealed class AuthService(
     {
         var user = await db.NguoiDungs.SingleOrDefaultAsync(x => x.MaNguoiDung == userId, cancellationToken);
         if (user is null) return (false, "Không tìm thấy tài khoản.");
+        if (!string.IsNullOrWhiteSpace(avatar) && !UrlAnToan.HopLe(avatar))
+            return (false, "Ảnh đại diện phải là URL http/https.");
         var normalizedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
         if (normalizedPhone is not null && await db.NguoiDungs.AnyAsync(x => x.MaNguoiDung != userId && x.SoDienThoai == normalizedPhone, cancellationToken))
             return (false, "Số điện thoại đã được sử dụng.");
