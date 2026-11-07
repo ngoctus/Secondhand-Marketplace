@@ -60,9 +60,10 @@
         </div>
     </div>
     <div class="hero-image-box">
-        <div class="wireframe-placeholder">
-            <span>Hình minh họa hero</span>
-        </div>
+        <img src="~/images/hero-marketplace.jpg"
+             alt="Đồ dùng secondhand được tái sử dụng: laptop, máy ảnh, tai nghe và quần áo"
+             class="hero-image"
+             asp-append-version="true" />
     </div>
 </section>
 
@@ -132,27 +133,27 @@
 
     <div class="category-grid">
         <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Thời trang" class="category-card">
-            <div class="cat-circle"></div>
+            <div class="cat-circle cat-icon" aria-hidden="true">👕</div>
             <span class="cat-name">Thời trang</span>
         </a>
         <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Điện tử" class="category-card">
-            <div class="cat-circle"></div>
+            <div class="cat-circle cat-icon" aria-hidden="true">💻</div>
             <span class="cat-name">Điện tử</span>
         </a>
         <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Đồ gia dụng" class="category-card">
-            <div class="cat-circle"></div>
+            <div class="cat-circle cat-icon" aria-hidden="true">🏠</div>
             <span class="cat-name">Đồ gia dụng</span>
         </a>
         <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Sách" class="category-card">
-            <div class="cat-circle"></div>
+            <div class="cat-circle cat-icon" aria-hidden="true">📚</div>
             <span class="cat-name">Sách</span>
         </a>
         <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Phụ kiện" class="category-card">
-            <div class="cat-circle"></div>
+            <div class="cat-circle cat-icon" aria-hidden="true">🎒</div>
             <span class="cat-name">Phụ kiện</span>
         </a>
         <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Nội thất" class="category-card">
-            <div class="cat-circle"></div>
+            <div class="cat-circle cat-icon" aria-hidden="true">🪑</div>
             <span class="cat-name">Nội thất</span>
         </a>
     </div>
@@ -216,10 +217,8 @@
 <!-- 5. GIÁ TRỊ BỀN VỮNG (Ảnh 3) -->
 <section class="landing-section">
     <div class="sustainability-row">
-        <div style="aspect-ratio: 16 / 10; width: 100%;">
-            <div class="wireframe-placeholder">
-                <span>Ảnh tái sử dụng</span>
-            </div>
+        <div class="sustainability-image-wrap">
+            <img src="~/images/sustainable-reuse.jpg" alt="Trái đất xanh với biểu tượng tái chế, đại diện cho lối sống bền vững" class="sustainability-image" asp-append-version="true" />
         </div>
         <div>
             <div class="section-label">GIÁ TRỊ BỀN VỮNG</div>
@@ -254,22 +253,22 @@
 
     <div class="trust-grid">
         <div class="trust-card">
-            <div class="trust-dot"></div>
+            <div class="trust-dot" aria-hidden="true">✓</div>
             <h4>Kiểm duyệt sản phẩm</h4>
             <p>Mọi tin đăng được duyệt trước khi hiển thị.</p>
         </div>
         <div class="trust-card">
-            <div class="trust-dot"></div>
+            <div class="trust-dot" aria-hidden="true">↔</div>
             <h4>Giao dịch an toàn</h4>
             <p>Hướng dẫn gặp mặt, thanh toán, kiểm hàng.</p>
         </div>
         <div class="trust-card">
-            <div class="trust-dot"></div>
+            <div class="trust-dot" aria-hidden="true">♡</div>
             <h4>Quy định cộng đồng</h4>
             <p>Nguyên tắc đăng bán và ứng xử rõ ràng.</p>
         </div>
         <div class="trust-card">
-            <div class="trust-dot"></div>
+            <div class="trust-dot" aria-hidden="true">!</div>
             <h4>Báo cáo vi phạm</h4>
             <p>Gửi báo cáo nhanh, có đội ngũ xử lý.</p>
         </div>
@@ -287,7 +286,7 @@
             <div class="review-stars">★★★★★</div>
             <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
             <div class="review-author">
-                <div class="author-circle"></div>
+                <img class="author-circle" src="~/images/avatar-default.png" alt="Ảnh đại diện người dùng" />
                 <div class="author-info">
                     <b>Tên người dùng</b>
                     <span>Đã mua: Tên sản phẩm</span>
@@ -298,7 +297,7 @@
             <div class="review-stars">★★★★★</div>
             <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
             <div class="review-author">
-                <div class="author-circle"></div>
+                <img class="author-circle" src="~/images/avatar-default.png" alt="Ảnh đại diện người dùng" />
                 <div class="author-info">
                     <b>Tên người dùng</b>
                     <span>Đã mua: Tên sản phẩm</span>
@@ -309,7 +308,7 @@
             <div class="review-stars">★★★★★</div>
             <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
             <div class="review-author">
-                <div class="author-circle"></div>
+                <img class="author-circle" src="~/images/avatar-default.png" alt="Ảnh đại diện người dùng" />
                 <div class="author-info">
                     <b>Tên người dùng</b>
                     <span>Đã mua: Tên sản phẩm</span>

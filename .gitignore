@@ -381,6 +381,12 @@ appsettings.Local.json
 **/wwwroot/uploads/*
 !**/wwwroot/uploads/banners/
 !**/wwwroot/uploads/.gitkeep
+!**/wwwroot/uploads/avatars/
+!**/wwwroot/uploads/avatars/**
+!**/wwwroot/uploads/shops/
+!**/wwwroot/uploads/shops/**
+!**/wwwroot/uploads/products/
+!**/wwwroot/uploads/products/**
 # Ảnh seed sản phẩm là dữ liệu mẫu của đồ án, cần commit để clone về là chạy được.
 !**/wwwroot/uploads/seed/
 !**/wwwroot/uploads/seed/**

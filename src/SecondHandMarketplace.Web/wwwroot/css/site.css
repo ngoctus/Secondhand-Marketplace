@@ -1965,3 +1965,53 @@ a.kpi:hover {
     }
     /* chỉ giữ avatar cho đỡ tràn */
 }
+/* Hình ảnh và biểu tượng cho các khu vực trang chủ */
+.cat-circle.cat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 27px;
+    line-height: 1;
+    background: #e4dfd2;
+    color: #66715b;
+}
+.sustainability-image-wrap {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: #e2d8c6;
+}
+.sustainability-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.trust-dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+}
+.author-circle {
+    display: block;
+    object-fit: cover;
+    flex: 0 0 32px;
+}
+.social-circle {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    color: #e8e0d2 !important;
+    text-decoration: none !important;
+    font-weight: 700;
+    font-size: 16px;
+    transition: background .2s ease, color .2s ease;
+}
+.social-circle:hover {
+    background: #e8e0d2;
+    color: #25211d !important;
+}
