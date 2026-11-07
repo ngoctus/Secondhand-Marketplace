@@ -15,7 +15,7 @@
             }
             else
             {
-                <img id="mainImage" class="auction-main-img" src="@Model.Images[0]" alt="@Model.ProductName" data-fallback />
+                <img id="mainImage" class="auction-main-img" src="@Model.Images[0]" alt="@Model.ProductName" data-fallback data-zoomable style="cursor: zoom-in;" title="Nhấn để phóng to ảnh" />
                 @if (Model.Images.Count > 1)
                 {
                     <div class="auction-thumbs">

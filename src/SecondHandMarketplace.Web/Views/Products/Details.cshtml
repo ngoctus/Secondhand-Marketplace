@@ -49,10 +49,10 @@
 <div class="detail-top-grid">
     <!-- CỘT ẢNH SẢN PHẨM -->
     <div>
-        <div class="detail-main-img">
+        <div class="detail-main-img" title="Nhấn để phóng to ảnh">
             @if (Model.Images != null && Model.Images.Count > 0)
             {
-                <img src="@Model.Images[0]" alt="@Model.Name" style="width: 100%; height: 100%; object-fit: cover;" data-fallback />
+                <img id="mainProductImg" src="@Model.Images[0]" alt="@Model.Name" style="width: 100%; height: 100%; object-fit: cover; cursor: zoom-in;" data-fallback data-zoomable />
             }
             else
             {
@@ -68,7 +68,7 @@
             {
                 @for (int i = 0; i < Math.Min(Model.Images.Count, 5); i++)
                 {
-                    <div class="thumbnail-item @(i == 0 ? "active" : "")">
+                    <div class="thumbnail-item @(i == 0 ? "active" : "")" title="Xem ảnh @(i + 1)">
                         <img src="@Model.Images[i]" alt="Ảnh @(i + 1)" style="width: 100%; height: 100%; object-fit: cover;" data-fallback />
                     </div>
                 }
