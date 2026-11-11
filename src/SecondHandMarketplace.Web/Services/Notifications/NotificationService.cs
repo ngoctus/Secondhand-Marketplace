@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 
 namespace SecondHandMarketplace.Web.Services.Notifications;
 
-public sealed class NotificationService(AppDbContext db) : INotificationService
+public sealed class NotificationService(
+    AppDbContext db,
+    Microsoft.AspNetCore.SignalR.IHubContext<SecondHandMarketplace.Web.Hubs.NotificationHub>? hubContext = null) : INotificationService
 {
     private const int MaxTitleLength = 200;    // ThongBao.TieuDe nvarchar(200)
     private const int MaxContentLength = 1000; // ThongBao.NoiDung nvarchar(1000)
@@ -22,7 +25,27 @@ public sealed class NotificationService(AppDbContext db) : INotificationService
         var entity = NewEntity(userId, type, title, content, referenceId);
         db.ThongBaos.Add(entity);
         error = await TrySaveAsync(new[] { entity }, cancellationToken);
-        return error is null ? (true, null) : (false, error);
+        if (error is null)
+        {
+            if (hubContext is not null)
+            {
+                try
+                {
+                    _ = hubContext.Clients.Group($"user-{userId}").SendAsync("ReceiveNotification", new
+                    {
+                        id = entity.MaThongBao,
+                        type,
+                        title,
+                        content,
+                        referenceId,
+                        createdAt = entity.NgayTao
+                    }, cancellationToken);
+                }
+                catch { }
+            }
+            return (true, null);
+        }
+        return (false, error);
     }
 
     public async Task<(bool Success, string? Error, int SentCount)> CreateForAllUsersAsync(string type, string title,
@@ -42,7 +65,26 @@ public sealed class NotificationService(AppDbContext db) : INotificationService
         var entities = userIds.Select(id => NewEntity(id, type, title, content, referenceId)).ToList();
         db.ThongBaos.AddRange(entities);
         error = await TrySaveAsync(entities, cancellationToken);
-        return error is null ? (true, null, entities.Count) : (false, error, 0);
+        if (error is null)
+        {
+            if (hubContext is not null)
+            {
+                try
+                {
+                    _ = hubContext.Clients.All.SendAsync("ReceiveNotification", new
+                    {
+                        type,
+                        title,
+                        content,
+                        referenceId,
+                        createdAt = DateTime.UtcNow
+                    }, cancellationToken);
+                }
+                catch { }
+            }
+            return (true, null, entities.Count);
+        }
+        return (false, error, 0);
     }
 
     public async Task<NotificationPage> GetForUserAsync(int userId, int page = 1, int pageSize = 20,

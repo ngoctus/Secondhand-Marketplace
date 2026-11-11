@@ -36,6 +36,8 @@ public class AppDbContext : DbContext
     public DbSet<YeuThich> YeuThichs => Set<YeuThich>();
     public DbSet<Banner> Banners => Set<Banner>();
     public DbSet<DanhGia> DanhGias => Set<DanhGia>();
+    public DbSet<TinhThanh> TinhThanhs => Set<TinhThanh>();
+    public DbSet<PhuongXa> PhuongXas => Set<PhuongXa>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -66,10 +68,46 @@ public class AppDbContext : DbContext
             e.Property(x => x.Logo).IsUnicode(false).HasMaxLength(500);
             e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(10);
             e.Property(x => x.LyDoKhoa).HasMaxLength(500);
+            e.Property(x => x.DiaChiChiTiet).HasMaxLength(300);
+            e.Property(x => x.KhuVucHienThi).HasMaxLength(100);
+            e.Property(x => x.NganHang).HasMaxLength(100);
+            e.Property(x => x.MaNganHang).IsUnicode(false).HasMaxLength(10);
+            e.Property(x => x.SoTaiKhoan).IsUnicode(false).HasMaxLength(30);
+            e.Property(x => x.TenChuTaiKhoan).HasMaxLength(100);
             e.HasOne(x => x.NguoiDung)
                 .WithMany()
                 .HasForeignKey(x => x.MaNguoiDung)
                 .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.TinhThanh)
+                .WithMany()
+                .HasForeignKey(x => x.MaTinhThanh)
+                .OnDelete(DeleteBehavior.NoAction);
+            e.HasOne(x => x.PhuongXa)
+                .WithMany()
+                .HasForeignKey(x => x.MaPhuongXa)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<TinhThanh>(e =>
+        {
+            e.ToTable("TinhThanh");
+            e.HasKey(x => x.MaTinhThanh);
+            e.Property(x => x.MaTinhThanh).ValueGeneratedNever();   // mã cố định theo danh mục hành chính, không IDENTITY
+            e.Property(x => x.TenTinhThanh).HasMaxLength(100);
+            e.Property(x => x.MaHanhChinh).IsUnicode(false).HasMaxLength(10);
+        });
+
+        modelBuilder.Entity<PhuongXa>(e =>
+        {
+            e.ToTable("PhuongXa");
+            e.HasKey(x => x.MaPhuongXa);
+            e.Property(x => x.MaPhuongXa).ValueGeneratedNever();
+            e.Property(x => x.TenPhuongXa).HasMaxLength(100);
+            e.Property(x => x.MaHanhChinh).IsUnicode(false).HasMaxLength(10);
+            e.HasOne(x => x.TinhThanh)
+                .WithMany(t => t.PhuongXas)
+                .HasForeignKey(x => x.MaTinhThanh)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<DanhMuc>(e =>

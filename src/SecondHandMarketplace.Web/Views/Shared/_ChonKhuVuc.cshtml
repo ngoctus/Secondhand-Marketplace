@@ -1,0 +1,32 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Areas.ChonKhuVucVm
+@{
+    var tatCaTinh = Model.ChoPhepTatCa ? "Tất cả tỉnh/thành" : "-- Chọn tỉnh/thành --";
+    var tatCaXa = Model.ChoPhepTatCa ? "Tất cả phường/xã" : "-- Chọn phường/xã --";
+    var idTinh = "kv-" + Model.TenFieldTinh;
+    var idXa = "kv-" + Model.TenFieldXa;
+}
+<div class="row g-3" data-khuvuc data-url="@Url.Action("PhuongXa", "KhuVuc", new { area = "" })"
+     data-tinh="#@idTinh" data-xa="#@idXa" data-label-xa="@tatCaXa">
+    <div class="col-md-6">
+        <label for="@idTinh" class="form-label">@Model.NhanTinh</label>
+        <select id="@idTinh" name="@Model.TenFieldTinh" class="form-select">
+            <option value="">@tatCaTinh</option>
+            @foreach (var t in Model.TinhThanhs)
+            {
+                <option value="@t.Ma" selected="@(Model.MaTinh == t.Ma)">@t.Ten</option>
+            }
+        </select>
+        @Html.ValidationMessage(Model.TenFieldTinh, null, new { @class = "text-danger small" })
+    </div>
+    <div class="col-md-6">
+        <label for="@idXa" class="form-label">@Model.NhanXa</label>
+        <select id="@idXa" name="@Model.TenFieldXa" class="form-select" disabled="@(Model.MaTinh is null)">
+            <option value="">@tatCaXa</option>
+            @foreach (var x in Model.PhuongXas)
+            {
+                <option value="@x.Ma" selected="@(Model.MaXa == x.Ma)">@x.Ten</option>
+            }
+        </select>
+        @Html.ValidationMessage(Model.TenFieldXa, null, new { @class = "text-danger small" })
+    </div>
+</div>

@@ -1,11 +1,44 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Shop.ShopVm
-@{ ViewData["Title"] = "Cửa hàng của tôi"; }
+@{
+    ViewData["Title"] = "Cửa hàng của tôi";
+    var thieuDiaChi = Model.MaCuaHang.HasValue && (Model.MaTinhThanh is null || Model.MaPhuongXa is null || string.IsNullOrWhiteSpace(Model.DiaChiChiTiet));
+}
 <div class="container py-4" style="max-width:760px"><h2>Cửa hàng của tôi</h2><p class="text-muted">Mỗi tài khoản USER được tạo tối đa một cửa hàng.</p>
+@if (thieuDiaChi)
+{
+    <div class="alert alert-warning">Cửa hàng của bạn chưa có địa chỉ. Vui lòng chọn tỉnh/thành, phường/xã và nhập địa chỉ chi tiết rồi bấm lưu.</div>
+}
 <form asp-action="Index" method="post" class="card card-body gap-3"><div asp-validation-summary="ModelOnly" class="text-danger"></div>
 <div><label asp-for="TenShop" class="form-label"></label><input asp-for="TenShop" class="form-control"/><span asp-validation-for="TenShop" class="text-danger"></span></div>
 <div><label asp-for="SoDienThoaiLienHe" class="form-label"></label><input asp-for="SoDienThoaiLienHe" class="form-control"/><span asp-validation-for="SoDienThoaiLienHe" class="text-danger"></span></div>
 <div><label asp-for="MoTa" class="form-label"></label><textarea asp-for="MoTa" class="form-control" rows="3"></textarea><span asp-validation-for="MoTa" class="text-danger"></span></div>
 <div><label asp-for="Logo" class="form-label"></label><input asp-for="Logo" class="form-control" placeholder="/uploads/shop-logo.png"/><span asp-validation-for="Logo" class="text-danger"></span></div>
+
+<fieldset class="border rounded p-3">
+    <legend class="fs-6 fw-semibold px-2 w-auto">Địa chỉ cửa hàng</legend>
+    <partial name="_ChonKhuVuc" model="new SecondHandMarketplace.Web.Models.ViewModels.Areas.ChonKhuVucVm {
+        TenFieldTinh = nameof(Model.MaTinhThanh), TenFieldXa = nameof(Model.MaPhuongXa),
+        MaTinh = Model.MaTinhThanh, MaXa = Model.MaPhuongXa,
+        TinhThanhs = Model.TinhThanhs, PhuongXas = Model.PhuongXas, ChoPhepTatCa = false }" />
+    <div class="mt-3"><label asp-for="DiaChiChiTiet" class="form-label"></label><input asp-for="DiaChiChiTiet" class="form-control" maxlength="300"/><span asp-validation-for="DiaChiChiTiet" class="text-danger"></span></div>
+    <div class="mt-3"><label asp-for="KhuVucHienThi" class="form-label"></label><input asp-for="KhuVucHienThi" class="form-control" maxlength="100" placeholder="Ví dụ: Gần chợ Bến Thành"/><span asp-validation-for="KhuVucHienThi" class="text-danger"></span></div>
+</fieldset>
+
+<fieldset class="border rounded p-3">
+    <legend class="fs-6 fw-semibold px-2 w-auto">Thông tin nhận chuyển khoản</legend>
+    <p class="small text-muted mb-3">Không bắt buộc. Nếu nhập, vui lòng điền đủ ngân hàng, số tài khoản và tên chủ tài khoản. Chưa nhập thì người mua sẽ không thấy mã QR thanh toán của shop.</p>
+    <div class="mb-3"><label asp-for="MaNganHang" class="form-label"></label>
+        <select asp-for="MaNganHang" class="form-select">
+            <option value="">-- Chưa chọn ngân hàng --</option>
+            @foreach (var b in Model.NganHangs)
+            {
+                <option value="@b.Bin" selected="@(Model.MaNganHang == b.Bin)">@b.TenHienThi</option>
+            }
+        </select><span asp-validation-for="MaNganHang" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="SoTaiKhoan" class="form-label"></label><input asp-for="SoTaiKhoan" class="form-control" inputmode="numeric" maxlength="30"/><span asp-validation-for="SoTaiKhoan" class="text-danger"></span></div>
+    <div><label asp-for="TenChuTaiKhoan" class="form-label"></label><input asp-for="TenChuTaiKhoan" class="form-control" maxlength="100" placeholder="NGUYEN VAN A"/><span asp-validation-for="TenChuTaiKhoan" class="text-danger"></span></div>
+</fieldset>
+
 @if(Model.MaCuaHang.HasValue){<p>Trạng thái: <strong>@Model.TrangThai</strong></p>}
 <button class="btn btn-primary" type="submit">@(Model.MaCuaHang.HasValue ? "Cập nhật cửa hàng" : "Tạo cửa hàng")</button></form></div>
-@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+@section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/khu-vuc.js" asp-append-version="true"></script> }
