@@ -1,9 +1,11 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Orders.DonHangChiTietViewModel
+@inject SecondHandMarketplace.Web.Services.Reviews.IReviewService ReviewService
 
 @{
-
     ViewData["Title"] = "Chi tiết đơn hàng " + Model.MaDon;
-
+    var danhGiaHienTai = Model.TrangThai == "COMPLETED"
+        ? await ReviewService.LayDanhGiaTheoDonHangAsync(Model.MaDonHang)
+        : null;
 }
 
 <div class="container my-4" style="max-width: 950px;">
@@ -174,6 +176,23 @@
 
                 }
 
+                @if (Model.TrangThai == "COMPLETED")
+                {
+                    if (danhGiaHienTai == null)
+                    {
+                        <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 fw-semibold text-dark shadow-sm"
+                                data-bs-toggle="modal" data-bs-target="#modalDanhGia">
+                            <i class="bi bi-star-fill text-dark me-1"></i> Đánh giá người bán
+                        </button>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-2 rounded-pill small">
+                            <i class="bi bi-star-fill text-warning me-1"></i> Đã đánh giá (@danhGiaHienTai.SoSao ★)
+                        </span>
+                    }
+                }
+
             </div>
 
         </div>
@@ -213,6 +232,50 @@
         </div>
 
     </div>
+
+    @if (danhGiaHienTai != null)
+    {
+        <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4 border-start border-warning border-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <div class="fw-bold text-dark">
+                    <i class="bi bi-star-fill text-warning me-1"></i> Đánh giá của bạn dành cho shop @Model.TenShop
+                </div>
+                <div class="small text-muted">
+                    Ngày gửi: @danhGiaHienTai.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-1 mb-2">
+                @for (byte s = 1; s <= 5; s++)
+                {
+                    if (s <= danhGiaHienTai.SoSao)
+                    {
+                        <i class="bi bi-star-fill text-warning fs-5"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-star text-secondary fs-5 opacity-50"></i>
+                    }
+                }
+                <span class="ms-2 fw-semibold text-dark small">(@danhGiaHienTai.SoSao / 5 sao)</span>
+                @if (danhGiaHienTai.TrangThai == "VISIBLE")
+                {
+                    <span class="badge bg-success-subtle text-success rounded-pill ms-2" style="font-size: 11px;">Đang hiển thị</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger-subtle text-danger rounded-pill ms-2" style="font-size: 11px;" title="Đánh giá bị ẩn bởi quản trị viên">Đã bị ẩn</span>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(danhGiaHienTai.NoiDung))
+            {
+                <div class="p-3 bg-light rounded-3 text-dark small" style="white-space: pre-line;">@danhGiaHienTai.NoiDung</div>
+            }
+            else
+            {
+                <div class="text-muted fst-italic small bg-light p-2 rounded-2">Không có nhận xét kèm theo.</div>
+            }
+        </div>
+    }
 
     <!-- Thông tin người nhận & Thanh toán -->
 
@@ -426,6 +489,67 @@
 
 </div>
 
+@if (Model.TrangThai == "COMPLETED" && danhGiaHienTai == null)
+{
+    <!-- Modal Đánh giá người bán (C3) -->
+    <div class="modal fade" id="modalDanhGia" tabindex="-1" aria-labelledby="modalDanhGiaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <form asp-area="User" asp-controller="Reviews" asp-action="Tao" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="MaDonHang" value="@Model.MaDonHang" />
+                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold" id="modalDanhGiaLabel">
+                            <i class="bi bi-star-fill text-warning me-1"></i> Đánh giá người bán
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+
+                    <div class="modal-body py-3">
+                        <div class="text-center mb-3">
+                            <div class="fw-bold text-dark fs-5">@Model.TenShop</div>
+                            <div class="text-muted small">Đơn hàng: <span class="font-monospace">#@Model.MaDon</span></div>
+                        </div>
+
+                        <!-- Chọn số sao trực quan -->
+                        <div class="mb-3 text-center">
+                            <label class="form-label fw-semibold small text-muted d-block">Mức độ hài lòng của bạn</label>
+                            <div class="d-inline-flex gap-2 justify-content-center" id="starRatingContainer">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <button type="button" class="btn p-1 border-0 star-btn" data-value="@i" title="@i sao" style="font-size: 2rem; color: #ffc107;">
+                                        <i class="bi bi-star-fill"></i>
+                                    </button>
+                                }
+                            </div>
+                            <input type="hidden" name="SoSao" id="inputSoSao" value="5" required />
+                            <div class="small fw-semibold text-warning mt-1" id="starRatingText">5 sao - Rất hài lòng</div>
+                        </div>
+
+                        <!-- Nhận xét chi tiết -->
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold small">Nhận xét chi tiết (tùy chọn)</label>
+                            <textarea name="NoiDung" class="form-control rounded-3" rows="4" maxlength="1000"
+                                      placeholder="Hãy chia sẻ trải nghiệm của bạn về tình trạng sản phẩm, mức độ đúng như mô tả và sự nhiệt tình của người bán..."></textarea>
+                            <div class="form-text text-end small">Tối đa 1.000 ký tự</div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 fw-semibold"
+                                style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
+                            Gửi đánh giá
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
 @section Scripts {
 
     <script>
@@ -437,6 +561,47 @@
             el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
 
         }
+
+        // Script chọn số sao trực quan
+        (function() {
+            var container = document.getElementById('starRatingContainer');
+            if (!container) return;
+            var buttons = container.querySelectorAll('.star-btn');
+            var input = document.getElementById('inputSoSao');
+            var text = document.getElementById('starRatingText');
+            var labels = {
+                1: '1 sao - Rất không hài lòng',
+                2: '2 sao - Không hài lòng',
+                3: '3 sao - Bình thường',
+                4: '4 sao - Hài lòng',
+                5: '5 sao - Rất hài lòng'
+            };
+
+            function setStars(val) {
+                if (input) input.value = val;
+                if (text) text.textContent = labels[val] || (val + ' sao');
+                buttons.forEach(function(btn) {
+                    var v = parseInt(btn.getAttribute('data-value'), 10);
+                    var icon = btn.querySelector('i');
+                    if (v <= val) {
+                        btn.style.color = '#ffc107';
+                        if (icon) icon.className = 'bi bi-star-fill';
+                    } else {
+                        btn.style.color = '#ccc';
+                        if (icon) icon.className = 'bi bi-star';
+                    }
+                });
+            }
+
+            buttons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var v = parseInt(this.getAttribute('data-value'), 10);
+                    setStars(v);
+                });
+            });
+
+            setStars(5);
+        })();
 
     </script>
 
