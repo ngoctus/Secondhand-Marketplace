@@ -335,4 +335,71 @@ public class ReviewServiceTests
         Assert.Equal(0m, diem.DiemTrungBinh);
         Assert.Equal(0, diem.SoDanhGia);
     }
+
+    // =========================================================
+    // C3: Giao diện người mua — LayDanhGiaCuaNguoiMua & LayDanhGiaTheoDonHang
+    // =========================================================
+
+    [Fact]
+    public async Task LayDanhGiaCuaNguoiMua_ChiTraDanhGiaCuaMinh()
+    {
+        using var db = GetDb("review_c3_nguoi_mua");
+        SeedCoSo(db, "COMPLETED");
+
+        // Tạo thêm user 2 mua đơn 2
+        var buyer2 = new NguoiDung { MaNguoiDung = 3, HoTen = "User 2", Email = "u2@test.local", MatKhauBam = "x" };
+        var don2 = new DonHang
+        {
+            MaDonHang = 2, MaDon = "DH002", MaNguoiDung = 3, MaCuaHang = 1,
+            TenNguoiNhan = "User 2", SoDienThoaiNhan = "088", DiaChiNhan = "XYZ",
+            TrangThai = "COMPLETED", NgayTao = DateTime.UtcNow, NgayCapNhat = DateTime.UtcNow
+        };
+        db.NguoiDungs.Add(buyer2);
+        db.DonHangs.Add(don2);
+        await db.SaveChangesAsync();
+
+        var svc = new ReviewService(db);
+        await svc.TaoDanhGiaAsync(1, 1, 5, "Của user 1");
+        await svc.TaoDanhGiaAsync(2, 3, 4, "Của user 2");
+
+        var resultUser1 = await svc.LayDanhGiaCuaNguoiMuaAsync(1, page: 1, pageSize: 10);
+        var resultUser2 = await svc.LayDanhGiaCuaNguoiMuaAsync(3, page: 1, pageSize: 10);
+
+        Assert.Equal(1, resultUser1.TotalItems);
+        Assert.Equal("Của user 1", resultUser1.Items[0].NoiDung);
+        Assert.Equal("DH001", resultUser1.Items[0].MaDon);
+        Assert.Equal("Shop Test", resultUser1.Items[0].TenShop);
+
+        Assert.Equal(1, resultUser2.TotalItems);
+        Assert.Equal("Của user 2", resultUser2.Items[0].NoiDung);
+        Assert.Equal("DH002", resultUser2.Items[0].MaDon);
+    }
+
+    [Fact]
+    public async Task LayDanhGiaTheoDonHang_DaDanhGia_TraChiTietDanhGia()
+    {
+        using var db = GetDb("review_c3_theo_don_hang");
+        SeedCoSo(db, "COMPLETED");
+        var svc = new ReviewService(db);
+        await svc.TaoDanhGiaAsync(1, 1, 5, "Tuyệt vời!");
+
+        var dg = await svc.LayDanhGiaTheoDonHangAsync(1);
+
+        Assert.NotNull(dg);
+        Assert.Equal(1, dg.MaDonHang);
+        Assert.Equal((byte)5, dg.SoSao);
+        Assert.Equal("Tuyệt vời!", dg.NoiDung);
+    }
+
+    [Fact]
+    public async Task LayDanhGiaTheoDonHang_ChuaDanhGia_TraNull()
+    {
+        using var db = GetDb("review_c3_don_chua_danh_gia");
+        SeedCoSo(db, "COMPLETED");
+        var svc = new ReviewService(db);
+
+        var dg = await svc.LayDanhGiaTheoDonHangAsync(1);
+
+        Assert.Null(dg);
+    }
 }

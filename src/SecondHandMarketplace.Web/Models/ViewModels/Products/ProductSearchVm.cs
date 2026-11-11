@@ -10,6 +10,8 @@ public class ProductSearchVm
     public string? Condition { get; set; }        // tình trạng từ radio sidebar (new / like-new / good / fair / worn)
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
+    public int? MaTinhThanh { get; set; }          // TinhThanh.MaTinhThanh (lọc theo khu vực, do B3 đọc)
+    public int? MaPhuongXa { get; set; }           // PhuongXa.MaPhuongXa (chỉ có nghĩa khi đã có MaTinhThanh)
     public string? Sort { get; set; }             // newest | price_asc | price_desc
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 12;
