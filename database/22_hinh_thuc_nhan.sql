@@ -1,3 +1,8 @@
+-- Đảm bảo User-defined Table Type dbo.DanhSachId tồn tại nếu chạy script độc lập
+IF TYPE_ID(N'dbo.DanhSachId') IS NULL
+    EXEC(N'CREATE TYPE dbo.DanhSachId AS TABLE (Id int NOT NULL PRIMARY KEY);');
+GO
+
 -- =============================================================================
 -- database/22_hinh_thuc_nhan.sql
 -- Module Giao dịch: Thêm hình thức nhận hàng (Giao hàng tận nơi hoặc Gặp trực tiếp)

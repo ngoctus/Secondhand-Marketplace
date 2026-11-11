@@ -99,7 +99,7 @@ public class DisputeService : IDisputeService
             NotificationTypes.Order,
             "Đơn hàng phát sinh khiếu nại tranh chấp",
             $"Người mua đã mở khiếu nại cho đơn hàng #{donHang.MaDon}. Lý do: {lyDoTrim}. Vui lòng kiểm tra và phản hồi.",
-            tranhChap.MaTranhChap
+            donHang.MaDonHang
         );
 
         return (true, "Đã gửi yêu cầu khiếu nại tranh chấp thành công. Người bán và Ban quản trị sẽ tiến hành xử lý.");
@@ -147,7 +147,7 @@ public class DisputeService : IDisputeService
             NotificationTypes.Order,
             "Người bán đã phản hồi khiếu nại",
             $"Người bán đã phản hồi khiếu nại đơn hàng #{tc.DonHang.MaDon}: \"{phanHoiTrim}\"",
-            tc.MaTranhChap
+            tc.MaDonHang
         );
 
         return (true, "Đã gửi phản hồi thành công.");
@@ -312,12 +312,11 @@ public class DisputeService : IDisputeService
             return (false, "Tranh chấp này đã được phân xử trước đó.");
         }
 
-        if (!string.IsNullOrWhiteSpace(ghiChu) && ghiChu.Trim().Length > 1000)
+        if (!string.IsNullOrWhiteSpace(ghiChu) && ghiChu.Trim().Length > 400)
         {
-            return (false, "Ghi chú của quản trị viên không được vượt quá 1000 ký tự.");
+            return (false, "Ghi chú của quản trị viên không được vượt quá 400 ký tự.");
         }
 
-        using var tx = _db.Database.IsRelational() ? await _db.Database.BeginTransactionAsync() : null;
         var now = DateTime.UtcNow;
         tc.NguoiXuLyId = adminId;
         tc.NgayGiaiQuyet = now;
@@ -331,6 +330,7 @@ public class DisputeService : IDisputeService
             tc.TrangThai = "RESOLVED";
             tc.PhanQuyet = "Chấp thuận khiếu nại: Hoàn tiền cho người mua và hủy đơn.";
             var lyDoAdmin = string.IsNullOrWhiteSpace(ghiChu) ? tc.PhanQuyet : $"{tc.PhanQuyet} Ghi chú: {ghiChu.Trim()}";
+            if (lyDoAdmin.Length > 500) lyDoAdmin = lyDoAdmin[..500];
 
             if (_db.Database.IsRelational())
             {
@@ -396,6 +396,7 @@ public class DisputeService : IDisputeService
             tc.TrangThai = "RESOLVED";
             tc.PhanQuyet = "Bác bỏ khiếu nại: Thanh toán hoàn tất cho người bán.";
             var lyDoAdmin = string.IsNullOrWhiteSpace(ghiChu) ? tc.PhanQuyet : $"{tc.PhanQuyet} Ghi chú: {ghiChu.Trim()}";
+            if (lyDoAdmin.Length > 500) lyDoAdmin = lyDoAdmin[..500];
 
             // Fix #6: Nếu đơn đã COMPLETED thì không gọi đổi trạng thái đơn nữa
             if (tc.DonHang.TrangThai != "COMPLETED")
@@ -470,21 +471,13 @@ public class DisputeService : IDisputeService
         }
 
         await _db.SaveChangesAsync();
-        if (tx != null) await tx.CommitAsync();
+    }
+    catch (Microsoft.Data.SqlClient.SqlException sqlEx)
+    {
+        return (false, SecondHandMarketplace.Web.Common.SqlLoi.ThongBao(sqlEx));
     }
     catch (Exception ex)
     {
-        if (tx != null)
-        {
-            try
-            {
-                await tx.RollbackAsync();
-            }
-            catch
-            {
-                // Tránh double-rollback nếu Stored Procedure phía SQL Server đã tự rollback khi gặp lỗi
-            }
-        }
         return (false, SecondHandMarketplace.Web.Common.SqlLoi.ThongBao(ex));
     }
 
@@ -498,12 +491,12 @@ public class DisputeService : IDisputeService
         await _notifications.CreateAsync(tc.MaNguoiTao, NotificationTypes.Order,
             "Kết quả xử lý khiếu nại đơn hàng",
             $"Tranh chấp đơn hàng #{tc.DonHang.MaDon} đã có kết quả: {tc.PhanQuyet}",
-            tc.MaTranhChap);
+            tc.MaDonHang);
 
         await _notifications.CreateAsync(tc.DonHang.CuaHang.MaNguoiDung, NotificationTypes.Order,
             "Kết quả xử lý khiếu nại đơn hàng",
             $"Tranh chấp đơn hàng #{tc.DonHang.MaDon} đã có kết quả: {tc.PhanQuyet}",
-            tc.MaTranhChap);
+            tc.MaDonHang);
     }
     catch
     {

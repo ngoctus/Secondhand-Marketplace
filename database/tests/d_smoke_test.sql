@@ -226,6 +226,48 @@ BEGIN CATCH
     INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D7. View vw_DonHangTongQuan co HinhThucNhan', 0, ERROR_MESSAGE());
 END CATCH
 
+-- ------------------------------------------------------------------ TEST 8: Chống mở trùng tranh chấp (Unique constraint)
+BEGIN TRY
+    DECLARE @DonHangTestId int = (SELECT TOP 1 dh.MaDonHang FROM dbo.DonHang dh WHERE dh.MaNguoiDung = @NguoiMuaId);
+    IF @DonHangTestId IS NOT NULL
+    BEGIN
+        INSERT INTO dbo.TranhChap (MaDonHang, MaNguoiTao, LyDo, TrangThai)
+        VALUES (@DonHangTestId, @NguoiMuaId, N'dsmoke Tranh chấp lần 1', 'OPEN');
+
+        -- Cố tình chèn lần 2
+        INSERT INTO dbo.TranhChap (MaDonHang, MaNguoiTao, LyDo, TrangThai)
+        VALUES (@DonHangTestId, @NguoiMuaId, N'dsmoke Tranh chấp lần 2 (trùng)', 'OPEN');
+
+        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D8. Chong mo trung tranh chap', 0, N'Lẽ ra phải chặn trùng lặp');
+    END
+    ELSE
+        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D8. Chong mo trung tranh chap', 1, N'Bỏ qua do không có đơn');
+END TRY
+BEGIN CATCH
+    IF ERROR_NUMBER() IN (2601, 2627)
+        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D8. Chong mo trung tranh chap', 1, N'Bắt đúng unique constraint (chống trùng)');
+    ELSE
+        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D8. Chong mo trung tranh chap', 0, ERROR_MESSAGE());
+END CATCH
+
+-- ------------------------------------------------------------------ TEST 9: Chống gửi báo cáo trùng khi đang PENDING
+BEGIN TRY
+    INSERT INTO dbo.BaoCao (LoaiDoiTuong, MaDoiTuong, MaNguoiBaoCao, LyDo, TrangThai)
+    VALUES ('PRODUCT', @Sp2Id, @NguoiMuaId, N'dsmoke Báo cáo vi phạm lần 1', 'PENDING');
+
+    -- Cố tình chèn lần 2 khi chưa xử lý
+    INSERT INTO dbo.BaoCao (LoaiDoiTuong, MaDoiTuong, MaNguoiBaoCao, LyDo, TrangThai)
+    VALUES ('PRODUCT', @Sp2Id, @NguoiMuaId, N'dsmoke Báo cáo vi phạm lần 2 (trùng)', 'PENDING');
+
+    INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D9. Chong gui trung bao cao PENDING', 0, N'Lẽ ra phải chặn trùng lặp');
+END TRY
+BEGIN CATCH
+    IF ERROR_NUMBER() IN (2601, 2627)
+        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D9. Chong gui trung bao cao PENDING', 1, N'Bắt đúng filtered unique index UQ_BaoCao_ChongTrung');
+    ELSE
+        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D9. Chong gui trung bao cao PENDING', 0, ERROR_MESSAGE());
+END CATCH
+
 -- ------------------------------------------------------------------ DỌN DẸP SAU KHI TEST
 DELETE FROM dbo.LichSuTrangThaiDonHang WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung = @NguoiMuaId);
 DELETE FROM dbo.ChiTietDonHang WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung = @NguoiMuaId);

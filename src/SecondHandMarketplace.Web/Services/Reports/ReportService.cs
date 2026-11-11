@@ -225,30 +225,54 @@ public class ReportService : IReportService
                 var (okUser, errUser) = await _userAdmin.LockUserAsync(adminId, bc.MaDoiTuong, lyDoXuLy);
                 if (!okUser)
                 {
-                    await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errUser);
-                    return (false, errUser ?? "Không thể khóa tài khoản người dùng.");
+                    var userTarget = await _db.NguoiDungs.FindAsync(bc.MaDoiTuong);
+                    if (userTarget != null && userTarget.TrangThai == "LOCKED")
+                    {
+                        lyDoXuLy += " (Người dùng đã bị khóa trước đó)";
+                    }
+                    else
+                    {
+                        await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errUser);
+                        return (false, errUser ?? "Không thể khóa tài khoản người dùng.");
+                    }
                 }
 
-                await _notifications.CreateAsync(bc.MaDoiTuong, NotificationTypes.System,
-                    "Tài khoản của bạn đã bị khóa",
-                    $"Tài khoản của bạn đã bị khóa do vi phạm quy định sàn: {lyDoXuLy}");
+                try
+                {
+                    await _notifications.CreateAsync(bc.MaDoiTuong, NotificationTypes.System,
+                        "Tài khoản của bạn đã bị khóa",
+                        $"Tài khoản của bạn đã bị khóa do vi phạm quy định sàn: {lyDoXuLy}");
+                }
+                catch { /* Best effort */ }
             }
             else if (bc.LoaiDoiTuong == "SHOP")
             {
                 var (okShop, errShop) = await _shopService.LockShopAsync(adminId, bc.MaDoiTuong, lyDoXuLy);
                 if (!okShop)
                 {
-                    await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errShop);
-                    return (false, errShop ?? "Không thể khóa cửa hàng.");
+                    var shopTarget = await _db.CuaHangs.FindAsync(bc.MaDoiTuong);
+                    if (shopTarget != null && shopTarget.TrangThai == "LOCKED")
+                    {
+                        lyDoXuLy += " (Cửa hàng đã bị khóa trước đó)";
+                    }
+                    else
+                    {
+                        await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errShop);
+                        return (false, errShop ?? "Không thể khóa cửa hàng.");
+                    }
                 }
 
-                var shop = await _db.CuaHangs.FindAsync(bc.MaDoiTuong);
-                if (shop != null)
+                try
                 {
-                    await _notifications.CreateAsync(shop.MaNguoiDung, NotificationTypes.System,
-                        "Cửa hàng của bạn đã bị khóa",
-                        $"Cửa hàng '{shop.TenShop}' đã bị tạm khóa do vi phạm chính sách: {lyDoXuLy}");
+                    var shop = await _db.CuaHangs.FindAsync(bc.MaDoiTuong);
+                    if (shop != null)
+                    {
+                        await _notifications.CreateAsync(shop.MaNguoiDung, NotificationTypes.System,
+                            "Cửa hàng của bạn đã bị khóa",
+                            $"Cửa hàng '{shop.TenShop}' đã bị tạm khóa do vi phạm chính sách: {lyDoXuLy}");
+                    }
                 }
+                catch { /* Best effort */ }
             }
             else if (bc.LoaiDoiTuong == "PRODUCT")
             {

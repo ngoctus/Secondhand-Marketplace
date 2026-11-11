@@ -201,7 +201,7 @@ public class DonHangChiTietViewModel
 
 
 
-    public bool CoTheHuy => TrangThai == "PENDING" || TrangThai == "CONFIRMED";
+    public bool CoTheHuy => SecondHandMarketplace.Web.Common.OrderRules.NguoiMuaDuocHuy(TrangThai);
 
     public bool CoTheXacNhanNhanHang => TrangThai == "DELIVERED" || (HinhThucNhan == "GAP_TRUC_TIEP" && TrangThai == "SHIPPING");
 

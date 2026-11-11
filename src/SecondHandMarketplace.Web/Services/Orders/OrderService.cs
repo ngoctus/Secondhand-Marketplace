@@ -135,8 +135,7 @@ public class OrderService : IOrderService
                 };
             }
             // Kiến trúc: Stored procedure sp_DatHangTuGio trong database/06_procedures.sql đã tự động
-            // tạo thông báo (NotificationTypes.Order) cho chủ cửa hàng (người bán), đồng thời ghi nhận bản ghi ThanhToan,
-            // đồng thời ghi nhận bản ghi ThanhToan với trạng thái tương ứng, đảm bảo tính toàn vẹn (ACID).
+            // tạo thông báo (NotificationTypes.Order) cho chủ cửa hàng (người bán), đồng thời ghi nhận bản ghi ThanhToan với trạng thái tương ứng, đảm bảo tính toàn vẹn (ACID).
             if (_db.Database.IsRelational())
             {
                 var conn = _db.Database.GetDbConnection();
@@ -464,6 +463,7 @@ public class OrderService : IOrderService
 
         var maTranhChap = await _db.TranhChaps
             .Where(t => t.MaDonHang == maDonHang)
+            .OrderByDescending(t => t.NgayTao)
             .Select(t => (int?)t.MaTranhChap)
             .FirstOrDefaultAsync();
 
