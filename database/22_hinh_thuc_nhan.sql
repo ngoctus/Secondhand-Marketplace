@@ -230,6 +230,7 @@ BEGIN
           AND sp.TrangThai = 'ACTIVE'
           AND sp.DaXoa = 0
           AND ch.TrangThai = 'ACTIVE'
+          AND ch.MaNguoiDung <> @MaNguoiDung
     )
         THROW 51103, N'Không có sản phẩm hợp lệ nào được chọn trong giỏ hàng.', 1;
 

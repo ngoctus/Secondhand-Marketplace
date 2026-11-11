@@ -31,7 +31,10 @@ public class CartService : ICartService
         {
             var sp = gh.SanPham;
             var ch = sp?.CuaHang;
-            var coTheMua = sp != null && !sp.DaXoa && sp.TrangThai == "ACTIVE" && ch != null && ch.TrangThai == "ACTIVE" && ch.NguoiDung != null && ch.NguoiDung.TrangThai == "ACTIVE";
+            var coTheMua = sp != null && !sp.DaXoa && sp.TrangThai == "ACTIVE" 
+                           && ch != null && ch.TrangThai == "ACTIVE" 
+                           && ch.NguoiDung != null && ch.NguoiDung.TrangThai == "ACTIVE"
+                           && ch.MaNguoiDung != maNguoiDung;
 
             return new CartItemViewModel
             {

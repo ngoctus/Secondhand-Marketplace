@@ -2,11 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 using SecondHandMarketplace.Web.Models.ViewModels.Cart;
 
-
-
 namespace SecondHandMarketplace.Web.Models.ViewModels.Orders;
-
-
 
 /// <summary>Dữ liệu màn hình Thanh toán & Đặt hàng.</summary>
 
@@ -20,23 +16,17 @@ public class CheckoutViewModel
 
     public string TenNguoiNhan { get; set; } = string.Empty;
 
-
-
     [Required(ErrorMessage = "Vui lòng nhập số điện thoại nhận hàng.")]
 
     [RegularExpression(@"^[0-9]{9,15}$", ErrorMessage = "Số điện thoại từ 9 đến 15 chữ số.")]
 
     public string SoDienThoaiNhan { get; set; } = string.Empty;
 
-
-
     [Required(ErrorMessage = "Vui lòng nhập địa chỉ nhận hàng.")]
 
     [StringLength(500)]
 
     public string DiaChiNhan { get; set; } = string.Empty;
-
-
 
     public string PhuongThucThanhToan { get; set; } = "COD"; // COD, BANK_TRANSFER, ONLINE
 
@@ -45,15 +35,11 @@ public class CheckoutViewModel
     /// </summary>
     public string HinhThucNhan { get; set; } = "GIAO_HANG";
 
-
-
     public int? MaSanPhamMuaNgay { get; set; }
 
     public CartIndexViewModel? GioHang { get; set; }
 
     public CartItemViewModel? SanPhamMuaNgay { get; set; }
-
-
 
     public decimal TienHang { get; set; }
 
@@ -63,8 +49,6 @@ public class CheckoutViewModel
     public decimal TongThanhToan => TienHang + PhiVanChuyen;
 
 }
-
-
 
 /// <summary>Kết quả sau khi đặt hàng.</summary>
 
@@ -79,8 +63,6 @@ public class DatHangResultViewModel
     public List<string> DanhSachMaDon { get; set; } = new();
 
 }
-
-
 
 /// <summary>Tổng quan một đơn hàng trong danh sách đơn mua.</summary>
 
@@ -120,8 +102,6 @@ public class DonHangItemViewModel
 
 }
 
-
-
 /// <summary>Một món hàng trong đơn.</summary>
 
 public class ChiTietDonHangItemViewModel
@@ -139,8 +119,6 @@ public class ChiTietDonHangItemViewModel
     public decimal Gia { get; set; }
 
 }
-
-
 
 /// <summary>Chi tiết đầy đủ đơn hàng phía người mua.</summary>
 
@@ -192,15 +170,11 @@ public class DonHangChiTietViewModel
 
     public DateTime? ThoiGianHuy { get; set; }
 
-
-
     public List<ChiTietDonHangItemViewModel> DanhSachSanPham { get; set; } = new();
 
     public List<LichSuTrangThaiDonViewModel> LichSuTrangThai { get; set; } = new();
 
     public int? MaTranhChap { get; set; }
-
-
 
     public bool CoTheHuy => SecondHandMarketplace.Web.Common.OrderRules.NguoiMuaDuocHuy(TrangThai);
 
@@ -209,8 +183,6 @@ public class DonHangChiTietViewModel
     public bool CoTheMoTranhChap => TrangThai == "SHIPPING" || TrangThai == "DELIVERED" || TrangThai == "COMPLETED";
 
 }
-
-
 
 /// <summary>Dòng lịch sử thay đổi trạng thái đơn.</summary>
 

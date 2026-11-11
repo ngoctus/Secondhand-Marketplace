@@ -145,14 +145,18 @@ public class DisputeService : IDisputeService
 
         await _db.SaveChangesAsync();
 
-        // Gửi thông báo cho Người mua
-        await _notifications.CreateAsync(
-            tc.MaNguoiTao,
-            NotificationTypes.Order,
-            "Người bán đã phản hồi khiếu nại",
-            $"Người bán đã phản hồi khiếu nại đơn hàng #{tc.DonHang.MaDon}: \"{phanHoiTrim}\"",
-            tc.MaDonHang
-        );
+        // Gửi thông báo cho Người mua (best-effort)
+        try
+        {
+            await _notifications.CreateAsync(
+                tc.MaNguoiTao,
+                NotificationTypes.Order,
+                "Người bán đã phản hồi khiếu nại",
+                $"Người bán đã phản hồi khiếu nại đơn hàng #{tc.DonHang.MaDon}: \"{phanHoiTrim}\"",
+                tc.MaDonHang
+            );
+        }
+        catch { /* Best-effort: không làm hỏng phản hồi nếu thông báo thất bại */ }
 
         return (true, "Đã gửi phản hồi thành công.");
     }

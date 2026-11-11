@@ -45,7 +45,8 @@ public class OrdersController(
             TenNguoiNhan = request.ReceiverName,
             SoDienThoaiNhan = request.ReceiverPhone,
             DiaChiNhan = request.ReceiverAddress,
-            PhuongThucThanhToan = request.PaymentMethod
+            PhuongThucThanhToan = request.PaymentMethod,
+            HinhThucNhan = request.DeliveryMethod ?? "GIAO_HANG"
         };
 
         var result = await orderService.DatHangTuGioAsync(userId, model);
@@ -86,7 +87,8 @@ public class OrdersController(
             SoDienThoaiNhan = request.ReceiverPhone,
             DiaChiNhan = request.ReceiverAddress,
             PhuongThucThanhToan = request.PaymentMethod,
-            MaSanPhamMuaNgay = request.ProductId
+            MaSanPhamMuaNgay = request.ProductId,
+            HinhThucNhan = request.DeliveryMethod ?? "GIAO_HANG"
         };
 
         var result = await orderService.MuaNgayAsync(userId, request.ProductId, model);
@@ -125,8 +127,14 @@ public class OrdersController(
             TotalAmount = o.TongTien,
             PaymentMethod = o.PhuongThucThanhToan,
             CreatedAt = o.NgayTao,
-            ItemsCount = 1,
-            Items = new List<OrderItemResponse>()
+            ItemsCount = o.ChiTiet.Count,
+            Items = o.ChiTiet.Select(c => new OrderItemResponse
+            {
+                ProductId = c.MaSanPham,
+                ProductName = c.TenSanPham,
+                ThumbnailUrl = c.AnhDaiDien,
+                PriceAtPurchase = c.Gia
+            }).ToList()
         }).ToList();
 
         return ServiceResult<IReadOnlyList<OrderResponse>>.Ok(dtos).ToActionResult(this);

@@ -274,11 +274,31 @@ public class OrderService : IOrderService
                         });
                     }
 
+                    _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+                    {
+                        MaDonHang = don.MaDonHang,
+                        TrangThaiCu = null,
+                        TrangThaiMoi = "PENDING",
+                        LoaiNguoiThucHien = "BUYER",
+                        NguoiThucHienId = maNguoiDung,
+                        LyDo = "Khách hàng đặt hàng từ giỏ hàng",
+                        ThoiGian = DateTime.UtcNow
+                    });
+
                     danhSachMaDon.Add(don.MaDon);
                 }
 
                 _db.GioHangs.RemoveRange(cartItems);
                 await _db.SaveChangesAsync();
+            }
+
+            if (!danhSachMaDon.Any())
+            {
+                return new DatHangResultViewModel
+                {
+                    ThanhCong = false,
+                    ThongBao = "Không có đơn hàng nào được tạo (sản phẩm không còn bán hoặc thuộc cửa hàng của chính bạn)."
+                };
             }
 
             return new DatHangResultViewModel
@@ -360,7 +380,7 @@ public class OrderService : IOrderService
                     };
                 }
 
-                sp.TrangThai = "SOLD";
+                sp.TrangThai = "RESERVED";
                 sp.NgayCapNhat = DateTime.UtcNow;
                 var phiVc = (model.HinhThucNhan == "GAP_TRUC_TIEP") ? 0 : model.PhiVanChuyen;
                 var don = new DonHang
@@ -417,6 +437,17 @@ public class OrderService : IOrderService
                         NgayTao = DateTime.UtcNow
                     });
                 }
+
+                _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+                {
+                    MaDonHang = don.MaDonHang,
+                    TrangThaiCu = null,
+                    TrangThaiMoi = "PENDING",
+                    LoaiNguoiThucHien = "BUYER",
+                    NguoiThucHienId = maNguoiDung,
+                    LyDo = "Khách hàng mua ngay sản phẩm",
+                    ThoiGian = DateTime.UtcNow
+                });
 
                 await _db.SaveChangesAsync();
 
@@ -616,13 +647,40 @@ public class OrderService : IOrderService
             {
                 var donHang = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
                 if (donHang == null) return (false, "Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
-                if (donHang.TrangThai != "DELIVERED")
+                
+                bool hopLe = donHang.TrangThai == "DELIVERED" || (donHang.HinhThucNhan == "GAP_TRUC_TIEP" && donHang.TrangThai == "SHIPPING");
+                if (!hopLe)
                 {
-                    return (false, "Chỉ có thể xác nhận khi đơn hàng đã được giao đến bạn.");
+                    return (false, "Chỉ có thể xác nhận khi đơn hàng đã được giao đến bạn (hoặc đang hẹn gặp trực tiếp).");
                 }
+                var trangThaiCu = donHang.TrangThai;
                 donHang.TrangThai = "COMPLETED";
                 donHang.ThoiGianHoanTat = DateTime.UtcNow;
                 if (donHang.PhuongThucThanhToan == "COD") donHang.TrangThaiThanhToan = "PAID";
+
+                var chiTiets = await _db.ChiTietDonHangs.Where(c => c.MaDonHang == donHang.MaDonHang).ToListAsync();
+                foreach (var ct in chiTiets)
+                {
+                    ct.DangGiuCho = false;
+                    var sp = await _db.SanPhams.FindAsync(ct.MaSanPham);
+                    if (sp != null)
+                    {
+                        sp.TrangThai = "SOLD";
+                        sp.NgayCapNhat = DateTime.UtcNow;
+                    }
+                }
+
+                _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+                {
+                    MaDonHang = donHang.MaDonHang,
+                    TrangThaiCu = trangThaiCu,
+                    TrangThaiMoi = "COMPLETED",
+                    LoaiNguoiThucHien = "BUYER",
+                    NguoiThucHienId = maNguoiDung,
+                    LyDo = "Người mua đã nhận được hàng",
+                    ThoiGian = DateTime.UtcNow
+                });
+
                 await _db.SaveChangesAsync();
             }
 
@@ -673,8 +731,10 @@ public class OrderService : IOrderService
     {
         var don = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
         if (don == null) return (false, "Đơn hàng không tồn tại.");
+        if (don.TrangThai == "CANCELLED") return (false, "Không thể xác nhận thanh toán cho đơn hàng đã hủy.");
         if (don.PhuongThucThanhToan != "BANK_TRANSFER") return (false, "Chỉ có thể xác nhận thanh toán chuyển khoản cho đơn hàng chọn phương thức BANK_TRANSFER.");
         if (don.TrangThaiThanhToan == "PAID") return (true, "Đơn hàng đã được thanh toán trước đó.");
+        if (don.TrangThaiThanhToan == "REFUNDED") return (false, "Đơn hàng đã được hoàn tiền.");
 
         don.TrangThaiThanhToan = "PAID";
         don.NgayCapNhat = DateTime.UtcNow;
@@ -696,13 +756,13 @@ public class OrderService : IOrderService
         if (idList.Count == 0) return (false, "Không có đơn hàng nào.");
 
         var dons = await _db.DonHangs
-            .Where(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung && d.PhuongThucThanhToan == "BANK_TRANSFER")
+            .Where(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung && d.PhuongThucThanhToan == "BANK_TRANSFER" && d.TrangThai != "CANCELLED" && d.TrangThaiThanhToan != "REFUNDED")
             .ToListAsync();
         if (dons.Count == 0) return (false, "Không tìm thấy đơn hàng chuyển khoản hợp lệ thuộc tài khoản của bạn.");
 
         var validDonIds = dons.Select(d => d.MaDonHang).ToList();
 
-        foreach (var don in dons)
+        foreach (var don in dons.Where(d => d.TrangThaiThanhToan != "PAID"))
         {
             don.TrangThaiThanhToan = "PAID";
             don.NgayCapNhat = DateTime.UtcNow;
@@ -726,6 +786,14 @@ public class OrderService : IOrderService
             .FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.CuaHang.MaNguoiDung == chuShopId);
 
         if (don == null) return (false, "Đơn hàng không tồn tại hoặc không thuộc cửa hàng của bạn.");
+        if (don.TrangThai == "CANCELLED") return (false, "Không thể xác nhận nhận tiền cho đơn hàng đã hủy.");
+        var trangThaiHopLe = new[] { "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED" };
+        if (!trangThaiHopLe.Contains(don.TrangThai))
+        {
+            return (false, "Chỉ có thể xác nhận nhận tiền cho đơn hàng đã được xác nhận hoặc đang thực hiện.");
+        }
+        if (don.TrangThaiThanhToan == "REFUNDED") return (false, "Đơn hàng đã được hoàn tiền.");
+        if (don.TrangThaiThanhToan == "PAID") return (true, "Đơn hàng này đã được xác nhận thanh toán trước đó.");
 
         don.TrangThaiThanhToan = "PAID";
         don.NgayCapNhat = DateTime.UtcNow;

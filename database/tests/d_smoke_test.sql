@@ -247,7 +247,7 @@ BEGIN TRY
         INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D8. Chong mo trung tranh chap', 0, N'Lẽ ra phải chặn trùng lặp');
     END
     ELSE
-        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D8. Chong mo trung tranh chap', 1, N'Bỏ qua do không có đơn');
+        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D8. Chong mo trung tranh chap', 0, N'Lỗi: Không tìm thấy đơn hàng test để kiểm tra');
 END TRY
 BEGIN CATCH
     IF ERROR_NUMBER() IN (2601, 2627)

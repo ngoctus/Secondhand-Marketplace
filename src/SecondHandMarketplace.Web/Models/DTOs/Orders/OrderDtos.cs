@@ -28,6 +28,12 @@ public class CreateOrderRequest
     [Required(ErrorMessage = "Vui lòng chọn phương thức thanh toán.")]
     public string PaymentMethod { get; set; } = "COD";
 
+    /// <summary>
+    /// Hình thức nhận hàng: "GIAO_HANG", "GAP_TRUC_TIEP"
+    /// </summary>
+    [StringLength(20)]
+    public string? DeliveryMethod { get; set; } = "GIAO_HANG";
+
     [StringLength(500)]
     public string? Note { get; set; }
 }

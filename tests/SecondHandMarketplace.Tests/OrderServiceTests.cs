@@ -149,7 +149,7 @@ public class OrderServiceTests
 
         // Kiểm tra sản phẩm đã chuyển trạng thái sang SOLD
         var spSauKhiMua = await db.SanPhams.FindAsync(500);
-        Assert.Equal("SOLD", spSauKhiMua!.TrangThai);
+        Assert.Equal("RESERVED", spSauKhiMua!.TrangThai);
 
         // Buyer 2 (id 2) cũng cố mua ngay sản phẩm 500
         var res2 = await service.MuaNgayAsync(2, 500, checkoutVm);
@@ -546,5 +546,84 @@ public class OrderServiceTests
         // Đơn 2001 của victim KHÔNG được bị thay đổi, vẫn là PENDING
         var tt20Db = await db.ThanhToans.FindAsync(2001);
         Assert.Equal("PENDING", tt20Db!.TrangThaiThanhToan);
+    }
+
+    [Fact]
+    public async Task XacNhanThanhToanChuyenKhoanAsync_DonDaHuyHoacHoanTien_KhongChoXacNhan()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_PaymentCancelledCheck");
+        var fakeCart = new FakeCartService();
+        var service = new OrderService(db, fakeCart);
+
+        var donHuy = new DonHang
+        {
+            MaDonHang = 301,
+            MaNguoiDung = 5,
+            MaCuaHang = 1,
+            MaDon = "DH301",
+            PhuongThucThanhToan = "BANK_TRANSFER",
+            TrangThai = "CANCELLED"
+        };
+        var donHoanTien = new DonHang
+        {
+            MaDonHang = 302,
+            MaNguoiDung = 5,
+            MaCuaHang = 1,
+            MaDon = "DH302",
+            PhuongThucThanhToan = "BANK_TRANSFER",
+            TrangThai = "CONFIRMED",
+            TrangThaiThanhToan = "REFUNDED"
+        };
+        db.DonHangs.AddRange(donHuy, donHoanTien);
+        await db.SaveChangesAsync();
+
+        var (ok1, msg1) = await service.XacNhanThanhToanChuyenKhoanAsync(5, 301);
+        Assert.False(ok1);
+        Assert.Contains("đã hủy", msg1);
+
+        var (ok2, msg2) = await service.XacNhanThanhToanChuyenKhoanAsync(5, 302);
+        Assert.False(ok2);
+        Assert.Contains("hoàn tiền", msg2);
+    }
+
+    [Fact]
+    public async Task XacNhanDaNhanTienShopAsync_DonPendingHoacDaHuy_KhongChoXacNhan()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_ShopPaymentPendingCheck");
+        var fakeCart = new FakeCartService();
+        var service = new OrderService(db, fakeCart);
+
+        var shop = new CuaHang { MaCuaHang = 7, MaNguoiDung = 77, TenShop = "Shop 77", TrangThai = "ACTIVE" };
+        var donPending = new DonHang
+        {
+            MaDonHang = 401,
+            MaNguoiDung = 2,
+            MaCuaHang = 7,
+            MaDon = "DH401",
+            TrangThai = "PENDING",
+            PhuongThucThanhToan = "BANK_TRANSFER",
+            TrangThaiThanhToan = "UNPAID"
+        };
+        var donHuy = new DonHang
+        {
+            MaDonHang = 402,
+            MaNguoiDung = 2,
+            MaCuaHang = 7,
+            MaDon = "DH402",
+            TrangThai = "CANCELLED",
+            PhuongThucThanhToan = "BANK_TRANSFER",
+            TrangThaiThanhToan = "UNPAID"
+        };
+        db.CuaHangs.Add(shop);
+        db.DonHangs.AddRange(donPending, donHuy);
+        await db.SaveChangesAsync();
+
+        var (okPending, msgPending) = await service.XacNhanDaNhanTienShopAsync(77, 401);
+        Assert.False(okPending);
+        Assert.Contains("đã được xác nhận hoặc đang thực hiện", msgPending);
+
+        var (okHuy, msgHuy) = await service.XacNhanDaNhanTienShopAsync(77, 402);
+        Assert.False(okHuy);
+        Assert.Contains("đã hủy", msgHuy);
     }
 }

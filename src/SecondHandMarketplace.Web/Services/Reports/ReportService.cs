@@ -202,11 +202,15 @@ public class ReportService : IReportService
             // Ghi Audit Log thành công
             await _audit.LogAsync(adminId, "DISMISS_REPORT", "BaoCao", maBaoCao, "SUCCESS", lyDoBoQua);
 
-            // Gửi thông báo cho người báo cáo
-            await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
-                "Kết quả xem xét báo cáo",
-                $"Báo cáo của bạn đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} đã được ban quản trị xem xét và ghi nhận không vi phạm quy định.",
-                bc.MaBaoCao);
+            // Gửi thông báo cho người báo cáo (best-effort)
+            try
+            {
+                await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
+                    "Kết quả xem xét báo cáo",
+                    $"Báo cáo của bạn đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} đã được ban quản trị xem xét và ghi nhận không vi phạm quy định.",
+                    bc.MaBaoCao);
+            }
+            catch { /* Best-effort */ }
 
             return (true, "Đã bỏ qua báo cáo thành công.");
         }
@@ -373,11 +377,15 @@ public class ReportService : IReportService
             // Ghi Audit Log xử lý báo cáo thành công
             await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "SUCCESS", lyDoXuLy);
 
-            // Gửi thông báo cảm ơn người báo cáo
-            await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
-                "Báo cáo của bạn đã được xử lý",
-                $"Ban quản trị đã tiến hành xử lý vi phạm đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} theo báo cáo của bạn. Cảm ơn sự đóng góp của bạn!",
-                bc.MaBaoCao);
+            // Gửi thông báo cảm ơn người báo cáo (best-effort)
+            try
+            {
+                await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
+                    "Báo cáo của bạn đã được xử lý",
+                    $"Ban quản trị đã tiến hành xử lý vi phạm đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} theo báo cáo của bạn. Cảm ơn sự đóng góp của bạn!",
+                    bc.MaBaoCao);
+            }
+            catch { /* Best-effort */ }
 
             return (true, "Đã cập nhật xử lý báo cáo thành công.");
         }
