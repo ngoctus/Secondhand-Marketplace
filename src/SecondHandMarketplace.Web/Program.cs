@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using SecondHandMarketplace.Web.Hubs;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Security;
@@ -17,6 +18,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddControllersWithViews();
+        builder.Services.AddSignalR();
         builder.Services.AddDatabase(builder.Configuration);
         builder.Services.AddAppServices();
         builder.Services.AddSingleton<IMatKhauService, MatKhauService>();
@@ -141,6 +143,9 @@ public class Program
         app.UseAuthorization();
         app.MapStaticAssets();
         app.MapControllers();
+        app.MapHub<AuctionHub>("/hubs/auction");
+        app.MapHub<NotificationHub>("/hubs/notification");
+        app.MapHub<ChatHub>("/hubs/chat");
         app.MapControllerRoute(name: "areas", pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}").WithStaticAssets();
         app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}").WithStaticAssets();
         app.Run();

@@ -20,6 +20,8 @@ using SecondHandMarketplace.Web.Services.Reports;
 using SecondHandMarketplace.Web.Services.Reviews;
 using SecondHandMarketplace.Web.Services.Accounts;
 using SecondHandMarketplace.Web.Services.Shops;
+using SecondHandMarketplace.Web.Services.Realtime;
+using SecondHandMarketplace.Web.Services.Chat;
 
 namespace SecondHandMarketplace.Web.Common.Extensions;
 
@@ -60,6 +62,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDashboardService, DashboardService>();
         // Phần E
         services.AddScoped<IOrderManagementService, OrderManagementService>();
+        services.AddScoped<IChatService, ChatService>();
+        services.AddScoped<IAuctionRealtime, AuctionRealtime>();
         services.AddScoped<IAuctionService, AuctionService>();
         services.AddHostedService<AuctionBackgroundService>();
 
