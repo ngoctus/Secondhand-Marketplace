@@ -92,6 +92,17 @@ public class CartController : UserBaseController
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> XoaMonKhongKhaDung()
+    {
+        var userId = User.LayNguoiDungId()!.Value;
+        var count = await _cartService.XoaMonKhongKhaDungAsync(userId);
+        if (count > 0) this.ThongBaoThanhCong($"Đã xóa {count} món không còn khả dụng khỏi giỏ hàng.");
+        else this.ThongBaoThanhCong("Giỏ hàng không có món nào cần dọn.");
+        return RedirectToAction(nameof(Index));
+    }
+
     /// <summary>Đếm số lượng món trong giỏ để cập nhật icon giỏ hàng trên thanh menu.</summary>
     [HttpGet]
     public async Task<IActionResult> DemSoLuong()

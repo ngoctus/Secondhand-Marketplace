@@ -348,6 +348,7 @@ public sealed class OrderManagementService(AppDbContext db, IAuditLogService aud
             RecipientPhone = d.SoDienThoaiNhan,
 
             RecipientAddress = d.DiaChiNhan,
+            DeliveryWindow = d.KhungGioNhan,
 
             BuyerName = d.NguoiDung.HoTen,
 

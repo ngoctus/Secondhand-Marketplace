@@ -14,6 +14,7 @@ rem Functions (07) phai co truoc Views/Procedures (05/06) vi cac procedure su du
 for %%F in (
     01_create_database.sql
     02_create_tables.sql
+    22_checkout_delivery_window.sql
     03_constraints.sql
     04_indexes.sql
     07_functions.sql

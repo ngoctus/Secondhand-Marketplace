@@ -36,9 +36,13 @@ public class CheckoutViewModel
 
     public string DiaChiNhan { get; set; } = string.Empty;
 
+    [StringLength(200)]
+    public string? KhungGioNhan { get; set; }
 
 
-    public string PhuongThucThanhToan { get; set; } = "COD"; // COD, BANK_TRANSFER, ONLINE
+
+    [RegularExpression("^(COD|BANK_TRANSFER)$", ErrorMessage = "Phương thức thanh toán hiện chưa được hỗ trợ.")]
+    public string PhuongThucThanhToan { get; set; } = "COD";
 
 
 
@@ -153,6 +157,8 @@ public class DonHangChiTietViewModel
     public string SoDienThoaiNhan { get; set; } = string.Empty;
 
     public string DiaChiNhan { get; set; } = string.Empty;
+
+    public string? KhungGioNhan { get; set; }
 
     public decimal TienHang { get; set; }
 

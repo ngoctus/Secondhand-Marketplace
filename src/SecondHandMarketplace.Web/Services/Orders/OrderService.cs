@@ -44,6 +44,7 @@ public class OrderService : IOrderService
             TenNguoiNhan = user?.HoTen ?? string.Empty,
             SoDienThoaiNhan = user?.SoDienThoai ?? string.Empty,
             DiaChiNhan = user?.DiaChiMacDinh ?? string.Empty,
+            KhungGioNhan = string.Empty,
             GioHang = cartVm,
             TienHang = tienHang,
             PhiVanChuyen = 0,
@@ -90,6 +91,7 @@ public class OrderService : IOrderService
             TenNguoiNhan = user?.HoTen ?? string.Empty,
             SoDienThoaiNhan = user?.SoDienThoai ?? string.Empty,
             DiaChiNhan = user?.DiaChiMacDinh ?? string.Empty,
+            KhungGioNhan = string.Empty,
             MaSanPhamMuaNgay = maSanPham,
             SanPhamMuaNgay = itemVm,
             TienHang = itemVm.Gia,
@@ -148,7 +150,8 @@ public class OrderService : IOrderService
                 cmd.Parameters.Add(new SqlParameter("@TenNguoiNhan", model.TenNguoiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@SoDienThoaiNhan", model.SoDienThoaiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@DiaChiNhan", model.DiaChiNhan.Trim()));
-                cmd.Parameters.Add(new SqlParameter("@PhiVanChuyenMoiDon", model.PhiVanChuyen));
+                cmd.Parameters.Add(new SqlParameter("@KhungGioNhan", (object?)model.KhungGioNhan?.Trim() ?? DBNull.Value));
+                cmd.Parameters.Add(new SqlParameter("@PhiVanChuyenMoiDon", 0m));
                 cmd.Parameters.Add(new SqlParameter("@PhuongThucThanhToan", model.PhuongThucThanhToan));
 
                 using var reader = await cmd.ExecuteReaderAsync();
@@ -173,15 +176,16 @@ public class OrderService : IOrderService
                     MaDon = "DH" + DateTime.UtcNow.Ticks.ToString()[^8..],
                     MaNguoiDung = maNguoiDung,
                     MaCuaHang = maCuaHangFallback,
-                    TienHang = model.TienHang,
-                    PhiVanChuyen = model.PhiVanChuyen,
-                    TongTien = model.TongThanhToan,
+                    TienHang = await _db.GioHangs.Where(g => g.MaNguoiDung == maNguoiDung && g.DaChon && g.SanPham.TrangThai == "ACTIVE" && !g.SanPham.DaXoa).SumAsync(g => g.SanPham.Gia ?? 0m),
+                    PhiVanChuyen = 0m,
+                    TongTien = await _db.GioHangs.Where(g => g.MaNguoiDung == maNguoiDung && g.DaChon && g.SanPham.TrangThai == "ACTIVE" && !g.SanPham.DaXoa).SumAsync(g => g.SanPham.Gia ?? 0m),
                     TrangThai = "PENDING",
-                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "PAID" : "UNPAID",
+                    TrangThaiThanhToan = "UNPAID",
                     PhuongThucThanhToan = model.PhuongThucThanhToan,
                     TenNguoiNhan = model.TenNguoiNhan.Trim(),
                     SoDienThoaiNhan = model.SoDienThoaiNhan.Trim(),
                     DiaChiNhan = model.DiaChiNhan.Trim(),
+                    KhungGioNhan = model.KhungGioNhan?.Trim(),
                     NgayTao = DateTime.UtcNow
                 };
                 _db.DonHangs.Add(don);
@@ -194,8 +198,8 @@ public class OrderService : IOrderService
                     MaGiaoDich = "TXN_" + don.MaDon,
                     PhuongThucThanhToan = model.PhuongThucThanhToan,
                     SoTien = don.TongTien,
-                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "SUCCESS" : "PENDING",
-                    ThoiGianThanhToan = model.PhuongThucThanhToan == "ONLINE" ? DateTime.UtcNow : null,
+                    TrangThaiThanhToan = "PENDING",
+                    ThoiGianThanhToan = null,
                     NgayTao = DateTime.UtcNow
                 };
                 _db.ThanhToans.Add(tt);
@@ -239,7 +243,8 @@ public class OrderService : IOrderService
                 cmd.Parameters.Add(new SqlParameter("@TenNguoiNhan", model.TenNguoiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@SoDienThoaiNhan", model.SoDienThoaiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@DiaChiNhan", model.DiaChiNhan.Trim()));
-                cmd.Parameters.Add(new SqlParameter("@PhiVanChuyen", model.PhiVanChuyen));
+                cmd.Parameters.Add(new SqlParameter("@KhungGioNhan", (object?)model.KhungGioNhan?.Trim() ?? DBNull.Value));
+                cmd.Parameters.Add(new SqlParameter("@PhiVanChuyen", 0m));
                 cmd.Parameters.Add(new SqlParameter("@PhuongThucThanhToan", model.PhuongThucThanhToan));
 
                 var outParam = new SqlParameter("@MaDonHangMoi", SqlDbType.Int)
@@ -288,14 +293,15 @@ public class OrderService : IOrderService
                     MaNguoiDung = maNguoiDung,
                     MaCuaHang = sp.MaCuaHang,
                     TienHang = sp.Gia ?? 0,
-                    TongTien = (sp.Gia ?? 0) + model.PhiVanChuyen,
-                    PhiVanChuyen = model.PhiVanChuyen,
+                    TongTien = sp.Gia ?? 0m,
+                    PhiVanChuyen = 0m,
                     TrangThai = "PENDING",
-                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "PAID" : "UNPAID",
+                    TrangThaiThanhToan = "UNPAID",
                     PhuongThucThanhToan = model.PhuongThucThanhToan,
                     TenNguoiNhan = model.TenNguoiNhan.Trim(),
                     SoDienThoaiNhan = model.SoDienThoaiNhan.Trim(),
                     DiaChiNhan = model.DiaChiNhan.Trim(),
+                    KhungGioNhan = model.KhungGioNhan?.Trim(),
                     NgayTao = DateTime.UtcNow
                 };
                 _db.DonHangs.Add(don);
@@ -307,8 +313,8 @@ public class OrderService : IOrderService
                     MaGiaoDich = "TXN_" + don.MaDon,
                     PhuongThucThanhToan = model.PhuongThucThanhToan,
                     SoTien = don.TongTien,
-                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "SUCCESS" : "PENDING",
-                    ThoiGianThanhToan = model.PhuongThucThanhToan == "ONLINE" ? DateTime.UtcNow : null,
+                    TrangThaiThanhToan = "PENDING",
+                    ThoiGianThanhToan = null,
                     NgayTao = DateTime.UtcNow
                 };
                 _db.ThanhToans.Add(tt);
@@ -400,6 +406,7 @@ public class OrderService : IOrderService
             TenNguoiNhan = d.TenNguoiNhan,
             SoDienThoaiNhan = d.SoDienThoaiNhan,
             DiaChiNhan = d.DiaChiNhan,
+            KhungGioNhan = d.KhungGioNhan,
             TienHang = d.TienHang,
             PhiVanChuyen = d.PhiVanChuyen,
             TongTien = d.TongTien,
@@ -562,47 +569,20 @@ public class OrderService : IOrderService
 
     public async Task<(bool ThanhCong, string? ThongBao)> XacNhanThanhToanChuyenKhoanAsync(int maNguoiDung, int maDonHang)
     {
-        var don = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
-        if (don == null) return (false, "Đơn hàng không tồn tại.");
-        if (don.TrangThaiThanhToan == "PAID") return (true, "Đơn hàng đã được thanh toán trước đó.");
-
-        don.TrangThaiThanhToan = "PAID";
-        don.NgayCapNhat = DateTime.UtcNow;
-
-        var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
-        if (tt != null)
-        {
-            tt.TrangThaiThanhToan = "SUCCESS";
-            tt.ThoiGianThanhToan = DateTime.UtcNow;
-        }
-
-        await _db.SaveChangesAsync();
-        return (true, "Xác nhận chuyển khoản thành công! Cảm ơn bạn.");
+        var exists = await _db.DonHangs.AnyAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
+        return exists
+            ? (false, "Hệ thống chưa kết nối xác minh ngân hàng. Đơn vẫn chờ đối soát và chưa được ghi nhận đã thanh toán.")
+            : (false, "Đơn hàng không tồn tại.");
     }
 
     public async Task<(bool ThanhCong, string? ThongBao)> XacNhanThanhToanTatCaChuyenKhoanAsync(int maNguoiDung, IEnumerable<int> maDonHangs)
     {
-        var idList = maDonHangs.ToList();
+        var idList = maDonHangs.Distinct().ToList();
         if (idList.Count == 0) return (false, "Không có đơn hàng nào.");
-
-        var dons = await _db.DonHangs.Where(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung).ToListAsync();
-        if (dons.Count == 0) return (false, "Đơn hàng không tồn tại.");
-
-        foreach (var don in dons)
-        {
-            don.TrangThaiThanhToan = "PAID";
-            don.NgayCapNhat = DateTime.UtcNow;
-        }
-
-        var tts = await _db.ThanhToans.Where(t => idList.Contains(t.MaDonHang)).ToListAsync();
-        foreach (var tt in tts)
-        {
-            tt.TrangThaiThanhToan = "SUCCESS";
-            tt.ThoiGianThanhToan = DateTime.UtcNow;
-        }
-
-        await _db.SaveChangesAsync();
-        return (true, "Xác nhận chuyển khoản thành công cho các đơn hàng! Cảm ơn bạn.");
+        var exists = await _db.DonHangs.AnyAsync(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung);
+        return exists
+            ? (false, "Hệ thống chưa kết nối xác minh ngân hàng. Các đơn vẫn chờ đối soát và chưa được ghi nhận đã thanh toán.")
+            : (false, "Đơn hàng không tồn tại.");
     }
 
     private static string LayThongBaoLoi(Exception ex) => SqlLoi.ThongBao(ex);

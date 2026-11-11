@@ -34,6 +34,13 @@
     }
     else
     {
+        @if (Model.DanhSachNhomShop.SelectMany(g => g.Items).Any(i => !i.CoTheMua))
+        {
+            <form asp-area="User" asp-controller="Cart" asp-action="XoaMonKhongKhaDung" method="post" class="mb-3">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Dọn các món đã bán hoặc không còn khả dụng</button>
+            </form>
+        }
         <div class="row g-4">
             <!-- Danh sách sản phẩm phân nhóm theo từng shop -->
             <div class="col-lg-8">

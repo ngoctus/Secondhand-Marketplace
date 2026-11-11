@@ -20,12 +20,15 @@ Chạy `run-db.bat` để tạo database `SecondHandMarketplace` và nạp dữ 
 - `12_tranhchap_baocao.sql`: phần Tranh chấp và Báo cáo (người D phụ trách).
 - `13_daugia.sql`: phần Đấu giá (người E phụ trách).
 - `14_donhang_admin.sql`: thủ tục Admin can thiệp đơn hàng `sp_AdminCapNhatTrangThaiDon` (người E phụ trách).
+- `22_checkout_delivery_window.sql`: bổ sung khung giờ nhận hàng cho đơn; chạy khi nâng cấp database đã có dữ liệu.
 
 Bốn file `10`–`13` được tạo sẵn chỉ có `USE SecondHandMarketplace; GO`; file `14` do người E bổ sung thêm. Thành viên phụ trách bổ sung SQL vào đúng file của mình, không sửa `02_create_tables.sql` hoặc `09_seed_data.sql`.
 
 ## Thứ tự thực thi
 
 `run-db.bat` chạy theo thứ tự phụ thuộc: database, tables, constraints, indexes, functions, views, procedures, triggers, seed data, rồi các file mở rộng. `07_functions.sql` phải chạy trước `06_procedures.sql` vì stored procedure sử dụng các hàm đã định nghĩa.
+
+Với database đã tồn tại, chạy `22_checkout_delivery_window.sql` trước khi nạp lại `06_procedures.sql` phiên bản mới. Database tạo mới đã có cột này trong `02_create_tables.sql`.
 
 ## Tài khoản dữ liệu mẫu
 
