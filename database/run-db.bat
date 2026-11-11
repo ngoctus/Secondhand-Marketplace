@@ -75,6 +75,15 @@ for %%F in (30_seed_dia_chi_shop.sql 31_seed_san_pham.sql 32_seed_don_hang.sql 3
             exit /b 1
         )
     )
+    if exist "33_seed_danh_gia.sql" (
+        echo Running 33_seed_danh_gia.sql...
+        sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "33_seed_danh_gia.sql"
+        if errorlevel 1 (
+            echo ERROR: 33_seed_danh_gia.sql failed.
+            pause
+            exit /b 1
+        )
+    )
 )
 
 :done
