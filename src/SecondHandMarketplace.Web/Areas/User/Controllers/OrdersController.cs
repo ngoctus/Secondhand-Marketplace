@@ -79,6 +79,11 @@ public class OrdersController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
 
+        if (model.HinhThucNhan == "GAP_TRUC_TIEP" || model.PhiVanChuyen < 0)
+        {
+            model.PhiVanChuyen = 0;
+        }
+
         if (!ModelState.IsValid)
         {
             if (model.MaSanPhamMuaNgay.HasValue)

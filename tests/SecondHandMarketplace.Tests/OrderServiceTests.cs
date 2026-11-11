@@ -475,4 +475,76 @@ public class OrderServiceTests
         Assert.All(chiTiets, ct => Assert.True(ct.DangGiuCho));
     }
 
+    [Fact]
+    public async Task DatHangTuGioAsync_GapTrucTiep_EpPhiVanChuyenVeKhong_VaGuiThongBaoChoShop()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_EpPhiShip0VaThongBaoShop");
+        var fakeCart = new FakeCartService();
+        var service = new OrderService(db, fakeCart);
+
+        var shop = new CuaHang { MaCuaHang = 30, MaNguoiDung = 300, TenShop = "Shop C", TrangThai = "ACTIVE" };
+        db.CuaHangs.Add(shop);
+
+        var sp = new SanPham { MaSanPham = 301, MaCuaHang = 30, Ten = "Sản phẩm C1", Gia = 150000, TrangThai = "ACTIVE", CuaHang = shop };
+        db.SanPhams.Add(sp);
+
+        db.GioHangs.Add(new GioHang { MaGioHang = 30, MaNguoiDung = 6, MaSanPham = 301, DaChon = true, SanPham = sp });
+        await db.SaveChangesAsync();
+
+        var model = new SecondHandMarketplace.Web.Models.ViewModels.Orders.CheckoutViewModel
+        {
+            TenNguoiNhan = "Trần Thị B",
+            SoDienThoaiNhan = "0912345678",
+            DiaChiNhan = "Quán trà sữa cổng UTC2",
+            PhiVanChuyen = 50000, // Cố tình truyền 50,000đ khi gặp trực tiếp
+            PhuongThucThanhToan = "COD",
+            HinhThucNhan = "GAP_TRUC_TIEP"
+        };
+
+        var result = await service.DatHangTuGioAsync(6, model);
+
+        Assert.True(result.ThanhCong);
+        var don = await db.DonHangs.FirstOrDefaultAsync(d => d.MaNguoiDung == 6);
+        Assert.NotNull(don);
+        Assert.Equal(0, don.PhiVanChuyen);
+        Assert.Equal(150000, don.TongTien);
+
+        // Kiểm tra có thông báo cho người bán
+        var thongBao = await db.ThongBaos.FirstOrDefaultAsync(tb => tb.MaNguoiDung == 300);
+        Assert.NotNull(thongBao);
+        Assert.Equal("ORDER", thongBao.Loai);
+    }
+
+    [Fact]
+    public async Task XacNhanThanhToanTatCaChuyenKhoanAsync_ChiCapNhatDonCuaChinhMinh_BaoVeIDOR()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_BatchPaymentIDOR");
+        var fakeCart = new FakeCartService();
+        var service = new OrderService(db, fakeCart);
+
+        // Đơn của user 10
+        var don10 = new DonHang { MaDonHang = 1001, MaNguoiDung = 10, MaCuaHang = 1, MaDon = "DH1001", PhuongThucThanhToan = "BANK_TRANSFER" };
+        var tt10 = new ThanhToan { MaThanhToan = 1001, MaDonHang = 1001, PhuongThucThanhToan = "BANK_TRANSFER", TrangThaiThanhToan = "PENDING" };
+
+        // Đơn của victim user 20
+        var don20 = new DonHang { MaDonHang = 2001, MaNguoiDung = 20, MaCuaHang = 2, MaDon = "DH2001", PhuongThucThanhToan = "BANK_TRANSFER" };
+        var tt20 = new ThanhToan { MaThanhToan = 2001, MaDonHang = 2001, PhuongThucThanhToan = "BANK_TRANSFER", TrangThaiThanhToan = "PENDING" };
+
+        db.DonHangs.AddRange(don10, don20);
+        db.ThanhToans.AddRange(tt10, tt20);
+        await db.SaveChangesAsync();
+
+        // User 10 cố gắng POST cả đơn của mình (1001) lẫn đơn của user khác (2001)
+        var (ok, _) = await service.XacNhanThanhToanTatCaChuyenKhoanAsync(10, new List<int> { 1001, 2001 });
+
+        Assert.True(ok);
+
+        // Đơn 1001 của user 10 phải được cập nhật SUCCESS
+        var tt10Db = await db.ThanhToans.FindAsync(1001);
+        Assert.Equal("SUCCESS", tt10Db!.TrangThaiThanhToan);
+
+        // Đơn 2001 của victim KHÔNG được bị thay đổi, vẫn là PENDING
+        var tt20Db = await db.ThanhToans.FindAsync(2001);
+        Assert.Equal("PENDING", tt20Db!.TrangThaiThanhToan);
+    }
 }

@@ -86,6 +86,24 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_BaoCao_DoiTuong' AND o
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_BaoCao_TrangThai' AND object_id = OBJECT_ID('BaoCao'))
     CREATE NONCLUSTERED INDEX IX_BaoCao_TrangThai ON BaoCao(TrangThai);
 
+-- Dọn dẹp bản ghi báo cáo trùng PENDING cũ nếu có trên DB dev trước khi tạo unique index
+IF EXISTS (
+    SELECT MaNguoiBaoCao, LoaiDoiTuong, MaDoiTuong 
+    FROM dbo.BaoCao 
+    WHERE TrangThai = 'PENDING' 
+    GROUP BY MaNguoiBaoCao, LoaiDoiTuong, MaDoiTuong 
+    HAVING COUNT(*) > 1
+)
+BEGIN
+    ;WITH CTE AS (
+        SELECT MaBaoCao, ROW_NUMBER() OVER (PARTITION BY MaNguoiBaoCao, LoaiDoiTuong, MaDoiTuong ORDER BY NgayTao DESC, MaBaoCao DESC) AS rn
+        FROM dbo.BaoCao
+        WHERE TrangThai = 'PENDING'
+    )
+    DELETE FROM dbo.BaoCao WHERE MaBaoCao IN (SELECT MaBaoCao FROM CTE WHERE rn > 1);
+END
+GO
+
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_BaoCao_ChongTrung' AND object_id = OBJECT_ID('BaoCao'))
     CREATE UNIQUE NONCLUSTERED INDEX UQ_BaoCao_ChongTrung ON BaoCao(MaNguoiBaoCao, LoaiDoiTuong, MaDoiTuong) WHERE TrangThai = 'PENDING';
 GO

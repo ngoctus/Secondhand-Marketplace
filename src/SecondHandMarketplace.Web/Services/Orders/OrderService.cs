@@ -146,10 +146,11 @@ public class OrderService : IOrderService
                 cmd.CommandType = CommandType.StoredProcedure;
 
                 cmd.Parameters.Add(new SqlParameter("@MaNguoiDung", maNguoiDung));
+                var phiVcMoiDon = (model.HinhThucNhan == "GAP_TRUC_TIEP") ? 0 : (model.PhiVanChuyen < 0 ? 0 : model.PhiVanChuyen);
                 cmd.Parameters.Add(new SqlParameter("@TenNguoiNhan", model.TenNguoiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@SoDienThoaiNhan", model.SoDienThoaiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@DiaChiNhan", model.DiaChiNhan.Trim()));
-                cmd.Parameters.Add(new SqlParameter("@PhiVanChuyenMoiDon", model.PhiVanChuyen));
+                cmd.Parameters.Add(new SqlParameter("@PhiVanChuyenMoiDon", phiVcMoiDon));
                 cmd.Parameters.Add(new SqlParameter("@PhuongThucThanhToan", model.PhuongThucThanhToan));
                 cmd.Parameters.Add(new SqlParameter("@HinhThucNhan", model.HinhThucNhan ?? "GIAO_HANG"));
 
@@ -258,6 +259,21 @@ public class OrderService : IOrderService
                     };
                     _db.ThanhToans.Add(tt);
 
+                    // Gửi thông báo cho người bán trong môi trường In-Memory
+                    var sellerId = itemsInShop.First().SanPham.CuaHang?.MaNguoiDung;
+                    if (sellerId.HasValue && sellerId.Value > 0)
+                    {
+                        _db.ThongBaos.Add(new ThongBao
+                        {
+                            MaNguoiDung = sellerId.Value,
+                            Loai = "ORDER",
+                            TieuDe = "Bạn có đơn hàng mới",
+                            NoiDung = $"Bạn vừa nhận được đơn hàng #{don.MaDon}.",
+                            MaThamChieu = don.MaDonHang,
+                            NgayTao = DateTime.UtcNow
+                        });
+                    }
+
                     danhSachMaDon.Add(don.MaDon);
                 }
 
@@ -300,7 +316,8 @@ public class OrderService : IOrderService
                 cmd.Parameters.Add(new SqlParameter("@TenNguoiNhan", model.TenNguoiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@SoDienThoaiNhan", model.SoDienThoaiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@DiaChiNhan", model.DiaChiNhan.Trim()));
-                cmd.Parameters.Add(new SqlParameter("@PhiVanChuyen", model.PhiVanChuyen));
+                var phiVcMua = (model.HinhThucNhan == "GAP_TRUC_TIEP") ? 0 : (model.PhiVanChuyen < 0 ? 0 : model.PhiVanChuyen);
+                cmd.Parameters.Add(new SqlParameter("@PhiVanChuyen", phiVcMua));
                 cmd.Parameters.Add(new SqlParameter("@PhuongThucThanhToan", model.PhuongThucThanhToan));
                 cmd.Parameters.Add(new SqlParameter("@HinhThucNhan", model.HinhThucNhan ?? "GIAO_HANG"));
 
@@ -386,6 +403,21 @@ public class OrderService : IOrderService
                     NgayTao = DateTime.UtcNow
                 };
                 _db.ThanhToans.Add(tt);
+
+                var sellerId = sp.CuaHang?.MaNguoiDung;
+                if (sellerId.HasValue && sellerId.Value > 0)
+                {
+                    _db.ThongBaos.Add(new ThongBao
+                    {
+                        MaNguoiDung = sellerId.Value,
+                        Loai = "ORDER",
+                        TieuDe = "Bạn có đơn hàng mới",
+                        NoiDung = $"Bạn vừa nhận được đơn hàng #{don.MaDon}.",
+                        MaThamChieu = don.MaDonHang,
+                        NgayTao = DateTime.UtcNow
+                    });
+                }
+
                 await _db.SaveChangesAsync();
 
                 return new DatHangResultViewModel

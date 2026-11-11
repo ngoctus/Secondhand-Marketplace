@@ -57,6 +57,7 @@ public class CheckoutViewModel
 
     public decimal TienHang { get; set; }
 
+    [Range(0, 10000000, ErrorMessage = "Phí vận chuyển phải từ 0đ trở lên.")]
     public decimal PhiVanChuyen { get; set; }
 
     public decimal TongThanhToan => TienHang + PhiVanChuyen;

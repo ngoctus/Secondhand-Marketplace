@@ -276,7 +276,12 @@ public class ReportService : IReportService
             }
             else if (bc.LoaiDoiTuong == "PRODUCT")
             {
-                if (_db.Database.IsRelational())
+                var spTarget = await _db.SanPhams.FindAsync(bc.MaDoiTuong);
+                if (spTarget != null && spTarget.TrangThai == "REMOVED")
+                {
+                    lyDoXuLy += " (Sản phẩm đã ở trạng thái bị gỡ trước đó)";
+                }
+                else if (_db.Database.IsRelational())
                 {
                     try
                     {

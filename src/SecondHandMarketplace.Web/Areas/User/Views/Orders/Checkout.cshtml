@@ -225,7 +225,7 @@
                         </div>
                         <div class="d-flex justify-content-between mb-2 small">
                             <span class="text-muted">Phí vận chuyển:</span>
-                            <span class="fw-semibold text-success">
+                            <span class="fw-semibold text-success" id="phiVanChuyenTxt">
                                 @(Model.PhiVanChuyen == 0 ? "Miễn phí" : Model.PhiVanChuyen.ToString("N0") + " ₫")
                             </span>
                         </div>
@@ -347,12 +347,24 @@
                 }
             });
 
+            const tienHang = @Model.TienHang;
+            const originalPhiVc = @Model.PhiVanChuyen;
+            const phiVcTxt = document.getElementById('phiVanChuyenTxt');
+            const totalTxt = document.getElementById('tongThanhToanTxt');
+            const inputPhiVc = document.getElementById('PhiVanChuyen');
+
             if (selectedVal === 'GAP_TRUC_TIEP') {
                 if (lblDiaChiNhan) lblDiaChiNhan.innerHTML = 'Địa điểm hẹn gặp mong muốn <span class="text-danger">*</span>';
                 if (txtDiaChiNhan) txtDiaChiNhan.placeholder = 'Ví dụ: Quán cafe X, cổng trường UTC2, công viên Y...';
+                if (phiVcTxt) phiVcTxt.textContent = 'Miễn phí (0 ₫)';
+                if (totalTxt) totalTxt.textContent = tienHang.toLocaleString('vi-VN') + ' ₫';
+                if (inputPhiVc) inputPhiVc.value = '0';
             } else {
                 if (lblDiaChiNhan) lblDiaChiNhan.innerHTML = 'Địa chỉ giao hàng chi tiết <span class="text-danger">*</span>';
                 if (txtDiaChiNhan) txtDiaChiNhan.placeholder = 'Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố...';
+                if (phiVcTxt) phiVcTxt.textContent = (originalPhiVc === 0 ? 'Miễn phí' : originalPhiVc.toLocaleString('vi-VN') + ' ₫');
+                if (totalTxt) totalTxt.textContent = (tienHang + originalPhiVc).toLocaleString('vi-VN') + ' ₫';
+                if (inputPhiVc) inputPhiVc.value = originalPhiVc;
             }
         }
 

@@ -76,6 +76,8 @@ BEGIN
         THROW 51110, N'Phương thức thanh toán không hợp lệ.', 1;
     IF @HinhThucNhan NOT IN ('GIAO_HANG','GAP_TRUC_TIEP')
         THROW 51115, N'Hình thức nhận hàng không hợp lệ (chỉ nhận GIAO_HANG hoặc GAP_TRUC_TIEP).', 1;
+    IF @HinhThucNhan = 'GAP_TRUC_TIEP'
+        SET @PhiVanChuyen = 0;
     IF @PhiVanChuyen IS NULL OR @PhiVanChuyen < 0
         THROW 51109, N'Phí vận chuyển không hợp lệ.', 1;
     IF LEN(LTRIM(RTRIM(ISNULL(@TenNguoiNhan, N'')))) = 0
@@ -210,6 +212,11 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
+    IF @HinhThucNhan NOT IN ('GIAO_HANG','GAP_TRUC_TIEP')
+        THROW 51115, N'Hình thức nhận hàng không hợp lệ (chỉ nhận GIAO_HANG hoặc GAP_TRUC_TIEP).', 1;
+    IF @HinhThucNhan = 'GAP_TRUC_TIEP'
+        SET @PhiVanChuyenMoiDon = 0;
+
     DECLARE @DonDaTao TABLE (MaDonHang int PRIMARY KEY);
     DECLARE @MaCuaHang int, @MaDonHangMoi int, @DanhSach dbo.DanhSachId;
 
@@ -237,7 +244,8 @@ BEGIN
               AND gh.DaChon = 1
               AND sp.TrangThai = 'ACTIVE'
               AND sp.DaXoa = 0
-              AND ch.TrangThai = 'ACTIVE';
+              AND ch.TrangThai = 'ACTIVE'
+              AND ch.MaNguoiDung <> @MaNguoiDung;
 
         OPEN cur;
         FETCH NEXT FROM cur INTO @MaCuaHang;

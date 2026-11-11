@@ -321,10 +321,11 @@ public class DisputeService : IDisputeService
             return (false, "Ghi chú của quản trị viên không được vượt quá 400 ký tự.");
         }
 
+        using var tx = _db.Database.IsRelational() ? await _db.Database.BeginTransactionAsync() : null;
         var now = DateTime.UtcNow;
         tc.NguoiXuLyId = adminId;
         tc.NgayGiaiQuyet = now;
-        tc.GhiChuAdmin = ghiChu;
+        tc.GhiChuAdmin = ghiChu?.Trim();
         var trangThaiDonCu = tc.DonHang.TrangThai;
 
         try
@@ -334,7 +335,12 @@ public class DisputeService : IDisputeService
             tc.TrangThai = "RESOLVED";
             tc.PhanQuyet = "Chấp thuận khiếu nại: Hoàn tiền cho người mua và hủy đơn.";
             var lyDoAdmin = string.IsNullOrWhiteSpace(ghiChu) ? tc.PhanQuyet : $"{tc.PhanQuyet} Ghi chú: {ghiChu.Trim()}";
-            if (lyDoAdmin.Length > 500) lyDoAdmin = lyDoAdmin[..500];
+            if (lyDoAdmin.Length > 500)
+            {
+                var cut = 500;
+                if (char.IsHighSurrogate(lyDoAdmin[cut - 1])) cut--;
+                lyDoAdmin = lyDoAdmin[..cut];
+            }
 
             if (_db.Database.IsRelational())
             {
@@ -400,7 +406,12 @@ public class DisputeService : IDisputeService
             tc.TrangThai = "RESOLVED";
             tc.PhanQuyet = "Bác bỏ khiếu nại: Thanh toán hoàn tất cho người bán.";
             var lyDoAdmin = string.IsNullOrWhiteSpace(ghiChu) ? tc.PhanQuyet : $"{tc.PhanQuyet} Ghi chú: {ghiChu.Trim()}";
-            if (lyDoAdmin.Length > 500) lyDoAdmin = lyDoAdmin[..500];
+            if (lyDoAdmin.Length > 500)
+            {
+                var cut = 500;
+                if (char.IsHighSurrogate(lyDoAdmin[cut - 1])) cut--;
+                lyDoAdmin = lyDoAdmin[..cut];
+            }
 
             // Fix #6: Nếu đơn đã COMPLETED thì không gọi đổi trạng thái đơn nữa
             if (tc.DonHang.TrangThai != "COMPLETED")
@@ -475,13 +486,22 @@ public class DisputeService : IDisputeService
         }
 
         await _db.SaveChangesAsync();
+        if (tx != null) await tx.CommitAsync();
     }
     catch (Microsoft.Data.SqlClient.SqlException sqlEx)
     {
+        if (tx != null)
+        {
+            try { await tx.RollbackAsync(); } catch { }
+        }
         return (false, SecondHandMarketplace.Web.Common.SqlLoi.ThongBao(sqlEx));
     }
     catch (Exception ex)
     {
+        if (tx != null)
+        {
+            try { await tx.RollbackAsync(); } catch { }
+        }
         return (false, SecondHandMarketplace.Web.Common.SqlLoi.ThongBao(ex));
     }
 
