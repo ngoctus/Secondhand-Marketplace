@@ -14,7 +14,8 @@
     const CLIENT_TIMEOUT_MS = 90000;    // lớn hơn thời gian chờ hàng đợi (30 giây) + xử lý (50 giây) phía máy chủ
     const MAX_ERROR_LENGTH = 300;
     const SITE_BASE = CHAT_URL.replace(/api\/ai\/chat\/?$/i, '');
-    const PRODUCT_PATH = /\/Products\/Details\/(\d{1,9})/g;
+    // [Tên sản phẩm](/Products/Details/<số>) hoặc chỉ đường dẫn trần; nhóm 1 = tên, nhóm 2/3 = mã sản phẩm.
+    const PRODUCT_PATH = /\[([^\]\n]{1,120})\]\(\/Products\/Details\/(\d{1,9})\)|\/Products\/Details\/(\d{1,9})/g;
 
     const el = (tag, className, text) => {
         const node = document.createElement(tag);
@@ -67,13 +68,14 @@
     root.append(panel, toggle);
 
     // ---- Hiển thị tin nhắn ------------------------------------------------------------------------------------
-    // Chỉ biến đường dẫn sản phẩm nội bộ (/Products/Details/<số>) thành liên kết; mọi thứ khác là văn bản thuần.
+    // Chỉ biến liên kết sản phẩm nội bộ (/Products/Details/<số>) thành liên kết; mọi thứ khác là văn bản thuần.
     const appendRichText = (container, text) => {
         let last = 0;
         for (const match of text.matchAll(PRODUCT_PATH)) {
             if (match.index > last) container.append(document.createTextNode(text.slice(last, match.index)));
-            const link = el('a', 'rmchat-link', match[0]);
-            link.href = SITE_BASE + 'Products/Details/' + match[1];
+            const id = match[2] || match[3];
+            const link = el('a', 'rmchat-link', match[1] || match[0]);
+            link.href = SITE_BASE + 'Products/Details/' + id;
             container.append(link);
             last = match.index + match[0].length;
         }
