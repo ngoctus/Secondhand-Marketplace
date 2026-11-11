@@ -57,7 +57,7 @@
                                         <small class="text-muted text-truncate d-inline-block" style="max-width: 300px;">@item.MoTa</small>
                                     }
                                 </td>
-                                <td class="text-muted small">@item.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-muted small">@HienThi.NgayGio(item.NgayTao)</td>
                                 <td>
                                     @switch (item.TrangThai)
                                     {
