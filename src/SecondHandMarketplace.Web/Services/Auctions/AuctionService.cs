@@ -1,4 +1,5 @@
 using System.Data;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
@@ -202,7 +203,7 @@ public sealed class AuctionService(
             {
                 try
                 {
-                    var status = await GetStatusAsync(id, actorId, ct);
+                    var status = await GetStatusAsync(id, userId, ct);
                     if (status is not null)
                     {
                         _ = auctionHub.Clients.Group($"auction-{id}").SendAsync("ReceiveBidUpdate", status, ct);
