@@ -641,6 +641,7 @@ public class OrderService : IOrderService
     {
         var don = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
         if (don == null) return (false, "Đơn hàng không tồn tại.");
+        if (don.PhuongThucThanhToan != "BANK_TRANSFER") return (false, "Chỉ có thể xác nhận thanh toán chuyển khoản cho đơn hàng chọn phương thức BANK_TRANSFER.");
         if (don.TrangThaiThanhToan == "PAID") return (true, "Đơn hàng đã được thanh toán trước đó.");
 
         don.TrangThaiThanhToan = "PAID";
@@ -662,8 +663,12 @@ public class OrderService : IOrderService
         var idList = maDonHangs.ToList();
         if (idList.Count == 0) return (false, "Không có đơn hàng nào.");
 
-        var dons = await _db.DonHangs.Where(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung).ToListAsync();
-        if (dons.Count == 0) return (false, "Đơn hàng không tồn tại.");
+        var dons = await _db.DonHangs
+            .Where(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung && d.PhuongThucThanhToan == "BANK_TRANSFER")
+            .ToListAsync();
+        if (dons.Count == 0) return (false, "Không tìm thấy đơn hàng chuyển khoản hợp lệ thuộc tài khoản của bạn.");
+
+        var validDonIds = dons.Select(d => d.MaDonHang).ToList();
 
         foreach (var don in dons)
         {
@@ -671,7 +676,7 @@ public class OrderService : IOrderService
             don.NgayCapNhat = DateTime.UtcNow;
         }
 
-        var tts = await _db.ThanhToans.Where(t => idList.Contains(t.MaDonHang)).ToListAsync();
+        var tts = await _db.ThanhToans.Where(t => validDonIds.Contains(t.MaDonHang)).ToListAsync();
         foreach (var tt in tts)
         {
             tt.TrangThaiThanhToan = "SUCCESS";

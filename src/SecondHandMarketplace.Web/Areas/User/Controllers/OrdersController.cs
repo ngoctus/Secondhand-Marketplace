@@ -144,7 +144,7 @@ public class OrdersController : UserBaseController
                 if (okAll) this.ThongBaoThanhCong(msgAll ?? "Đã xác nhận thanh toán chuyển khoản.");
                 else this.ThongBaoLoi(msgAll ?? "Không thể xác nhận thanh toán.");
 
-                if (!string.IsNullOrEmpty(returnUrl)) return Redirect(returnUrl);
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -155,7 +155,7 @@ public class OrdersController : UserBaseController
             if (ok) this.ThongBaoThanhCong(msg ?? "Đã xác nhận thanh toán chuyển khoản.");
             else this.ThongBaoLoi(msg ?? "Không thể xác nhận thanh toán.");
 
-            if (!string.IsNullOrEmpty(returnUrl)) return Redirect(returnUrl);
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
             return RedirectToAction(nameof(ChiTiet), new { id = maDonHang.Value });
         }
 

@@ -18,13 +18,20 @@ IF OBJECT_ID('tempdb..#KQ') IS NOT NULL DROP TABLE #KQ;
 CREATE TABLE #KQ (Id int IDENTITY(1,1), Ten nvarchar(200), Dat bit, ChiTiet nvarchar(500));
 GO
 
--- ------------------------------------------------------------------ DỌN DẸP TRƯỚC KHI CHẠY
-DELETE FROM dbo.LichSuTrangThaiDonHang WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaDon LIKE 'dsmoke%');
-DELETE FROM dbo.ChiTietDonHang WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaDon LIKE 'dsmoke%');
-DELETE FROM dbo.ThanhToan WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaDon LIKE 'dsmoke%');
-DELETE FROM dbo.TranhChap WHERE LyDo LIKE N'dsmoke%';
-DELETE FROM dbo.BaoCao WHERE LyDo LIKE N'dsmoke%';
-DELETE FROM dbo.DonHang WHERE MaDon LIKE 'dsmoke%';
+-- ------------------------------------------------------------------ DỌN DẸP AN TOÀN THEO ĐÚNG THỨ TỰ KHÓA NGOẠI
+DELETE FROM dbo.TranhChap WHERE MaNguoiTao IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%')
+    OR MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%'))
+    OR LyDo LIKE N'dsmoke%';
+DELETE FROM dbo.BaoCao WHERE MaNguoiBaoCao IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%')
+    OR LyDo LIKE N'dsmoke%';
+DELETE FROM dbo.ThongBao WHERE MaNguoiDung IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%');
+DELETE FROM dbo.LichSuTrangThaiDonHang WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%'))
+    OR NguoiThucHienId IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%');
+DELETE FROM dbo.LichSuTrangThaiSanPham WHERE NguoiThucHienId IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%')
+    OR MaSanPham IN (SELECT MaSanPham FROM dbo.SanPham WHERE Ten LIKE 'dsmoke%');
+DELETE FROM dbo.ChiTietDonHang WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%'));
+DELETE FROM dbo.ThanhToan WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%'));
+DELETE FROM dbo.DonHang WHERE MaNguoiDung IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%');
 DELETE FROM dbo.GioHang WHERE MaNguoiDung IN (SELECT MaNguoiDung FROM dbo.NguoiDung WHERE Email LIKE 'dsmoke%');
 DELETE FROM dbo.AnhSanPham WHERE MaSanPham IN (SELECT MaSanPham FROM dbo.SanPham WHERE Ten LIKE 'dsmoke%');
 DELETE FROM dbo.SanPham WHERE Ten LIKE 'dsmoke%';
@@ -195,8 +202,7 @@ BEGIN TRY
         EXEC dbo.sp_CapNhatTrangThaiDon 
             @MaDonHang = @DonHangHuyId,
             @TrangThaiMoi = 'CANCELLED',
-            @NguoiThucHienId = @NguoiMuaId,
-            @LoaiNguoiThucHien = 'BUYER',
+            @MaNguoiDung = @NguoiMuaId,
             @LyDo = N'Người mua đổi ý không muốn nhận hàng nữa';
 
         DECLARE @Sp1Status varchar(20) = (SELECT TrangThai FROM dbo.SanPham WHERE MaSanPham = @Sp1Id);
@@ -268,8 +274,16 @@ BEGIN CATCH
         INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D9. Chong gui trung bao cao PENDING', 0, ERROR_MESSAGE());
 END CATCH
 
--- ------------------------------------------------------------------ DỌN DẸP SAU KHI TEST
+-- ------------------------------------------------------------------ DỌN DẸP SAU KHI TEST (ĐÚNG THỨ TỰ KHÓA NGOẠI)
+DELETE FROM dbo.TranhChap WHERE MaNguoiTao IN (@NguoiMuaId, @ChuShop1Id, @ChuShop2Id)
+    OR MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung = @NguoiMuaId)
+    OR LyDo LIKE N'dsmoke%';
+DELETE FROM dbo.BaoCao WHERE MaNguoiBaoCao IN (@NguoiMuaId, @ChuShop1Id, @ChuShop2Id)
+    OR LyDo LIKE N'dsmoke%';
+DELETE FROM dbo.ThongBao WHERE MaNguoiDung IN (@NguoiMuaId, @ChuShop1Id, @ChuShop2Id);
 DELETE FROM dbo.LichSuTrangThaiDonHang WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung = @NguoiMuaId);
+DELETE FROM dbo.LichSuTrangThaiSanPham WHERE NguoiThucHienId IN (@NguoiMuaId, @ChuShop1Id, @ChuShop2Id)
+    OR MaSanPham IN (@Sp1Id, @Sp2Id, @Sp3Id);
 DELETE FROM dbo.ChiTietDonHang WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung = @NguoiMuaId);
 DELETE FROM dbo.ThanhToan WHERE MaDonHang IN (SELECT MaDonHang FROM dbo.DonHang WHERE MaNguoiDung = @NguoiMuaId);
 DELETE FROM dbo.DonHang WHERE MaNguoiDung = @NguoiMuaId;

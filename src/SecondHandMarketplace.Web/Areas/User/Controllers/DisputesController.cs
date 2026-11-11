@@ -126,6 +126,8 @@ public class DisputesController : UserBaseController
         var userId = User.LayNguoiDungId();
         if (userId == null) return Challenge();
 
+        string? createdFilePath = null;
+
         // Xử lý upload tệp ảnh bằng chứng nếu có
         if (vm.FileDinhKem != null && vm.FileDinhKem.Length > 0)
         {
@@ -141,24 +143,45 @@ public class DisputesController : UserBaseController
             }
             else
             {
-                var webRoot = _env?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                var folder = Path.Combine(webRoot, "uploads", "disputes");
-                if (!Directory.Exists(folder))
+                // Kiểm tra Magic Bytes chống file giả mạo đuôi
+                using var readStream = vm.FileDinhKem.OpenReadStream();
+                var header = new byte[8];
+                var readBytes = await readStream.ReadAsync(header, 0, 8);
+                bool isImage = false;
+                if (readBytes >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF) isImage = true; // JPEG/JPG
+                else if (readBytes >= 4 && header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47) isImage = true; // PNG
+                else if (readBytes >= 4 && header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46) isImage = true; // WEBP (RIFF)
+
+                if (!isImage)
                 {
-                    Directory.CreateDirectory(folder);
+                    ModelState.AddModelError(nameof(vm.FileDinhKem), "Nội dung tệp không phải là định dạng hình ảnh hợp lệ.");
                 }
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                var filePath = Path.Combine(folder, fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                else
                 {
-                    await vm.FileDinhKem.CopyToAsync(stream);
+                    var webRoot = _env?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                    var folder = Path.Combine(webRoot, "uploads", "disputes");
+                    if (!Directory.Exists(folder))
+                    {
+                        Directory.CreateDirectory(folder);
+                    }
+                    var fileName = $"{Guid.NewGuid():N}{ext}";
+                    createdFilePath = Path.Combine(folder, fileName);
+                    readStream.Position = 0;
+                    using (var writeStream = new FileStream(createdFilePath, FileMode.Create))
+                    {
+                        await readStream.CopyToAsync(writeStream);
+                    }
+                    vm.BangChungAnh = $"/uploads/disputes/{fileName}";
                 }
-                vm.BangChungAnh = $"/uploads/disputes/{fileName}";
             }
         }
 
         if (!ModelState.IsValid)
         {
+            if (createdFilePath != null && System.IO.File.Exists(createdFilePath))
+            {
+                try { System.IO.File.Delete(createdFilePath); } catch { /* Best effort */ }
+            }
             return View(vm);
         }
 
@@ -167,6 +190,11 @@ public class DisputesController : UserBaseController
         {
             this.ThongBaoThanhCong(thongBao ?? "Đã gửi khiếu nại thành công.");
             return RedirectToAction(nameof(Index));
+        }
+
+        if (createdFilePath != null && System.IO.File.Exists(createdFilePath))
+        {
+            try { System.IO.File.Delete(createdFilePath); } catch { /* Best effort */ }
         }
 
         this.ThongBaoLoi(thongBao ?? "Không thể mở khiếu nại.");

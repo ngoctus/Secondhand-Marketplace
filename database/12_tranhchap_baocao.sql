@@ -64,6 +64,18 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TranhChap_MaDonHang' A
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TranhChap_TrangThai' AND object_id = OBJECT_ID('TranhChap'))
     CREATE NONCLUSTERED INDEX IX_TranhChap_TrangThai ON TranhChap(TrangThai);
 
+-- Dọn dẹp bản ghi tranh chấp trùng cũ nếu có trên DB dev trước khi tạo unique index
+IF EXISTS (
+    SELECT MaDonHang FROM dbo.TranhChap GROUP BY MaDonHang HAVING COUNT(*) > 1
+)
+BEGIN
+    ;WITH CTE AS (
+        SELECT MaTranhChap, ROW_NUMBER() OVER (PARTITION BY MaDonHang ORDER BY NgayTao DESC, MaTranhChap DESC) AS rn
+        FROM dbo.TranhChap
+    )
+    DELETE FROM dbo.TranhChap WHERE MaTranhChap IN (SELECT MaTranhChap FROM CTE WHERE rn > 1);
+END
+GO
 -- Mỗi đơn hàng chỉ có tối đa 1 tranh chấp trong toàn bộ vòng đời (chống mở lại cả khi REJECTED)
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_TranhChap_MaDonHang' AND object_id = OBJECT_ID('TranhChap'))
     CREATE UNIQUE NONCLUSTERED INDEX UQ_TranhChap_MaDonHang ON TranhChap(MaDonHang);

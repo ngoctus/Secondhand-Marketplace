@@ -147,7 +147,7 @@ BEGIN
                  THEN N'Người mua tạo đơn hàng (Hẹn gặp trực tiếp).' 
                  ELSE N'Người mua tạo đơn hàng (Giao tận nơi).' END);
 
-    INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, LienKetId)
+    INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu)
     VALUES (@ChuShopId, 'ORDER', N'Bạn có đơn hàng mới', 
             CONCAT(N'Bạn vừa nhận được đơn hàng ', @MaDon, 
                    CASE WHEN @HinhThucNhan = 'GAP_TRUC_TIEP' THEN N' (Hẹn gặp trực tiếp).' ELSE N'.' END), 

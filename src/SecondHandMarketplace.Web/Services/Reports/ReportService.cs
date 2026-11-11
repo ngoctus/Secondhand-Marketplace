@@ -321,6 +321,7 @@ public class ReportService : IReportService
                         LyDo = lyDoXuLy,
                         ThoiGian = now
                     });
+                    await _db.SaveChangesAsync();
                 }
 
                 // Gửi thông báo cho chủ shop của sản phẩm bị gỡ

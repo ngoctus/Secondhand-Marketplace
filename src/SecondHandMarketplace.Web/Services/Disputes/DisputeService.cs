@@ -93,14 +93,18 @@ public class DisputeService : IDisputeService
             return (false, "Đơn hàng này đang có khiếu nại đang chờ xử lý.");
         }
 
-        // Gửi thông báo cho Người bán (chủ cửa hàng)
-        await _notifications.CreateAsync(
-            donHang.CuaHang.MaNguoiDung,
-            NotificationTypes.Order,
-            "Đơn hàng phát sinh khiếu nại tranh chấp",
-            $"Người mua đã mở khiếu nại cho đơn hàng #{donHang.MaDon}. Lý do: {lyDoTrim}. Vui lòng kiểm tra và phản hồi.",
-            donHang.MaDonHang
-        );
+        // Gửi thông báo cho Người bán (chủ cửa hàng) - best effort
+        try
+        {
+            await _notifications.CreateAsync(
+                donHang.CuaHang.MaNguoiDung,
+                NotificationTypes.Order,
+                "Đơn hàng phát sinh khiếu nại tranh chấp",
+                $"Người mua đã mở khiếu nại cho đơn hàng #{donHang.MaDon}. Lý do: {lyDoTrim}. Vui lòng kiểm tra và phản hồi.",
+                donHang.MaDonHang
+            );
+        }
+        catch { /* Best effort: không làm gián đoạn khiếu nại đã lưu */ }
 
         return (true, "Đã gửi yêu cầu khiếu nại tranh chấp thành công. Người bán và Ban quản trị sẽ tiến hành xử lý.");
     }
