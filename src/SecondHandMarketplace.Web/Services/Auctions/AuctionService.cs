@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
@@ -9,7 +9,10 @@ using SecondHandMarketplace.Web.Models.ViewModels.Auctions;
 
 namespace SecondHandMarketplace.Web.Services.Auctions;
 
-public sealed class AuctionService(AppDbContext db) : IAuctionService
+public sealed class AuctionService(
+    AppDbContext db,
+    Microsoft.AspNetCore.SignalR.IHubContext<SecondHandMarketplace.Web.Hubs.AuctionHub>? auctionHub = null,
+    SecondHandMarketplace.Web.Services.Notifications.INotificationService? notificationService = null) : IAuctionService
 {
     private static SqlParameter Tien(string ten, decimal v) =>
         new(ten, SqlDbType.Decimal) { Value = v, Precision = 18, Scale = 2 };
@@ -195,6 +198,19 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
             await db.Database.ExecuteSqlRawAsync(
                 "EXEC dbo.sp_DatGia @MaPhienDauGia, @MaNguoiDung, @SoTien",
                 new object[] { new SqlParameter("@MaPhienDauGia", id), new SqlParameter("@MaNguoiDung", userId), Tien("@SoTien", amount) }, ct);
+            if (auctionHub is not null)
+            {
+                try
+                {
+                    var status = await GetStatusAsync(id, actorId, ct);
+                    if (status is not null)
+                    {
+                        _ = auctionHub.Clients.Group($"auction-{id}").SendAsync("ReceiveBidUpdate", status, ct);
+                    }
+                }
+                catch { }
+            }
+
             return (true, null);
         }
         catch (SqlException ex) { return (false, SqlLoi.ThongBao(ex)); }
@@ -255,6 +271,19 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
                 "EXEC dbo.sp_HuyPhienDauGia @MaPhienDauGia, @MaNguoiDung, @LyDo",
                 new object[] { new SqlParameter("@MaPhienDauGia", id), new SqlParameter("@MaNguoiDung", actorId),
                                new SqlParameter("@LyDo", (object?)reason ?? DBNull.Value) }, ct);
+            if (auctionHub is not null)
+            {
+                try
+                {
+                    var status = await GetStatusAsync(id, actorId, ct);
+                    if (status is not null)
+                    {
+                        _ = auctionHub.Clients.Group($"auction-{id}").SendAsync("ReceiveBidUpdate", status, ct);
+                    }
+                }
+                catch { }
+            }
+
             return (true, null);
         }
         catch (SqlException ex) { return (false, SqlLoi.ThongBao(ex)); }

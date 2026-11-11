@@ -22,6 +22,42 @@ public class Program
         builder.Services.AddSingleton<IMatKhauService, MatKhauService>();
         builder.Services.AddSingleton<JwtTokenService>();
 
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+            {
+                Title = "SecondHand Marketplace API",
+                Version = "v1",
+                Description = "Hệ thống RESTful API chuẩn cho Sàn giao dịch đồ cũ (SecondHand Marketplace)"
+            });
+
+            options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                Scheme = "Bearer",
+                BearerFormat = "JWT",
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                Description = "Nhập JWT token theo mẫu: {token}"
+            });
+
+            options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+            {
+                {
+                    new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                    {
+                        Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                        {
+                            Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+        });
+
         var jwt = builder.Configuration.GetSection("Jwt");
         var jwtKey = jwt["Key"] ?? throw new InvalidOperationException("Thiếu cấu hình Jwt:Key.");
         if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
@@ -89,7 +125,14 @@ public class Program
             app.UseHsts();
         }
 
-        app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api"),
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "SecondHand Marketplace API v1");
+            c.RoutePrefix = "swagger";
+        });
+
+        app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api") && !context.Request.Path.StartsWithSegments("/swagger"),
             branch => branch.UseStatusCodePagesWithReExecute("/Home/TrangLoi", "?ma={0}"));
         app.UseHttpsRedirection();
         app.UseStaticFiles();   // Phục vụ file trong wwwroot (ảnh seed, css, js...)
