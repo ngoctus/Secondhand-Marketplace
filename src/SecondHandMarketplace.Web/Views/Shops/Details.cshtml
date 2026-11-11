@@ -1,0 +1,70 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Shop.ShopPublicVm
+@{
+    ViewData["Title"] = Model.Name;
+    var products = Model.Products;
+}
+<div class="container py-4">
+    <!-- Phần đầu: thông tin shop (không hiển thị SĐT, địa chỉ chi tiết hay thông tin ngân hàng) -->
+    <section class="card card-body mb-4" aria-label="Thông tin cửa hàng">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            @if (!string.IsNullOrWhiteSpace(Model.Logo))
+            {
+                <img src="@Model.Logo" alt="Logo @Model.Name" width="88" height="88" class="rounded-circle border" style="object-fit:cover" data-fallback />
+            }
+            else
+            {
+                <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light fw-bold fs-3" style="width:88px;height:88px" aria-hidden="true">
+                    @Model.Name.Substring(0, 1).ToUpperInvariant()
+                </div>
+            }
+            <div class="flex-grow-1">
+                <h1 class="h3 mb-1">@Model.Name</h1>
+                @if (!string.IsNullOrWhiteSpace(Model.AreaText))
+                {
+                    <div class="text-muted"><i class="bi bi-geo-alt"></i> @Model.AreaText</div>
+                }
+                <div class="mt-2 d-flex flex-wrap gap-3 small">
+                    @if (Model.AverageRating.HasValue && Model.ReviewCount > 0)
+                    {
+                        <span><strong>@Model.AverageRating.Value.ToString("0.0")</strong> ★ (@Model.ReviewCount đánh giá)</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Chưa có đánh giá</span>
+                    }
+                    @if (Model.CompletedOrders.HasValue)
+                    {
+                        <span>@Model.CompletedOrders đơn thành công</span>
+                    }
+                    <span class="text-muted">Tham gia từ @Model.JoinedAtUtc.ToString("MM/yyyy")</span>
+                </div>
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <p class="mt-3 mb-0" style="white-space:pre-line">@Model.Description</p>
+        }
+    </section>
+
+    <!-- Phần giữa: chỗ để module C gắn danh sách đánh giá của shop (ví dụ <partial name="_DanhSachDanhGiaShop" model="Model.Id" />) -->
+    <section id="shop-reviews" class="mb-4" aria-label="Đánh giá cửa hàng" data-shop-id="@Model.Id"></section>
+
+    <!-- Phần dưới: sản phẩm đang bán, dùng thẻ sản phẩm chung -->
+    <section aria-label="Sản phẩm đang bán">
+        <h2 class="h5 mb-3">Sản phẩm đang bán (@products.TotalItems)</h2>
+        @if (products.Items.Count == 0)
+        {
+            <div class="text-center text-muted py-5 border rounded">Cửa hàng chưa có sản phẩm nào đang bán.</div>
+        }
+        else
+        {
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+                @foreach (var p in products.Items)
+                {
+                    <div class="col"><partial name="_ProductCard" model="p" /></div>
+                }
+            </div>
+            <partial name="_Pager" model="new PagerVm(products.Page, products.TotalPages)" />
+        }
+    </section>
+</div>

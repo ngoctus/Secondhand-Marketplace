@@ -31,12 +31,25 @@ for %%F in (
     17_bo_chan_tu_cam_khi_gui_duyet.sql
     18_ghi_vi_pham_low_khi_tu_choi.sql
     20_cauhinh_ai.sql
+    21_dia_chi_khu_vuc.sql
     22_hinh_thuc_nhan.sql
 ) do (
     echo Running %%F...
     sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "%%F"
     if errorlevel 1 (
         echo ERROR: %%F failed.
+        pause
+        exit /b 1
+    )
+)
+
+rem Du lieu mau cho dev/kiem thu (A7): chi chay khi dat SEED_DEMO=1 (mac dinh KHONG chay, de deploy khong co tai khoan mau).
+rem   Dat set SEED_DEMO=1 truoc khi chay run-db.bat (E5 se gop che do dev/prod vao script nay; file 30 chay sau file 29 cua E)
+if "%SEED_DEMO%"=="1" (
+    echo Running 30_seed_dia_chi_shop.sql...
+    sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "30_seed_dia_chi_shop.sql"
+    if errorlevel 1 (
+        echo ERROR: 30_seed_dia_chi_shop.sql failed.
         pause
         exit /b 1
     )
