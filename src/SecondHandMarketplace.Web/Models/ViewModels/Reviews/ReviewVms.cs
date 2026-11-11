@@ -77,3 +77,33 @@ public sealed class DiemCuaHangVm
     public int SoDanhGia { get; init; }
     public int SoDonThanhCong { get; init; }
 }
+
+/// <summary>
+/// Một dòng đánh giá trong danh sách đánh giá của tôi (/User/Reviews).
+/// </summary>
+public sealed class DanhGiaCuaToiItemVm
+{
+    public int MaDanhGia { get; init; }
+    public int MaDonHang { get; init; }
+    public string MaDon { get; init; } = string.Empty;
+    public int MaCuaHang { get; init; }
+    public string TenShop { get; init; } = string.Empty;
+    public byte SoSao { get; init; }
+    public string? NoiDung { get; init; }
+    public string TrangThai { get; init; } = "VISIBLE";
+    public DateTime NgayTao { get; init; }
+    public List<string> TenSanPhams { get; init; } = new();
+    public string? AnhSanPhamDaiDien { get; init; }
+}
+
+/// <summary>
+/// Danh sách đánh giá do chính người mua hiện tại đã viết (có phân trang).
+/// </summary>
+public sealed class DanhSachDanhGiaCuaToiVm
+{
+    public IReadOnlyList<DanhGiaCuaToiItemVm> Items { get; init; } = Array.Empty<DanhGiaCuaToiItemVm>();
+    public int Page { get; init; }
+    public int PageSize { get; init; }
+    public int TotalItems { get; init; }
+    public int TotalPages => (int)Math.Ceiling(TotalItems / (double)Math.Max(1, PageSize));
+}

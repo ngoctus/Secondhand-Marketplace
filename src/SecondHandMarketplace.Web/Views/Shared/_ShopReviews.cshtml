@@ -1,0 +1,126 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Reviews.DanhSachDanhGiaTheoShopVm
+@{
+    var items = Model?.Items ?? Array.Empty<SecondHandMarketplace.Web.Models.ViewModels.Reviews.DanhGiaItemVm>();
+    var totalItems = Model?.TotalItems ?? 0;
+    var avgScore = Model?.DiemTrungBinh ?? 0m;
+}
+
+<div class="card card-body border-0 shadow-sm rounded-4 bg-white" id="shop-reviews-card">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
+        <div>
+            <h2 class="h5 fw-bold text-dark mb-1">
+                <i class="bi bi-star-fill text-warning me-1"></i> Đánh giá từ người mua
+                <span class="text-muted fw-normal fs-6">(@totalItems)</span>
+            </h2>
+            <div class="text-muted small">Chỉ người mua của các đơn hàng đã hoàn tất mới được gửi đánh giá.</div>
+        </div>
+
+        @if (totalItems > 0)
+        {
+            <div class="d-flex align-items-center gap-2 bg-light px-3 py-2 rounded-pill border">
+                <span class="fs-4 fw-bold text-warning">@avgScore.ToString("0.0")</span>
+                <div class="d-flex flex-column lh-1">
+                    <div class="text-warning small">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            if (i <= Math.Round(avgScore))
+                            {
+                                <i class="bi bi-star-fill"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-star text-muted opacity-25"></i>
+                            }
+                        }
+                    </div>
+                    <span class="text-muted" style="font-size: 11px;">@totalItems lượt đánh giá</span>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (items.Count == 0)
+    {
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-chat-heart text-secondary fs-3 d-block mb-2"></i>
+            <span>Cửa hàng chưa có đánh giá nào từ người mua.</span>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var review in items)
+            {
+                <div class="p-3 rounded-3 bg-light border border-light-subtle">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrWhiteSpace(review.AnhDaiDienNguoiMua))
+                            {
+                                <img src="@review.AnhDaiDienNguoiMua" alt="@review.TenNguoiMua"
+                                     width="36" height="36" class="rounded-circle border" style="object-fit:cover" />
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold small"
+                                     style="width: 36px; height: 36px;">
+                                    @(string.IsNullOrWhiteSpace(review.TenNguoiMua) ? "U" : review.TenNguoiMua.Substring(0, 1).ToUpperInvariant())
+                                </div>
+                            }
+                            <div>
+                                <div class="fw-semibold text-dark small">@review.TenNguoiMua</div>
+                                <div class="text-warning small" style="font-size: 11px;">
+                                    @for (byte s = 1; s <= 5; s++)
+                                    {
+                                        if (s <= review.SoSao)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star text-secondary opacity-50"></i>
+                                        }
+                                    }
+                                    <span class="text-muted ms-1">(@review.SoSao sao)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-muted small" style="font-size: 11px;">
+                            <i class="bi bi-check2-circle text-success me-1"></i>Đã mua hàng • @review.NgayTao.ToLocalTime().ToString("dd/MM/yyyy")
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(review.NoiDung))
+                    {
+                        <p class="text-dark small mb-0 ps-1" style="white-space: pre-line;">@review.NoiDung</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted fst-italic small mb-0 ps-1">Người mua không để lại nhận xét bằng lời.</p>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (Model != null && Model.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-center mt-3">
+                <nav aria-label="Phân trang đánh giá shop">
+                    <ul class="pagination pagination-sm mb-0">
+                        @for (int p = 1; p <= Model.TotalPages; p++)
+                        {
+                            var isActive = p == Model.Page;
+                            <li class="page-item @(isActive ? "active" : "")">
+                                <a class="page-link rounded-pill px-3 mx-1 @(isActive ? "bg-success border-success text-white" : "text-dark bg-white border")"
+                                   href="?reviewPage=@p#shop-reviews"
+                                   data-review-page="@p">
+                                    @p
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        }
+    }
+</div>

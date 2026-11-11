@@ -166,9 +166,6 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
         page     = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
 
-        // Lấy thống kê điểm song song với query danh sách
-        var diemTask = LayDiemCuaHangAsync(maCuaHang, cancellationToken);
-
         var query = db.DanhGias.AsNoTracking()
             .Where(d => d.MaCuaHang == maCuaHang);
 
@@ -196,7 +193,8 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
             })
             .ToListAsync(cancellationToken);
 
-        var diem = await diemTask;
+        // Đọc điểm trung bình tuần tự (tránh xung đột DbContext đa luồng trên SQL Server)
+        var diem = await LayDiemCuaHangAsync(maCuaHang, cancellationToken);
         var tenShop = await db.CuaHangs.AsNoTracking()
             .Where(c => c.MaCuaHang == maCuaHang)
             .Select(c => c.TenShop)
@@ -312,5 +310,73 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
                     SoDonThanhCong = don?.SoDonThanhCong ?? 0
                 };
             });
+    }
+
+    // =========================================================
+    // 6. Lấy danh sách đánh giá của chính người mua (C3)
+    // =========================================================
+    public async Task<DanhSachDanhGiaCuaToiVm> LayDanhGiaCuaNguoiMuaAsync(
+        int maNguoiMua,
+        int page = 1,
+        int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 50);
+
+        var query = db.DanhGias.AsNoTracking()
+            .Where(d => d.MaNguoiMua == maNguoiMua);
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(d => d.NgayTao).ThenByDescending(d => d.MaDanhGia)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(d => new DanhGiaCuaToiItemVm
+            {
+                MaDanhGia = d.MaDanhGia,
+                MaDonHang = d.MaDonHang,
+                MaDon = d.DonHang.MaDon,
+                MaCuaHang = d.MaCuaHang,
+                TenShop = d.CuaHang.TenShop,
+                SoSao = d.SoSao,
+                NoiDung = d.NoiDung,
+                TrangThai = d.TrangThai,
+                NgayTao = d.NgayTao,
+                TenSanPhams = d.DonHang.ChiTiet.Select(ct => ct.TenSanPham).ToList(),
+                AnhSanPhamDaiDien = d.DonHang.ChiTiet.Select(ct => ct.AnhDaiDien).FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
+
+        return new DanhSachDanhGiaCuaToiVm
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = total
+        };
+    }
+
+    // =========================================================
+    // 7. Lấy đánh giá của một đơn hàng (C3)
+    // =========================================================
+    public async Task<DanhGiaItemVm?> LayDanhGiaTheoDonHangAsync(int maDonHang, CancellationToken cancellationToken = default)
+    {
+        return await db.DanhGias.AsNoTracking()
+            .Where(d => d.MaDonHang == maDonHang)
+            .Select(d => new DanhGiaItemVm
+            {
+                MaDanhGia = d.MaDanhGia,
+                MaDonHang = d.MaDonHang,
+                MaCuaHang = d.MaCuaHang,
+                MaNguoiMua = d.MaNguoiMua,
+                TenNguoiMua = d.NguoiMua.HoTen,
+                AnhDaiDienNguoiMua = d.NguoiMua.AnhDaiDien,
+                SoSao = d.SoSao,
+                NoiDung = d.NoiDung,
+                TrangThai = d.TrangThai,
+                NgayTao = d.NgayTao
+            })
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }
