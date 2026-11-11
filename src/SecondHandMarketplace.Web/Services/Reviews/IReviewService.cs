@@ -75,4 +75,21 @@ public interface IReviewService
     Task<Dictionary<int, DiemCuaHangVm>> LayDiemNhieuShopAsync(
         IEnumerable<int> maCuaHangs,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lấy danh sách đánh giá do chính người mua hiện tại đã viết, có phân trang (dùng cho C3 - /User/Reviews).
+    /// </summary>
+    Task<DanhSachDanhGiaCuaToiVm> LayDanhGiaCuaNguoiMuaAsync(
+        int maNguoiMua,
+        int page = 1,
+        int pageSize = 10,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lấy chi tiết đánh giá đã gửi cho một đơn hàng (dùng cho C3 - trang chi tiết đơn hàng).
+    /// Trả về null nếu đơn hàng chưa được đánh giá.
+    /// </summary>
+    Task<DanhGiaItemVm?> LayDanhGiaTheoDonHangAsync(
+        int maDonHang,
+        CancellationToken cancellationToken = default);
 }

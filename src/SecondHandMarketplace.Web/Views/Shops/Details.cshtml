@@ -46,8 +46,13 @@
         }
     </section>
 
-    <!-- Phần giữa: chỗ để module C gắn danh sách đánh giá của shop (ví dụ <partial name="_DanhSachDanhGiaShop" model="Model.Id" />) -->
-    <section id="shop-reviews" class="mb-4" aria-label="Đánh giá cửa hàng" data-shop-id="@Model.Id"></section>
+    <!-- Phần giữa: danh sách đánh giá của shop (module C) -->
+    <section id="shop-reviews" class="mb-4" aria-label="Đánh giá cửa hàng" data-shop-id="@Model.Id">
+        @if (ViewBag.ShopReviews is SecondHandMarketplace.Web.Models.ViewModels.Reviews.DanhSachDanhGiaTheoShopVm shopReviews)
+        {
+            <partial name="_ShopReviews" model="shopReviews" />
+        }
+    </section>
 
     <!-- Phần dưới: sản phẩm đang bán, dùng thẻ sản phẩm chung -->
     <section aria-label="Sản phẩm đang bán">

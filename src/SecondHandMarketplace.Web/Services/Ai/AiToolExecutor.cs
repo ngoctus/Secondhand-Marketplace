@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Common.Constants;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Areas;
 using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Products;
 
@@ -20,7 +21,7 @@ public sealed record AiToolResult(bool IsError, string Json)
 
 /// <summary>
 /// Danh sách CỐ ĐỊNH các công cụ AI được phép gọi và cách chạy chúng.
-/// - AI không có đường nào chạy SQL hay đọc database tùy ý: mọi truy vấn đi qua IProductService / ICategoryService hiện có.
+/// - AI không có đường nào chạy SQL hay đọc database tùy ý: mọi truy vấn đi qua IProductService / ICategoryService / IKhuVucService hiện có.
 /// - Tham số do AI sinh ra được xem là không đáng tin: kiểm tra kiểu, độ dài, miền giá trị trước khi dùng.
 /// - Tên công cụ không có trong danh sách (hoặc không được phép theo vai trò) bị từ chối.
 /// - Không công cụ nào ghi dữ liệu: tìm kiếm/gợi ý chỉ đọc, viết mô tả chỉ trả thông tin để AI soạn văn bản.
@@ -54,11 +55,13 @@ public sealed class AiToolExecutor
 
     private readonly IProductService _products;
     private readonly ICategoryService _categories;
+    private readonly IKhuVucService _khuVuc;
 
-    public AiToolExecutor(IProductService products, ICategoryService categories)
+    public AiToolExecutor(IProductService products, ICategoryService categories, IKhuVucService khuVuc)
     {
         _products = products;
         _categories = categories;
+        _khuVuc = khuVuc;
     }
 
     public static bool IsAllowed(string role, string toolName) =>
@@ -73,6 +76,24 @@ public sealed class AiToolExecutor
 
         if (declarations.Count == 0) return new JsonArray();
         return new JsonArray(new JsonObject { ["functionDeclarations"] = declarations });
+    }
+
+    /// <summary>Định nghĩa công cụ theo định dạng OpenAI tools (dùng cho OpenAI/Gemini chat completions endpoint).</summary>
+    public static JsonArray BuildOpenAiTools(string role)
+    {
+        var result = new JsonArray();
+        if (ToolsByRole.TryGetValue(role, out var tools))
+        {
+            foreach (var name in tools)
+            {
+                result.Add(new JsonObject
+                {
+                    ["type"] = "function",
+                    ["function"] = Definition(name)
+                });
+            }
+        }
+        return result;
     }
 
     public async Task<AiToolResult> ExecuteAsync(string role, string toolName, JsonElement input, CancellationToken cancellationToken)
@@ -229,7 +250,98 @@ public sealed class AiToolExecutor
             filter.ConditionId = match.MaTinhTrang;
         }
 
+        var (locationError, maTinh, maXa) = await ResolveLocationAsync(
+            ReadString(args, "province", KeywordMaxLength),
+            ReadString(args, "ward", KeywordMaxLength),
+            ct);
+        if (locationError is not null) return (null, locationError);
+        filter.MaTinhThanh = maTinh;
+        filter.MaPhuongXa = maXa;
+
         return (filter, null);
+    }
+
+    /// <summary>
+    /// Đổi tên tỉnh/thành và phường/xã do AI sinh ra thành mã trong hệ thống.
+    /// Chỉ đọc qua IKhuVucService (của Người A); ProductSearchVm được điền mã, việc lọc theo mã thuộc ProductService (B3).
+    /// </summary>
+    private async Task<(string? Error, int? MaTinh, int? MaXa)> ResolveLocationAsync(
+        string? provinceName, string? wardName, CancellationToken ct)
+    {
+        if (provinceName is null)
+            return wardName is null
+                ? (null, null, null)
+                : ("Cần biết tỉnh/thành trước khi lọc theo phường/xã. Hãy hỏi lại người dùng.", null, null);
+
+        var provinces = await _khuVuc.GetTinhThanhAsync(ct);
+        var province = FindByAreaName(provinces, p => p.Ten, ProvinceKey, provinceName);
+        if (province is null)
+            return ($"Không tìm thấy tỉnh/thành '{provinceName}' trong hệ thống. Hãy hỏi lại người dùng tên tỉnh/thành chính xác.", null, null);
+
+        if (wardName is null) return (null, province.Ma, null);
+
+        var wards = await _khuVuc.GetPhuongXaTheoTinhAsync(province.Ma, ct);
+        var ward = FindByAreaName(wards, w => w.Ten, WardKey, wardName);
+        if (ward is null)
+            return ($"Không tìm thấy phường/xã '{wardName}' thuộc {province.Ten}. Hãy hỏi lại người dùng tên phường/xã chính xác.", null, null);
+
+        return (null, province.Ma, ward.Ma);
+    }
+
+    // Từ đồng nghĩa/viết tắt phổ biến, khóa đã chuẩn hóa (bỏ dấu, bỏ tiền tố "thành phố"/"tỉnh"/"tp").
+    private static readonly IReadOnlyDictionary<string, string> ProvinceAliases = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["hcm"] = "ho chi minh",
+        ["ho chi minh"] = "ho chi minh",
+        ["sai gon"] = "ho chi minh",
+        ["saigon"] = "ho chi minh",
+        ["hn"] = "ha noi",
+        ["hanoi"] = "ha noi",
+        ["ha noi"] = "ha noi",
+        ["dn"] = "da nang",
+        ["danang"] = "da nang",
+        ["da nang"] = "da nang",
+        ["hp"] = "hai phong",
+        ["hai phong"] = "hai phong",
+        ["hue"] = "hue",
+        ["can tho"] = "can tho"
+    };
+
+    private static readonly string[] ProvincePrefixes = { "thanh pho ", "tinh ", "tp " };
+    private static readonly string[] WardPrefixes = { "phuong ", "xa ", "thi tran ", "tt " };
+
+    /// <summary>"TP.HCM" → "ho chi minh"; "Thành phố Hà Nội" → "ha noi"; tên khác giữ nguyên dạng chuẩn hóa.</summary>
+    private static string ProvinceKey(string? raw)
+    {
+        var key = StripPrefix(TextHelper.ChuanHoa(raw), ProvincePrefixes);
+        return ProvinceAliases.TryGetValue(key, out var alias) ? alias : key;
+    }
+
+    /// <summary>"Phường Tân Định" và "Tân Định" cùng trả "tan dinh".</summary>
+    private static string WardKey(string? raw) => StripPrefix(TextHelper.ChuanHoa(raw), WardPrefixes);
+
+    private static string StripPrefix(string key, string[] prefixes)
+    {
+        foreach (var prefix in prefixes)
+            if (key.StartsWith(prefix, StringComparison.Ordinal))
+                return key[prefix.Length..].Trim();
+        return key;
+    }
+
+    /// <summary>Khớp theo khóa địa danh: đúng trước, rồi khớp chứa nhau (vd "hue" với "Thừa Thiên Huế").</summary>
+    private static T? FindByAreaName<T>(IReadOnlyList<T> items, Func<T, string> nameOf, Func<string?, string> keyOf, string wanted) where T : class
+    {
+        var key = keyOf(wanted);
+        if (key.Length == 0) return null;
+
+        var exact = items.FirstOrDefault(x => keyOf(nameOf(x)) == key);
+        if (exact is not null) return exact;
+
+        return items.FirstOrDefault(x =>
+        {
+            var n = keyOf(nameOf(x));
+            return n.Length > 0 && (n.Contains(key, StringComparison.Ordinal) || key.Contains(n, StringComparison.Ordinal));
+        });
     }
 
     /// <summary>So khớp tên không phân biệt hoa thường và dấu tiếng Việt: khớp đúng trước, rồi khớp chứa nhau.</summary>
@@ -353,6 +465,8 @@ public sealed class AiToolExecutor
                   "condition": { "type": "string", "description": "Tình trạng sản phẩm nếu người dùng nêu rõ, ví dụ: Như mới." },
                   "min_price": { "type": "number", "description": "Giá tối thiểu, đơn vị VND." },
                   "max_price": { "type": "number", "description": "Giá tối đa, đơn vị VND." },
+                  "province": { "type": "string", "description": "Tên tỉnh/thành phố cần tìm (ví dụ: 'Hồ Chí Minh', 'TP.HCM', 'Hà Nội'). Chỉ truyền khi người dùng nêu rõ địa điểm." },
+                  "ward": { "type": "string", "description": "Tên phường/xã cần tìm nếu người dùng nói rõ (ví dụ: 'Bến Nghé', 'Tân Định')." },
                   "limit": { "type": "integer", "description": "Số kết quả tối đa, từ 1 đến 10 (mặc định 6)." }
                 }
               }
@@ -370,6 +484,8 @@ public sealed class AiToolExecutor
                   "condition": { "type": "string", "description": "Tình trạng mong muốn nếu có." },
                   "min_price": { "type": "number", "description": "Ngân sách tối thiểu, VND." },
                   "max_price": { "type": "number", "description": "Ngân sách tối đa, VND." },
+                  "province": { "type": "string", "description": "Tên tỉnh/thành phố cần tìm (ví dụ: 'Hồ Chí Minh', 'TP.HCM', 'Hà Nội'). Chỉ truyền khi người dùng nêu rõ địa điểm." },
+                  "ward": { "type": "string", "description": "Tên phường/xã cần tìm nếu người dùng nói rõ (ví dụ: 'Bến Nghé', 'Tân Định')." },
                   "limit": { "type": "integer", "description": "Số ứng viên tối đa, từ 1 đến 8 (mặc định 5)." }
                 }
               }
