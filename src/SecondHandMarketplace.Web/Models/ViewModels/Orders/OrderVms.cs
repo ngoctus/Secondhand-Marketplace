@@ -58,6 +58,7 @@ public sealed class OrderDetailVm
     public string RecipientName { get; set; } = "";
     public string RecipientPhone { get; set; } = "";
     public string RecipientAddress { get; set; } = "";
+    public string? DeliveryWindow { get; set; }
     public int BuyerId { get; set; }
     public string BuyerName { get; set; } = "";
     public string ShopName { get; set; } = "";

@@ -36,6 +36,8 @@ public class AppDbContext : DbContext
     public DbSet<YeuThich> YeuThichs => Set<YeuThich>();
     public DbSet<Banner> Banners => Set<Banner>();
     public DbSet<DanhGia> DanhGias => Set<DanhGia>();
+    public DbSet<HoiThoai> HoiThoais => Set<HoiThoai>();
+    public DbSet<TinNhan> TinNhans => Set<TinNhan>();
     public DbSet<TinhThanh> TinhThanhs => Set<TinhThanh>();
     public DbSet<PhuongXa> PhuongXas => Set<PhuongXa>();
 
@@ -312,6 +314,25 @@ public class AppDbContext : DbContext
         {
             e.ToTable("ThongBao");
             e.HasKey(x => x.MaThongBao);
+        });
+
+        modelBuilder.Entity<HoiThoai>(e =>
+        {
+            e.ToTable("HoiThoai");
+            e.HasKey(x => x.MaHoiThoai);
+            e.Property(x => x.NoiDungCuoi).HasMaxLength(200);
+            e.HasIndex(x => new { x.MaNguoiDung1, x.MaNguoiDung2 }).IsUnique();
+            e.HasOne(x => x.NguoiDung1).WithMany().HasForeignKey(x => x.MaNguoiDung1).OnDelete(DeleteBehavior.NoAction);
+            e.HasOne(x => x.NguoiDung2).WithMany().HasForeignKey(x => x.MaNguoiDung2).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<TinNhan>(e =>
+        {
+            e.ToTable("TinNhan");
+            e.HasKey(x => x.MaTinNhan);
+            e.Property(x => x.NoiDung).HasMaxLength(1000);
+            e.HasOne(x => x.HoiThoai).WithMany(h => h.TinNhans).HasForeignKey(x => x.MaHoiThoai).OnDelete(DeleteBehavior.NoAction);
+            e.HasOne(x => x.NguoiGui).WithMany().HasForeignKey(x => x.MaNguoiGui).OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<TranhChap>(e =>

@@ -44,11 +44,19 @@
                  data-end="@HienThi.Iso(Model.EndAt)"
                  data-now="@HienThi.Iso(Model.ServerNowUtc)"
                  data-min="@((long)Model.MinNextBid)"
-                 data-step="@((long)Model.Step)">
+                 data-step="@((long)Model.Step)"
+                 data-hub-url="@Url.Content("~/hubs/auction")">
                 <div class="d-flex justify-content-between align-items-center">
                     <h2 class="bid-title">@Model.ProductName</h2>
                     <span id="status-badge" class="@HienThi.LopTrangThai(Model.Status)">@HienThi.TrangThaiPhien(Model.Status)</span>
                 </div>
+                @if (isOpen)
+                {
+                    <div class="live-row">
+                        <span id="live-dot" class="live-dot" data-state="connecting">● Đang kết nối...</span>
+                        <span class="muted">👁 <span id="viewer-count">1</span> đang xem</span>
+                    </div>
+                }
 
                 <div class="bid-price-label">Giá hiện tại</div>
                 <div class="bid-price" id="current-price">@HienThi.Tien(Model.CurrentPrice)</div>
@@ -61,6 +69,12 @@
                 </div>
 
                 <div id="leader-badge" class="leader-badge" @(Model.IsLeader && isOpen ? "" : "hidden")>🏆 Bạn đang dẫn đầu phiên này</div>
+
+                @if (logged && !Model.IsOwner && User.IsInRole("USER"))
+                {
+                    <button type="button" class="btn-rm-outline js-chat-seller mt-2" data-product-id="@Model.ProductId"
+                            data-prefill="@($"Chào shop, mình quan tâm phiên đấu giá \"{Model.ProductName}\" ạ.")">💬 Chat với người bán</button>
+                }
 
                 @if (Model.Status is "ENDED")
                 {

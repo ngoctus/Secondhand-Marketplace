@@ -2300,3 +2300,62 @@ a.kpi:hover {
 body.rm-modal-open {
     overflow: hidden !important;
 }
+/* Realtime */
+.rm-notify-slot .count[hidden] {
+    display: none;
+}
+
+.live-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin: 6px 0 10px;
+    font-size: 13px;
+}
+
+.live-dot {
+    font-weight: 600;
+}
+
+    .live-dot[data-state="on"] {
+        color: #1a7f37;
+    }
+
+    .live-dot[data-state="connecting"] {
+        color: #b7791f;
+    }
+
+    .live-dot[data-state="off"] {
+        color: #c0392b;
+    }
+
+.rm-toasts {
+    position: fixed;
+    top: 76px;
+    right: 16px;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(340px, calc(100vw - 32px));
+}
+
+.rm-toast {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    background: #fff;
+    color: inherit;
+    text-decoration: none;
+    border: 1px solid #e6e8df;
+    border-left: 4px solid #285b43;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(40, 62, 37, .15);
+    font-size: 13px;
+    animation: rmFadeIn .25s ease;
+}
+
+    .rm-toast b {
+        font-size: 13.5px;
+    }

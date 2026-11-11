@@ -94,6 +94,12 @@
                         </div>
                         <span asp-validation-for="DiaChiNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
+
+                    <div class="mb-2">
+                        <label asp-for="KhungGioNhan" class="form-label fw-semibold small text-dark">Khung giờ hoặc lưu ý khi nhận hàng</label>
+                        <input asp-for="KhungGioNhan" class="form-control rounded-3" maxlength="200" placeholder="Ví dụ: sau 18:00, né giờ hành chính, hoặc linh động" />
+                        <span asp-validation-for="KhungGioNhan" class="text-danger small mt-1 d-block"></span>
+                    </div>
                 </div>
 
                 <!-- 2. Phương thức thanh toán -->
@@ -129,14 +135,14 @@
                         </label>
 
                         <!-- Online -->
-                        <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 cursor-pointer transition-all @(Model.PhuongThucThanhToan == "ONLINE" ? "payment-active" : "")" for="pt_online">
-                            <input class="form-check-input mt-1" type="radio" asp-for="PhuongThucThanhToan" id="pt_online" value="ONLINE" />
+                        <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 opacity-50" for="pt_online">
+                            <input class="form-check-input mt-1" type="radio" id="pt_online" value="ONLINE" disabled />
                             <div class="flex-grow-1">
                                 <div class="fw-bold text-dark d-flex align-items-center justify-content-between">
                                     <span><i class="bi bi-credit-card text-warning me-2 fs-5"></i>Ví điện tử / Thẻ thanh toán</span>
-                                    <span class="badge bg-light text-secondary border small">Tức thì</span>
+                                    <span class="badge bg-light text-secondary border small">Sắp hỗ trợ</span>
                                 </div>
-                                <div class="text-secondary small mt-1">Thanh toán bảo mật tức thì qua cổng thẻ nội địa hoặc quốc tế.</div>
+                                <div class="text-secondary small mt-1">Thanh toán online chưa được tích hợp; phương thức này hiện chưa thể chọn.</div>
                             </div>
                         </label>
                     </div>

@@ -77,7 +77,7 @@
                         ChuTaiKhoan = "SAN THUONG MAI RE:MARKET",
                         DanhSachMaDonHang = dsId,
                         MaDonHang = unpaidBankOrders.Count == 1 ? unpaidBankOrders[0].MaDonHang : null,
-                        ChoPhepXacNhan = true,
+                        ChoPhepXacNhan = false,
                         ReturnUrl = Context.Request.Path + Context.Request.QueryString
                     };
                 }

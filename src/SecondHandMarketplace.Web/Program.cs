@@ -3,8 +3,12 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Threading.RateLimiting;
+using SecondHandMarketplace.Web.Hubs;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Security;
@@ -17,6 +21,20 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddControllersWithViews();
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(15),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
+        });
+        builder.Services.AddSignalR();
         builder.Services.AddDatabase(builder.Configuration);
         builder.Services.AddAppServices();
         builder.Services.AddSingleton<IMatKhauService, MatKhauService>();
@@ -117,6 +135,14 @@ public class Program
         });
 
         var app = builder.Build();
+        var forwardedHeaders = new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+            ForwardLimit = 1
+        };
+        forwardedHeaders.KnownProxies.Add(System.Net.IPAddress.Loopback);
+        forwardedHeaders.KnownProxies.Add(System.Net.IPAddress.IPv6Loopback);
+        app.UseForwardedHeaders(forwardedHeaders);
         if (jwtKeyIsPlaceholder)
             app.Logger.LogWarning("Đang dùng Jwt:Key mặc định. Chỉ chấp nhận khi phát triển local.");
         if (!app.Environment.IsDevelopment())
@@ -137,10 +163,14 @@ public class Program
         app.UseHttpsRedirection();
         app.UseStaticFiles();   // Phục vụ file trong wwwroot (ảnh seed, css, js...)
         app.UseRouting();
+        app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapStaticAssets();
         app.MapControllers();
+        app.MapHub<AuctionHub>("/hubs/auction");
+        app.MapHub<NotificationHub>("/hubs/notification");
+        app.MapHub<ChatHub>("/hubs/chat");
         app.MapControllerRoute(name: "areas", pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}").WithStaticAssets();
         app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}").WithStaticAssets();
         app.Run();

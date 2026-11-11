@@ -28,6 +28,11 @@
     </div>
     <partial name="_ThongBao" />
 
+    @if (!string.IsNullOrWhiteSpace(Model.KhungGioNhan))
+    {
+        <div class="alert alert-light border rounded-3"><strong>Khung giờ nhận:</strong> @Model.KhungGioNhan</div>
+    }
+
     <!-- Thanh trạng thái & Nút thao tác -->
 
     <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4">

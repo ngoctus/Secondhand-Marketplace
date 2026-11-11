@@ -17,6 +17,7 @@ public class DonHang
     public string TenNguoiNhan { get; set; } = string.Empty;
     public string SoDienThoaiNhan { get; set; } = string.Empty;
     public string DiaChiNhan { get; set; } = string.Empty;
+    public string? KhungGioNhan { get; set; }
     public decimal TienHang { get; set; }
     public decimal PhiVanChuyen { get; set; }
     public decimal TongTien { get; set; }

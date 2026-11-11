@@ -17,7 +17,14 @@ public class CheckoutViewModel
     [Required(ErrorMessage = "Vui lòng nhập địa chỉ nhận hàng.")]
     [StringLength(500)]
     public string DiaChiNhan { get; set; } = string.Empty;
-    public string PhuongThucThanhToan { get; set; } = "COD"; // COD, BANK_TRANSFER, ONLINE
+
+    [StringLength(200)]
+    public string? KhungGioNhan { get; set; }
+
+
+
+    [RegularExpression("^(COD|BANK_TRANSFER)$", ErrorMessage = "Phương thức thanh toán hiện chưa được hỗ trợ.")]
+    public string PhuongThucThanhToan { get; set; } = "COD";
 
     /// <summary>
     /// Hình thức nhận: GIAO_HANG (Giao hàng tận nơi) hoặc GAP_TRUC_TIEP (Gặp mặt trực tiếp).
@@ -84,6 +91,9 @@ public class DonHangChiTietViewModel
     public string TenNguoiNhan { get; set; } = string.Empty;
     public string SoDienThoaiNhan { get; set; } = string.Empty;
     public string DiaChiNhan { get; set; } = string.Empty;
+
+    public string? KhungGioNhan { get; set; }
+
     public decimal TienHang { get; set; }
     public decimal PhiVanChuyen { get; set; }
     public decimal TongTien { get; set; }

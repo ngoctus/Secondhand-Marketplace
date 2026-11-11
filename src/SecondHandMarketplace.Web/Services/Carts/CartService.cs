@@ -160,6 +160,21 @@ public class CartService : ICartService
         return true;
     }
 
+    public async Task<int> XoaMonKhongKhaDungAsync(int maNguoiDung)
+    {
+        var items = await _db.GioHangs
+            .Include(g => g.SanPham).ThenInclude(s => s.CuaHang).ThenInclude(c => c.NguoiDung)
+            .Where(g => g.MaNguoiDung == maNguoiDung &&
+                (g.SanPham == null || g.SanPham.DaXoa || g.SanPham.TrangThai != "ACTIVE" ||
+                 g.SanPham.CuaHang == null || g.SanPham.CuaHang.TrangThai != "ACTIVE" ||
+                 g.SanPham.CuaHang.NguoiDung == null || g.SanPham.CuaHang.NguoiDung.TrangThai != "ACTIVE"))
+            .ToListAsync();
+        if (items.Count == 0) return 0;
+        _db.GioHangs.RemoveRange(items);
+        await _db.SaveChangesAsync();
+        return items.Count;
+    }
+
     public async Task<int> DemSoLuongMonAsync(int maNguoiDung)
     {
         return await _db.GioHangs.CountAsync(x => x.MaNguoiDung == maNguoiDung);

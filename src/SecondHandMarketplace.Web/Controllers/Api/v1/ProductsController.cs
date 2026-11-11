@@ -82,7 +82,6 @@ public class ProductsController(IProductService productService) : ControllerBase
             ShopId = 0,
             ShopName = product.ShopName,
             ShopLogo = null,
-            ShopContactPhone = string.Empty,
             CategoryId = null,
             CategoryName = product.CategoryName,
             ConditionId = null,
