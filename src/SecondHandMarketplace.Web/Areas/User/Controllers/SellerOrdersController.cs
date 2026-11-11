@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models.ViewModels.Orders;
 using SecondHandMarketplace.Web.Services.OrderManagement;
+using SecondHandMarketplace.Web.Services.Orders;
 
 namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
-/// <summary>E1: người bán quản lý đơn gửi tới shop của mình.</summary>
+/// <summary>E1 & D5: người bán quản lý đơn gửi tới shop của mình và xác nhận thanh toán.</summary>
 public sealed class SellerOrdersController(IOrderManagementService orders) : UserBaseController
 {
     private static readonly string[] TrangThaiHopLe = { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" };
@@ -45,6 +46,21 @@ public sealed class SellerOrdersController(IOrderManagementService orders) : Use
         var (ok, error) = await orders.SellerUpdateStatusAsync(userId.Value, id, status, reason, ct);
         if (ok) this.ThongBaoThanhCong("Đã cập nhật đơn hàng, người mua sẽ nhận được thông báo.");
         else this.ThongBaoLoi(error ?? "Không cập nhật được đơn hàng.");
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    /// <summary>
+    /// Task D5: Người bán xác nhận đã nhận tiền (thủ công qua VietQR hoặc tiền mặt).
+    /// </summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> XacNhanNhanTien(int id, [FromServices] IOrderService orderService)
+    {
+        var userId = User.LayNguoiDungId();
+        if (userId is null) return Challenge();
+
+        var (ok, error) = await orderService.XacNhanDaNhanTienShopAsync(userId.Value, id);
+        if (ok) this.ThongBaoThanhCong("Đã xác nhận nhận tiền thành công!");
+        else this.ThongBaoLoi(error ?? "Không thể xác nhận nhận tiền.");
         return RedirectToAction(nameof(Details), new { id });
     }
 

@@ -33,6 +33,7 @@ for %%F in (
     18_ghi_vi_pham_low_khi_tu_choi.sql
     20_cauhinh_ai.sql
     21_dia_chi_khu_vuc.sql
+    22_hinh_thuc_nhan.sql
 ) do (
     echo Running %%F...
     sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "%%F"
@@ -52,6 +53,15 @@ if "%SEED_DEMO%"=="1" (
         echo ERROR: 30_seed_dia_chi_shop.sql failed.
         pause
         exit /b 1
+    )
+    if exist "32_seed_don_hang.sql" (
+        echo Running 32_seed_don_hang.sql...
+        sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "32_seed_don_hang.sql"
+        if errorlevel 1 (
+            echo ERROR: 32_seed_don_hang.sql failed.
+            pause
+            exit /b 1
+        )
     )
 )
 

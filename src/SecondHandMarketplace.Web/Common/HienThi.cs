@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 
 namespace SecondHandMarketplace.Web.Common;
 
@@ -15,6 +15,9 @@ public static class HienThi
 
     public static string NgayGio(DateTime? utc) =>
         utc is null ? "—" : SangGioVn(utc.Value).ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+
+    public static string NgayGioGiay(DateTime? utc) =>
+        utc is null ? "—" : SangGioVn(utc.Value).ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
 
     public static string Ngay(DateTime? utc) =>
         utc is null ? "—" : SangGioVn(utc.Value).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
@@ -39,6 +42,35 @@ public static class HienThi
         "COMPLETED" => "Hoàn tất",
         "CANCELLED" => "Đã hủy",
         _ => s
+    };
+
+    /// <summary>
+    /// Nhãn trạng thái hiển thị linh hoạt theo hình thức nhận hàng (Mục 4.3 cho Người D).
+    /// Với GAP_TRUC_TIEP: SHIPPING hiện là "Đã hẹn gặp", DELIVERED hiện là "Đã nhận hàng", v.v.
+    /// </summary>
+    public static string TrangThaiDon(string s, string? hinhThucNhan)
+    {
+        if (string.Equals(hinhThucNhan, "GAP_TRUC_TIEP", StringComparison.OrdinalIgnoreCase))
+        {
+            return s switch
+            {
+                "PENDING" => "Chờ xác nhận hẹn",
+                "CONFIRMED" => "Đã đồng ý hẹn",
+                "SHIPPING" => "Đã hẹn gặp",
+                "DELIVERED" => "Đã nhận hàng",
+                "COMPLETED" => "Hoàn tất",
+                "CANCELLED" => "Đã hủy hẹn",
+                _ => s
+            };
+        }
+        return TrangThaiDon(s);
+    }
+
+    public static string TenHinhThucNhan(string? htn) => htn switch
+    {
+        "GAP_TRUC_TIEP" => "Gặp mặt trực tiếp",
+        "GIAO_HANG" => "Giao hàng tận nơi",
+        _ => "Giao hàng tận nơi"
     };
 
     public static string PhuongThucThanhToan(string s) => s switch
@@ -66,6 +98,15 @@ public static class HienThi
         "SELLER" => "Người bán",
         "ADMIN" => "Quản trị viên",
         "SYSTEM" => "Hệ thống",
+        _ => s
+    };
+
+    public static string TrangThaiTranhChap(string s) => s switch
+    {
+        "OPEN" => "Chờ phản hồi",
+        "PROCESSING" => "Đang xử lý",
+        "RESOLVED" => "Đã giải quyết",
+        "REJECTED" => "Đã từ chối",
         _ => s
     };
 

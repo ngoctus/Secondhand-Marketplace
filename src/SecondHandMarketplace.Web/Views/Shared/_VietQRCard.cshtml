@@ -8,26 +8,41 @@
             </div>
             <div>
                 <h6 class="fw-bold mb-0 text-dark">Thanh toán Chuyển khoản VietQR</h6>
-                <div class="text-muted" style="font-size: 11.5px;">Quét mã bằng mọi app ngân hàng hoặc ví điện tử (Napas 247)</div>
+                <div class="text-muted" style="font-size: 11.5px;">Mã QR tạo theo chuẩn EMVCo Napas247 (Tích hợp QRCoder nội bộ)</div>
             </div>
         </div>
-        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill small">
-            <i class="bi bi-exclamation-circle me-1"></i>Chưa đối soát tự động
+        <!-- Nhãn "Xác nhận thủ công" theo quy định của đồ án (Task D4) -->
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 rounded-pill small">
+            <i class="bi bi-hand-index-thumb me-1"></i>Xác nhận thủ công
         </span>
+    </div>
+
+    <!-- KHUNG QUY ĐỊNH AN TOÀN THANH TOÁN (Bắt buộc theo tài liệu nhóm - Người D) -->
+    <div class="alert alert-warning border border-warning rounded-3 p-3 mb-3" style="font-size: 12px; line-height: 1.5;">
+        <div class="fw-bold text-dark d-flex align-items-center gap-1 mb-1">
+            <i class="bi bi-shield-exclamation text-warning fs-6"></i>
+            <span>Quy định an toàn giao dịch chuyển khoản:</span>
+        </div>
+        <ul class="mb-0 ps-3 text-secondary">
+            <li><strong>Người mua:</strong> Vui lòng kiểm tra kỹ tên chủ tài khoản, số tiền và nội dung chuyển khoản trước khi xác nhận trên ứng dụng ngân hàng.</li>
+            <li><strong>Người bán:</strong> Chỉ xác nhận đơn hàng sau khi đã tự kiểm tra và thấy tiền vào tài khoản ngân hàng thực tế của mình.</li>
+            <li><strong>Lưu ý:</strong> Hệ thống <em>không tự động xác nhận với ngân hàng</em> và nền tảng <em>không bảo chứng thanh toán</em>.</li>
+        </ul>
     </div>
 
     <div class="row g-4 align-items-center">
         <!-- Khung QR Code -->
         <div class="col-md-5 text-center">
-            <div class="vietqr-frame d-inline-block p-2 rounded-3 border bg-light shadow-sm" style="max-width: 230px;">
+            <div class="vietqr-frame d-inline-block p-2 rounded-3 border bg-light shadow-sm" style="max-width: 240px;">
                 <div class="bg-primary text-white text-center py-1 rounded-2 mb-1 fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">
-                    MB BANK · VIETQR NAPAS
+                    @Model.NganHang.ToUpper() · VIETQR NAPAS
                 </div>
-                <img src="@Model.QrUrl" 
+                <!-- Ảnh mã QR sinh offline nội bộ bằng QRCoder (theo bài giảng UTC2) -->
+                <img src="@Model.QrImageSource" 
                      alt="VietQR Mã thanh toán" 
                      class="img-fluid rounded border bg-white" 
-                     style="width: 200px; height: 200px; object-fit: contain;"
-                     onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 200\'><rect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/><rect x=\'20\' y=\'20\' width=\'50\' height=\'50\' fill=\'%23111827\'/><rect x=\'30\' y=\'30\' width=\'30\' height=\'30\' fill=\'%23fff\'/><rect x=\'35\' y=\'35\' width=\'20\' height=\'20\' fill=\'%23111827\'/><rect x=\'130\' y=\'20\' width=\'50\' height=\'50\' fill=\'%23111827\'/><rect x=\'140\' y=\'30\' width=\'30\' height=\'30\' fill=\'%23fff\'/><rect x=\'145\' y=\'35\' width=\'20\' height=\'20\' fill=\'%23111827\'/><rect x=\'20\' y=\'130\' width=\'50\' height=\'50\' fill=\'%23111827\'/><rect x=\'30\' y=\'140\' width=\'30\' height=\'30\' fill=\'%23fff\'/><rect x=\'35\' y=\'145\' width=\'20\' height=\'20\' fill=\'%23111827\'/><circle cx=\'100\' cy=\'100\' r=\'18\' fill=\'%231f5c3d\'/><text x=\'100\' y=\'104\' font-size=\'8\' fill=\'%23fff\' font-weight=\'bold\' text-anchor=\'middle\'>RE:MARKET</text></svg>';" />
+                     style="width: 210px; height: 210px; object-fit: contain;"
+                     onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 200\'><rect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/><rect x=\'20\' y=\'20\' width=\'50\' height=\'50\' fill=\'%23111827\'/><rect x=\'30\' y=\'30\' width=\'30\' height=\'30\' fill=\'%23fff\'/><rect x=\'35\' y=\'35\' width=\'20\' height=\'20\' fill=\'%23111827\'/><rect x=\'130\' y=\'20\' width=\'50\' height=\'50\' fill=\'%23111827\'/><rect x=\'140\' y=\'30\' width=\'30\' height=\'30\' fill=\'%23fff\'/><rect x=\'145\' y=\'35\' width=\'20\' height=\'20\' fill=\'%23111827\'/><rect x=\'20\' y=\'130\' width=\'50\' height=\'50\' fill=\'%23111827\'/><rect x=\'30\' y=\'140\' width=\'30\' height=\'30\' fill=\'%23fff\'/><rect x=\'35\' y=\'145\' width=\'20\' height=\'20\' fill=\'%23111827\'/><circle cx=\'100\' cy=\'100\' r=\'18\' fill=\'%231f5c3d\'/><text x=\'100\' y=\'104\' font-size=\'8\' fill=\'%23fff\' font-weight=\'bold\' text-anchor=\'middle\'>VIETQR</text></svg>';" />
                 <div class="mt-2 text-muted fw-semibold" style="font-size: 11px;">
                     <i class="bi bi-camera me-1"></i>Mở camera / App ngân hàng để quét
                 </div>
@@ -40,14 +55,14 @@
                 <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light border">
                     <div>
                         <div class="text-muted" style="font-size: 11px;">Ngân hàng thụ hưởng</div>
-                        <div class="fw-bold text-dark small">@Model.NganHang (MB)</div>
+                        <div class="fw-bold text-dark small">@Model.NganHang</div>
                     </div>
                     <span class="badge bg-secondary-subtle text-secondary font-monospace">BIN: @Model.MaNganHang</span>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light border">
                     <div>
-                        <div class="text-muted" style="font-size: 11px;">Số tài khoản</div>
+                        <div class="text-muted" style="font-size: 11px;">Số tài khoản (mô phỏng)</div>
                         <div class="fw-bold text-primary font-monospace fs-6">@Model.SoTaiKhoan</div>
                     </div>
                     <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-0 copy-btn" style="font-size: 12px;" onclick="copyVietQrRaw('@Model.SoTaiKhoan', this)">
@@ -106,7 +121,7 @@
                     {
                         <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
                     }
-                    <button type="submit" class="btn btn-success w-100 rounded-pill fw-semibold py-2">
+                    <button type="submit" class="btn btn-success w-100 rounded-pill fw-semibold py-2 shadow-sm">
                         <i class="bi bi-check-circle-fill me-1"></i> Tôi đã chuyển khoản xong
                     </button>
                 </form>

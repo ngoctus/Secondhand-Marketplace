@@ -651,7 +651,7 @@ BEGIN
     DECLARE @TrangThaiCu varchar(15), @MaNguoiMua int, @ChuShopId int, @MaDon varchar(30),
             @VaiTro varchar(10), @TrangThaiTaiKhoan varchar(10), @Loai varchar(10),
             @Now datetime2(3) = SYSUTCDATETIME(), @TrangThaiSanPhamMoi varchar(20),
-            @TrangThaiShop varchar(10);
+            @TrangThaiShop varchar(10), @HinhThucNhan varchar(20);
 
     DECLARE @SanPhamDoi TABLE (MaSanPham int PRIMARY KEY);
 
@@ -659,7 +659,8 @@ BEGIN
         BEGIN TRANSACTION;
 
         SELECT @TrangThaiCu = dh.TrangThai, @MaNguoiMua = dh.MaNguoiDung,
-               @ChuShopId = ch.MaNguoiDung, @MaDon = dh.MaDon, @TrangThaiShop = ch.TrangThai
+               @ChuShopId = ch.MaNguoiDung, @MaDon = dh.MaDon, @TrangThaiShop = ch.TrangThai,
+               @HinhThucNhan = ISNULL(dh.HinhThucNhan, 'GIAO_HANG')
         FROM DonHang dh WITH (UPDLOCK, HOLDLOCK)
         JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
         WHERE dh.MaDonHang = @MaDonHang;
@@ -691,8 +692,15 @@ BEGIN
         IF @TrangThaiMoi IN ('CONFIRMED','SHIPPING','DELIVERED') AND @TrangThaiShop <> 'ACTIVE'
             THROW 51210, N'Cửa hàng đang bị khóa, chỉ có thể hủy đơn.', 1;
 
-        IF @TrangThaiMoi = 'COMPLETED' AND @Loai <> 'BUYER'
-            THROW 51206, N'Chỉ người mua mới được xác nhận hoàn tất.', 1;
+        IF @TrangThaiMoi = 'COMPLETED'
+        BEGIN
+            IF @Loai <> 'BUYER'
+                THROW 51206, N'Chỉ người mua mới được xác nhận hoàn tất.', 1;
+
+            -- Đơn GIAO_HANG bắt buộc phải qua DELIVERED mới được hoàn tất (chống nhảy cóc khi đang SHIPPING)
+            IF @TrangThaiCu = 'SHIPPING' AND @HinhThucNhan <> 'GAP_TRUC_TIEP'
+                THROW 51211, N'Đơn giao hàng tận nơi chỉ có thể xác nhận hoàn tất sau khi đã giao hàng thành công (DELIVERED).', 1;
+        END;
 
         -- Fix #2: Chặn Buyer và Seller hủy đơn khi đã giao hoặc hoàn tất
         IF @TrangThaiMoi = 'CANCELLED'

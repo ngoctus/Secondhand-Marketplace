@@ -15,6 +15,7 @@ public sealed class OrderRowVm
     public string ShopName { get; set; } = "";
     public string PaymentMethod { get; set; } = "";
     public string PaymentStatus { get; set; } = "";
+    public string HinhThucNhan { get; set; } = "GIAO_HANG";
 }
 
 public sealed class OrderItemVm
@@ -50,6 +51,7 @@ public sealed class OrderDetailVm
     public string Status { get; set; } = "";
     public string PaymentMethod { get; set; } = "";
     public string PaymentStatus { get; set; } = "";
+    public string HinhThucNhan { get; set; } = "GIAO_HANG";
     public decimal ItemsTotal { get; set; }
     public decimal ShippingFee { get; set; }
     public decimal Total { get; set; }

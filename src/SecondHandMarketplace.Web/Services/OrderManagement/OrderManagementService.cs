@@ -336,6 +336,7 @@ public sealed class OrderManagementService(AppDbContext db, IAuditLogService aud
             PaymentMethod = d.PhuongThucThanhToan,
 
             PaymentStatus = d.TrangThaiThanhToan,
+            HinhThucNhan = d.HinhThucNhan,
 
             ItemsTotal = d.TienHang,
 

@@ -189,10 +189,15 @@
 
                     fetch('@Url.Action("ChuyenTrangThaiChon", "Cart", new { area = "User" })', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': afToken },
                         body: 'maGioHang=' + encodeURIComponent(id) + '&daChon=' + encodeURIComponent(daChon) + '&__RequestVerificationToken=' + encodeURIComponent(afToken)
                     }).then(res => res.json()).then(data => {
+                        if (data && data.success) {
+                            capNhatGiaoDien();
+                        } else {
+                            capNhatGiaoDien();
+                        }
+                    }).catch(() => {
                         capNhatGiaoDien();
                     });
                 });
@@ -210,10 +215,15 @@
 
                     fetch('@Url.Action("ChonTatCaShop", "Cart", new { area = "User" })', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': afToken },
                         body: 'maCuaHang=' + encodeURIComponent(shopId) + '&daChon=' + encodeURIComponent(daChon) + '&__RequestVerificationToken=' + encodeURIComponent(afToken)
                     }).then(res => res.json()).then(data => {
+                        if (data && data.success) {
+                            capNhatGiaoDien();
+                        } else {
+                            capNhatGiaoDien();
+                        }
+                    }).catch(() => {
                         capNhatGiaoDien();
                     });
                 });

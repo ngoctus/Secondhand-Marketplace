@@ -29,12 +29,37 @@
         <div class="row g-4">
             <!-- CỘT TRÁI: THÔNG TIN GIAO NHẬN & PHƯƠNG THỨC THANH TOÁN -->
             <div class="col-lg-7">
-                <!-- 1. Địa chỉ nhận hàng -->
+                <!-- 1. Hình thức nhận hàng & Địa chỉ -->
                 <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4">
                     <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
                         <span class="badge bg-success rounded-circle px-2 py-1" style="font-size: 13px;">1</span>
-                        <span>Thông tin người nhận hàng</span>
+                        <span>Hình thức nhận & Thông tin người nhận</span>
                     </h5>
+
+                    <!-- Chọn hình thức nhận hàng (Task D3) -->
+                    <label class="form-label fw-semibold small text-dark mb-2">
+                        Hình thức giao dịch <span class="text-danger">*</span>
+                    </label>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="delivery-option-card border rounded-3 p-3 d-flex align-items-start gap-2 h-100 cursor-pointer @(Model.HinhThucNhan == "GIAO_HANG" ? "delivery-active" : "")" for="htn_giao">
+                                <input class="form-check-input mt-1" type="radio" asp-for="HinhThucNhan" id="htn_giao" value="GIAO_HANG" />
+                                <div>
+                                    <div class="fw-bold text-dark small"><i class="bi bi-truck text-primary me-1"></i> Giao hàng tận nơi</div>
+                                    <div class="text-muted" style="font-size: 11px;">Người bán gửi hàng tận nhà cho bạn.</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="delivery-option-card border rounded-3 p-3 d-flex align-items-start gap-2 h-100 cursor-pointer @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "delivery-active" : "")" for="htn_gap">
+                                <input class="form-check-input mt-1" type="radio" asp-for="HinhThucNhan" id="htn_gap" value="GAP_TRUC_TIEP" />
+                                <div>
+                                    <div class="fw-bold text-dark small"><i class="bi bi-people-fill text-success me-1"></i> Gặp mặt trực tiếp</div>
+                                    <div class="text-muted" style="font-size: 11px;">Hẹn gặp kiểm tra đồ trực tiếp, 0đ ship.</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
 
                     <div class="mb-3">
                         <label asp-for="TenNguoiNhan" class="form-label fw-semibold small text-dark">
@@ -59,13 +84,13 @@
                     </div>
 
                     <div class="mb-2">
-                        <label asp-for="DiaChiNhan" class="form-label fw-semibold small text-dark">
-                            Địa chỉ giao hàng chi tiết <span class="text-danger">*</span>
+                        <label asp-for="DiaChiNhan" id="lblDiaChiNhan" class="form-label fw-semibold small text-dark">
+                            @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Địa điểm hẹn gặp mong muốn" : "Địa chỉ giao hàng chi tiết") <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted align-items-start pt-2"><i class="bi bi-geo-alt"></i></span>
-                            <textarea asp-for="DiaChiNhan" rows="3" class="form-control rounded-end-3 border-start-0" 
-                                      placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..." required maxlength="500"></textarea>
+                            <textarea asp-for="DiaChiNhan" id="txtDiaChiNhan" rows="3" class="form-control rounded-end-3 border-start-0" 
+                                      placeholder="@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Ví dụ: Quán cafe X, cổng trường UTC2, công viên Y..." : "Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố...")" required maxlength="500"></textarea>
                         </div>
                         <span asp-validation-for="DiaChiNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
@@ -206,7 +231,7 @@
                         </div>
                         <div class="d-flex justify-content-between mb-2 small">
                             <span class="text-muted">Phí vận chuyển:</span>
-                            <span class="fw-semibold text-success">
+                            <span class="fw-semibold text-success" id="phiVanChuyenTxt">
                                 @(Model.PhiVanChuyen == 0 ? "Miễn phí" : Model.PhiVanChuyen.ToString("N0") + " ₫")
                             </span>
                         </div>
@@ -243,6 +268,14 @@
 .payment-card:hover {
     border-color: #cbd5e1 !important;
     background-color: #f8fafc;
+}
+.delivery-option-card {
+    transition: all 0.2s ease;
+}
+.delivery-active {
+    border-color: #1f5c3d !important;
+    background-color: rgba(31, 92, 61, 0.05) !important;
+    box-shadow: 0 2px 6px rgba(31, 92, 61, 0.1);
 }
 .payment-active {
     border-color: #1f5c3d !important;
@@ -301,6 +334,50 @@
         });
 
         updatePaymentUI();
+
+        // Xử lý đổi hình thức nhận hàng (Task D3)
+        const deliveryRadios = document.querySelectorAll('input[name="HinhThucNhan"]');
+        const deliveryCards = document.querySelectorAll('.delivery-option-card');
+        const lblDiaChiNhan = document.getElementById('lblDiaChiNhan');
+        const txtDiaChiNhan = document.getElementById('txtDiaChiNhan');
+
+        function updateDeliveryUI() {
+            let selectedVal = 'GIAO_HANG';
+            deliveryRadios.forEach(radio => {
+                const card = radio.closest('.delivery-option-card');
+                if (radio.checked) {
+                    selectedVal = radio.value;
+                    card.classList.add('delivery-active');
+                } else {
+                    card.classList.remove('delivery-active');
+                }
+            });
+
+            const tienHang = @Model.TienHang;
+            const originalPhiVc = @Model.PhiVanChuyen;
+            const phiVcTxt = document.getElementById('phiVanChuyenTxt');
+            const totalTxt = document.getElementById('tongThanhToanTxt');
+            const inputPhiVc = document.getElementById('PhiVanChuyen');
+
+            if (selectedVal === 'GAP_TRUC_TIEP') {
+                if (lblDiaChiNhan) lblDiaChiNhan.innerHTML = 'Địa điểm hẹn gặp mong muốn <span class="text-danger">*</span>';
+                if (txtDiaChiNhan) txtDiaChiNhan.placeholder = 'Ví dụ: Quán cafe X, cổng trường UTC2, công viên Y...';
+                if (phiVcTxt) phiVcTxt.textContent = 'Miễn phí (0 ₫)';
+                if (totalTxt) totalTxt.textContent = tienHang.toLocaleString('vi-VN') + ' ₫';
+                if (inputPhiVc) inputPhiVc.value = '0';
+            } else {
+                if (lblDiaChiNhan) lblDiaChiNhan.innerHTML = 'Địa chỉ giao hàng chi tiết <span class="text-danger">*</span>';
+                if (txtDiaChiNhan) txtDiaChiNhan.placeholder = 'Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố...';
+                if (phiVcTxt) phiVcTxt.textContent = (originalPhiVc === 0 ? 'Miễn phí' : originalPhiVc.toLocaleString('vi-VN') + ' ₫');
+                if (totalTxt) totalTxt.textContent = (tienHang + originalPhiVc).toLocaleString('vi-VN') + ' ₫';
+                if (inputPhiVc) inputPhiVc.value = originalPhiVc;
+            }
+        }
+
+        deliveryRadios.forEach(radio => {
+            radio.addEventListener('change', updateDeliveryUI);
+        });
+        updateDeliveryUI();
     });
     </script>
 }

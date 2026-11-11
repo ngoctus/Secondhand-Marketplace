@@ -28,6 +28,12 @@ public class CreateOrderRequest
     [Required(ErrorMessage = "Vui lòng chọn phương thức thanh toán.")]
     public string PaymentMethod { get; set; } = "COD";
 
+    /// <summary>
+    /// Hình thức nhận hàng: "GIAO_HANG", "GAP_TRUC_TIEP"
+    /// </summary>
+    [StringLength(20)]
+    public string? DeliveryMethod { get; set; } = "GIAO_HANG";
+
     [StringLength(500)]
     public string? Note { get; set; }
 }
@@ -81,10 +87,12 @@ public class OrderResponse
     public decimal ShippingFee { get; set; }
     public string Status { get; set; } = string.Empty;
     public string PaymentMethod { get; set; } = string.Empty;
+    public string DeliveryMethod { get; set; } = "GIAO_HANG";
     public string ReceiverName { get; set; } = string.Empty;
     public string ReceiverPhone { get; set; } = string.Empty;
     public string ReceiverAddress { get; set; } = string.Empty;
     public string? DeliveryTimeSlot { get; set; }
+    public string? Note { get; set; }
     public DateTime CreatedAt { get; set; }
     public int ItemsCount { get; set; }
     public List<OrderItemResponse> Items { get; set; } = new();
