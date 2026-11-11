@@ -101,6 +101,10 @@
                 </div>
             </div>
 
+            <div class="alert alert-info py-2 px-3 small mt-3 mb-0" style="font-size: 12px;">
+                <i class="bi bi-info-circle-fill me-1"></i> <strong>Lưu ý:</strong> Mã và thông tin tài khoản hiện phục vụ bản demo. Hệ thống chưa xác minh giao dịch ngân hàng; khoản chuyển này sẽ không tự đổi trạng thái đơn thành đã thanh toán.
+            </div>
+
             @if (Model.ChoPhepXacNhan && (Model.MaDonHang.HasValue || !string.IsNullOrEmpty(Model.DanhSachMaDonHang)))
             {
                 <form asp-area="User" asp-controller="Orders" asp-action="XacNhanThanhToan" method="post" class="mt-3">

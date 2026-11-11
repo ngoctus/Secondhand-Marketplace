@@ -67,7 +67,6 @@
 
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000">Giá tốt</a>
-                <a class="rm-nav-link" asp-area="" asp-controller="PublicAuctions" asp-action="Index">Đấu giá</a>
 
                 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
                 {
@@ -124,7 +123,6 @@
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">Đánh giá của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán (Shop)</a>
-                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Auctions" asp-action="Index">Đấu giá của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê doanh thu</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">Yêu thích</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng của tôi</a>
@@ -166,7 +164,6 @@
             <div class="rm-dropdown-divider"></div>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000">Giá tốt</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="PublicAuctions" asp-action="Index">Đấu giá</a>
 
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
             {
@@ -256,7 +253,13 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script src="~/js/realtime.js" asp-append-version="true" data-hub="@Url.Content("~/hubs/notification")"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
+    <partial name="_ChatWidget" />
     <partial name="_AiChatWidget" />
 </body>
 </html>

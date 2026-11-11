@@ -13,7 +13,6 @@
     <div class="kpi"><span>Tổng đơn hàng</span><b>@Model.TongDonHang</b><small>@Model.DonHoanTat đã hoàn tất</small></div>
     <a class="kpi warn" asp-controller="Products" asp-action="Index"><span>Sản phẩm chờ duyệt</span><b>@Model.SanPhamChoDuyet</b></a>
     <a class="kpi warn" asp-controller="Reports" asp-action="Index"><span>Báo cáo chưa xử lý</span><b>@(Model.BaoCaoChuaXuLy?.ToString() ?? "—")</b></a>
-    <a class="kpi" asp-controller="Auctions" asp-action="Index"><span>Phiên đấu giá đang mở</span><b>@Model.PhienDangMo</b></a>
 </div>
 
 <div class="row g-3">

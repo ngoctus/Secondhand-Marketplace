@@ -8,12 +8,19 @@ services:
       dockerfile: Dockerfile
     container_name: secondhand_web
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      # Su dung host.docker.internal de ket noi toi SQL Server tren may Windows host
-      - ConnectionStrings__DefaultConnection=Server=host.docker.internal;Database=SecondHandMarketplace;User Id=sa;Password=Admin@12345;TrustServerCertificate=True;
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      ConnectionStrings__DefaultConnection: "Server=${DB_SERVER:?Set DB_SERVER};Database=${DB_NAME:-SecondHandMarketplace};User Id=${DB_USER:?Set DB_USER};Password=${DB_PASSWORD:?Set DB_PASSWORD};Encrypt=True;TrustServerCertificate=False;MultipleActiveResultSets=True"
+      Jwt__Key: ${JWT_KEY:?Set JWT_KEY to a random secret of at least 32 bytes}
+      Ai__ApiKey: ${AI_API_KEY:-}
+    volumes:
+      - product_uploads:/app/wwwroot/uploads/products
+      - dispute_uploads:/app/wwwroot/uploads/disputes
     restart: unless-stopped
+
+volumes:
+  product_uploads:
+  dispute_uploads:

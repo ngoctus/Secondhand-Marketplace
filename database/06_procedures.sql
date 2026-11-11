@@ -419,6 +419,7 @@ CREATE OR ALTER PROCEDURE sp_TaoDonHangTheoShop
     @TenNguoiNhan        nvarchar(100),
     @SoDienThoaiNhan     varchar(15),
     @DiaChiNhan          nvarchar(500),
+    @KhungGioNhan        nvarchar(200) = NULL,
     @PhiVanChuyen        decimal(18,2) = 0,
     @PhuongThucThanhToan varchar(20)   = 'COD',
     @GiaTuyChon          decimal(18,2) = NULL,   -- giá chốt từ đấu giá (NULL = lấy SanPham.Gia)
@@ -451,7 +452,7 @@ BEGIN
     IF @ChuShopId = @MaNguoiDung
         THROW 51105, N'Không thể mua sản phẩm của chính shop mình.', 1;
 
-    IF @PhuongThucThanhToan NOT IN ('COD','BANK_TRANSFER','ONLINE')
+    IF @PhuongThucThanhToan NOT IN ('COD','BANK_TRANSFER')
         THROW 51110, N'Phương thức thanh toán không hợp lệ.', 1;
     IF @PhiVanChuyen IS NULL OR @PhiVanChuyen < 0
         THROW 51109, N'Phí vận chuyển không hợp lệ.', 1;
@@ -482,21 +483,15 @@ BEGIN
     SET @MaDon = 'DH' + CONVERT(varchar(8), SYSUTCDATETIME(), 112) + '-'
                + RIGHT('000000' + CAST(@SoThuTu AS varchar(10)), 6);
 
-    INSERT DonHang (MaDon, MaNguoiDung, MaCuaHang, TenNguoiNhan, SoDienThoaiNhan, DiaChiNhan,
+    INSERT DonHang (MaDon, MaNguoiDung, MaCuaHang, TenNguoiNhan, SoDienThoaiNhan, DiaChiNhan, KhungGioNhan,
                     TienHang, PhiVanChuyen, TongTien, PhuongThucThanhToan)
-    VALUES (@MaDon, @MaNguoiDung, @MaCuaHang, LTRIM(RTRIM(@TenNguoiNhan)), @SoDienThoaiNhan, LTRIM(RTRIM(@DiaChiNhan)),
+    VALUES (@MaDon, @MaNguoiDung, @MaCuaHang, LTRIM(RTRIM(@TenNguoiNhan)), @SoDienThoaiNhan, LTRIM(RTRIM(@DiaChiNhan)), NULLIF(LTRIM(RTRIM(@KhungGioNhan)), N''),
             @TienHang, @PhiVanChuyen, @TienHang + @PhiVanChuyen, @PhuongThucThanhToan);
     SET @MaDonHangMoi = SCOPE_IDENTITY();
 
     INSERT ThanhToan (MaDonHang, MaGiaoDich, PhuongThucThanhToan, SoTien, TrangThaiThanhToan, ThoiGianThanhToan)
     VALUES (@MaDonHangMoi, 'TXN_' + @MaDon, @PhuongThucThanhToan, @TienHang + @PhiVanChuyen,
-            CASE WHEN @PhuongThucThanhToan = 'ONLINE' THEN 'SUCCESS' ELSE 'PENDING' END,
-            CASE WHEN @PhuongThucThanhToan = 'ONLINE' THEN SYSUTCDATETIME() ELSE NULL END);
-
-    IF @PhuongThucThanhToan = 'ONLINE'
-    BEGIN
-        UPDATE DonHang SET TrangThaiThanhToan = 'PAID' WHERE MaDonHang = @MaDonHangMoi;
-    END
+            'PENDING', NULL);
 
     INSERT ChiTietDonHang (MaDonHang, MaSanPham, TenSanPham, AnhDaiDien, Gia, DangGiuCho)
     SELECT @MaDonHangMoi, sp.MaSanPham, sp.Ten, a.DuongDan, COALESCE(@GiaTuyChon, sp.Gia), 1
@@ -535,6 +530,7 @@ CREATE OR ALTER PROCEDURE sp_TaoDonHang
     @TenNguoiNhan        nvarchar(100),
     @SoDienThoaiNhan     varchar(15),
     @DiaChiNhan          nvarchar(500),
+    @KhungGioNhan        nvarchar(200) = NULL,
     @PhiVanChuyen        decimal(18,2) = 0,
     @PhuongThucThanhToan varchar(20)   = 'COD',
     @MaDonHangMoi        int OUTPUT
@@ -554,6 +550,7 @@ BEGIN
     EXEC sp_TaoDonHangTheoShop
          @MaNguoiDung = @MaNguoiDung, @MaCuaHang = @MaCuaHang, @DanhSachSanPham = @DanhSach,
          @TenNguoiNhan = @TenNguoiNhan, @SoDienThoaiNhan = @SoDienThoaiNhan, @DiaChiNhan = @DiaChiNhan,
+         @KhungGioNhan = @KhungGioNhan,
          @PhiVanChuyen = @PhiVanChuyen, @PhuongThucThanhToan = @PhuongThucThanhToan,
          @MaDonHangMoi = @MaDonHangMoi OUTPUT;
 END
@@ -565,6 +562,7 @@ CREATE OR ALTER PROCEDURE sp_DatHangTuGio
     @TenNguoiNhan        nvarchar(100),
     @SoDienThoaiNhan     varchar(15),
     @DiaChiNhan          nvarchar(500),
+    @KhungGioNhan        nvarchar(200) = NULL,
     @PhiVanChuyenMoiDon  decimal(18,2) = 0,
     @PhuongThucThanhToan varchar(20)   = 'COD'
 AS
@@ -613,6 +611,7 @@ BEGIN
             EXEC sp_TaoDonHangTheoShop
                  @MaNguoiDung = @MaNguoiDung, @MaCuaHang = @MaCuaHang, @DanhSachSanPham = @DanhSach,
                  @TenNguoiNhan = @TenNguoiNhan, @SoDienThoaiNhan = @SoDienThoaiNhan, @DiaChiNhan = @DiaChiNhan,
+                 @KhungGioNhan = @KhungGioNhan,
                  @PhiVanChuyen = @PhiVanChuyenMoiDon, @PhuongThucThanhToan = @PhuongThucThanhToan,
                  @MaDonHangMoi = @MaDonHangMoi OUTPUT;
 

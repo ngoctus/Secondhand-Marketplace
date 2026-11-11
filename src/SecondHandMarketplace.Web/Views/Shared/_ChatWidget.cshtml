@@ -1,0 +1,15 @@
+@using Microsoft.AspNetCore.Antiforgery
+@using SecondHandMarketplace.Web.Common
+@inject IAntiforgery Antiforgery
+@if (User.Identity?.IsAuthenticated == true && User.IsInRole("USER") && User.LayNguoiDungId() is int meId)
+{
+    var csrfToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
+    <script src="~/js/chat.js" asp-append-version="true"
+            data-hub-url="@Url.Content("~/hubs/chat")"
+            data-conversations-url="@Url.Content("~/chat/conversations")"
+            data-start-url="@Url.Content("~/chat/start")"
+            data-unread-url="@Url.Content("~/chat/unread")"
+            data-user-id="@meId"
+            data-csrf-token="@csrfToken"></script>
+}

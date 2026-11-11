@@ -7,19 +7,28 @@ using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels;
 using SecondHandMarketplace.Web.Models.ViewModels.Auctions;
+using SecondHandMarketplace.Web.Services.Realtime;
 
 namespace SecondHandMarketplace.Web.Services.Auctions;
 
-public sealed class AuctionService(
-    AppDbContext db,
-    Microsoft.AspNetCore.SignalR.IHubContext<SecondHandMarketplace.Web.Hubs.AuctionHub>? auctionHub = null,
-    SecondHandMarketplace.Web.Services.Notifications.INotificationService? notificationService = null) : IAuctionService
+public sealed class AuctionService(AppDbContext db, IAuctionRealtime realtime) : IAuctionService
 {
     private static SqlParameter Tien(string ten, decimal v) =>
         new(ten, SqlDbType.Decimal) { Value = v, Precision = 18, Scale = 2 };
 
     private static SqlParameter Gio(string ten, DateTime v) =>
         new(ten, SqlDbType.DateTime2) { Value = v };
+
+    /// <summary>Đẩy trạng thái trung lập (userId = null nên không lộ IsLeader/Mine) tới phòng đấu giá.</summary>
+    private async Task BroadcastAsync(int auctionId)
+    {
+        try
+        {
+            var neutral = await GetStatusAsync(auctionId, null, CancellationToken.None);
+            if (neutral is not null) await realtime.BroadcastStatusAsync(auctionId, neutral);
+        }
+        catch { /* realtime chỉ là phụ trợ, lỗi đẩy tin không được làm hỏng giao dịch đã commit */ }
+    }
 
     private static IQueryable<AuctionCardVm> ToCard(IQueryable<PhienDauGia> q) => q.Select(p => new AuctionCardVm
     {
@@ -194,23 +203,18 @@ public sealed class AuctionService(
                 return (false, "Cửa hàng đang bị khóa, không thể đặt giá.");
         }
 
+        // Lấy người dẫn đầu CŨ để cảnh báo "bị vượt giá" realtime (nội dung thông báo vẫn do sp_DatGia ghi).
+        var nguoiDanDauCu = await db.PhienDauGias.AsNoTracking()
+            .Where(p => p.MaPhienDauGia == id).Select(p => p.MaNguoiDanDau).FirstOrDefaultAsync(ct);
+
         try
         {
             await db.Database.ExecuteSqlRawAsync(
                 "EXEC dbo.sp_DatGia @MaPhienDauGia, @MaNguoiDung, @SoTien",
                 new object[] { new SqlParameter("@MaPhienDauGia", id), new SqlParameter("@MaNguoiDung", userId), Tien("@SoTien", amount) }, ct);
-            if (auctionHub is not null)
-            {
-                try
-                {
-                    var status = await GetStatusAsync(id, userId, ct);
-                    if (status is not null)
-                    {
-                        _ = auctionHub.Clients.Group($"auction-{id}").SendAsync("ReceiveBidUpdate", status, ct);
-                    }
-                }
-                catch { }
-            }
+            await BroadcastAsync(id);
+            if (nguoiDanDauCu is int cu && cu != userId)
+                await realtime.PushLatestNotificationAsync(cu, $"/dau-gia/{id}");
 
             return (true, null);
         }
@@ -272,18 +276,8 @@ public sealed class AuctionService(
                 "EXEC dbo.sp_HuyPhienDauGia @MaPhienDauGia, @MaNguoiDung, @LyDo",
                 new object[] { new SqlParameter("@MaPhienDauGia", id), new SqlParameter("@MaNguoiDung", actorId),
                                new SqlParameter("@LyDo", (object?)reason ?? DBNull.Value) }, ct);
-            if (auctionHub is not null)
-            {
-                try
-                {
-                    var status = await GetStatusAsync(id, actorId, ct);
-                    if (status is not null)
-                    {
-                        _ = auctionHub.Clients.Group($"auction-{id}").SendAsync("ReceiveBidUpdate", status, ct);
-                    }
-                }
-                catch { }
-            }
+            await BroadcastAsync(id);
+            await realtime.PushToParticipantsAsync(id);
 
             return (true, null);
         }

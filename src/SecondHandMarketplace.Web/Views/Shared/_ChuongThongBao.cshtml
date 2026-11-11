@@ -6,11 +6,18 @@
 @if (User.Identity?.IsAuthenticated == true && User.LayNguoiDungId() is int nguoiDungId)
 {
     var chuaDoc = await Notifications.CountUnreadAsync(nguoiDungId);
+    @if (User.IsInRole("ADMIN"))
+    {
+        <a class="iconbtn" asp-area="Admin" asp-controller="Notifications" asp-action="Index" aria-label="Thông báo (@chuaDoc chưa đọc)">
+            <span aria-hidden="true">🔔</span>
+            <span class="count" id="notifyCount" @(chuaDoc > 0 ? "" : "hidden")>@(chuaDoc > 99 ? "99+" : chuaDoc.ToString())</span>
+        </a>
+    }
+    else
+    {
     <a class="iconbtn" asp-area="User" asp-controller="Notifications" asp-action="Index" aria-label="Thông báo (@chuaDoc chưa đọc)">
         <span aria-hidden="true">🔔</span>
-        @if (chuaDoc > 0)
-        {
-            <span class="count">@(chuaDoc > 99 ? "99+" : chuaDoc.ToString())</span>
-        }
+        <span class="count" id="notifyCount" @(chuaDoc > 0 ? "" : "hidden")>@(chuaDoc > 99 ? "99+" : chuaDoc.ToString())</span>
     </a>
+    }
 }
