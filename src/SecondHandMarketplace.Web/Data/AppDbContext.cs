@@ -197,6 +197,7 @@ public class AppDbContext : DbContext
         {
             e.ToTable("GioHang");
             e.HasKey(x => x.MaGioHang);
+            e.HasIndex(x => new { x.MaNguoiDung, x.MaSanPham }).IsUnique();
             e.HasOne(x => x.NguoiDung)
                 .WithMany()
                 .HasForeignKey(x => x.MaNguoiDung)
@@ -214,6 +215,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.TienHang).HasPrecision(18, 2);
             e.Property(x => x.PhiVanChuyen).HasPrecision(18, 2);
             e.Property(x => x.TongTien).HasPrecision(18, 2);
+            e.Property(x => x.HinhThucNhan).IsUnicode(false).HasMaxLength(20).HasDefaultValue("GIAO_HANG");
 
             e.HasOne(x => x.NguoiDung)
                 .WithMany()
@@ -338,7 +340,7 @@ public class AppDbContext : DbContext
             e.ToTable("TranhChap");
             e.HasKey(x => x.MaTranhChap);
             e.Property(x => x.LyDo).HasMaxLength(500);
-            e.Property(x => x.BangChungAnh).IsUnicode(false).HasMaxLength(500);
+            e.Property(x => x.BangChungAnh).HasMaxLength(500);
             e.Property(x => x.PhanHoiNguoiBan).HasMaxLength(1000);
             e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(20);
             e.Property(x => x.PhanQuyet).HasMaxLength(500);
@@ -352,6 +354,9 @@ public class AppDbContext : DbContext
         {
             e.ToTable("BaoCao");
             e.HasKey(x => x.MaBaoCao);
+            e.HasIndex(x => new { x.MaNguoiBaoCao, x.LoaiDoiTuong, x.MaDoiTuong })
+                .HasFilter("[TrangThai] = 'PENDING'")
+                .IsUnique();
             e.Property(x => x.LoaiDoiTuong).IsUnicode(false).HasMaxLength(10);
             e.Property(x => x.LyDo).HasMaxLength(255);
             e.Property(x => x.MoTa).HasMaxLength(1000);

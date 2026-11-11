@@ -40,12 +40,45 @@ public class OrdersController(
             return ServiceResult.Fail(ErrorCodes.Unauthorized, "Không thể xác định danh tính.").ToActionResult(this);
         }
 
+        var validPaymentMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "COD", "BANK_TRANSFER", "ONLINE" };
+        var validDeliveryMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "GIAO_HANG", "GAP_TRUC_TIEP" };
+
+        if (string.IsNullOrWhiteSpace(request.PaymentMethod) || !validPaymentMethods.Contains(request.PaymentMethod))
+        {
+            return ServiceResult.Fail(ErrorCodes.ValidationError, "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận COD, BANK_TRANSFER hoặc ONLINE.").ToActionResult(this);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.DeliveryMethod) && !validDeliveryMethods.Contains(request.DeliveryMethod))
+        {
+            return ServiceResult.Fail(ErrorCodes.ValidationError, "Hình thức nhận hàng không hợp lệ. Chỉ chấp nhận GIAO_HANG hoặc GAP_TRUC_TIEP.").ToActionResult(this);
+        }
+
+        var diaChi = request.ReceiverAddress.Trim();
+        var extraParts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(request.DeliveryTimeSlot) && request.DeliveryTimeSlot != "BAT_KY")
+        {
+            extraParts.Add($"Khung giờ: {request.DeliveryTimeSlot.Trim()}");
+        }
+        if (!string.IsNullOrWhiteSpace(request.Note))
+        {
+            extraParts.Add($"Ghi chú: {request.Note.Trim()}");
+        }
+        if (extraParts.Count > 0)
+        {
+            var extraStr = $" ({string.Join(" - ", extraParts)})";
+            if (diaChi.Length + extraStr.Length <= 500)
+            {
+                diaChi += extraStr;
+            }
+        }
+
         var model = new CheckoutViewModel
         {
             TenNguoiNhan = request.ReceiverName,
             SoDienThoaiNhan = request.ReceiverPhone,
-            DiaChiNhan = request.ReceiverAddress,
-            PhuongThucThanhToan = request.PaymentMethod
+            DiaChiNhan = diaChi,
+            PhuongThucThanhToan = request.PaymentMethod.ToUpperInvariant(),
+            HinhThucNhan = (request.DeliveryMethod ?? "GIAO_HANG").ToUpperInvariant()
         };
 
         var result = await orderService.DatHangTuGioAsync(userId, model);
@@ -80,13 +113,46 @@ public class OrdersController(
             return ServiceResult.Fail(ErrorCodes.Unauthorized, "Không thể xác định danh tính.").ToActionResult(this);
         }
 
+        var validPaymentMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "COD", "BANK_TRANSFER", "ONLINE" };
+        var validDeliveryMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "GIAO_HANG", "GAP_TRUC_TIEP" };
+
+        if (string.IsNullOrWhiteSpace(request.PaymentMethod) || !validPaymentMethods.Contains(request.PaymentMethod))
+        {
+            return ServiceResult.Fail(ErrorCodes.ValidationError, "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận COD, BANK_TRANSFER hoặc ONLINE.").ToActionResult(this);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.DeliveryMethod) && !validDeliveryMethods.Contains(request.DeliveryMethod))
+        {
+            return ServiceResult.Fail(ErrorCodes.ValidationError, "Hình thức nhận hàng không hợp lệ. Chỉ chấp nhận GIAO_HANG hoặc GAP_TRUC_TIEP.").ToActionResult(this);
+        }
+
+        var diaChiBuyNow = request.ReceiverAddress.Trim();
+        var extraPartsBuyNow = new List<string>();
+        if (!string.IsNullOrWhiteSpace(request.DeliveryTimeSlot) && request.DeliveryTimeSlot != "BAT_KY")
+        {
+            extraPartsBuyNow.Add($"Khung giờ: {request.DeliveryTimeSlot.Trim()}");
+        }
+        if (!string.IsNullOrWhiteSpace(request.Note))
+        {
+            extraPartsBuyNow.Add($"Ghi chú: {request.Note.Trim()}");
+        }
+        if (extraPartsBuyNow.Count > 0)
+        {
+            var extraStr = $" ({string.Join(" - ", extraPartsBuyNow)})";
+            if (diaChiBuyNow.Length + extraStr.Length <= 500)
+            {
+                diaChiBuyNow += extraStr;
+            }
+        }
+
         var model = new CheckoutViewModel
         {
             TenNguoiNhan = request.ReceiverName,
             SoDienThoaiNhan = request.ReceiverPhone,
-            DiaChiNhan = request.ReceiverAddress,
-            PhuongThucThanhToan = request.PaymentMethod,
-            MaSanPhamMuaNgay = request.ProductId
+            DiaChiNhan = diaChiBuyNow,
+            PhuongThucThanhToan = request.PaymentMethod.ToUpperInvariant(),
+            MaSanPhamMuaNgay = request.ProductId,
+            HinhThucNhan = (request.DeliveryMethod ?? "GIAO_HANG").ToUpperInvariant()
         };
 
         var result = await orderService.MuaNgayAsync(userId, request.ProductId, model);
@@ -114,19 +180,33 @@ public class OrdersController(
             return ServiceResult<IReadOnlyList<OrderResponse>>.Fail(ErrorCodes.Unauthorized, "Không thể xác định danh tính.").ToActionResult(this);
         }
 
+        var userName = User.Identity?.Name;
         var orders = await orderService.LayDanhSachDonMuaAsync(userId, status);
         var dtos = orders.Select(o => new OrderResponse
         {
             Id = o.MaDonHang,
             OrderCode = o.MaDon,
+            BuyerId = userId,
+            BuyerName = !string.IsNullOrEmpty(userName) ? userName : o.TenNguoiNhan,
             ShopId = o.MaCuaHang,
             ShopName = o.TenShop,
             Status = o.TrangThai,
             TotalAmount = o.TongTien,
+            ShippingFee = o.PhiVanChuyen,
             PaymentMethod = o.PhuongThucThanhToan,
+            DeliveryMethod = o.HinhThucNhan,
+            ReceiverName = o.TenNguoiNhan,
+            ReceiverPhone = o.SoDienThoaiNhan,
+            ReceiverAddress = o.DiaChiNhan,
             CreatedAt = o.NgayTao,
-            ItemsCount = 1,
-            Items = new List<OrderItemResponse>()
+            ItemsCount = o.ChiTiet.Count,
+            Items = o.ChiTiet.Select(c => new OrderItemResponse
+            {
+                ProductId = c.MaSanPham,
+                ProductName = c.TenSanPham,
+                ThumbnailUrl = c.AnhDaiDien,
+                PriceAtPurchase = c.Gia
+            }).ToList()
         }).ToList();
 
         return ServiceResult<IReadOnlyList<OrderResponse>>.Ok(dtos).ToActionResult(this);
@@ -145,25 +225,42 @@ public class OrdersController(
             return ServiceResult<OrderDetailResponse>.Fail(ErrorCodes.Unauthorized, "Không thể xác định danh tính.").ToActionResult(this);
         }
 
+        var userName = User.Identity?.Name;
         var order = await orderService.LayChiTietDonMuaAsync(userId, orderId);
         if (order is null)
         {
             return ServiceResult<OrderDetailResponse>.Fail(ErrorCodes.OrderNotFound, "Không tìm thấy đơn hàng.").ToActionResult(this);
         }
 
+        string? deliveryTimeSlot = null;
+        string? note = null;
+        if (!string.IsNullOrEmpty(order.DiaChiNhan))
+        {
+            var mSlot = System.Text.RegularExpressions.Regex.Match(order.DiaChiNhan, @"Khung giờ:\s*([^-\)]+)");
+            if (mSlot.Success) deliveryTimeSlot = mSlot.Groups[1].Value.Trim();
+
+            var mNote = System.Text.RegularExpressions.Regex.Match(order.DiaChiNhan, @"Ghi chú:\s*([^\)]+)");
+            if (mNote.Success) note = mNote.Groups[1].Value.Trim();
+        }
+
         var detail = new OrderDetailResponse
         {
             Id = order.MaDonHang,
             OrderCode = order.MaDon,
+            BuyerId = userId,
+            BuyerName = !string.IsNullOrEmpty(userName) ? userName : order.TenNguoiNhan,
             ShopId = order.MaCuaHang,
             ShopName = order.TenShop,
             Status = order.TrangThai,
             TotalAmount = order.TongTien,
             ShippingFee = order.PhiVanChuyen,
             PaymentMethod = order.PhuongThucThanhToan,
+            DeliveryMethod = order.HinhThucNhan,
             ReceiverName = order.TenNguoiNhan,
             ReceiverPhone = order.SoDienThoaiNhan,
             ReceiverAddress = order.DiaChiNhan,
+            DeliveryTimeSlot = deliveryTimeSlot,
+            Note = note,
             CreatedAt = order.NgayTao,
             ItemsCount = order.DanhSachSanPham.Count,
             Items = order.DanhSachSanPham.Select(p => new OrderItemResponse

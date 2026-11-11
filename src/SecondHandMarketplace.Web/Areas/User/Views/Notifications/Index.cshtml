@@ -30,7 +30,7 @@
                             @if (!item.DaDoc) { <span class="badge bg-success ms-1">Mới</span> }
                         </div>
                         <div>@item.NoiDung</div>
-                        <div class="small text-muted">@TenLoai(item.Loai) · @item.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                        <div class="small text-muted">@TenLoai(item.Loai) · @HienThi.NgayGio(item.NgayTao)</div>
                     </div>
                     @if (!item.DaDoc)
                     {
