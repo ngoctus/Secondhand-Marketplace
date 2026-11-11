@@ -1,4 +1,5 @@
 using System.Data;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;

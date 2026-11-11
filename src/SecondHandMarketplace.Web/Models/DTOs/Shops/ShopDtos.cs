@@ -21,6 +21,28 @@ public class CreateShopRequest
 
     [StringLength(255)]
     public string? ContactAddress { get; set; }
+
+    /// <summary>Mã tỉnh/thành (bắt buộc khi lưu shop; xem GET /KhuVuc/PhuongXa để lấy danh sách xã).</summary>
+    public int? ProvinceId { get; set; }
+
+    /// <summary>Mã phường/xã, phải thuộc tỉnh <see cref="ProvinceId"/>.</summary>
+    public int? WardId { get; set; }
+
+    [StringLength(300)]
+    public string? AddressDetail { get; set; }
+
+    [StringLength(100)]
+    public string? AreaLabel { get; set; }
+
+    /// <summary>Mã BIN VietQR của ngân hàng nhận chuyển khoản (tùy chọn, nhưng nhập thì phải đủ 3 trường ngân hàng).</summary>
+    [StringLength(10)]
+    public string? BankBin { get; set; }
+
+    [StringLength(30)]
+    public string? BankAccountNumber { get; set; }
+
+    [StringLength(100)]
+    public string? BankAccountHolder { get; set; }
 }
 
 public class UpdateShopRequest

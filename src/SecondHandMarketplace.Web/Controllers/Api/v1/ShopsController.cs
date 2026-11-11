@@ -72,8 +72,10 @@ public class ShopsController(IShopService shopService) : ControllerBase
             return ServiceResult.Fail(ErrorCodes.Unauthorized, "Không thể xác định danh tính.").ToActionResult(this);
         }
 
-        var (success, error) = await shopService.SaveAsync(
-            userId, request.Name, request.ContactPhone, request.Description, request.Logo, cancellationToken);
+        var (success, error) = await shopService.SaveAsync(userId, new ShopSaveInput(
+            request.Name, request.ContactPhone, request.Description, request.Logo,
+            request.ProvinceId, request.WardId, request.AddressDetail, request.AreaLabel,
+            request.BankBin, request.BankAccountNumber, request.BankAccountHolder), cancellationToken);
 
         if (!success)
         {
