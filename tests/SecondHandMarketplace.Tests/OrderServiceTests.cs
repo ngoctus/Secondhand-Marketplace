@@ -626,4 +626,57 @@ public class OrderServiceTests
         Assert.False(okHuy);
         Assert.Contains("đã hủy", msgHuy);
     }
+
+    [Fact]
+    public async Task XacNhanDaNhanHangAsync_GiaoHangDangShipping_ChuaTheHoanTat()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_GiaoHangShippingCheck");
+        var fakeCart = new FakeCartService();
+        var service = new OrderService(db, fakeCart);
+
+        var don = new DonHang
+        {
+            MaDonHang = 501,
+            MaNguoiDung = 3,
+            MaCuaHang = 1,
+            MaDon = "DH501",
+            HinhThucNhan = "GIAO_HANG",
+            TrangThai = "SHIPPING",
+            PhuongThucThanhToan = "COD"
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var (ok, msg) = await service.XacNhanDaNhanHangAsync(3, 501);
+        Assert.False(ok);
+        Assert.Contains("giao đến bạn", msg);
+    }
+
+    [Fact]
+    public async Task XacNhanDaNhanHangAsync_GapTrucTiepDangShipping_ChoPhepHoanTat()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_GapTrucTiepShippingCheck");
+        var fakeCart = new FakeCartService();
+        var service = new OrderService(db, fakeCart);
+
+        var don = new DonHang
+        {
+            MaDonHang = 502,
+            MaNguoiDung = 3,
+            MaCuaHang = 1,
+            MaDon = "DH502",
+            HinhThucNhan = "GAP_TRUC_TIEP",
+            TrangThai = "SHIPPING",
+            PhuongThucThanhToan = "COD"
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var (ok, msg) = await service.XacNhanDaNhanHangAsync(3, 502);
+        Assert.True(ok);
+        Assert.Contains("hoàn tất đơn thành công", msg);
+
+        var donDb = await db.DonHangs.FindAsync(502);
+        Assert.Equal("COMPLETED", donDb!.TrangThai);
+    }
 }

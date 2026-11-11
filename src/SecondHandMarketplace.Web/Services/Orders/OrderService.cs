@@ -638,6 +638,15 @@ public class OrderService : IOrderService
     {
         try
         {
+            var donHang = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
+            if (donHang == null) return (false, "Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
+
+            bool hopLe = donHang.TrangThai == "DELIVERED" || (donHang.HinhThucNhan == "GAP_TRUC_TIEP" && donHang.TrangThai == "SHIPPING");
+            if (!hopLe)
+            {
+                return (false, "Chỉ có thể xác nhận khi đơn hàng đã được giao đến bạn (hoặc đang hẹn gặp trực tiếp).");
+            }
+
             if (_db.Database.IsRelational())
             {
                 await _db.Database.ExecuteSqlInterpolatedAsync(
@@ -645,14 +654,6 @@ public class OrderService : IOrderService
             }
             else
             {
-                var donHang = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
-                if (donHang == null) return (false, "Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
-                
-                bool hopLe = donHang.TrangThai == "DELIVERED" || (donHang.HinhThucNhan == "GAP_TRUC_TIEP" && donHang.TrangThai == "SHIPPING");
-                if (!hopLe)
-                {
-                    return (false, "Chỉ có thể xác nhận khi đơn hàng đã được giao đến bạn (hoặc đang hẹn gặp trực tiếp).");
-                }
                 var trangThaiCu = donHang.TrangThai;
                 donHang.TrangThai = "COMPLETED";
                 donHang.ThoiGianHoanTat = DateTime.UtcNow;

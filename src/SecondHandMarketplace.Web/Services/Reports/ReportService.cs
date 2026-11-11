@@ -338,10 +338,14 @@ public class ReportService : IReportService
                 if (product?.CuaHang != null)
                 {
                     var chuShopId = product.CuaHang.MaNguoiDung;
-                    await _notifications.CreateAsync(chuShopId, NotificationTypes.Product,
-                        "Sản phẩm bị gỡ bỏ do vi phạm",
-                        $"Sản phẩm '{product.Ten}' đã bị ban quản trị gỡ bỏ khỏi sàn. Lý do: {lyDoXuLy}",
-                        bc.MaDoiTuong);
+                    try
+                    {
+                        await _notifications.CreateAsync(chuShopId, NotificationTypes.Product,
+                            "Sản phẩm bị gỡ bỏ do vi phạm",
+                            $"Sản phẩm '{product.Ten}' đã bị ban quản trị gỡ bỏ khỏi sàn. Lý do: {lyDoXuLy}",
+                            bc.MaDoiTuong);
+                    }
+                    catch { /* Best-effort: lỗi thông báo không làm hỏng giao dịch gỡ sản phẩm */ }
 
                     // Kiểm tra tổng số vi phạm của người bán (báo cáo đã xử lý + vi phạm kiểm duyệt)
                     var countViPham = await _db.LichSuViPhams.CountAsync(v => v.MaNguoiBan == chuShopId);
@@ -356,9 +360,13 @@ public class ReportService : IReportService
                         var lyDoKhoa = $"Tự động khóa: Đạt {tongViPham} lần vi phạm/bị gỡ do báo cáo và kiểm duyệt (ngưỡng 3 gậy).";
                         await _userAdmin.LockUserAsync(adminId, chuShopId, lyDoKhoa);
                         await _shopService.LockShopAsync(adminId, product.MaCuaHang, lyDoKhoa);
-                        await _notifications.CreateAsync(chuShopId, NotificationTypes.System,
-                            "Tài khoản của bạn đã bị khóa",
-                            $"Tài khoản và cửa hàng của bạn đã bị khóa tự động vì tích lũy {tongViPham} lần vi phạm (đạt ngưỡng 3 gậy). Vui lòng liên hệ ban quản trị để được hỗ trợ.");
+                        try
+                        {
+                            await _notifications.CreateAsync(chuShopId, NotificationTypes.System,
+                                "Tài khoản của bạn đã bị khóa",
+                                $"Tài khoản và cửa hàng của bạn đã bị khóa tự động vì tích lũy {tongViPham} lần vi phạm (đạt ngưỡng 3 gậy). Vui lòng liên hệ ban quản trị để được hỗ trợ.");
+                        }
+                        catch { /* Best-effort */ }
                     }
                 }
             }

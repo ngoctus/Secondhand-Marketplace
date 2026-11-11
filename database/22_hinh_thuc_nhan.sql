@@ -430,3 +430,130 @@ LEFT JOIN AnhSanPham a
 GO
 
 PRINT N'Đã hoàn tất cấu hình hình thức nhận hàng (22_hinh_thuc_nhan.sql)!';
+
+-- 6. Cập nhật Stored Procedure sp_CapNhatTrangThaiDon (Ràng buộc hình thức nhận hàng khi hoàn tất)
+CREATE OR ALTER PROCEDURE sp_CapNhatTrangThaiDon
+    @MaDonHang    int,
+    @TrangThaiMoi varchar(15),
+    @MaNguoiDung  int,
+    @LyDo         nvarchar(500) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @TrangThaiCu varchar(15), @MaNguoiMua int, @ChuShopId int, @MaDon varchar(30),
+            @VaiTro varchar(10), @TrangThaiTaiKhoan varchar(10), @Loai varchar(10),
+            @Now datetime2(3) = SYSUTCDATETIME(), @TrangThaiSanPhamMoi varchar(20),
+            @TrangThaiShop varchar(10), @HinhThucNhan varchar(20);
+
+    DECLARE @SanPhamDoi TABLE (MaSanPham int PRIMARY KEY);
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        SELECT @TrangThaiCu = dh.TrangThai, @MaNguoiMua = dh.MaNguoiDung,
+               @ChuShopId = ch.MaNguoiDung, @MaDon = dh.MaDon, @TrangThaiShop = ch.TrangThai,
+               @HinhThucNhan = ISNULL(dh.HinhThucNhan, 'GIAO_HANG')
+        FROM DonHang dh WITH (UPDLOCK, HOLDLOCK)
+        JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
+        WHERE dh.MaDonHang = @MaDonHang;
+
+        IF @TrangThaiCu IS NULL
+            THROW 51201, N'Đơn hàng không tồn tại.', 1;
+
+        SELECT @VaiTro = VaiTro, @TrangThaiTaiKhoan = TrangThai
+        FROM NguoiDung WHERE MaNguoiDung = @MaNguoiDung;
+
+        IF @VaiTro IS NULL OR @TrangThaiTaiKhoan <> 'ACTIVE'
+            THROW 51202, N'Tài khoản cập nhật không hợp lệ.', 1;
+
+        SET @Loai = CASE WHEN @MaNguoiDung = @ChuShopId  THEN 'SELLER'
+                         WHEN @MaNguoiDung = @MaNguoiMua THEN 'BUYER'
+                         WHEN @VaiTro = 'ADMIN'          THEN 'ADMIN' END;
+
+        IF @Loai IS NULL
+            THROW 51204, N'Bạn không có quyền với đơn hàng này.', 1;
+
+        IF dbo.fn_ChuyenTrangThaiDonHangHopLe(@TrangThaiCu, @TrangThaiMoi) = 0
+            THROW 51203, N'Không cho phép chuyển trạng thái này.', 1;
+
+        IF @TrangThaiMoi IN ('CONFIRMED','SHIPPING','DELIVERED') AND @Loai <> 'SELLER'
+            THROW 51205, N'Chỉ chủ shop mới được cập nhật xác nhận và giao hàng.', 1;
+
+        IF @TrangThaiMoi IN ('CONFIRMED','SHIPPING','DELIVERED') AND @TrangThaiShop <> 'ACTIVE'
+            THROW 51210, N'Cửa hàng đang bị khóa, chỉ có thể hủy đơn.', 1;
+
+        IF @TrangThaiMoi = 'COMPLETED'
+        BEGIN
+            IF @Loai <> 'BUYER'
+                THROW 51206, N'Chỉ người mua mới được xác nhận hoàn tất.', 1;
+
+            -- Đơn GIAO_HANG bắt buộc phải qua DELIVERED mới được hoàn tất (chống nhảy cóc khi đang SHIPPING)
+            IF @TrangThaiCu = 'SHIPPING' AND @HinhThucNhan <> 'GAP_TRUC_TIEP'
+                THROW 51211, N'Đơn giao hàng tận nơi chỉ có thể xác nhận hoàn tất sau khi đã giao hàng thành công (DELIVERED).', 1;
+        END;
+
+        IF @TrangThaiMoi = 'CANCELLED'
+        BEGIN
+            IF LEN(LTRIM(RTRIM(ISNULL(@LyDo, N'')))) = 0
+                THROW 51207, N'Hủy đơn bắt buộc phải có lý do.', 1;
+
+            IF @Loai = 'BUYER' AND @TrangThaiCu NOT IN ('PENDING', 'CONFIRMED')
+                THROW 51208, N'Người mua chỉ được hủy đơn khi shop chưa giao hàng.', 1;
+
+            IF @Loai = 'SELLER' AND @TrangThaiCu NOT IN ('PENDING', 'CONFIRMED')
+                THROW 51209, N'Người bán chỉ được hủy đơn khi chưa giao hàng.', 1;
+        END;
+
+        UPDATE DonHang
+        SET TrangThai          = @TrangThaiMoi,
+            NgayCapNhat        = @Now,
+            NguoiHuy           = CASE WHEN @TrangThaiMoi = 'CANCELLED' THEN @Loai ELSE NguoiHuy END,
+            LyDoHuy            = CASE WHEN @TrangThaiMoi = 'CANCELLED' THEN LTRIM(RTRIM(@LyDo)) ELSE LyDoHuy END,
+            ThoiGianHuy        = CASE WHEN @TrangThaiMoi = 'CANCELLED' THEN @Now ELSE ThoiGianHuy END,
+            ThoiGianXacNhan    = CASE WHEN @TrangThaiMoi = 'CONFIRMED' THEN @Now ELSE ThoiGianXacNhan END,
+            ThoiGianBatDauGiao = CASE WHEN @TrangThaiMoi = 'SHIPPING'  THEN @Now ELSE ThoiGianBatDauGiao END,
+            ThoiGianDaGiao     = CASE WHEN @TrangThaiMoi = 'DELIVERED' THEN @Now ELSE ThoiGianDaGiao END,
+            ThoiGianHoanTat    = CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN @Now ELSE ThoiGianHoanTat END,
+            TrangThaiThanhToan = CASE WHEN @TrangThaiMoi = 'COMPLETED' AND PhuongThucThanhToan = 'COD' AND TrangThaiThanhToan = 'UNPAID'
+                                      THEN 'PAID'
+                                      WHEN @TrangThaiMoi = 'CANCELLED' AND TrangThaiThanhToan = 'PAID'
+                                      THEN 'REFUNDED'
+                                      ELSE TrangThaiThanhToan END
+        WHERE MaDonHang = @MaDonHang;
+
+        INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
+        VALUES (@MaDonHang, @TrangThaiCu, @TrangThaiMoi, @Loai, @MaNguoiDung, @LyDo);
+
+        IF @TrangThaiMoi = 'COMPLETED'
+        BEGIN
+            UPDATE ChiTietDonHang SET DangGiuCho = 0 WHERE MaDonHang = @MaDonHang;
+
+            UPDATE sp
+            SET sp.TrangThai = 'SOLD',
+                sp.NgayCapNhat = @Now
+            FROM SanPham sp
+            JOIN ChiTietDonHang ct ON ct.MaSanPham = sp.MaSanPham
+            WHERE ct.MaDonHang = @MaDonHang;
+        END
+        ELSE IF @TrangThaiMoi = 'CANCELLED'
+        BEGIN
+            UPDATE ChiTietDonHang SET DangGiuCho = 0 WHERE MaDonHang = @MaDonHang;
+
+            UPDATE sp
+            SET sp.TrangThai = 'ACTIVE',
+                sp.NgayCapNhat = @Now
+            FROM SanPham sp
+            JOIN ChiTietDonHang ct ON ct.MaSanPham = sp.MaSanPham
+            WHERE ct.MaDonHang = @MaDonHang AND sp.TrangThai = 'RESERVED';
+        END;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
