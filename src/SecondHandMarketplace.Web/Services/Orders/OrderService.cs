@@ -543,6 +543,7 @@ public class OrderService : IOrderService
             PhiVanChuyen = d.PhiVanChuyen,
             TongTien = d.TongTien,
             PhuongThucThanhToan = d.PhuongThucThanhToan,
+            HinhThucNhan = d.HinhThucNhan,
             TrangThaiThanhToan = d.TrangThaiThanhToan,
             TrangThai = d.TrangThai,
             NgayTao = d.NgayTao,

@@ -679,4 +679,35 @@ public class OrderServiceTests
         var donDb = await db.DonHangs.FindAsync(502);
         Assert.Equal("COMPLETED", donDb!.TrangThai);
     }
+
+    [Fact]
+    public async Task LayChiTietDonMuaAsync_GapTrucTiep_MapDungHinhThucNhanVaCoTheXacNhanNhanHang()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_LayChiTietGapTrucTiep");
+        var fakeCart = new FakeCartService();
+        var service = new OrderService(db, fakeCart);
+
+        var shop = new CuaHang { MaCuaHang = 10, MaNguoiDung = 99, TenShop = "Shop Test Direct" };
+        db.CuaHangs.Add(shop);
+
+        var don = new DonHang
+        {
+            MaDonHang = 503,
+            MaNguoiDung = 5,
+            MaCuaHang = 10,
+            MaDon = "DH503",
+            HinhThucNhan = "GAP_TRUC_TIEP",
+            TrangThai = "SHIPPING",
+            PhuongThucThanhToan = "COD",
+            TongTien = 150000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var detail = await service.LayChiTietDonMuaAsync(5, 503);
+        Assert.NotNull(detail);
+        Assert.Equal("GAP_TRUC_TIEP", detail!.HinhThucNhan);
+        Assert.True(detail.CoTheXacNhanNhanHang);
+    }
 }
