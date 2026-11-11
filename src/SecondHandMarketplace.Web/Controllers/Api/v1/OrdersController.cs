@@ -180,17 +180,24 @@ public class OrdersController(
             return ServiceResult<IReadOnlyList<OrderResponse>>.Fail(ErrorCodes.Unauthorized, "Không thể xác định danh tính.").ToActionResult(this);
         }
 
+        var userName = User.Identity?.Name;
         var orders = await orderService.LayDanhSachDonMuaAsync(userId, status);
         var dtos = orders.Select(o => new OrderResponse
         {
             Id = o.MaDonHang,
             OrderCode = o.MaDon,
+            BuyerId = userId,
+            BuyerName = !string.IsNullOrEmpty(userName) ? userName : o.TenNguoiNhan,
             ShopId = o.MaCuaHang,
             ShopName = o.TenShop,
             Status = o.TrangThai,
             TotalAmount = o.TongTien,
+            ShippingFee = o.PhiVanChuyen,
             PaymentMethod = o.PhuongThucThanhToan,
             DeliveryMethod = o.HinhThucNhan,
+            ReceiverName = o.TenNguoiNhan,
+            ReceiverPhone = o.SoDienThoaiNhan,
+            ReceiverAddress = o.DiaChiNhan,
             CreatedAt = o.NgayTao,
             ItemsCount = o.ChiTiet.Count,
             Items = o.ChiTiet.Select(c => new OrderItemResponse
@@ -218,6 +225,7 @@ public class OrdersController(
             return ServiceResult<OrderDetailResponse>.Fail(ErrorCodes.Unauthorized, "Không thể xác định danh tính.").ToActionResult(this);
         }
 
+        var userName = User.Identity?.Name;
         var order = await orderService.LayChiTietDonMuaAsync(userId, orderId);
         if (order is null)
         {
@@ -239,6 +247,8 @@ public class OrdersController(
         {
             Id = order.MaDonHang,
             OrderCode = order.MaDon,
+            BuyerId = userId,
+            BuyerName = !string.IsNullOrEmpty(userName) ? userName : order.TenNguoiNhan,
             ShopId = order.MaCuaHang,
             ShopName = order.TenShop,
             Status = order.TrangThai,

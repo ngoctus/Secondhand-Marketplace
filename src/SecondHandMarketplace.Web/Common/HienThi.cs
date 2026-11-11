@@ -16,6 +16,9 @@ public static class HienThi
     public static string NgayGio(DateTime? utc) =>
         utc is null ? "—" : SangGioVn(utc.Value).ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
 
+    public static string NgayGioGiay(DateTime? utc) =>
+        utc is null ? "—" : SangGioVn(utc.Value).ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+
     public static string Ngay(DateTime? utc) =>
         utc is null ? "—" : SangGioVn(utc.Value).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
 
@@ -95,6 +98,15 @@ public static class HienThi
         "SELLER" => "Người bán",
         "ADMIN" => "Quản trị viên",
         "SYSTEM" => "Hệ thống",
+        _ => s
+    };
+
+    public static string TrangThaiTranhChap(string s) => s switch
+    {
+        "OPEN" => "Chờ phản hồi",
+        "PROCESSING" => "Đang xử lý",
+        "RESOLVED" => "Đã giải quyết",
+        "REJECTED" => "Đã từ chối",
         _ => s
     };
 

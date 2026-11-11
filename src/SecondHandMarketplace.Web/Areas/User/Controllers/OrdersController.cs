@@ -79,12 +79,10 @@ public class OrdersController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
 
-        // Chuẩn hóa phí vận chuyển cho hình thức Gặp mặt trực tiếp:
-        if (model.HinhThucNhan == "GAP_TRUC_TIEP")
-        {
-            model.PhiVanChuyen = 0;
-            ModelState.Remove(nameof(model.PhiVanChuyen));
-        }
+        // Khóa phí vận chuyển phía server: Gặp mặt trực tiếp luôn là 0đ;
+        // Giao hàng tận nơi áp dụng chính sách Freeship (0đ) toàn sàn, khóa chặt server-side chống client can thiệp qua hidden input
+        model.PhiVanChuyen = 0;
+        ModelState.Remove(nameof(model.PhiVanChuyen));
 
         if (!ModelState.IsValid)
         {

@@ -111,7 +111,7 @@
                                     <div class="small text-success mt-1"><strong>Admin xử lý:</strong> @item.GhiChuXuLy</div>
                                 }
                             </td>
-                            <td class="text-muted small">@item.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-muted small">@HienThi.NgayGio(item.NgayTao)</td>
                             <td>
                                 @switch (item.TrangThai)
                                 {

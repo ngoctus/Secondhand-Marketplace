@@ -58,14 +58,7 @@
                                 _ => "bg-light text-dark"
                             };
 
-                            var statusText = item.TrangThai switch
-                            {
-                                "OPEN" => "Chờ phản hồi",
-                                "PROCESSING" => "Đang xử lý",
-                                "RESOLVED" => "Đã giải quyết",
-                                "REJECTED" => "Đã từ chối",
-                                _ => item.TrangThai
-                            };
+                            var statusText = HienThi.TrangThaiTranhChap(item.TrangThai);
 
                             var isBuyer = item.MaNguoiTao == userId;
 
@@ -97,7 +90,7 @@
                                     }
                                 </td>
                                 <td class="small text-muted">
-                                    @item.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    @HienThi.NgayGio(item.NgayTao)
                                 </td>
                                 <td>
                                     <span class="badge @badgeClass rounded-pill px-2 py-1 small">@statusText</span>

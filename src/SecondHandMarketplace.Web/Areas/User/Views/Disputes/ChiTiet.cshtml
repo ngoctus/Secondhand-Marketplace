@@ -14,14 +14,7 @@
         _ => "bg-light text-dark"
     };
 
-    var statusText = Model.TrangThai switch
-    {
-        "OPEN" => "Chờ phản hồi",
-        "PROCESSING" => "Đang xử lý",
-        "RESOLVED" => "Đã giải quyết",
-        "REJECTED" => "Đã từ chối",
-        _ => Model.TrangThai
-    };
+    var statusText = HienThi.TrangThaiTranhChap(Model.TrangThai);
 }
 
 <div class="container my-4" style="max-width: 900px;">
@@ -39,7 +32,7 @@
                 Khiếu nại đơn hàng #@Model.MaDon
                 <span class="badge @badgeClass rounded-pill fs-6 ms-2">@statusText</span>
             </h2>
-            <p class="text-muted small mb-0">Ngày mở: @Model.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+            <p class="text-muted small mb-0">Ngày mở: @HienThi.NgayGio(Model.NgayTao)</p>
         </div>
         <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
             &larr; Quay lại danh sách
@@ -97,7 +90,7 @@
             <div class="p-3 bg-light rounded-3 text-dark border" style="line-height: 1.6; white-space: pre-line;">
                 @Model.PhanHoiNguoiBan
             </div>
-            <div class="small text-muted mt-2 text-end">Cập nhật lúc: @Model.NgayCapNhat.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+            <div class="small text-muted mt-2 text-end">Cập nhật lúc: @HienThi.NgayGio(Model.NgayCapNhat)</div>
         }
         else
         {
@@ -140,7 +133,7 @@
             }
             <div class="small text-muted d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
                 <span>Người giải quyết: <strong>@(Model.TenNguoiXuLy ?? "Ban quản trị")</strong></span>
-                <span>Thời gian: @(Model.NgayGiaiQuyet?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "N/A")</span>
+                <span>Thời gian: @HienThi.NgayGio(Model.NgayGiaiQuyet)</span>
             </div>
         </div>
     }

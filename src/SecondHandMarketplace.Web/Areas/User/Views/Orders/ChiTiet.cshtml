@@ -15,7 +15,7 @@
                    class="text-danger small ms-2 text-decoration-none" title="Báo cáo cửa hàng vi phạm">
                     🚩 Báo cáo shop
                 </a>
-                | Ngày đặt: @Model.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                | Ngày đặt: @HienThi.NgayGio(Model.NgayTao)</div>
         </div>
         <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
             &larr; Về danh sách đơn
@@ -217,7 +217,7 @@
                             @HienThi.TrangThaiDon(ls.TrangThaiMoi, Model.HinhThucNhan)
                             <span class="text-muted fw-normal ms-1">(@HienThi.NguoiThucHien(ls.LoaiNguoiThucHien))</span>
                         </div>
-                        <div class="text-muted small" style="font-size: 11px;">@ls.ThoiGian.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</div>
+                        <div class="text-muted small" style="font-size: 11px;">@HienThi.NgayGioGiay(ls.ThoiGian)</div>
                         @if (!string.IsNullOrEmpty(ls.LyDo))
                         {
                             <div class="text-secondary small mt-1">Ghi chú: @ls.LyDo</div>

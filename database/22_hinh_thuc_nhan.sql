@@ -143,6 +143,10 @@ BEGIN
     FROM SanPham sp
     JOIN @DanhSachSanPham d ON d.Id = sp.MaSanPham;
 
+    INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
+    SELECT d.Id, 'ACTIVE', 'RESERVED', 'BUYER', @MaNguoiDung, CONCAT(N'Có đơn hàng ', @MaDon)
+    FROM @DanhSachSanPham d;
+
     INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
     VALUES (@MaDonHangMoi, NULL, 'PENDING', 'BUYER', @MaNguoiDung, 
             CASE WHEN @HinhThucNhan = 'GAP_TRUC_TIEP' 
@@ -526,28 +530,49 @@ BEGIN
         INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
         VALUES (@MaDonHang, @TrangThaiCu, @TrangThaiMoi, @Loai, @MaNguoiDung, @LyDo);
 
-        IF @TrangThaiMoi = 'COMPLETED'
+        IF @TrangThaiMoi IN ('CANCELLED','COMPLETED')
         BEGIN
+            SET @TrangThaiSanPhamMoi = CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN 'SOLD' ELSE 'ACTIVE' END;
+
             UPDATE ChiTietDonHang SET DangGiuCho = 0 WHERE MaDonHang = @MaDonHang;
 
             UPDATE sp
-            SET sp.TrangThai = 'SOLD',
-                sp.NgayCapNhat = @Now
-            FROM SanPham sp
-            JOIN ChiTietDonHang ct ON ct.MaSanPham = sp.MaSanPham
-            WHERE ct.MaDonHang = @MaDonHang;
-        END
-        ELSE IF @TrangThaiMoi = 'CANCELLED'
-        BEGIN
-            UPDATE ChiTietDonHang SET DangGiuCho = 0 WHERE MaDonHang = @MaDonHang;
-
-            UPDATE sp
-            SET sp.TrangThai = 'ACTIVE',
-                sp.NgayCapNhat = @Now
+            SET TrangThai = @TrangThaiSanPhamMoi, NgayCapNhat = @Now
+            OUTPUT inserted.MaSanPham INTO @SanPhamDoi (MaSanPham)
             FROM SanPham sp
             JOIN ChiTietDonHang ct ON ct.MaSanPham = sp.MaSanPham
             WHERE ct.MaDonHang = @MaDonHang AND sp.TrangThai = 'RESERVED';
+
+            INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
+            SELECT x.MaSanPham, 'RESERVED', @TrangThaiSanPhamMoi, @Loai, @MaNguoiDung,
+                   CONCAT(N'Đơn ', @MaDon, CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN N' hoàn tất' ELSE N' bị hủy' END)
+            FROM @SanPhamDoi x;
         END;
+
+        -- Đồng bộ bảng ThanhToan khi hoàn tất hoặc hủy đơn đã thanh toán
+        IF @TrangThaiMoi = 'COMPLETED'
+        BEGIN
+            UPDATE ThanhToan
+            SET TrangThaiThanhToan = 'SUCCESS',
+                ThoiGianThanhToan = ISNULL(ThoiGianThanhToan, @Now)
+            WHERE MaDonHang = @MaDonHang;
+        END
+        ELSE IF @TrangThaiMoi = 'CANCELLED' AND EXISTS (SELECT 1 FROM DonHang WHERE MaDonHang = @MaDonHang AND TrangThaiThanhToan = 'REFUNDED')
+        BEGIN
+            UPDATE ThanhToan
+            SET TrangThaiThanhToan = 'REFUNDED'
+            WHERE MaDonHang = @MaDonHang;
+        END;
+
+        INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu)
+        SELECT r.Id, 'ORDER', N'Cập nhật đơn hàng',
+               CONCAT(N'Đơn ', @MaDon, N' chuyển sang trạng thái "',
+                      CASE @TrangThaiMoi
+                          WHEN 'CONFIRMED' THEN N'Đã xác nhận' WHEN 'SHIPPING'  THEN N'Đang giao'
+                          WHEN 'DELIVERED' THEN N'Đã giao'     WHEN 'COMPLETED' THEN N'Hoàn tất'
+                          WHEN 'CANCELLED' THEN N'Đã hủy'      ELSE @TrangThaiMoi END, N'".'), @MaDonHang
+        FROM (VALUES (@MaNguoiMua), (@ChuShopId)) r (Id)
+        WHERE r.Id <> @MaNguoiDung;
 
         COMMIT TRANSACTION;
     END TRY
@@ -555,5 +580,7 @@ BEGIN
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
         THROW;
     END CATCH;
+
+    SELECT @MaDonHang AS MaDonHang, @TrangThaiCu AS TrangThaiCu, @TrangThaiMoi AS TrangThaiMoi;
 END;
 GO

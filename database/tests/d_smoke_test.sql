@@ -206,13 +206,17 @@ BEGIN TRY
             @LyDo = N'Người mua đổi ý không muốn nhận hàng nữa';
 
         DECLARE @Sp1Status varchar(20) = (SELECT TrangThai FROM dbo.SanPham WHERE MaSanPham = @Sp1Id);
-        IF @Sp1Status = 'ACTIVE'
-            INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D6. Huy don hoan lai san pham ACTIVE', 1, N'Sản phẩm đã được giải phóng sang ACTIVE');
+        DECLARE @CoLichSuSp bit = CASE WHEN EXISTS (SELECT 1 FROM dbo.LichSuTrangThaiSanPham WHERE MaSanPham = @Sp1Id AND TrangThaiMoi = 'ACTIVE') THEN 1 ELSE 0 END;
+        DECLARE @CoThongBao bit = CASE WHEN EXISTS (SELECT 1 FROM dbo.ThongBao WHERE MaThamChieu = @DonHangHuyId) THEN 1 ELSE 0 END;
+
+        IF @Sp1Status = 'ACTIVE' AND @CoLichSuSp = 1 AND @CoThongBao = 1
+            INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D6. Huy don hoan lai san pham ACTIVE va ghi nhan day du', 1, N'Sản phẩm giải phóng sang ACTIVE, có lịch sử sản phẩm và thông báo');
         ELSE
-            INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D6. Huy don hoan lai san pham ACTIVE', 0, CONCAT(N'Trạng thái sản phẩm hiện tại: ', @Sp1Status));
+            INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D6. Huy don hoan lai san pham ACTIVE va ghi nhan day du', 0, 
+                CONCAT(N'Sp: ', @Sp1Status, N', Lịch sử: ', @CoLichSuSp, N', Thông báo: ', @CoThongBao));
     END
     ELSE
-        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D6. Huy don hoan lai san pham ACTIVE', 0, N'Không tìm thấy đơn hàng chứa Sp1');
+        INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D6. Huy don hoan lai san pham ACTIVE va ghi nhan day du', 0, N'Không tìm thấy đơn hàng chứa Sp1');
 END TRY
 BEGIN CATCH
     INSERT #KQ (Ten, Dat, ChiTiet) VALUES (N'D6. Huy don hoan lai san pham ACTIVE', 0, ERROR_MESSAGE());

@@ -35,11 +35,11 @@
 
             <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "SHIPPING" ? "btn-success" : "btn-light text-secondary")" 
                style="@(currentFilter == "SHIPPING" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="SHIPPING">Đang giao hàng</a>
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="SHIPPING">Đang giao / Hẹn gặp</a>
 
             <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "DELIVERED" ? "btn-success" : "btn-light text-secondary")" 
                style="@(currentFilter == "DELIVERED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="DELIVERED">Đã giao</a>
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="DELIVERED">Đã giao / Nhận hàng</a>
 
             <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "COMPLETED" ? "btn-success" : "btn-light text-secondary")" 
                style="@(currentFilter == "COMPLETED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
@@ -111,7 +111,7 @@
                     <!-- Footer của thẻ đơn hàng -->
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3">
                         <div class="text-muted small">
-                            Ngày đặt: @don.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            Ngày đặt: @HienThi.NgayGio(don.NgayTao)
                             @if (!string.IsNullOrEmpty(don.LyDoHuy))
                             {
                                 <div class="text-danger small mt-1">Lý do hủy: @don.LyDoHuy</div>
