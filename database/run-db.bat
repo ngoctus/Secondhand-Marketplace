@@ -53,6 +53,15 @@ if "%SEED_DEMO%"=="1" (
         pause
         exit /b 1
     )
+    if exist "32_seed_don_hang.sql" (
+        echo Running 32_seed_don_hang.sql...
+        sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "32_seed_don_hang.sql"
+        if errorlevel 1 (
+            echo ERROR: 32_seed_don_hang.sql failed.
+            pause
+            exit /b 1
+        )
+    )
 )
 
 echo All scripts completed.
