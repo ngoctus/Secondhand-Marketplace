@@ -28,13 +28,13 @@ DECLARE @AdminId int = (SELECT TOP 1 MaNguoiDung FROM NguoiDung WHERE VaiTro = '
 BEGIN TRANSACTION;
 -- 1. Bổ sung Danh mục & Tình trạng mặc định nếu chưa có
 IF NOT EXISTS (SELECT 1 FROM DanhMuc WHERE Ten = N'Đồ điện tử')
-    INSERT DanhMuc (Ten, MoTa) VALUES (N'Đồ điện tử', N'Thiết bị điện tử, máy tính, điện thoại cũ');
+    INSERT DanhMuc (Ten) VALUES (N'Đồ điện tử');
 IF NOT EXISTS (SELECT 1 FROM DanhMuc WHERE Ten = N'Thời trang')
-    INSERT DanhMuc (Ten, MoTa) VALUES (N'Thời trang', N'Quần áo, giày dép, phụ kiện thời trang');
+    INSERT DanhMuc (Ten) VALUES (N'Thời trang');
 IF NOT EXISTS (SELECT 1 FROM DanhMuc WHERE Ten = N'Đồ gia dụng')
-    INSERT DanhMuc (Ten, MoTa) VALUES (N'Đồ gia dụng', N'Đồ dùng nhà bếp, thiết bị gia đình cũ');
+    INSERT DanhMuc (Ten) VALUES (N'Đồ gia dụng');
 IF NOT EXISTS (SELECT 1 FROM DanhMuc WHERE Ten = N'Sách & văn phòng phẩm')
-    INSERT DanhMuc (Ten, MoTa) VALUES (N'Sách & văn phòng phẩm', N'Sách giáo trình, truyện, đồ dùng học tập');
+    INSERT DanhMuc (Ten) VALUES (N'Sách & văn phòng phẩm');
 -- 2. Tạo bảng tạm chứa 70 đơn hàng cần seed
 DECLARE @SeedOrders TABLE (
     Stt int PRIMARY KEY,
@@ -150,7 +150,7 @@ WHERE NOT EXISTS (
 INSERT DonHang (
     MaDon, MaNguoiDung, MaCuaHang, TenNguoiNhan, SoDienThoaiNhan, DiaChiNhan,
     TienHang, PhiVanChuyen, TongTien, PhuongThucThanhToan, TrangThaiThanhToan,
-    TrangThai, HinhThucNhan, NguoiHuy, LyDoHuy, NgayTao, NgayCapNhat
+    TrangThai, HinhThucNhan, NguoiHuy, LyDoHuy, ThoiGianHuy, NgayTao, NgayCapNhat
 )
 SELECT
     so.MaDon,
@@ -182,6 +182,10 @@ SELECT
     CASE 
         WHEN so.TrangThai = 'CANCELLED' AND so.Stt % 2 = 1 THEN N'Thay đổi kế hoạch cá nhân, không có nhu cầu nhận đồ nữa.'
         WHEN so.TrangThai = 'CANCELLED' AND so.Stt % 2 = 0 THEN N'Sản phẩm bị thất lạc trong kho, xin lỗi người mua.'
+        ELSE NULL
+    END,
+    CASE 
+        WHEN so.TrangThai = 'CANCELLED' THEN DATEADD(HOUR, 4, DATEADD(DAY, -so.SoNgayTruoc, @Now))
         ELSE NULL
     END,
     DATEADD(DAY, -so.SoNgayTruoc, @Now),

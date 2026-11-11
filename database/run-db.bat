@@ -62,6 +62,15 @@ if "%SEED_DEMO%"=="1" (
             exit /b 1
         )
     )
+    if exist "33_seed_danh_gia.sql" (
+        echo Running 33_seed_danh_gia.sql...
+        sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "33_seed_danh_gia.sql"
+        if errorlevel 1 (
+            echo ERROR: 33_seed_danh_gia.sql failed.
+            pause
+            exit /b 1
+        )
+    )
 )
 
 echo All scripts completed.

@@ -19,15 +19,25 @@ BEGIN
     ADD HinhThucNhan varchar(20) NOT NULL 
         CONSTRAINT DF_DonHang_HinhThucNhan DEFAULT 'GIAO_HANG';
 
-    ALTER TABLE DonHang 
-    ADD CONSTRAINT CK_DonHang_HinhThucNhan 
-        CHECK (HinhThucNhan IN ('GIAO_HANG', 'GAP_TRUC_TIEP'));
-
     PRINT N'Đã thêm cột HinhThucNhan vào bảng DonHang.';
 END
 ELSE
 BEGIN
     PRINT N'Cột HinhThucNhan đã tồn tại trong bảng DonHang.';
+END
+GO
+
+-- Thêm ràng buộc CHECK ở batch riêng để cột đã tồn tại khi biên dịch
+IF NOT EXISTS (
+    SELECT 1 FROM sys.check_constraints 
+    WHERE name = 'CK_DonHang_HinhThucNhan' AND parent_object_id = OBJECT_ID('DonHang')
+)
+BEGIN
+    ALTER TABLE DonHang 
+    ADD CONSTRAINT CK_DonHang_HinhThucNhan 
+        CHECK (HinhThucNhan IN ('GIAO_HANG', 'GAP_TRUC_TIEP'));
+
+    PRINT N'Đã thêm ràng buộc CK_DonHang_HinhThucNhan vào bảng DonHang.';
 END
 GO
 
