@@ -1,4 +1,4 @@
-﻿-- 21_chat.sql
+﻿-- 19_chat.sql
 -- Chat 1-1 người mua <-> người bán. Chạy lại an toàn (chỉ tạo khi chưa có, không xóa dữ liệu).
 -- Mỗi cặp người dùng có đúng 1 hội thoại: MaNguoiDung1 < MaNguoiDung2.
 
