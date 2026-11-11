@@ -212,6 +212,7 @@ public class ReportService : IReportService
         }
         else if (hanhDong == "RESOLVE")
         {
+            using var tx = _db.Database.IsRelational() ? await _db.Database.BeginTransactionAsync() : null;
             var lyDoXuLy = string.IsNullOrWhiteSpace(ghiChu) ? $"Vi phạm quy định theo báo cáo #{bc.MaBaoCao}" : ghiChu.Trim();
             if (lyDoXuLy.Length > 500)
             {
@@ -326,7 +327,6 @@ public class ReportService : IReportService
                         LyDo = lyDoXuLy,
                         ThoiGian = now
                     });
-                    await _db.SaveChangesAsync();
                 }
 
                 // Gửi thông báo cho chủ shop của sản phẩm bị gỡ
@@ -365,6 +365,10 @@ public class ReportService : IReportService
             bc.NguoiXuLyId = adminId;
             bc.NgayXuLy = now;
             await _db.SaveChangesAsync();
+            if (tx != null)
+            {
+                await tx.CommitAsync();
+            }
 
             // Ghi Audit Log xử lý báo cáo thành công
             await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "SUCCESS", lyDoXuLy);

@@ -79,10 +79,10 @@ public class OrdersController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
 
-        if (model.HinhThucNhan == "GAP_TRUC_TIEP" || model.PhiVanChuyen < 0)
-        {
-            model.PhiVanChuyen = 0;
-        }
+        // Chuẩn hóa và cố định phí vận chuyển từ phía server:
+        // Cả GIAO_HANG lẫn GAP_TRUC_TIEP đều tuân thủ chính sách sàn (0đ mặc định / tự thỏa thuận),
+        // vô hiệu hóa hoàn toàn nguy cơ người dùng can thiệp sửa đổi giá trị qua thẻ hidden input trên client.
+        model.PhiVanChuyen = 0;
 
         if (!ModelState.IsValid)
         {
