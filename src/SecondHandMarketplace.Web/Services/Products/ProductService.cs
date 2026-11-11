@@ -1,4 +1,5 @@
 using System.Data;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
@@ -14,8 +15,12 @@ public class ProductService : IProductService
     private const int SoAnhToiDa = 10;
 
     private readonly AppDbContext _db;
-
-    public ProductService(AppDbContext db) => _db = db;
+    private readonly IWebHostEnvironment? _environment;
+    public ProductService(AppDbContext db, IWebHostEnvironment? environment = null)
+    {
+        _db = db;
+        _environment = environment;
+    }
 
     public async Task<PagedResult<ProductCardVm>> SearchAsync(ProductSearchVm f)
     {
@@ -125,6 +130,12 @@ public class ProductService : IProductService
             })
             .ToListAsync();
 
+        if (_environment is not null)
+        {
+            foreach (var item in items)
+                item.ImageUrl = ThumbnailIfPresent(item.ImageUrl);
+        }
+
         return new PagedResult<ProductCardVm>
         {
             Items = items,
@@ -132,6 +143,20 @@ public class ProductService : IProductService
             PageSize = pageSize,
             TotalItems = totalItems
         };
+    }
+
+    private string? ThumbnailIfPresent(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl) || _environment?.WebRootPath is null) return imageUrl;
+        var cleanUrl = imageUrl.Split('?', '#')[0];
+        if (!cleanUrl.StartsWith("/uploads/products/", StringComparison.OrdinalIgnoreCase)) return imageUrl;
+        var relative = cleanUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var directory = Path.GetDirectoryName(relative) ?? string.Empty;
+        var thumbName = Path.GetFileNameWithoutExtension(relative) + "-thumb.webp";
+        var thumbPath = Path.Combine(_environment.WebRootPath, directory, thumbName);
+        return System.IO.File.Exists(thumbPath)
+            ? "/" + Path.Combine(directory, thumbName).Replace(Path.DirectorySeparatorChar, '/')
+            : imageUrl;
     }
 
     public async Task<ProductDetailVm?> GetDetailAsync(int id)

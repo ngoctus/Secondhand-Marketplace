@@ -215,8 +215,6 @@ public class OrderService : IOrderService
                     var tongTienShop = tienHangShop + phiMoiDon;
                     var maDonCode = $"DH{DateTime.UtcNow.Ticks.ToString()[^6..]}_{shopId}_{++counter}";
 
-                    .Select(g => g.SanPham.MaCuaHang)
-                    .FirstOrDefaultAsync();
                     var don = new DonHang
                     {
                         MaDon = maDonCode,
@@ -259,8 +257,8 @@ public class OrderService : IOrderService
                         MaGiaoDich = "TXN_" + don.MaDon,
                         PhuongThucThanhToan = model.PhuongThucThanhToan,
                         SoTien = don.TongTien,
-                        TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "SUCCESS" : "PENDING",
-                        ThoiGianThanhToan = model.PhuongThucThanhToan == "ONLINE" ? DateTime.UtcNow : null,
+                        TrangThaiThanhToan = "PENDING",
+                        ThoiGianThanhToan = null,
                         NgayTao = DateTime.UtcNow
                     };
                     _db.ThanhToans.Add(tt);
@@ -327,6 +325,7 @@ public class OrderService : IOrderService
 
     public async Task<DatHangResultViewModel> MuaNgayAsync(int maNguoiDung, int maSanPham, CheckoutViewModel model)
     {
+        var phiVcMua = model.HinhThucNhan == "GAP_TRUC_TIEP" ? 0 : Math.Max(0, model.PhiVanChuyen);
         try
         {
             if (_db.Database.IsRelational())
@@ -389,7 +388,7 @@ public class OrderService : IOrderService
 
                 sp.TrangThai = "RESERVED";
                 sp.NgayCapNhat = DateTime.UtcNow;
-                var phiVc = (model.HinhThucNhan == "GAP_TRUC_TIEP") ? 0 : model.PhiVanChuyen;
+                var phiVc = phiVcMua;
                 var don = new DonHang
                 {
                     MaDon = "DH" + DateTime.UtcNow.Ticks.ToString()[^8..],
@@ -747,21 +746,9 @@ public class OrderService : IOrderService
         if (don == null) return (false, "Đơn hàng không tồn tại.");
         if (don.TrangThai == "CANCELLED") return (false, "Không thể xác nhận thanh toán cho đơn hàng đã hủy.");
         if (don.PhuongThucThanhToan != "BANK_TRANSFER") return (false, "Chỉ có thể xác nhận thanh toán chuyển khoản cho đơn hàng chọn phương thức BANK_TRANSFER.");
-        if (don.TrangThaiThanhToan == "PAID") return (true, "Đơn hàng đã được thanh toán trước đó.");
-        if (don.TrangThaiThanhToan == "REFUNDED") return (false, "Đơn hàng đã được hoàn tiền.");
-
-        don.TrangThaiThanhToan = "PAID";
-        don.NgayCapNhat = DateTime.UtcNow;
-
-        var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
-        if (tt != null)
-        {
-            tt.TrangThaiThanhToan = "SUCCESS";
-            tt.ThoiGianThanhToan = DateTime.UtcNow;
-        }
-
-        await _db.SaveChangesAsync();
-        return (true, "Xác nhận chuyển khoản thành công! Cảm ơn bạn.");
+        return don.TrangThaiThanhToan == "PAID"
+            ? (true, "Shop đã xác nhận đơn hàng này đã thanh toán.")
+            : (false, "Chỉ người bán mới được xác nhận đã nhận tiền sau khi tự kiểm tra tài khoản ngân hàng.");
     }
 
     public async Task<(bool ThanhCong, string? ThongBao)> XacNhanThanhToanTatCaChuyenKhoanAsync(int maNguoiDung, IEnumerable<int> maDonHangs)
@@ -769,33 +756,10 @@ public class OrderService : IOrderService
         var idList = maDonHangs.Distinct().ToList();
         if (idList.Count == 0) return (false, "Không có đơn hàng nào.");
 
-        var dons = await _db.DonHangs
-            .Where(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung && d.PhuongThucThanhToan == "BANK_TRANSFER" && d.TrangThai != "CANCELLED" && d.TrangThaiThanhToan != "REFUNDED")
-            .ToListAsync();
-        if (dons.Count == 0) return (false, "Không tìm thấy đơn hàng chuyển khoản hợp lệ thuộc tài khoản của bạn.");
-
-        var validDonIds = dons.Select(d => d.MaDonHang).ToList();
-
-        foreach (var don in dons.Where(d => d.TrangThaiThanhToan != "PAID"))
-        {
-            don.TrangThaiThanhToan = "PAID";
-            don.NgayCapNhat = DateTime.UtcNow;
-        }
-
-        var tts = await _db.ThanhToans.Where(t => validDonIds.Contains(t.MaDonHang)).ToListAsync();
-        foreach (var tt in tts)
-        {
-            tt.TrangThaiThanhToan = "SUCCESS";
-            tt.ThoiGianThanhToan = DateTime.UtcNow;
-        }
-
-        await _db.SaveChangesAsync();
-        var invalidIds = idList.Except(validDonIds).ToList();
-        string thongBao = invalidIds.Count == 0
-            ? $"Xác nhận chuyển khoản thành công cho {validDonIds.Count} đơn hàng! Cảm ơn bạn."
-            : $"Đã xác nhận thanh toán cho {validDonIds.Count} đơn hàng. Bỏ qua {invalidIds.Count} đơn hàng không hợp lệ (ID: {string.Join(", ", invalidIds)}).";
-
-        return (true, thongBao);
+        var ownedOrderExists = await _db.DonHangs.AnyAsync(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung);
+        return ownedOrderExists
+            ? (false, "Chỉ người bán mới được xác nhận đã nhận tiền sau khi tự kiểm tra tài khoản ngân hàng.")
+            : (false, "Không tìm thấy đơn hàng thuộc tài khoản của bạn.");
     }
 
     public async Task<(bool ThanhCong, string? ThongBao)> XacNhanDaNhanTienShopAsync(int chuShopId, int maDonHang)

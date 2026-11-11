@@ -8,9 +8,9 @@
 
 ## Tạo lại database
 
-Chạy `run-db.bat` để tạo database `SecondHandMarketplace` và nạp dữ liệu mẫu. Nếu dùng SQL Server Express, đặt biến môi trường `SQL_SERVER=.\SQLEXPRESS`. Nếu dùng SQL Authentication, đặt `SQL_AUTH` theo hướng dẫn trong `run-db.bat`.
+Chạy `run-db.bat` trên database mới để tạo database `SecondHandMarketplace`. `DB_MODE=dev` hoặc `test` nạp dữ liệu demo; `DB_MODE=deploy` chỉ nạp schema và seed hệ thống. Nếu dùng SQL Server Express, đặt biến môi trường `SQL_SERVER=.\SQLEXPRESS`. Nếu dùng SQL Authentication, đặt `SQL_AUTH` theo hướng dẫn trong `run-db.bat`.
 
-`reset-db.bat` sẽ xóa database và toàn bộ dữ liệu hiện có trước khi chạy lại các script. Chỉ dùng khi thực sự muốn tạo mới database.
+`reset-db.bat` sẽ xóa database và toàn bộ dữ liệu hiện có trước khi chạy lại các script. Phải đặt `DB_MODE=dev` hoặc `DB_MODE=test`; script từ chối khi chưa đặt chế độ hoặc khi là `deploy`. Chỉ dùng khi thực sự muốn tạo mới database dev/test.
 
 ## Các script
 
@@ -26,9 +26,13 @@ Bốn file `10`–`13` được tạo sẵn chỉ có `USE SecondHandMarketplace
 
 ## Thứ tự thực thi
 
-`run-db.bat` chạy theo thứ tự phụ thuộc: database, tables, constraints, indexes, functions, views, procedures, triggers, seed data, rồi các file mở rộng. `07_functions.sql` phải chạy trước `06_procedures.sql` vì stored procedure sử dụng các hàm đã định nghĩa.
+`run-db.bat` chỉ khởi tạo database mới và chọn seed bằng `DB_MODE=dev`, `test` hoặc `deploy` (mặc định `dev`). Cả ba chế độ chạy schema và seed hệ thống; `dev` và `test` chạy thêm seed demo `29` đến `33`, còn `deploy` không tạo tài khoản demo. Script từ chối chạy nếu database đã tồn tại vì `02_create_tables.sql` tạo lại bảng. `29_seed_demo_goc.sql` chỉ được chạy một lần trên database dev/test trống; reset trước khi chạy lại. Script kiểm tra điều kiện dữ liệu là `tests/seed_consistency.sql`.
 
-Với database đã tồn tại, chạy `22_checkout_delivery_window.sql` trước khi nạp lại `06_procedures.sql` phiên bản mới. Database tạo mới đã có cột này trong `02_create_tables.sql`.
+Khởi tạo Production theo hướng dẫn trong `docs/deployment-runbook.md`; tài khoản admin production dùng `24_seed_admin_deploy.template.sql` với BCrypt hash cung cấp ngoài repo.
+
+`07_functions.sql` phải chạy trước `06_procedures.sql` vì stored procedure sử dụng các hàm đã định nghĩa. Các thay đổi schema chạy trước thủ tục tương ứng.
+
+`23_checkout_delivery_window.sql` thêm cột khung giờ nhận theo kiểu migration và được chạy sau khi tạo các bảng, trước khi tạo thủ tục đặt hàng.
 
 ## Tài khoản dữ liệu mẫu
 

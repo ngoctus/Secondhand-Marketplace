@@ -127,7 +127,6 @@ CREATE TABLE DonHang (
     TenNguoiNhan         nvarchar(100)  NOT NULL,
     SoDienThoaiNhan      varchar(15)    NOT NULL,
     DiaChiNhan           nvarchar(500)  NOT NULL,
-    KhungGioNhan         nvarchar(200)  NULL,
     TienHang             decimal(18,2)  NOT NULL,
     PhiVanChuyen         decimal(18,2)  NOT NULL CONSTRAINT DF_DonHang_PhiVanChuyen DEFAULT (0),
     TongTien             decimal(18,2)  NOT NULL,

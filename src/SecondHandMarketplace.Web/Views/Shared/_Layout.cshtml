@@ -67,7 +67,6 @@
 
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000">Giá tốt</a>
-                <a class="rm-nav-link" asp-area="" asp-controller="PublicAuctions" asp-action="Index">Đấu giá</a>
 
                 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
                 {
@@ -124,7 +123,6 @@
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">Đánh giá của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán (Shop)</a>
-                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Auctions" asp-action="Index">Đấu giá của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê doanh thu</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">Yêu thích</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng của tôi</a>
@@ -166,7 +164,6 @@
             <div class="rm-dropdown-divider"></div>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000">Giá tốt</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="PublicAuctions" asp-action="Index">Đấu giá</a>
 
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
             {

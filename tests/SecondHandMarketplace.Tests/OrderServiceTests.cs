@@ -19,6 +19,7 @@ public class FakeCartService : ICartService
     public Task<bool> CapNhatChonTatCaTheoShopAsync(int maNguoiDung, int maCuaHang, bool daChon) => Task.FromResult(true);
     public Task<bool> XoaKhoiGioAsync(int maNguoiDung, int maGioHang) => Task.FromResult(true);
     public Task<int> DemSoLuongMonAsync(int maNguoiDung) => Task.FromResult(0);
+    public Task<int> XoaMonKhongKhaDungAsync(int maNguoiDung) => Task.FromResult(0);
 }
 
 public class OrderServiceTests
@@ -516,7 +517,7 @@ public class OrderServiceTests
     }
 
     [Fact]
-    public async Task XacNhanThanhToanTatCaChuyenKhoanAsync_ChiCapNhatDonCuaChinhMinh_BaoVeIDOR()
+    public async Task XacNhanThanhToanTatCaChuyenKhoanAsync_NguoiMuaKhongTuXacNhanDaThanhToan()
     {
         using var db = GetInMemoryDbContext("OrderTest_BatchPaymentIDOR");
         var fakeCart = new FakeCartService();
@@ -537,11 +538,11 @@ public class OrderServiceTests
         // User 10 cố gắng POST cả đơn của mình (1001) lẫn đơn của user khác (2001)
         var (ok, _) = await service.XacNhanThanhToanTatCaChuyenKhoanAsync(10, new List<int> { 1001, 2001 });
 
-        Assert.True(ok);
+        Assert.False(ok);
 
-        // Đơn 1001 của user 10 phải được cập nhật SUCCESS
+        // Người mua không thể tự xác nhận tiền đã vào tài khoản shop.
         var tt10Db = await db.ThanhToans.FindAsync(1001);
-        Assert.Equal("SUCCESS", tt10Db!.TrangThaiThanhToan);
+        Assert.Equal("PENDING", tt10Db!.TrangThaiThanhToan);
 
         // Đơn 2001 của victim KHÔNG được bị thay đổi, vẫn là PENDING
         var tt20Db = await db.ThanhToans.FindAsync(2001);
@@ -583,7 +584,7 @@ public class OrderServiceTests
 
         var (ok2, msg2) = await service.XacNhanThanhToanChuyenKhoanAsync(5, 302);
         Assert.False(ok2);
-        Assert.Contains("hoàn tiền", msg2);
+        Assert.Contains("người bán", msg2);
     }
 
     [Fact]

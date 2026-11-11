@@ -4,6 +4,7 @@ using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Moderation;
 using SecondHandMarketplace.Web.Services.Products;
+using SkiaSharp;
 
 namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
@@ -202,9 +203,11 @@ public class ProductsController : UserBaseController
         {
             var tuongDoi = a.DuongDan.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
             var duongDan = Path.Combine(_env.WebRootPath, tuongDoi);
+            var thumbPath = Path.Combine(Path.GetDirectoryName(duongDan)!, Path.GetFileNameWithoutExtension(duongDan) + "-thumb.webp");
             try
             {
                 if (System.IO.File.Exists(duongDan)) System.IO.File.Delete(duongDan);
+                if (System.IO.File.Exists(thumbPath)) System.IO.File.Delete(thumbPath);
             }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
@@ -230,14 +233,61 @@ public class ProductsController : UserBaseController
             if (!DinhDangAnhChoPhep.Contains(ext))
                 return (result, $"Định dạng \"{ext}\" không được hỗ trợ. Chỉ nhận jpg, png, webp, gif.");
 
+            if (!await NoiDungAnhHopLeAsync(file, ext))
+                return (result, $"Ảnh \"{Path.GetFileName(file.FileName)}\" không đúng định dạng nội dung.");
+
             var ten = Guid.NewGuid().ToString("N") + ext;
             var duongDanDia = Path.Combine(thuMuc, ten);
+            var thumbnailPath = Path.Combine(thuMuc, Path.GetFileNameWithoutExtension(ten) + "-thumb.webp");
             await using (var mo = System.IO.File.Create(duongDanDia))
             {
                 await file.CopyToAsync(mo);
             }
+
+            try
+            {
+                using var source = System.IO.File.OpenRead(duongDanDia);
+                using var codec = SKCodec.Create(source);
+                var info = codec?.Info;
+                if (info is null || info.Value.Width > 12000 || info.Value.Height > 12000 || (long)info.Value.Width * info.Value.Height > 80_000_000)
+                    throw new InvalidDataException("Image dimensions exceed the allowed limit.");
+
+                using var image = SKBitmap.Decode(codec!);
+                if (image is null) throw new InvalidDataException("Image could not be decoded.");
+                var scale = Math.Min(1d, 640d / Math.Max(image.Width, image.Height));
+                var width = Math.Max(1, (int)Math.Round(image.Width * scale));
+                var height = Math.Max(1, (int)Math.Round(image.Height * scale));
+                using var thumbnail = image.Resize(new SKImageInfo(width, height), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
+                if (thumbnail is null) throw new InvalidDataException("Thumbnail could not be generated.");
+                using var encoded = thumbnail.Encode(SKEncodedImageFormat.Webp, 78);
+                if (encoded is null) throw new InvalidDataException("WebP encoding failed.");
+                await using var output = System.IO.File.Create(thumbnailPath);
+                encoded.SaveTo(output);
+            }
+            catch (Exception)
+            {
+                System.IO.File.Delete(duongDanDia);
+                if (System.IO.File.Exists(thumbnailPath)) System.IO.File.Delete(thumbnailPath);
+                return (result, $"Ảnh \"{Path.GetFileName(file.FileName)}\" không thể xử lý. Vui lòng tải lại ảnh hợp lệ.");
+            }
+
             result.Add(new ProductImageInput($"/uploads/products/{thu}/{ten}", (int)file.Length));
         }
         return (result, null);
+    }
+
+    private static async Task<bool> NoiDungAnhHopLeAsync(IFormFile file, string extension)
+    {
+        var header = new byte[12];
+        await using var stream = file.OpenReadStream();
+        var read = await stream.ReadAsync(header);
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => read >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF,
+            ".png" => read >= 8 && header.AsSpan(0, 8).SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }),
+            ".webp" => read >= 12 && header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46 && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50,
+            ".gif" => read >= 6 && header.AsSpan(0, 6).SequenceEqual("GIF87a"u8) || read >= 6 && header.AsSpan(0, 6).SequenceEqual("GIF89a"u8),
+            _ => false
+        };
     }
 }

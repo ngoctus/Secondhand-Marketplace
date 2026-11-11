@@ -40,12 +40,12 @@ public class OrdersController(
             return ServiceResult.Fail(ErrorCodes.Unauthorized, "Không thể xác định danh tính.").ToActionResult(this);
         }
 
-        var validPaymentMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "COD", "BANK_TRANSFER", "ONLINE" };
+        var validPaymentMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "COD", "BANK_TRANSFER" };
         var validDeliveryMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "GIAO_HANG", "GAP_TRUC_TIEP" };
 
         if (string.IsNullOrWhiteSpace(request.PaymentMethod) || !validPaymentMethods.Contains(request.PaymentMethod))
         {
-            return ServiceResult.Fail(ErrorCodes.ValidationError, "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận COD, BANK_TRANSFER hoặc ONLINE.").ToActionResult(this);
+            return ServiceResult.Fail(ErrorCodes.ValidationError, "Phương thức thanh toán không hợp lệ. Hiện chỉ hỗ trợ COD hoặc chuyển khoản VietQR.").ToActionResult(this);
         }
 
         if (!string.IsNullOrWhiteSpace(request.DeliveryMethod) && !validDeliveryMethods.Contains(request.DeliveryMethod))
@@ -113,12 +113,12 @@ public class OrdersController(
             return ServiceResult.Fail(ErrorCodes.Unauthorized, "Không thể xác định danh tính.").ToActionResult(this);
         }
 
-        var validPaymentMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "COD", "BANK_TRANSFER", "ONLINE" };
+        var validPaymentMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "COD", "BANK_TRANSFER" };
         var validDeliveryMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "GIAO_HANG", "GAP_TRUC_TIEP" };
 
         if (string.IsNullOrWhiteSpace(request.PaymentMethod) || !validPaymentMethods.Contains(request.PaymentMethod))
         {
-            return ServiceResult.Fail(ErrorCodes.ValidationError, "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận COD, BANK_TRANSFER hoặc ONLINE.").ToActionResult(this);
+            return ServiceResult.Fail(ErrorCodes.ValidationError, "Phương thức thanh toán không hợp lệ. Hiện chỉ hỗ trợ COD hoặc chuyển khoản VietQR.").ToActionResult(this);
         }
 
         if (!string.IsNullOrWhiteSpace(request.DeliveryMethod) && !validDeliveryMethods.Contains(request.DeliveryMethod))

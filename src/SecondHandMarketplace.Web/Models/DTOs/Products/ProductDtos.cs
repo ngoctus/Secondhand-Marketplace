@@ -88,7 +88,6 @@ public class ProductDetailResponse
     public int ShopId { get; set; }
     public string ShopName { get; set; } = string.Empty;
     public string? ShopLogo { get; set; }
-    public string ShopContactPhone { get; set; } = string.Empty;
     public int? CategoryId { get; set; }
     public string? CategoryName { get; set; }
     public int? ConditionId { get; set; }

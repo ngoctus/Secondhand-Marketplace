@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SecondHandMarketplace.Web.Common.Constants;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Models.DTOs.Auth;
@@ -26,6 +27,7 @@ public class AuthController(
     /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [ProducesResponseType(typeof(ServiceResult<AuthResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ServiceResult), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
