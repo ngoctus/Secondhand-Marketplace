@@ -173,6 +173,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.TienHang).HasPrecision(18, 2);
             e.Property(x => x.PhiVanChuyen).HasPrecision(18, 2);
             e.Property(x => x.TongTien).HasPrecision(18, 2);
+            e.Property(x => x.HinhThucNhan).IsUnicode(false).HasMaxLength(20).HasDefaultValue("GIAO_HANG");
 
             e.HasOne(x => x.NguoiDung)
                 .WithMany()

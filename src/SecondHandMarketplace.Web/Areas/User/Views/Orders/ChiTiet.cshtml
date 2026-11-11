@@ -222,13 +222,15 @@
 
             <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
 
-                <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-geo-alt text-danger me-1"></i> Thông tin giao hàng</h6>
+                <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-geo-alt text-danger me-1"></i> @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Thông tin điểm hẹn trực tiếp" : "Thông tin giao hàng")</h6>
 
-                <div class="small mb-2"><span class="text-muted">Người nhận:</span> <strong class="text-dark">@Model.TenNguoiNhan</strong></div>
+                <div class="small mb-2"><span class="text-muted">Hình thức nhận:</span> <strong class="text-primary">@HienThi.TenHinhThucNhan(Model.HinhThucNhan)</strong></div>
+
+                <div class="small mb-2"><span class="text-muted">@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Người hẹn:" : "Người nhận:")</span> <strong class="text-dark">@Model.TenNguoiNhan</strong></div>
 
                 <div class="small mb-2"><span class="text-muted">Số điện thoại:</span> <strong class="text-dark">@Model.SoDienThoaiNhan</strong></div>
 
-                <div class="small"><span class="text-muted">Địa chỉ nhận:</span> <span class="text-dark">@Model.DiaChiNhan</span></div>
+                <div class="small"><span class="text-muted">@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Địa điểm hẹn:" : "Địa chỉ nhận:")</span> <span class="text-dark">@Model.DiaChiNhan</span></div>
 
             </div>
 

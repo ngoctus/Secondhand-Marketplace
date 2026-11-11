@@ -325,4 +325,97 @@ public class OrderServiceTests
         var ttDb = await db.ThanhToans.FirstAsync(t => t.MaDonHang == 23);
         Assert.Equal("REFUNDED", ttDb.TrangThaiThanhToan);
     }
+
+    [Fact]
+    public async Task DatHang_VoiHinhThucNhan_GapTrucTiep_LuuDungVaoDonHang()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_HinhThucNhanGapTrucTiep");
+        var fakeCart = new FakeCartService();
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 10, TenShop = "Shop Test", TrangThai = "ACTIVE" };
+        var sp = new SanPham { MaSanPham = 101, MaCuaHang = 1, Ten = "Sach Cu", Gia = 50000, TrangThai = "ACTIVE" };
+        db.CuaHangs.Add(shop);
+        db.SanPhams.Add(sp);
+        await db.SaveChangesAsync();
+
+        var model = new CheckoutViewModel
+        {
+            TenNguoiNhan = "Nguoi Mua A",
+            SoDienThoaiNhan = "0988888888",
+            DiaChiNhan = "Cong truong UTC2",
+            HinhThucNhan = "GAP_TRUC_TIEP",
+            PhuongThucThanhToan = "COD",
+            PhiVanChuyen = 0
+        };
+
+        var service = new OrderService(db, fakeCart);
+        var res = await service.MuaNgayAsync(2, 101, model);
+
+        Assert.True(res.ThanhCong);
+        var don = await db.DonHangs.FirstOrDefaultAsync();
+        Assert.NotNull(don);
+        Assert.Equal("GAP_TRUC_TIEP", don.HinhThucNhan);
+        Assert.Equal("Cong truong UTC2", don.DiaChiNhan);
+    }
+
+    [Fact]
+    public async Task LayChiTietDonMuaAsync_NguoiDungKhacKhongXemDuocDon_BaoVeIDOR()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_BaoVeIDOR");
+        var fakeCart = new FakeCartService();
+
+        var don = new DonHang
+        {
+            MaDonHang = 99,
+            MaNguoiDung = 5,
+            MaCuaHang = 1,
+            MaDon = "DH99",
+            TrangThai = "PENDING"
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var service = new OrderService(db, fakeCart);
+        var detail = await service.LayChiTietDonMuaAsync(999, 99);
+
+        Assert.Null(detail);
+    }
+
+    [Fact]
+    public async Task XacNhanDaNhanTienShopAsync_ChuShopXacNhanThanhToan_ChuyenTrangThaiPaid()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_XacNhanNhanTienShop");
+        var fakeCart = new FakeCartService();
+
+        var shop = new CuaHang { MaCuaHang = 5, MaNguoiDung = 88, TenShop = "Shop Chu 88", TrangThai = "ACTIVE" };
+        var don = new DonHang
+        {
+            MaDonHang = 55,
+            MaNguoiDung = 2,
+            MaCuaHang = 5,
+            MaDon = "DH55",
+            TongTien = 300000,
+            PhuongThucThanhToan = "BANK_TRANSFER",
+            TrangThaiThanhToan = "UNPAID",
+            TrangThai = "CONFIRMED"
+        };
+        db.CuaHangs.Add(shop);
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var service = new OrderService(db, fakeCart);
+
+        var (okLa, _) = await service.XacNhanDaNhanTienShopAsync(999, 55);
+        Assert.False(okLa);
+
+        var (ok, _) = await service.XacNhanDaNhanTienShopAsync(88, 55);
+        Assert.True(ok);
+
+        var donDb = await db.DonHangs.FindAsync(55);
+        Assert.Equal("PAID", donDb!.TrangThaiThanhToan);
+
+        var ttDb = await db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == 55);
+        Assert.NotNull(ttDb);
+        Assert.Equal("SUCCESS", ttDb.TrangThaiThanhToan);
+    }
 }

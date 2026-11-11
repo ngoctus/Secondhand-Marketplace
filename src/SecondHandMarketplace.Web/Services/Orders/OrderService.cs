@@ -47,7 +47,8 @@ public class OrderService : IOrderService
             GioHang = cartVm,
             TienHang = tienHang,
             PhiVanChuyen = 0,
-            PhuongThucThanhToan = "COD"
+            PhuongThucThanhToan = "COD",
+            HinhThucNhan = "GIAO_HANG"
         };
     }
 
@@ -94,7 +95,8 @@ public class OrderService : IOrderService
             SanPhamMuaNgay = itemVm,
             TienHang = itemVm.Gia,
             PhiVanChuyen = 0,
-            PhuongThucThanhToan = "COD"
+            PhuongThucThanhToan = "COD",
+            HinhThucNhan = "GIAO_HANG"
         };
     }
 
@@ -150,6 +152,7 @@ public class OrderService : IOrderService
                 cmd.Parameters.Add(new SqlParameter("@DiaChiNhan", model.DiaChiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@PhiVanChuyenMoiDon", model.PhiVanChuyen));
                 cmd.Parameters.Add(new SqlParameter("@PhuongThucThanhToan", model.PhuongThucThanhToan));
+                cmd.Parameters.Add(new SqlParameter("@HinhThucNhan", model.HinhThucNhan ?? "GIAO_HANG"));
 
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
@@ -179,6 +182,7 @@ public class OrderService : IOrderService
                     TrangThai = "PENDING",
                     TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "PAID" : "UNPAID",
                     PhuongThucThanhToan = model.PhuongThucThanhToan,
+                    HinhThucNhan = model.HinhThucNhan ?? "GIAO_HANG",
                     TenNguoiNhan = model.TenNguoiNhan.Trim(),
                     SoDienThoaiNhan = model.SoDienThoaiNhan.Trim(),
                     DiaChiNhan = model.DiaChiNhan.Trim(),
@@ -241,6 +245,7 @@ public class OrderService : IOrderService
                 cmd.Parameters.Add(new SqlParameter("@DiaChiNhan", model.DiaChiNhan.Trim()));
                 cmd.Parameters.Add(new SqlParameter("@PhiVanChuyen", model.PhiVanChuyen));
                 cmd.Parameters.Add(new SqlParameter("@PhuongThucThanhToan", model.PhuongThucThanhToan));
+                cmd.Parameters.Add(new SqlParameter("@HinhThucNhan", model.HinhThucNhan ?? "GIAO_HANG"));
 
                 var outParam = new SqlParameter("@MaDonHangMoi", SqlDbType.Int)
                 {
@@ -293,6 +298,7 @@ public class OrderService : IOrderService
                     TrangThai = "PENDING",
                     TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "PAID" : "UNPAID",
                     PhuongThucThanhToan = model.PhuongThucThanhToan,
+                    HinhThucNhan = model.HinhThucNhan ?? "GIAO_HANG",
                     TenNguoiNhan = model.TenNguoiNhan.Trim(),
                     SoDienThoaiNhan = model.SoDienThoaiNhan.Trim(),
                     DiaChiNhan = model.DiaChiNhan.Trim(),
@@ -361,6 +367,7 @@ public class OrderService : IOrderService
             TrangThai = d.TrangThai,
             TrangThaiThanhToan = d.TrangThaiThanhToan,
             PhuongThucThanhToan = d.PhuongThucThanhToan,
+            HinhThucNhan = d.HinhThucNhan,
             NgayTao = d.NgayTao,
             NguoiHuy = d.NguoiHuy,
             LyDoHuy = d.LyDoHuy,
@@ -548,6 +555,7 @@ public class OrderService : IOrderService
             TrangThai = d.TrangThai,
             TrangThaiThanhToan = d.TrangThaiThanhToan,
             PhuongThucThanhToan = d.PhuongThucThanhToan,
+            HinhThucNhan = d.HinhThucNhan,
             NgayTao = d.NgayTao,
             ChiTiet = d.ChiTiet.Select(c => new ChiTietDonHangItemViewModel
             {
@@ -603,6 +611,52 @@ public class OrderService : IOrderService
 
         await _db.SaveChangesAsync();
         return (true, "Xác nhận chuyển khoản thành công cho các đơn hàng! Cảm ơn bạn.");
+    }
+
+    public async Task<(bool ThanhCong, string? ThongBao)> XacNhanDaNhanTienShopAsync(int chuShopId, int maDonHang)
+    {
+        var don = await _db.DonHangs
+            .Include(d => d.CuaHang)
+            .FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.CuaHang.MaNguoiDung == chuShopId);
+
+        if (don == null) return (false, "Đơn hàng không tồn tại hoặc không thuộc cửa hàng của bạn.");
+
+        don.TrangThaiThanhToan = "PAID";
+        don.NgayCapNhat = DateTime.UtcNow;
+
+        var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
+        if (tt != null)
+        {
+            tt.TrangThaiThanhToan = "SUCCESS";
+            tt.ThoiGianThanhToan = DateTime.UtcNow;
+        }
+        else
+        {
+            _db.ThanhToans.Add(new ThanhToan
+            {
+                MaDonHang = don.MaDonHang,
+                MaGiaoDich = "TXN_" + don.MaDon,
+                PhuongThucThanhToan = don.PhuongThucThanhToan,
+                SoTien = don.TongTien,
+                TrangThaiThanhToan = "SUCCESS",
+                ThoiGianThanhToan = DateTime.UtcNow,
+                NgayTao = DateTime.UtcNow
+            });
+        }
+
+        _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+        {
+            MaDonHang = don.MaDonHang,
+            TrangThaiCu = don.TrangThai,
+            TrangThaiMoi = don.TrangThai,
+            LoaiNguoiThucHien = "SELLER",
+            NguoiThucHienId = chuShopId,
+            LyDo = "Người bán xác nhận đã nhận đủ tiền thanh toán.",
+            ThoiGian = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync();
+        return (true, "Đã xác nhận nhận tiền thành công!");
     }
 
     private static string LayThongBaoLoi(Exception ex) => SqlLoi.ThongBao(ex);

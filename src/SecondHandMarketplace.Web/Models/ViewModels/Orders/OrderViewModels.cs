@@ -40,6 +40,11 @@ public class CheckoutViewModel
 
     public string PhuongThucThanhToan { get; set; } = "COD"; // COD, BANK_TRANSFER, ONLINE
 
+    /// <summary>
+    /// Hình thức nhận: GIAO_HANG (Giao hàng tận nơi) hoặc GAP_TRUC_TIEP (Gặp mặt trực tiếp).
+    /// </summary>
+    public string HinhThucNhan { get; set; } = "GIAO_HANG";
+
 
 
     public int? MaSanPhamMuaNgay { get; set; }
@@ -102,6 +107,8 @@ public class DonHangItemViewModel
 
     public string PhuongThucThanhToan { get; set; } = "COD";
 
+    public string HinhThucNhan { get; set; } = "GIAO_HANG";
+
     public DateTime NgayTao { get; set; }
 
     public string? NguoiHuy { get; set; }
@@ -162,6 +169,8 @@ public class DonHangChiTietViewModel
 
     public string PhuongThucThanhToan { get; set; } = "COD";
 
+    public string HinhThucNhan { get; set; } = "GIAO_HANG";
+
     public string TrangThaiThanhToan { get; set; } = "UNPAID";
 
     public string TrangThai { get; set; } = "PENDING";
@@ -194,7 +203,7 @@ public class DonHangChiTietViewModel
 
     public bool CoTheHuy => TrangThai == "PENDING" || TrangThai == "CONFIRMED";
 
-    public bool CoTheXacNhanNhanHang => TrangThai == "DELIVERED";
+    public bool CoTheXacNhanNhanHang => TrangThai == "DELIVERED" || (HinhThucNhan == "GAP_TRUC_TIEP" && TrangThai == "SHIPPING");
 
     public bool CoTheMoTranhChap => TrangThai == "SHIPPING" || TrangThai == "DELIVERED" || TrangThai == "COMPLETED";
 
