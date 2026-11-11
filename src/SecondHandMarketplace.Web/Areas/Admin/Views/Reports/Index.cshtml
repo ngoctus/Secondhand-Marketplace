@@ -1,404 +1,212 @@
-@model SecondHandMarketplace.Web.Models.ViewModels.Reports.AdminReportListViewModel
-
-@{
-
-    ViewData["Title"] = "Quản lý Báo cáo vi phạm";
-
-}
-
-
-
-<div class="container-fluid my-4 px-md-4" style="max-width: 1300px;">
-
-    <!-- Tiêu đề trang Admin -->
-
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-
-        <div>
-
-            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-shield-shaded text-danger"></i> Quản lý Báo cáo vi phạm</h2>
-
-            <p class="text-muted small mb-0">Hiện có <strong class="text-danger">@Model.TongChuaXuLy</strong> phản ánh từ người dùng đang chờ kiểm duyệt.</p>
-
-        </div>
-
-    </div>
-
-
-
-    <partial name="_ThongBao" />
-
-
-
-    <!-- Bộ lọc tìm kiếm -->
-
-    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-3">
-
-        <form method="get" class="row g-3 align-items-center">
-
-            <div class="col-auto">
-
-                <label class="form-label mb-0 fw-semibold small text-dark">Trạng thái:</label>
-
-            </div>
-
-            <div class="col-auto">
-
-                <select name="trangThai" class="form-select form-select-sm rounded-pill" onchange="this.form.submit()">
-
-                    <option value="">-- Tất cả trạng thái --</option>
-
-                    <option value="PENDING" selected="@(Model.TrangThaiFilter == "PENDING")">Chờ xử lý (PENDING)</option>
-
-                    <option value="RESOLVED" selected="@(Model.TrangThaiFilter == "RESOLVED")">Đã xử lý (RESOLVED)</option>
-
-                    <option value="DISMISSED" selected="@(Model.TrangThaiFilter == "DISMISSED")">Đã bỏ qua (DISMISSED)</option>
-
-                </select>
-
-            </div>
-
-
-
-            <div class="col-auto">
-
-                <label class="form-label mb-0 fw-semibold small text-dark">Loại đối tượng:</label>
-
-            </div>
-
-            <div class="col-auto">
-
-                <select name="loaiDoiTuong" class="form-select form-select-sm rounded-pill" onchange="this.form.submit()">
-
-                    <option value="">-- Tất cả loại --</option>
-
-                    <option value="PRODUCT" selected="@(Model.LoaiFilter == "PRODUCT")">Sản phẩm (PRODUCT)</option>
-
-                    <option value="USER" selected="@(Model.LoaiFilter == "USER")">Người dùng (USER)</option>
-
-                    <option value="SHOP" selected="@(Model.LoaiFilter == "SHOP")">Cửa hàng (SHOP)</option>
-
-                </select>
-
-            </div>
-
-
-
-            <div class="col-auto ms-auto">
-
-                <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-
-                    Xóa lọc
-
-                </a>
-
-            </div>
-
-        </form>
-
-    </div>
-
-
-
-    <!-- Bảng danh sách báo cáo -->
-
-    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
-
-        <div class="table-responsive">
-
-            <table class="table table-hover align-middle mb-0">
-
-                <thead class="table-light small text-muted">
-
-                    <tr>
-
-                        <th style="width: 70px;" class="ps-3">Mã</th>
-
-                        <th style="width: 110px;">Loại</th>
-
-                        <th>Đối tượng bị báo cáo</th>
-
-                        <th style="width: 170px;">Người gửi</th>
-
-                        <th>Lý do & Mô tả</th>
-
-                        <th style="width: 140px;">Ngày gửi</th>
-
-                        <th style="width: 120px;">Trạng thái</th>
-
-                        <th style="width: 170px;" class="text-end pe-3">Thao tác</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    @if (!Model.Items.Any())
-
-                    {
-
-                        <tr>
-
-                            <td colspan="8" class="text-center py-5 text-muted">
-
-                                Không tìm thấy báo cáo nào phù hợp với bộ lọc.
-
-                            </td>
-
-                        </tr>
-
-                    }
-
-                    @foreach (var item in Model.Items)
-
-                    {
-
-                        <tr>
-
-                            <td class="ps-3 fw-bold text-dark">#@item.MaBaoCao</td>
-
-                            <td>
-
-                                @switch (item.LoaiDoiTuong)
-
-                                {
-
-                                    case "PRODUCT":
-
-                                        <span class="badge bg-primary rounded-pill small">Sản phẩm</span>
-
-                                        break;
-
-                                    case "USER":
-
-                                        <span class="badge bg-info text-dark rounded-pill small">Người dùng</span>
-
-                                        break;
-
-                                    case "SHOP":
-
-                                        <span class="badge bg-warning text-dark rounded-pill small">Cửa hàng</span>
-
-                                        break;
-
-                                }
-
-                            </td>
-
-                            <td>
-
-                                <strong class="text-dark">@item.TenDoiTuong</strong>
-
-                                <div class="small text-muted">ID: #@item.MaDoiTuong</div>
-
-                            </td>
-
-                            <td>
-
-                                <div class="fw-semibold text-dark">@item.TenNguoiBaoCao</div>
-
-                                <div class="small text-muted">ID: #@item.MaNguoiBaoCao</div>
-
-                            </td>
-
-                            <td>
-
-                                <div><strong class="text-dark">Lý do:</strong> @item.LyDo</div>
-
-                                @if (!string.IsNullOrEmpty(item.MoTa))
-
-                                {
-
-                                    <div class="small text-secondary mt-1">@item.MoTa</div>
-
-                                }
-
-                                @if (!string.IsNullOrEmpty(item.GhiChuXuLy))
-
-                                {
-
-                                    <div class="small text-success mt-1"><strong>Admin xử lý:</strong> @item.GhiChuXuLy</div>
-
-                                }
-
-                            </td>
-
-                            <td class="text-muted small">@item.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-
-                            <td>
-
-                                @switch (item.TrangThai)
-
-                                {
-
-                                    case "PENDING":
-
-                                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small">Chờ xử lý</span>
-
-                                        break;
-
-                                    case "RESOLVED":
-
-                                        <span class="badge bg-success rounded-pill px-2 py-1 small">Đã giải quyết</span>
-
-                                        break;
-
-                                    case "DISMISSED":
-
-                                        <span class="badge bg-secondary rounded-pill px-2 py-1 small">Đã bỏ qua</span>
-
-                                        break;
-
-                                }
-
-                            </td>
-
-                            <td class="text-end pe-3">
-
-                                @if (item.TrangThai == "PENDING")
-
-                                {
-
-                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold"
-
-                                            onclick="toggleRow('rowXuLy_@item.MaBaoCao')">
-
-                                        Xử lý vi phạm
-
-                                    </button>
-
-                                }
-
-                                else
-
-                                {
-
-                                    <span class="text-muted small">Đã hoàn tất</span>
-
-                                }
-
-                            </td>
-
-                        </tr>
-
-
-
-                        @* Khung xử lý inline *@
-
-                        @if (item.TrangThai == "PENDING")
-
-                        {
-
-                            <tr id="rowXuLy_@item.MaBaoCao" style="display: none;" class="table-light">
-
-                                <td colspan="8" class="p-3">
-
-                                    <form asp-area="Admin" asp-controller="Reports" asp-action="XuLy" method="post" class="border rounded-3 p-3 bg-white">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <input type="hidden" name="maBaoCao" value="@item.MaBaoCao" />
-
-                                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-shield-check text-danger me-1"></i> Xử lý báo cáo #@item.MaBaoCao - [@item.LoaiDoiTuong] @item.TenDoiTuong</h6>
-
-                                        <div class="row g-3">
-
-                                            <div class="col-md-4">
-
-                                                <label class="form-label fw-semibold small">Hành động của Admin <span class="text-danger">*</span></label>
-
-                                                <select name="hanhDong" class="form-select form-select-sm rounded-2">
-
-                                                    <option value="RESOLVE">Xử lý vi phạm (Gỡ SP / Khóa Shop / Khóa User)</option>
-
-                                                    <option value="DISMISS">Bỏ qua báo cáo (Không vi phạm)</option>
-
-                                                </select>
-
-                                            </div>
-
-                                            <div class="col-md-8">
-
-                                                <label class="form-label fw-semibold small">Ghi chú lý do xử lý</label>
-
-                                                <input type="text" name="ghiChu" class="form-control form-control-sm rounded-2" maxlength="500"
-
-                                                       placeholder="Ghi chú phản hồi cho người báo cáo hoặc lý do khóa/gỡ..." />
-
-                                            </div>
-
-                                        </div>
-
-                                        <div class="d-flex gap-2 justify-content-end mt-3">
-
-                                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="toggleRow('rowXuLy_@item.MaBaoCao')">Hủy</button>
-
-                                            <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold">
-
-                                                Xác nhận thực hiện
-
-                                            </button>
-
-                                        </div>
-
-                                    </form>
-
-                                </td>
-
-                            </tr>
-
-                        }
-
-                    }
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        @if (Model.TotalPages > 1)
-        {
-            <div class="d-flex justify-content-between align-items-center p-3 border-top">
-                <span class="text-muted small">Tổng cộng: @Model.TotalItems báo cáo</span>
-                <nav aria-label="Phân trang">
-                    <ul class="pagination pagination-sm mb-0">
-                        @if (Model.Page > 1)
-                        {
-                            <li class="page-item"><a class="page-link" asp-route-page="@(Model.Page - 1)" asp-route-trangThai="@Model.TrangThaiFilter" asp-route-loaiDoiTuong="@Model.LoaiFilter">&laquo; Trước</a></li>
-                        }
-                        <li class="page-item disabled"><span class="page-link">Trang @Model.Page / @Model.TotalPages</span></li>
-                        @if (Model.Page < Model.TotalPages)
-                        {
-                            <li class="page-item"><a class="page-link" asp-route-page="@(Model.Page + 1)" asp-route-trangThai="@Model.TrangThaiFilter" asp-route-loaiDoiTuong="@Model.LoaiFilter">Sau &raquo;</a></li>
-                        }
-                    </ul>
-                </nav>
-            </div>
-        }
-    </div>
-</div>
-
-
-
-@section Scripts {
-
-    <script>
-
-        function toggleRow(rowId) {
-
-            var row = document.getElementById(rowId);
-
-            if (row) {
-
-                row.style.display = (row.style.display === "none" || row.style.display === "") ? "table-row" : "none";
-
-            }
-
-        }
-
-    </script>
-
-}
-
+@model SecondHandMarketplace.Web.Models.ViewModels.Reports.AdminReportListViewModel
+@{
+    ViewData["Title"] = "Quản lý Báo cáo vi phạm";
+}
+<div class="container-fluid my-4 px-md-4" style="max-width: 1300px;">
+
+    <!-- Tiêu đề trang Admin -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-shield-shaded text-danger"></i> Quản lý Báo cáo vi phạm</h2>
+            <p class="text-muted small mb-0">Hiện có <strong class="text-danger">@Model.TongChuaXuLy</strong> phản ánh từ người dùng đang chờ kiểm duyệt.</p>
+        </div>
+    </div>
+    <partial name="_ThongBao" />
+
+    <!-- Bộ lọc tìm kiếm -->
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-3">
+
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label class="form-label mb-0 fw-semibold small text-dark">Trạng thái:</label>
+            </div>
+            <div class="col-auto">
+                <select name="trangThai" class="form-select form-select-sm rounded-pill" onchange="this.form.submit()">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="PENDING" selected="@(Model.TrangThaiFilter == "PENDING")">Chờ xử lý (PENDING)</option>
+                    <option value="RESOLVED" selected="@(Model.TrangThaiFilter == "RESOLVED")">Đã xử lý (RESOLVED)</option>
+                    <option value="DISMISSED" selected="@(Model.TrangThaiFilter == "DISMISSED")">Đã bỏ qua (DISMISSED)</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-0 fw-semibold small text-dark">Loại đối tượng:</label>
+            </div>
+            <div class="col-auto">
+                <select name="loaiDoiTuong" class="form-select form-select-sm rounded-pill" onchange="this.form.submit()">
+                    <option value="">-- Tất cả loại --</option>
+                    <option value="PRODUCT" selected="@(Model.LoaiFilter == "PRODUCT")">Sản phẩm (PRODUCT)</option>
+                    <option value="USER" selected="@(Model.LoaiFilter == "USER")">Người dùng (USER)</option>
+                    <option value="SHOP" selected="@(Model.LoaiFilter == "SHOP")">Cửa hàng (SHOP)</option>
+                </select>
+            </div>
+            <div class="col-auto ms-auto">
+                <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    Xóa lọc
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bảng danh sách báo cáo -->
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th style="width: 70px;" class="ps-3">Mã</th>
+                        <th style="width: 110px;">Loại</th>
+                        <th>Đối tượng bị báo cáo</th>
+                        <th style="width: 170px;">Người gửi</th>
+                        <th>Lý do & Mô tả</th>
+                        <th style="width: 140px;">Ngày gửi</th>
+                        <th style="width: 120px;">Trạng thái</th>
+                        <th style="width: 170px;" class="text-end pe-3">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                Không tìm thấy báo cáo nào phù hợp với bộ lọc.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="ps-3 fw-bold text-dark">#@item.MaBaoCao</td>
+                            <td>
+                                @switch (item.LoaiDoiTuong)
+                                {
+                                    case "PRODUCT":
+                                        <span class="badge bg-primary rounded-pill small">Sản phẩm</span>
+                                        break;
+                                    case "USER":
+                                        <span class="badge bg-info text-dark rounded-pill small">Người dùng</span>
+                                        break;
+                                    case "SHOP":
+                                        <span class="badge bg-warning text-dark rounded-pill small">Cửa hàng</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                <strong class="text-dark">@item.TenDoiTuong</strong>
+                                <div class="small text-muted">ID: #@item.MaDoiTuong</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">@item.TenNguoiBaoCao</div>
+                                <div class="small text-muted">ID: #@item.MaNguoiBaoCao</div>
+                            </td>
+                            <td>
+                                <div><strong class="text-dark">Lý do:</strong> @item.LyDo</div>
+                                @if (!string.IsNullOrEmpty(item.MoTa))
+                                {
+                                    <div class="small text-secondary mt-1">@item.MoTa</div>
+                                }
+                                @if (!string.IsNullOrEmpty(item.GhiChuXuLy))
+                                {
+                                    <div class="small text-success mt-1"><strong>Admin xử lý:</strong> @item.GhiChuXuLy</div>
+                                }
+                            </td>
+                            <td class="text-muted small">@item.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @switch (item.TrangThai)
+                                {
+                                    case "PENDING":
+                                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small">Chờ xử lý</span>
+                                        break;
+                                    case "RESOLVED":
+                                        <span class="badge bg-success rounded-pill px-2 py-1 small">Đã giải quyết</span>
+                                        break;
+                                    case "DISMISSED":
+                                        <span class="badge bg-secondary rounded-pill px-2 py-1 small">Đã bỏ qua</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                @if (item.TrangThai == "PENDING")
+                                {
+                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold"
+                                            onclick="toggleRow('rowXuLy_@item.MaBaoCao')">
+                                        Xử lý vi phạm
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Đã hoàn tất</span>
+                                }
+                            </td>
+                        </tr>
+                        @* Khung xử lý inline *@
+                        @if (item.TrangThai == "PENDING")
+                        {
+                            <tr id="rowXuLy_@item.MaBaoCao" style="display: none;" class="table-light">
+                                <td colspan="8" class="p-3">
+
+                                    <form asp-area="Admin" asp-controller="Reports" asp-action="XuLy" method="post" class="border rounded-3 p-3 bg-white">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="maBaoCao" value="@item.MaBaoCao" />
+                                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-shield-check text-danger me-1"></i> Xử lý báo cáo #@item.MaBaoCao - [@item.LoaiDoiTuong] @item.TenDoiTuong</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold small">Hành động của Admin <span class="text-danger">*</span></label>
+                                                <select name="hanhDong" class="form-select form-select-sm rounded-2">
+                                                    <option value="RESOLVE">Xử lý vi phạm (Gỡ SP / Khóa Shop / Khóa User)</option>
+                                                    <option value="DISMISS">Bỏ qua báo cáo (Không vi phạm)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label fw-semibold small">Ghi chú lý do xử lý</label>
+                                                <input type="text" name="ghiChu" class="form-control form-control-sm rounded-2" maxlength="500"
+                                                       placeholder="Ghi chú phản hồi cho người báo cáo hoặc lý do khóa/gỡ..." />
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 justify-content-end mt-3">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="toggleRow('rowXuLy_@item.MaBaoCao')">Hủy</button>
+                                            <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold">
+                                                Xác nhận thực hiện
+                                            </button>
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                <span class="text-muted small">Tổng cộng: @Model.TotalItems báo cáo</span>
+                <nav aria-label="Phân trang">
+                    <ul class="pagination pagination-sm mb-0">
+                        @if (Model.Page > 1)
+                        {
+                            <li class="page-item"><a class="page-link" asp-route-page="@(Model.Page - 1)" asp-route-trangThai="@Model.TrangThaiFilter" asp-route-loaiDoiTuong="@Model.LoaiFilter">&laquo; Trước</a></li>
+                        }
+                        <li class="page-item disabled"><span class="page-link">Trang @Model.Page / @Model.TotalPages</span></li>
+                        @if (Model.Page < Model.TotalPages)
+                        {
+                            <li class="page-item"><a class="page-link" asp-route-page="@(Model.Page + 1)" asp-route-trangThai="@Model.TrangThaiFilter" asp-route-loaiDoiTuong="@Model.LoaiFilter">Sau &raquo;</a></li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleRow(rowId) {
+            var row = document.getElementById(rowId);
+            if (row) {
+                row.style.display = (row.style.display === "none" || row.style.display === "") ? "table-row" : "none";
+            }
+        }
+    </script>
+}

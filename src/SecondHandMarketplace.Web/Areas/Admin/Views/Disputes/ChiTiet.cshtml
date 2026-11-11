@@ -113,15 +113,28 @@
                             <input type="hidden" name="maTranhChap" value="@Model.MaTranhChap" />
                             <div class="mb-3">
                                 <label class="form-label fw-semibold small">Quyết định xử lý <span class="text-danger">*</span></label>
-                                <select name="phanQuyet" class="form-select form-select-sm rounded-2" required>
-                                    <option value="">-- Chọn quyết định --</option>
-                                    <option value="REFUND_BUYER">Hoàn tiền cho người mua (Hủy đơn hàng)</option>
-                                    @if (Model.TrangThaiDonHang != "COMPLETED")
-                                    {
-                                        <option value="RELEASE_SELLER">Thanh toán cho người bán (Hoàn tất đơn)</option>
-                                    }
-                                    <option value="REJECT">Bác bỏ khiếu nại (Giữ nguyên trạng thái)</option>
-                                </select>
+                                @if (Model.TrangThaiDonHang == "CANCELLED")
+                                {
+                                    <div class="alert alert-secondary py-2 small mb-2">
+                                        <i class="bi bi-info-circle me-1"></i> Đơn hàng này đã ở trạng thái <strong>Đã hủy</strong>. Chỉ có thể bác bỏ hoặc giữ nguyên khiếu nại.
+                                    </div>
+                                    <select name="phanQuyet" class="form-select form-select-sm rounded-2" required>
+                                        <option value="">-- Chọn quyết định --</option>
+                                        <option value="REJECT">Bác bỏ khiếu nại (Giữ nguyên trạng thái)</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <select name="phanQuyet" class="form-select form-select-sm rounded-2" required>
+                                        <option value="">-- Chọn quyết định --</option>
+                                        <option value="REFUND_BUYER">Hoàn tiền cho người mua (Hủy đơn hàng)</option>
+                                        @if (Model.TrangThaiDonHang == "DELIVERED" || Model.TrangThaiDonHang == "SHIPPING")
+                                        {
+                                            <option value="RELEASE_SELLER">Thanh toán cho người bán (Hoàn tất đơn)</option>
+                                        }
+                                        <option value="REJECT">Bác bỏ khiếu nại (Giữ nguyên trạng thái)</option>
+                                    </select>
+                                }
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold small">Ghi chú / Căn cứ phân xử</label>

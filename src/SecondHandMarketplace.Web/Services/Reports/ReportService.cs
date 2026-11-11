@@ -347,26 +347,38 @@ public class ReportService : IReportService
                     }
                     catch { /* Best-effort: lỗi thông báo không làm hỏng giao dịch gỡ sản phẩm */ }
 
-                    // Kiểm tra tổng số vi phạm của người bán (báo cáo đã xử lý + vi phạm kiểm duyệt)
-                    var countViPham = await _db.LichSuViPhams.CountAsync(v => v.MaNguoiBan == chuShopId);
-                    var countBaoCao = await _db.BaoCaos.CountAsync(b => b.TrangThai == "RESOLVED" &&
-                        ((b.LoaiDoiTuong == "PRODUCT" && _db.SanPhams.Any(p => p.MaSanPham == b.MaDoiTuong && p.CuaHang.MaNguoiDung == chuShopId)) ||
-                         (b.LoaiDoiTuong == "USER" && b.MaDoiTuong == chuShopId) ||
-                         (b.LoaiDoiTuong == "SHOP" && _db.CuaHangs.Any(c => c.MaCuaHang == b.MaDoiTuong && c.MaNguoiDung == chuShopId))));
+                    // Đếm số vi phạm chuẩn xác: các sản phẩm vi phạm khác nhau (distinct) + vi phạm kiểm duyệt
+                    var countViPhamKiemDuyet = await _db.LichSuViPhams.CountAsync(v => v.MaNguoiBan == chuShopId);
+                    
+                    var countSpBiBaoCao = await _db.BaoCaos
+                        .Where(b => b.TrangThai == "RESOLVED" && b.LoaiDoiTuong == "PRODUCT" &&
+                                    _db.SanPhams.Any(p => p.MaSanPham == b.MaDoiTuong && p.CuaHang.MaNguoiDung == chuShopId && p.MaSanPham != bc.MaDoiTuong))
+                        .Select(b => b.MaDoiTuong)
+                        .Distinct()
+                        .CountAsync();
 
-                    var tongViPham = countViPham + countBaoCao + 1; // +1 cho báo cáo hiện tại
+                    var countBaoCaoNguoiDungShop = await _db.BaoCaos
+                        .Where(b => b.TrangThai == "RESOLVED" &&
+                                    ((b.LoaiDoiTuong == "USER" && b.MaDoiTuong == chuShopId) ||
+                                     (b.LoaiDoiTuong == "SHOP" && _db.CuaHangs.Any(c => c.MaCuaHang == b.MaDoiTuong && c.MaNguoiDung == chuShopId))))
+                        .CountAsync();
+
+                    var tongViPham = countViPhamKiemDuyet + countSpBiBaoCao + countBaoCaoNguoiDungShop + 1; // +1 cho sản phẩm bị gỡ hiện tại
                     if (tongViPham >= 3)
                     {
                         var lyDoKhoa = $"Tự động khóa: Đạt {tongViPham} lần vi phạm/bị gỡ do báo cáo và kiểm duyệt (ngưỡng 3 gậy).";
-                        await _userAdmin.LockUserAsync(adminId, chuShopId, lyDoKhoa);
-                        await _shopService.LockShopAsync(adminId, product.MaCuaHang, lyDoKhoa);
-                        try
+                        var (okUser, _) = await _userAdmin.LockUserAsync(adminId, chuShopId, lyDoKhoa);
+                        var (okShop, _) = await _shopService.LockShopAsync(adminId, product.MaCuaHang, lyDoKhoa);
+                        if (okUser || okShop)
                         {
-                            await _notifications.CreateAsync(chuShopId, NotificationTypes.System,
-                                "Tài khoản của bạn đã bị khóa",
-                                $"Tài khoản và cửa hàng của bạn đã bị khóa tự động vì tích lũy {tongViPham} lần vi phạm (đạt ngưỡng 3 gậy). Vui lòng liên hệ ban quản trị để được hỗ trợ.");
+                            try
+                            {
+                                await _notifications.CreateAsync(chuShopId, NotificationTypes.System,
+                                    "Tài khoản của bạn đã bị khóa",
+                                    $"Tài khoản và cửa hàng của bạn đã bị khóa tự động vì tích lũy {tongViPham} lần vi phạm (đạt ngưỡng 3 gậy). Vui lòng liên hệ ban quản trị để được hỗ trợ.");
+                            }
+                            catch { /* Best-effort */ }
                         }
-                        catch { /* Best-effort */ }
                     }
                 }
             }

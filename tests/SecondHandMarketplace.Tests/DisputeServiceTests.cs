@@ -690,4 +690,110 @@ public class DisputeServiceTests
         Assert.Contains("không thể mở lại", thongBao);
     }
 
+    [Fact]
+    public async Task ChuanBiMoTranhChapAsync_DonHangKhongTonTai_TraVeFalse()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_ChuanBi_DonNotFound");
+        var service = new DisputeService(db, new FakeNotificationService(), new FakeAuditLogService());
+
+        var (hopLe, thongBao, vm, maTc) = await service.ChuanBiMoTranhChapAsync(20, 9999);
+        Assert.False(hopLe);
+        Assert.Contains("Không tìm thấy đơn hàng", thongBao);
+        Assert.Null(vm);
+    }
+
+    [Fact]
+    public async Task ChuanBiMoTranhChapAsync_DonHangKhongDungTrangThai_TraVeFalse()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_ChuanBi_TrangThaiSai");
+        var service = new DisputeService(db, new FakeNotificationService(), new FakeAuditLogService());
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop" };
+        db.CuaHangs.Add(shop);
+        var don = new DonHang
+        {
+            MaDonHang = 80,
+            MaDon = "DH080",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "PENDING",
+            TongTien = 100000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var (hopLe, thongBao, vm, maTc) = await service.ChuanBiMoTranhChapAsync(20, 80);
+        Assert.False(hopLe);
+        Assert.Contains("Chỉ có thể mở khiếu nại", thongBao);
+        Assert.Null(vm);
+    }
+
+    [Fact]
+    public async Task ChuanBiMoTranhChapAsync_DonHangDaCoTranhChap_TraVeFalseVaMaTranhChap()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_ChuanBi_DaCoTranhChap");
+        var service = new DisputeService(db, new FakeNotificationService(), new FakeAuditLogService());
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop" };
+        db.CuaHangs.Add(shop);
+        var don = new DonHang
+        {
+            MaDonHang = 81,
+            MaDon = "DH081",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "DELIVERED",
+            TongTien = 100000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+        db.TranhChaps.Add(new TranhChap
+        {
+            MaTranhChap = 88,
+            MaDonHang = 81,
+            MaNguoiTao = 20,
+            LyDo = "Lý do cũ",
+            TrangThai = "OPEN"
+        });
+        await db.SaveChangesAsync();
+
+        var (hopLe, thongBao, vm, maTc) = await service.ChuanBiMoTranhChapAsync(20, 81);
+        Assert.False(hopLe);
+        Assert.Contains("Đơn hàng này đã có khiếu nại", thongBao);
+        Assert.Equal(88, maTc);
+        Assert.Null(vm);
+    }
+
+    [Fact]
+    public async Task ChuanBiMoTranhChapAsync_HopLe_TraVeTrueVaViewModel()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_ChuanBi_HopLe");
+        var service = new DisputeService(db, new FakeNotificationService(), new FakeAuditLogService());
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop 1" };
+        db.CuaHangs.Add(shop);
+        var don = new DonHang
+        {
+            MaDonHang = 82,
+            MaDon = "DH082",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TrangThai = "DELIVERED",
+            TongTien = 250000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var (hopLe, thongBao, vm, maTc) = await service.ChuanBiMoTranhChapAsync(20, 82);
+        Assert.True(hopLe);
+        Assert.Null(thongBao);
+        Assert.NotNull(vm);
+        Assert.Equal(82, vm!.MaDonHang);
+        Assert.Equal("DH082", vm.MaDon);
+        Assert.Equal("Test Shop 1", vm.TenShop);
+        Assert.Equal(250000, vm.TongTien);
+        Assert.Null(maTc);
+    }
 }

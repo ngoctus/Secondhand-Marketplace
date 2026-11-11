@@ -21,6 +21,39 @@ public class DisputeService : IDisputeService
         _audit = audit;
     }
 
+    public async Task<(bool HopLe, string? ThongBao, MoTranhChapViewModel? ViewModel, int? MaTranhChapHienCo)> ChuanBiMoTranhChapAsync(int userId, int maDonHang)
+    {
+        var donHang = await _db.DonHangs
+            .Include(d => d.CuaHang)
+            .FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == userId);
+
+        if (donHang == null)
+        {
+            return (false, "Không tìm thấy đơn hàng cần khiếu nại hoặc bạn không phải người mua.", null, null);
+        }
+
+        if (donHang.TrangThai != "SHIPPING" && donHang.TrangThai != "DELIVERED" && donHang.TrangThai != "COMPLETED")
+        {
+            return (false, "Chỉ có thể mở khiếu nại đối với đơn hàng đang giao, đã giao hoặc đã hoàn tất.", null, null);
+        }
+
+        var tranhChapHienCo = await _db.TranhChaps.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
+        if (tranhChapHienCo != null)
+        {
+            return (false, "Đơn hàng này đã có khiếu nại trước đó.", null, tranhChapHienCo.MaTranhChap);
+        }
+
+        var vm = new MoTranhChapViewModel
+        {
+            MaDonHang = donHang.MaDonHang,
+            MaDon = donHang.MaDon,
+            TenShop = donHang.CuaHang?.TenShop ?? "Cửa hàng",
+            TongTien = donHang.TongTien
+        };
+
+        return (true, null, vm, null);
+    }
+
     public async Task<(bool ThanhCong, string? ThongBao)> MoTranhChapAsync(int maNguoiMua, MoTranhChapViewModel vm)
     {
         // 1. Kiểm tra lý do bắt buộc và độ dài

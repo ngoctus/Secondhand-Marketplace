@@ -561,7 +561,7 @@ public class OrderService : IOrderService
                 AnhDaiDien = ct.AnhDaiDien,
                 Gia = ct.Gia
             }).ToList(),
-            LichSuTrangThai = d.LichSu.OrderBy(ls => ls.ThoiGian).Select(ls => new LichSuTrangThaiDonViewModel
+            LichSuTrangThai = d.LichSu.OrderBy(ls => ls.ThoiGian).ThenBy(ls => ls.MaLichSuTrangThaiDonHang).Select(ls => new LichSuTrangThaiDonViewModel
             {
                 TrangThaiCu = ls.TrangThaiCu,
                 TrangThaiMoi = ls.TrangThaiMoi,
@@ -777,7 +777,12 @@ public class OrderService : IOrderService
         }
 
         await _db.SaveChangesAsync();
-        return (true, "Xác nhận chuyển khoản thành công cho các đơn hàng! Cảm ơn bạn.");
+        var invalidIds = idList.Except(validDonIds).ToList();
+        string thongBao = invalidIds.Count == 0
+            ? $"Xác nhận chuyển khoản thành công cho {validDonIds.Count} đơn hàng! Cảm ơn bạn."
+            : $"Đã xác nhận thanh toán cho {validDonIds.Count} đơn hàng. Bỏ qua {invalidIds.Count} đơn hàng không hợp lệ (ID: {string.Join(", ", invalidIds)}).";
+
+        return (true, thongBao);
     }
 
     public async Task<(bool ThanhCong, string? ThongBao)> XacNhanDaNhanTienShopAsync(int chuShopId, int maDonHang)
