@@ -125,6 +125,11 @@ BEGIN
         ORDER BY LaAnhChinh DESC, MaAnh ASC
     ) a;
 
+    -- Đồng bộ tổng tiền bằng hàm dbo.fn_TinhTongTienDonHang theo đúng nguyên tắc Data-first
+    UPDATE DonHang
+    SET TongTien = dbo.fn_TinhTongTienDonHang(@MaDonHangMoi)
+    WHERE MaDonHang = @MaDonHangMoi;
+
     UPDATE sp
     SET sp.TrangThai = 'RESERVED',
         sp.NgayCapNhat = SYSUTCDATETIME()
@@ -289,6 +294,125 @@ BEGIN
     JOIN DonHang dh ON dh.MaDonHang = x.MaDonHang
     ORDER BY dh.MaDonHang;
 END;
+GO
+
+
+
+-- 5. Cập nhật vw_DonHangTongQuan bao gồm hình thức nhận hàng (HinhThucNhan)
+CREATE OR ALTER VIEW vw_DonHangTongQuan
+AS
+SELECT
+    dh.MaDonHang AS Id,
+    dh.MaDon,
+    dh.MaNguoiDung AS NguoiMuaId,
+    mua.HoTen AS TenNguoiMua,
+    dh.MaCuaHang,
+    ch.TenShop,
+    ch.MaNguoiDung AS ChuShopId,
+    dh.TrangThai,
+    dh.PhuongThucThanhToan,
+    dh.TrangThaiThanhToan,
+    dh.HinhThucNhan,
+    dh.TongTien,
+    dh.NguoiHuy,
+    dh.LyDoHuy,
+    dh.NgayTao,
+    (
+        SELECT COUNT(*)
+        FROM ChiTietDonHang ct
+        WHERE ct.MaDonHang = dh.MaDonHang
+    ) AS SoSanPham,
+    (
+        SELECT TOP (1) ct.TenSanPham
+        FROM ChiTietDonHang ct
+        WHERE ct.MaDonHang = dh.MaDonHang
+        ORDER BY ct.MaChiTietDonHang
+    ) AS TenSanPhamDau,
+    (
+        SELECT TOP (1) ct.AnhDaiDien
+        FROM ChiTietDonHang ct
+        WHERE ct.MaDonHang = dh.MaDonHang
+        ORDER BY ct.MaChiTietDonHang
+    ) AS AnhDau
+FROM DonHang dh
+JOIN NguoiDung mua
+    ON mua.MaNguoiDung = dh.MaNguoiDung
+JOIN CuaHang ch
+    ON ch.MaCuaHang = dh.MaCuaHang;
+GO
+
+-- 6. Cập nhật vw_ChiTietDonHang bao gồm hình thức nhận hàng (HinhThucNhan)
+CREATE OR ALTER VIEW vw_ChiTietDonHang
+AS
+SELECT
+    dh.MaDonHang,
+    dh.MaDon,
+    dh.MaNguoiDung AS MaNguoiMua,
+    mua.HoTen AS TenNguoiMua,
+    ch.MaNguoiDung AS MaNguoiBan,
+    ban.HoTen AS TenNguoiBan,
+    dh.TenNguoiNhan,
+    dh.SoDienThoaiNhan AS SDTNguoiNhan,
+    dh.DiaChiNhan AS DiaChiGiaoHang,
+    dh.TienHang,
+    dh.PhiVanChuyen,
+    dh.TongTien,
+    dh.PhuongThucThanhToan,
+    dh.TrangThaiThanhToan,
+    dh.HinhThucNhan,
+    dh.TrangThai AS TrangThaiDonHang,
+    dh.NgayTao,
+    ct.MaChiTietDonHang,
+    ct.MaSanPham,
+    ct.TenSanPham,
+    ct.Gia AS DonGia
+FROM DonHang dh
+JOIN NguoiDung mua
+    ON mua.MaNguoiDung = dh.MaNguoiDung
+JOIN CuaHang ch
+    ON ch.MaCuaHang = dh.MaCuaHang
+JOIN NguoiDung ban
+    ON ban.MaNguoiDung = ch.MaNguoiDung
+JOIN ChiTietDonHang ct
+    ON ct.MaDonHang = dh.MaDonHang;
+GO
+
+-- 7. Cập nhật vw_GioHangChiTiet kiểm tra đầy đủ trạng thái chủ shop và chặn mua shop của chính mình
+CREATE OR ALTER VIEW vw_GioHangChiTiet
+AS
+SELECT
+    gh.MaGioHang AS Id,
+    gh.MaNguoiDung AS NguoiDungId,
+    gh.MaSanPham AS SanPhamId,
+    gh.DaChon,
+    gh.ThoiGianThem,
+    sp.Ten,
+    sp.Gia,
+    sp.TrangThai AS TrangThaiSanPham,
+    sp.MaCuaHang,
+    ch.TenShop,
+    a.DuongDan AS AnhDaiDien,
+    CAST(
+        CASE
+            WHEN sp.TrangThai = 'ACTIVE'
+                AND sp.DaXoa = 0
+                AND ch.TrangThai = 'ACTIVE'
+                AND ch.MaNguoiDung <> gh.MaNguoiDung
+                AND chuShop.TrangThai = 'ACTIVE'
+            THEN 1
+            ELSE 0
+        END AS bit
+    ) AS CoTheMua
+FROM GioHang gh
+JOIN SanPham sp
+    ON sp.MaSanPham = gh.MaSanPham
+JOIN CuaHang ch
+    ON ch.MaCuaHang = sp.MaCuaHang
+JOIN NguoiDung chuShop
+    ON chuShop.MaNguoiDung = ch.MaNguoiDung
+LEFT JOIN AnhSanPham a
+    ON a.MaSanPham = sp.MaSanPham
+    AND a.LaAnhChinh = 1;
 GO
 
 PRINT N'Đã hoàn tất cấu hình hình thức nhận hàng (22_hinh_thuc_nhan.sql)!';

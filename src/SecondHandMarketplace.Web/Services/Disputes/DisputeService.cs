@@ -63,13 +63,12 @@ public class DisputeService : IDisputeService
             return (false, "Chỉ có thể mở khiếu nại đối với đơn hàng đang giao, đã giao hoặc đã hoàn tất.");
         }
 
-        // 4. Chống mở trùng khiếu nại đang xử lý hoặc đã được giải quyết
-        var daCoTranhChap = await _db.TranhChaps.AnyAsync(t =>
-            t.MaDonHang == vm.MaDonHang && (t.TrangThai == "OPEN" || t.TrangThai == "PROCESSING" || t.TrangThai == "RESOLVED"));
+        // 4. Chống mở trùng khiếu nại: Mỗi đơn hàng chỉ được mở khiếu nại 1 lần duy nhất
+        var daCoTranhChap = await _db.TranhChaps.AnyAsync(t => t.MaDonHang == vm.MaDonHang);
 
         if (daCoTranhChap)
         {
-            return (false, "Đơn hàng này đã có khiếu nại đang chờ xử lý hoặc đã được giải quyết xong.");
+            return (false, "Đơn hàng này đã có khiếu nại đang chờ xử lý hoặc đã kết thúc và không thể mở lại.");
         }
 
         var now = DateTime.UtcNow;
@@ -313,6 +312,11 @@ public class DisputeService : IDisputeService
             return (false, "Tranh chấp này đã được phân xử trước đó.");
         }
 
+        if (!string.IsNullOrWhiteSpace(ghiChu) && ghiChu.Trim().Length > 1000)
+        {
+            return (false, "Ghi chú của quản trị viên không được vượt quá 1000 ký tự.");
+        }
+
         using var tx = _db.Database.IsRelational() ? await _db.Database.BeginTransactionAsync() : null;
         var now = DateTime.UtcNow;
         tc.NguoiXuLyId = adminId;
@@ -470,7 +474,17 @@ public class DisputeService : IDisputeService
     }
     catch (Exception ex)
     {
-        if (tx != null) await tx.RollbackAsync();
+        if (tx != null)
+        {
+            try
+            {
+                await tx.RollbackAsync();
+            }
+            catch
+            {
+                // Tránh double-rollback nếu Stored Procedure phía SQL Server đã tự rollback khi gặp lỗi
+            }
+        }
         return (false, SecondHandMarketplace.Web.Common.SqlLoi.ThongBao(ex));
     }
 

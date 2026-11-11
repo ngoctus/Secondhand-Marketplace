@@ -418,4 +418,61 @@ public class OrderServiceTests
         Assert.NotNull(ttDb);
         Assert.Equal("SUCCESS", ttDb.TrangThaiThanhToan);
     }
+
+    [Fact]
+    public async Task DatHangTuGioAsync_NhieuShop_TachDonRiengBietVaDoiTrangThaiReserved()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_TachDonNhieuShop");
+        var fakeCart = new FakeCartService();
+        var service = new OrderService(db, fakeCart);
+
+        var shop1 = new CuaHang { MaCuaHang = 10, MaNguoiDung = 100, TenShop = "Shop A", TrangThai = "ACTIVE" };
+        var shop2 = new CuaHang { MaCuaHang = 20, MaNguoiDung = 200, TenShop = "Shop B", TrangThai = "ACTIVE" };
+        db.CuaHangs.AddRange(shop1, shop2);
+
+        var sp1 = new SanPham { MaSanPham = 1, MaCuaHang = 10, Ten = "Sản phẩm A1", Gia = 100000, TrangThai = "ACTIVE", CuaHang = shop1 };
+        var sp2 = new SanPham { MaSanPham = 2, MaCuaHang = 20, Ten = "Sản phẩm B1", Gia = 200000, TrangThai = "ACTIVE", CuaHang = shop2 };
+        db.SanPhams.AddRange(sp1, sp2);
+
+        db.GioHangs.Add(new GioHang { MaGioHang = 1, MaNguoiDung = 5, MaSanPham = 1, DaChon = true, SanPham = sp1 });
+        db.GioHangs.Add(new GioHang { MaGioHang = 2, MaNguoiDung = 5, MaSanPham = 2, DaChon = true, SanPham = sp2 });
+        await db.SaveChangesAsync();
+
+        var model = new SecondHandMarketplace.Web.Models.ViewModels.Orders.CheckoutViewModel
+        {
+            TenNguoiNhan = "Nguyễn Văn Test",
+            SoDienThoaiNhan = "0987654321",
+            DiaChiNhan = "123 Đường Test, Quận 1",
+            PhiVanChuyen = 30000,
+            PhuongThucThanhToan = "COD",
+            HinhThucNhan = "GIAO_HANG"
+        };
+
+        var result = await service.DatHangTuGioAsync(5, model);
+
+        Assert.True(result.ThanhCong);
+        Assert.Equal(2, result.DanhSachMaDon.Count);
+
+        // Kiểm tra database có 2 đơn hàng thuộc 2 shop khác nhau
+        var donHangs = await db.DonHangs.Where(d => d.MaNguoiDung == 5).ToListAsync();
+        Assert.Equal(2, donHangs.Count);
+        Assert.Contains(donHangs, d => d.MaCuaHang == 10);
+        Assert.Contains(donHangs, d => d.MaCuaHang == 20);
+
+        // Kiểm tra sản phẩm đã đổi sang RESERVED
+        var p1 = await db.SanPhams.FindAsync(1);
+        var p2 = await db.SanPhams.FindAsync(2);
+        Assert.Equal("RESERVED", p1!.TrangThai);
+        Assert.Equal("RESERVED", p2!.TrangThai);
+
+        // Kiểm tra giỏ hàng đã được xóa sạch
+        var conTrongGio = await db.GioHangs.Where(g => g.MaNguoiDung == 5).CountAsync();
+        Assert.Equal(0, conTrongGio);
+
+        // Kiểm tra chi tiết đơn hàng
+        var chiTiets = await db.ChiTietDonHangs.ToListAsync();
+        Assert.Equal(2, chiTiets.Count);
+        Assert.All(chiTiets, ct => Assert.True(ct.DangGiuCho));
+    }
+
 }

@@ -365,4 +365,50 @@ public class ReportServiceTests
         Assert.Single(fakeShop.LockedShops);
         Assert.Equal(shopId, fakeShop.LockedShops[0].ShopId);
     }
+
+    [Fact]
+    public async Task TaoBaoCaoAsync_TuBaoCaoSanPhamCuaShopMinh_TraVeLoi()
+    {
+        using var db = GetInMemoryDbContext("ReportTest_TuBaoCaoSanPhamMinh");
+        var service = new ReportService(db, new FakeUserAdminService(), new FakeShopService(), new FakeAuditLogService(), new FakeNotificationService());
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 8, TenShop = "Shop của tôi" };
+        db.CuaHangs.Add(shop);
+
+        var sp = new SanPham { MaSanPham = 10, MaCuaHang = 1, Ten = "Sản phẩm của tôi", TrangThai = "ACTIVE" };
+        db.SanPhams.Add(sp);
+        await db.SaveChangesAsync();
+
+        var (thanhCong, thongBao) = await service.TaoBaoCaoAsync(8, new TaoBaoCaoViewModel
+        {
+            LoaiDoiTuong = "PRODUCT",
+            MaDoiTuong = 10,
+            LyDo = "Tự báo cáo sản phẩm của mình"
+        });
+
+        Assert.False(thanhCong);
+        Assert.Contains("Không thể tự báo cáo sản phẩm của cửa hàng mình", thongBao);
+    }
+
+    [Fact]
+    public async Task TaoBaoCaoAsync_TuBaoCaoChinhMinh_TraVeLoi()
+    {
+        using var db = GetInMemoryDbContext("ReportTest_TuBaoCaoChinhMinh");
+        var service = new ReportService(db, new FakeUserAdminService(), new FakeShopService(), new FakeAuditLogService(), new FakeNotificationService());
+
+        var user = new NguoiDung { MaNguoiDung = 15, HoTen = "Tự Report", Email = "test@abc.com", VaiTro = "USER" };
+        db.NguoiDungs.Add(user);
+        await db.SaveChangesAsync();
+
+        var (thanhCong, thongBao) = await service.TaoBaoCaoAsync(15, new TaoBaoCaoViewModel
+        {
+            LoaiDoiTuong = "USER",
+            MaDoiTuong = 15,
+            LyDo = "Tự report chính mình"
+        });
+
+        Assert.False(thanhCong);
+        Assert.Contains("Không thể tự báo cáo chính mình", thongBao);
+    }
+
 }

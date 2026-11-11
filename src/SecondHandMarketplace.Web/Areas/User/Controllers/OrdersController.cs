@@ -202,28 +202,4 @@ public class OrdersController : UserBaseController
         return RedirectToAction(nameof(ChiTiet), new { id = maDonHang });
     }
 
-    /// <summary>Người mua mở khiếu nại tranh chấp cho đơn hàng.</summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MoTranhChap(int maDonHang, string lyDo, string? bangChungAnh = null)
-    {
-        var userId = User.LayNguoiDungId()!.Value;
-        var (thanhCong, thongBao) = await _disputeService.MoTranhChapAsync(userId, new MoTranhChapViewModel
-        {
-            MaDonHang = maDonHang,
-            LyDo = lyDo,
-            BangChungAnh = bangChungAnh
-        });
-
-        if (thanhCong)
-        {
-            this.ThongBaoThanhCong(thongBao ?? "Đã mở khiếu nại đơn hàng thành công.");
-        }
-        else
-        {
-            this.ThongBaoLoi(thongBao ?? "Không thể mở khiếu nại.");
-        }
-
-        return RedirectToAction(nameof(ChiTiet), new { id = maDonHang });
-    }
 }

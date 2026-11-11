@@ -1,3 +1,4 @@
+using SecondHandMarketplace.Web.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
@@ -67,9 +68,44 @@ public class CartService : ICartService
     {
         try
         {
-            // Gọi stored procedure sp_ThemVaoGio
-            await _db.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC sp_ThemVaoGio @MaNguoiDung={maNguoiDung}, @MaSanPham={maSanPham}");
+            var daCoTrongGio = await _db.GioHangs.AnyAsync(g => g.MaNguoiDung == maNguoiDung && g.MaSanPham == maSanPham);
+            if (daCoTrongGio)
+            {
+                return (true, "Sản phẩm này đã có sẵn trong giỏ hàng của bạn.");
+            }
+
+            if (_db.Database.IsRelational())
+            {
+                // Gọi stored procedure sp_ThemVaoGio
+                await _db.Database.ExecuteSqlInterpolatedAsync(
+                    $"EXEC sp_ThemVaoGio @MaNguoiDung={maNguoiDung}, @MaSanPham={maSanPham}");
+            }
+            else
+            {
+                // In-Memory fallback cho Unit Test
+                var sp = await _db.SanPhams
+                    .Include(s => s.CuaHang)
+                    .FirstOrDefaultAsync(s => s.MaSanPham == maSanPham && !s.DaXoa);
+
+                if (sp == null || sp.TrangThai != "ACTIVE" || sp.CuaHang?.TrangThai != "ACTIVE")
+                {
+                    return (false, "Sản phẩm không còn bán hoặc không tồn tại.");
+                }
+
+                if (sp.CuaHang.MaNguoiDung == maNguoiDung)
+                {
+                    return (false, "Không thể thêm sản phẩm của chính mình vào giỏ hàng.");
+                }
+
+                _db.GioHangs.Add(new GioHang
+                {
+                    MaNguoiDung = maNguoiDung,
+                    MaSanPham = maSanPham,
+                    DaChon = true,
+                    ThoiGianThem = DateTime.UtcNow
+                });
+                await _db.SaveChangesAsync();
+            }
 
             return (true, "Đã thêm sản phẩm vào giỏ hàng thành công.");
         }

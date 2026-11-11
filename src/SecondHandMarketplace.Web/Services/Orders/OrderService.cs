@@ -135,7 +135,7 @@ public class OrderService : IOrderService
                 };
             }
             // Kiến trúc: Stored procedure sp_DatHangTuGio trong database/06_procedures.sql đã tự động
-            // tạo thông báo (NotificationTypes.Order) cho người bán và người mua trong cùng transaction,
+            // tạo thông báo (NotificationTypes.Order) cho chủ cửa hàng (người bán), đồng thời ghi nhận bản ghi ThanhToan,
             // đồng thời ghi nhận bản ghi ThanhToan với trạng thái tương ứng, đảm bảo tính toàn vẹn (ACID).
             if (_db.Database.IsRelational())
             {
@@ -166,46 +166,104 @@ public class OrderService : IOrderService
             }
             else
             {
-                // Fallback phục vụ test môi trường In-Memory
-                var maCuaHangFallback = await _db.GioHangs.AsNoTracking()
+                // Fallback phục vụ test môi trường In-Memory: mô phỏng trung thực sp_DatHangTuGio
+                var cartItems = await _db.GioHangs
+                    .Include(g => g.SanPham)
+                        .ThenInclude(s => s.CuaHang)
                     .Where(g => g.MaNguoiDung == maNguoiDung && g.DaChon)
-                    .Select(g => g.SanPham.MaCuaHang)
-                    .FirstOrDefaultAsync();
-                var don = new DonHang
-                {
-                    MaDon = "DH" + DateTime.UtcNow.Ticks.ToString()[^8..],
-                    MaNguoiDung = maNguoiDung,
-                    MaCuaHang = maCuaHangFallback,
-                    TienHang = model.TienHang,
-                    PhiVanChuyen = model.PhiVanChuyen,
-                    TongTien = model.TongThanhToan,
-                    TrangThai = "PENDING",
-                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "PAID" : "UNPAID",
-                    PhuongThucThanhToan = model.PhuongThucThanhToan,
-                    HinhThucNhan = model.HinhThucNhan ?? "GIAO_HANG",
-                    TenNguoiNhan = model.TenNguoiNhan.Trim(),
-                    SoDienThoaiNhan = model.SoDienThoaiNhan.Trim(),
-                    DiaChiNhan = model.DiaChiNhan.Trim(),
-                    NgayTao = DateTime.UtcNow
-                };
-                _db.DonHangs.Add(don);
-                await _db.SaveChangesAsync();
+                    .ToListAsync();
 
-                // Ghi nhận bản ghi thanh toán
-                var tt = new ThanhToan
+                if (!cartItems.Any())
                 {
-                    MaDonHang = don.MaDonHang,
-                    MaGiaoDich = "TXN_" + don.MaDon,
-                    PhuongThucThanhToan = model.PhuongThucThanhToan,
-                    SoTien = don.TongTien,
-                    TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "SUCCESS" : "PENDING",
-                    ThoiGianThanhToan = model.PhuongThucThanhToan == "ONLINE" ? DateTime.UtcNow : null,
-                    NgayTao = DateTime.UtcNow
-                };
-                _db.ThanhToans.Add(tt);
-                await _db.SaveChangesAsync();
+                    return new DatHangResultViewModel
+                    {
+                        ThanhCong = false,
+                        ThongBao = "Không có sản phẩm nào được chọn trong giỏ hàng."
+                    };
+                }
 
-                danhSachMaDon.Add(don.MaDon);
+                if (cartItems.Any(g => g.SanPham.CuaHang.MaNguoiDung == maNguoiDung))
+                {
+                    return new DatHangResultViewModel
+                    {
+                        ThanhCong = false,
+                        ThongBao = "Bạn không thể đặt mua sản phẩm của chính cửa hàng mình."
+                    };
+                }
+
+                if (cartItems.Any(g => g.SanPham.TrangThai != "ACTIVE" || g.SanPham.DaXoa || g.SanPham.CuaHang.TrangThai != "ACTIVE"))
+                {
+                    return new DatHangResultViewModel
+                    {
+                        ThanhCong = false,
+                        ThongBao = "Có sản phẩm không còn bán hoặc không thuộc cửa hàng này."
+                    };
+                }
+
+                var shopGroups = cartItems.GroupBy(g => g.SanPham.MaCuaHang).ToList();
+                var phiMoiDon = (model.HinhThucNhan == "GAP_TRUC_TIEP") ? 0 : model.PhiVanChuyen;
+                var counter = 0;
+
+                foreach (var group in shopGroups)
+                {
+                    var shopId = group.Key;
+                    var itemsInShop = group.ToList();
+                    var tienHangShop = itemsInShop.Sum(i => i.SanPham.Gia ?? 0);
+                    var tongTienShop = tienHangShop + phiMoiDon;
+                    var maDonCode = $"DH{DateTime.UtcNow.Ticks.ToString()[^6..]}_{shopId}_{++counter}";
+
+                    var don = new DonHang
+                    {
+                        MaDon = maDonCode,
+                        MaNguoiDung = maNguoiDung,
+                        MaCuaHang = shopId,
+                        TienHang = tienHangShop,
+                        PhiVanChuyen = phiMoiDon,
+                        TongTien = tongTienShop,
+                        TrangThai = "PENDING",
+                        TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "PAID" : "UNPAID",
+                        PhuongThucThanhToan = model.PhuongThucThanhToan,
+                        HinhThucNhan = model.HinhThucNhan ?? "GIAO_HANG",
+                        TenNguoiNhan = model.TenNguoiNhan.Trim(),
+                        SoDienThoaiNhan = model.SoDienThoaiNhan.Trim(),
+                        DiaChiNhan = model.DiaChiNhan.Trim(),
+                        NgayTao = DateTime.UtcNow
+                    };
+                    _db.DonHangs.Add(don);
+                    await _db.SaveChangesAsync();
+
+                    foreach (var item in itemsInShop)
+                    {
+                        _db.ChiTietDonHangs.Add(new ChiTietDonHang
+                        {
+                            MaDonHang = don.MaDonHang,
+                            MaSanPham = item.MaSanPham,
+                            TenSanPham = item.SanPham.Ten,
+                            Gia = item.SanPham.Gia ?? 0,
+                            DangGiuCho = true
+                        });
+
+                        item.SanPham.TrangThai = "RESERVED";
+                        item.SanPham.NgayCapNhat = DateTime.UtcNow;
+                    }
+
+                    var tt = new ThanhToan
+                    {
+                        MaDonHang = don.MaDonHang,
+                        MaGiaoDich = "TXN_" + don.MaDon,
+                        PhuongThucThanhToan = model.PhuongThucThanhToan,
+                        SoTien = don.TongTien,
+                        TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "SUCCESS" : "PENDING",
+                        ThoiGianThanhToan = model.PhuongThucThanhToan == "ONLINE" ? DateTime.UtcNow : null,
+                        NgayTao = DateTime.UtcNow
+                    };
+                    _db.ThanhToans.Add(tt);
+
+                    danhSachMaDon.Add(don.MaDon);
+                }
+
+                _db.GioHangs.RemoveRange(cartItems);
+                await _db.SaveChangesAsync();
             }
 
             return new DatHangResultViewModel
@@ -287,14 +345,16 @@ public class OrderService : IOrderService
                 }
 
                 sp.TrangThai = "SOLD";
+                sp.NgayCapNhat = DateTime.UtcNow;
+                var phiVc = (model.HinhThucNhan == "GAP_TRUC_TIEP") ? 0 : model.PhiVanChuyen;
                 var don = new DonHang
                 {
                     MaDon = "DH" + DateTime.UtcNow.Ticks.ToString()[^8..],
                     MaNguoiDung = maNguoiDung,
                     MaCuaHang = sp.MaCuaHang,
                     TienHang = sp.Gia ?? 0,
-                    TongTien = (sp.Gia ?? 0) + model.PhiVanChuyen,
-                    PhiVanChuyen = model.PhiVanChuyen,
+                    TongTien = (sp.Gia ?? 0) + phiVc,
+                    PhiVanChuyen = phiVc,
                     TrangThai = "PENDING",
                     TrangThaiThanhToan = model.PhuongThucThanhToan == "ONLINE" ? "PAID" : "UNPAID",
                     PhuongThucThanhToan = model.PhuongThucThanhToan,
@@ -306,6 +366,15 @@ public class OrderService : IOrderService
                 };
                 _db.DonHangs.Add(don);
                 await _db.SaveChangesAsync();
+
+                _db.ChiTietDonHangs.Add(new ChiTietDonHang
+                {
+                    MaDonHang = don.MaDonHang,
+                    MaSanPham = sp.MaSanPham,
+                    TenSanPham = sp.Ten,
+                    Gia = sp.Gia ?? 0,
+                    DangGiuCho = true
+                });
 
                 var tt = new ThanhToan
                 {

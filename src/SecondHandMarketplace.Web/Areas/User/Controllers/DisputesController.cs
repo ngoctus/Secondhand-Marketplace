@@ -12,10 +12,13 @@ public class DisputesController : UserBaseController
     private readonly IDisputeService _disputeService;
     private readonly AppDbContext _db;
 
-    public DisputesController(IDisputeService disputeService, AppDbContext db)
+    private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
+
+    public DisputesController(IDisputeService disputeService, AppDbContext db, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
     {
         _disputeService = disputeService;
         _db = db;
+        _env = env;
     }
 
     /// <summary>Danh sách các khiếu nại / tranh chấp liên quan đến người dùng (cả tư cách người mua lẫn chủ shop bán hàng).</summary>
@@ -122,6 +125,37 @@ public class DisputesController : UserBaseController
     {
         var userId = User.LayNguoiDungId();
         if (userId == null) return Challenge();
+
+        // Xử lý upload tệp ảnh bằng chứng nếu có
+        if (vm.FileDinhKem != null && vm.FileDinhKem.Length > 0)
+        {
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(vm.FileDinhKem.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(ext))
+            {
+                ModelState.AddModelError(nameof(vm.FileDinhKem), "Chỉ chấp nhận tệp ảnh JPG, JPEG, PNG hoặc WEBP.");
+            }
+            else if (vm.FileDinhKem.Length > 5 * 1024 * 1024)
+            {
+                ModelState.AddModelError(nameof(vm.FileDinhKem), "Kích thước ảnh không được vượt quá 5MB.");
+            }
+            else
+            {
+                var webRoot = _env?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var folder = Path.Combine(webRoot, "uploads", "disputes");
+                if (!Directory.Exists(folder))
+                {
+                    Directory.CreateDirectory(folder);
+                }
+                var fileName = $"{Guid.NewGuid():N}{ext}";
+                var filePath = Path.Combine(folder, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await vm.FileDinhKem.CopyToAsync(stream);
+                }
+                vm.BangChungAnh = $"/uploads/disputes/{fileName}";
+            }
+        }
 
         if (!ModelState.IsValid)
         {
