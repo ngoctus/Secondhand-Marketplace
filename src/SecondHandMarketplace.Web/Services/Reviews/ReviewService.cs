@@ -358,7 +358,99 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
     }
 
     // =========================================================
-    // 7. Lấy đánh giá của một đơn hàng (C3)
+    // 7. Admin: danh sách shop cần rà soát (C4)
+    // =========================================================
+    /// <summary>
+    /// Đọc điểm shop trực tiếp từ vw_DiemCuaHang (nguồn duy nhất), join hồ sơ shop/chủ shop/khu vực.
+    /// Số báo cáo vi phạm được tính bằng correlated subquery cho từng dòng của trang hiện tại
+    /// (tối đa pageSize dòng), gồm báo cáo SHOP và báo cáo PRODUCT thuộc shop.
+    /// </summary>
+    public async Task<DanhSachShopCanRaSoatVm> LayDanhSachShopCanRaSoatAsync(
+        ShopCanRaSoatFilterVm filter,
+        CancellationToken cancellationToken = default)
+    {
+        filter   ??= new ShopCanRaSoatFilterVm();
+        var tab  = filter.TabChuanHoa;
+        var page = Math.Max(1, filter.Page);
+        var pageSize = Math.Clamp(filter.PageSize <= 0 ? 10 : filter.PageSize, 1, 50);
+
+        var query =
+            from d in db.DiemCuaHangViews.AsNoTracking()
+            join ch in db.CuaHangs.AsNoTracking() on d.MaCuaHang equals ch.MaCuaHang
+            join nd in db.NguoiDungs.AsNoTracking() on ch.MaNguoiDung equals nd.MaNguoiDung
+            join tt in db.TinhThanhs.AsNoTracking() on ch.MaTinhThanh equals (int?)tt.MaTinhThanh into tts
+            from tt in tts.DefaultIfEmpty()
+            join px in db.PhuongXas.AsNoTracking() on ch.MaPhuongXa equals (int?)px.MaPhuongXa into pxs
+            from px in pxs.DefaultIfEmpty()
+            select new { Diem = d, Shop = ch, Chu = nd, Tinh = tt, Xa = px };
+
+        // "all": mọi shop đã có ít nhất một đánh giá VISIBLE; còn lại: tiêu chí shop điểm thấp.
+        query = tab == "all"
+            ? query.Where(x => x.Diem.SoDanhGia > 0)
+            : query.Where(x => x.Diem.DiemTrungBinh < 3.0m && x.Diem.SoDanhGia >= 5);
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var keyword = filter.Search.Trim();
+            query = query.Where(x =>
+                x.Shop.TenShop.Contains(keyword) ||
+                x.Chu.HoTen.Contains(keyword) ||
+                x.Chu.Email.Contains(keyword));
+        }
+
+        var totalItems = await query.CountAsync(cancellationToken);
+
+        // Sắp xếp shop tệ nhất lên đầu; MaCuaHang làm khóa phụ để phân trang ổn định.
+        var items = await query
+            .OrderBy(x => x.Diem.DiemTrungBinh)
+            .ThenByDescending(x => x.Diem.SoDanhGia)
+            .ThenBy(x => x.Shop.MaCuaHang)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ShopCanRaSoatItemVm
+            {
+                MaCuaHang        = x.Shop.MaCuaHang,
+                TenShop          = x.Shop.TenShop,
+                TrangThaiShop    = x.Shop.TrangThai,
+                LyDoKhoa         = x.Shop.LyDoKhoa,
+                ChuShopId        = x.Chu.MaNguoiDung,
+                TenChuShop       = x.Chu.HoTen,
+                EmailChuShop     = x.Chu.Email,
+                SoDienThoai      = x.Shop.SoDienThoaiLienHe,
+                KhuVuc           = x.Xa != null && x.Tinh != null
+                    ? x.Xa.TenPhuongXa + ", " + x.Tinh.TenTinhThanh
+                    : (x.Shop.KhuVucHienThi ?? "Chưa cập nhật"),
+                DiemTrungBinh    = x.Diem.DiemTrungBinh,
+                SoDanhGia        = x.Diem.SoDanhGia,
+                SoDonThanhCong   = x.Diem.SoDonThanhCong,
+                SoBaoCao         = db.BaoCaos.Count(b =>
+                    (b.LoaiDoiTuong == "SHOP" && b.MaDoiTuong == x.Shop.MaCuaHang) ||
+                    (b.LoaiDoiTuong == "PRODUCT" &&
+                     db.SanPhams.Any(s => s.MaSanPham == b.MaDoiTuong && s.MaCuaHang == x.Shop.MaCuaHang))),
+                LaShopCanRaSoat  = x.Diem.DiemTrungBinh < 3.0m && x.Diem.SoDanhGia >= 5
+            })
+            .ToListAsync(cancellationToken);
+
+        // Badge tab không phụ thuộc ô tìm kiếm: luôn là tổng số shop điểm thấp toàn hệ thống.
+        var tongShopCanRaSoat = await (
+            from d in db.DiemCuaHangViews.AsNoTracking()
+            join ch in db.CuaHangs.AsNoTracking() on d.MaCuaHang equals ch.MaCuaHang
+            where d.DiemTrungBinh < 3.0m && d.SoDanhGia >= 5
+            select d.MaCuaHang).CountAsync(cancellationToken);
+
+        return new DanhSachShopCanRaSoatVm
+        {
+            Items             = items,
+            CurrentPage       = page,
+            PageSize          = pageSize,
+            TotalItems        = totalItems,
+            TongShopCanRaSoat = tongShopCanRaSoat,
+            Filter            = filter
+        };
+    }
+
+    // =========================================================
+    // 8. Lấy đánh giá của một đơn hàng (C3)
     // =========================================================
     public async Task<DanhGiaItemVm?> LayDanhGiaTheoDonHangAsync(int maDonHang, CancellationToken cancellationToken = default)
     {

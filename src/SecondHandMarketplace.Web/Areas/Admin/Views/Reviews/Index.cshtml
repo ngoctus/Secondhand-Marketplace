@@ -1,0 +1,323 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Reviews.DanhSachShopCanRaSoatVm
+@{
+    ViewData["Title"] = "Rà soát đánh giá shop";
+    var filter = Model.Filter;
+    var tab = filter.TabChuanHoa;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var pageSize = Model.PageSize;
+}
+
+<div class="container-fluid my-4 px-md-4" style="max-width: 1350px;">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom gap-2">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">
+                <i class="bi bi-clipboard2-pulse text-danger"></i> Rà soát shop bị đánh giá thấp
+            </h2>
+            <p class="text-muted small mb-0">
+                Tiêu chí cảnh báo: điểm trung bình dưới <strong>3.0 sao</strong> và có ít nhất <strong>5 đánh giá</strong>.
+                Hiện có <strong class="text-danger">@Model.TongShopCanRaSoat</strong> shop cần rà soát.
+            </p>
+        </div>
+        <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-flag"></i> Báo cáo vi phạm
+        </a>
+    </div>
+
+    <partial name="_ThongBao" />
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-3">
+        <div class="card-body pb-0">
+            <ul class="nav nav-tabs border-0">
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold @(tab == "can_ra_soat" ? "active text-danger" : "text-muted")"
+                       asp-action="Index" asp-route-tab="can_ra_soat" asp-route-search="@filter.Search">
+                        <i class="bi bi-exclamation-triangle"></i> Shop cần rà soát (&lt; 3 sao)
+                        <span class="badge rounded-pill @(tab == "can_ra_soat" ? "bg-danger" : "bg-secondary") ms-1">@Model.TongShopCanRaSoat</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold @(tab == "all" ? "active text-primary" : "text-muted")"
+                       asp-action="Index" asp-route-tab="all" asp-route-search="@filter.Search">
+                        <i class="bi bi-shop"></i> Tất cả shop có đánh giá
+                    </a>
+                </li>
+            </ul>
+            <form method="get" class="row g-2 align-items-center py-3">
+                <input type="hidden" name="tab" value="@tab" />
+                <div class="col-md-6 col-lg-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input name="search" value="@filter.Search" class="form-control" maxlength="200"
+                               placeholder="Tìm theo tên shop, tên chủ shop hoặc email..." />
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <select name="pageSize" class="form-select">
+                        <option value="10" selected="@(pageSize == 10)">10 / trang</option>
+                        <option value="20" selected="@(pageSize == 20)">20 / trang</option>
+                        <option value="50" selected="@(pageSize == 50)">50 / trang</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-primary px-3"><i class="bi bi-funnel"></i> Lọc</button>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(filter.Search))
+                {
+                    <div class="col-auto">
+                        <a class="btn btn-outline-secondary" asp-action="Index" asp-route-tab="@tab">
+                            <i class="bi bi-x-circle"></i> Xóa từ khóa
+                        </a>
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th class="ps-3" style="min-width: 210px;">Cửa hàng</th>
+                        <th style="min-width: 220px;">Chủ shop</th>
+                        <th style="min-width: 170px;">Khu vực</th>
+                        <th class="text-center" style="width: 110px;">Điểm sao</th>
+                        <th class="text-center" style="width: 150px;">Đơn thành công</th>
+                        <th class="text-center" style="width: 120px;">Báo cáo</th>
+                        <th class="text-end pe-3" style="min-width: 300px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-emoji-smile fs-4 d-block mb-2"></i>
+                                @(tab == "can_ra_soat"
+                                    ? "Không có shop nào dưới 3 sao trong nhóm này."
+                                    : "Không tìm thấy shop nào phù hợp với bộ lọc.")
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var shop in Model.Items)
+                    {
+                        <tr>
+                            <td class="ps-3">
+                                <a class="fw-semibold text-dark text-decoration-none"
+                                   asp-action="Details" asp-route-id="@shop.MaCuaHang">@shop.TenShop</a>
+                                <div class="small">
+                                    @if (shop.TrangThaiShop == "LOCKED")
+                                    {
+                                        <span class="badge bg-danger">Đã khóa</span>
+                                        @if (!string.IsNullOrWhiteSpace(shop.LyDoKhoa))
+                                        {
+                                            <span class="text-muted">@shop.LyDoKhoa</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Hoạt động</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">@shop.TenChuShop</div>
+                                <div class="small text-muted"><i class="bi bi-envelope"></i> @shop.EmailChuShop</div>
+                                @if (!string.IsNullOrWhiteSpace(shop.SoDienThoai))
+                                {
+                                    <div class="small text-muted"><i class="bi bi-telephone"></i> @shop.SoDienThoai</div>
+                                }
+                            </td>
+                            <td class="small text-secondary">@shop.KhuVuc</td>
+                            <td class="text-center">
+                                @if (shop.DiemTrungBinh < 3.0m)
+                                {
+                                    <span class="badge bg-danger rounded-pill px-3 py-2">
+                                        @shop.DiemTrungBinh.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) <i class="bi bi-star-fill"></i>
+                                    </span>
+                                    <div class="small text-muted mt-1">@shop.SoDanhGia đánh giá</div>
+                                }
+                                else if (shop.DiemTrungBinh < 4.0m)
+                                {
+                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                        @shop.DiemTrungBinh.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) <i class="bi bi-star-fill"></i>
+                                    </span>
+                                    <div class="small text-muted mt-1">@shop.SoDanhGia đánh giá</div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success rounded-pill px-3 py-2">
+                                        @shop.DiemTrungBinh.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) <i class="bi bi-star-fill"></i>
+                                    </span>
+                                    <div class="small text-muted mt-1">@shop.SoDanhGia đánh giá</div>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-semibold text-dark">@shop.SoDonThanhCong</span>
+                                <div class="small text-muted">đơn COMPLETED</div>
+                            </td>
+                            <td class="text-center">
+                                @if (shop.SoBaoCao > 0)
+                                {
+                                    <span class="badge bg-danger rounded-pill px-3 py-2" title="Báo cáo shop và sản phẩm của shop">
+                                        @shop.SoBaoCao
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">0</span>
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                    <a class="btn btn-sm btn-outline-primary rounded-pill"
+                                       asp-action="Details" asp-route-id="@shop.MaCuaHang" title="Xem rà soát & đánh giá">
+                                        <i class="bi bi-search"></i> Xem rà soát
+                                    </a>
+                                    <a class="btn btn-sm btn-outline-secondary rounded-pill"
+                                       asp-area="Admin" asp-controller="Orders" asp-action="Index"
+                                       asp-route-shopId="@shop.MaCuaHang" title="Lịch sử đơn hàng của shop">
+                                        <i class="bi bi-receipt"></i> Lịch sử đơn
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-warning rounded-pill"
+                                            data-bs-toggle="modal" data-bs-target="#modalCanhBao"
+                                            data-shop-id="@shop.MaCuaHang" data-shop-name="@shop.TenShop"
+                                            data-tab="@tab" title="Gửi cảnh cáo cho chủ shop">
+                                        <i class="bi bi-megaphone"></i> Cảnh cáo
+                                    </button>
+                                    @if (shop.TrangThaiShop == "LOCKED")
+                                    {
+                                        <form asp-action="UnlockShop" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="maCuaHang" value="@shop.MaCuaHang" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <button class="btn btn-sm btn-outline-success rounded-pill" title="Mở khóa shop">
+                                                <i class="bi bi-unlock"></i> Mở khóa
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill"
+                                                data-bs-toggle="modal" data-bs-target="#modalKhoaShop"
+                                                data-shop-id="@shop.MaCuaHang" data-shop-name="@shop.TenShop"
+                                                title="Khóa shop">
+                                            <i class="bi bi-lock"></i> Khóa shop
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                <span class="text-muted small">
+                    Trang @Model.CurrentPage / @Model.TotalPages — @Model.TotalItems shop
+                </span>
+                <nav aria-label="Phân trang shop rà soát">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-tab="@tab"
+                               asp-route-search="@filter.Search" asp-route-pageSize="@pageSize"
+                               asp-route-page="@(Model.CurrentPage - 1)">&laquo; Trước</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">@Model.CurrentPage</span>
+                        </li>
+                        <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-tab="@tab"
+                               asp-route-search="@filter.Search" asp-route-pageSize="@pageSize"
+                               asp-route-page="@(Model.CurrentPage + 1)">Sau &raquo;</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>
+
+@* Modal dùng chung: khóa shop *@
+<div class="modal fade" id="modalKhoaShop" tabindex="-1" aria-labelledby="modalKhoaShopLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="LockShop" method="post" class="modal-content border-0 rounded-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="maCuaHang" value="" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-danger" id="modalKhoaShopLabel">
+                    <i class="bi bi-lock"></i> Khóa cửa hàng
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Bạn đang khóa cửa hàng <strong data-vai-tro="ten-shop"></strong>.</p>
+                <label class="form-label fw-semibold small">Lý do khóa <span class="text-danger">*</span></label>
+                <textarea name="reason" class="form-control" rows="3" maxlength="500" required
+                          placeholder="Ví dụ: Nhiều đánh giá phản ánh hàng không đúng mô tả, shop không phản hồi..."></textarea>
+                <div class="form-text">Tối đa 500 ký tự. Lý do được lưu vào nhật ký hệ thống.</div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-danger rounded-pill px-3">
+                    <i class="bi bi-lock"></i> Xác nhận khóa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* Modal dùng chung: gửi cảnh cáo *@
+<div class="modal fade" id="modalCanhBao" tabindex="-1" aria-labelledby="modalCanhBaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="Warn" method="post" class="modal-content border-0 rounded-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="maCuaHang" value="" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-warning" id="modalCanhBaoLabel">
+                    <i class="bi bi-megaphone"></i> Gửi cảnh cáo chất lượng dịch vụ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Gửi thông báo hệ thống tới chủ shop <strong data-vai-tro="ten-shop"></strong>.</p>
+                <label class="form-label fw-semibold small">Nội dung cảnh cáo <span class="text-danger">*</span></label>
+                <textarea name="reason" class="form-control" rows="4" maxlength="1000" required
+                          placeholder="Ví dụ: Shop có 5 đánh giá 1-2 sao phản ánh hàng không đúng mô tả. Đề nghị cải thiện chất lượng và phản hồi khách hàng."></textarea>
+                <div class="form-text">Tối đa 1 000 ký tự. Chủ shop sẽ nhận được thông báo ngay.</div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-warning rounded-pill px-3">
+                    <i class="bi bi-send"></i> Gửi cảnh cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            function ganDuLieu(modalId) {
+                var modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.addEventListener('show.bs.modal', function (event) {
+                    var nut = event.relatedTarget;
+                    if (!nut) return;
+                    modal.querySelector('input[name="maCuaHang"]').value = nut.getAttribute('data-shop-id') || '';
+                    var ten = modal.querySelector('[data-vai-tro="ten-shop"]');
+                    if (ten) ten.textContent = nut.getAttribute('data-shop-name') || '';
+                });
+            }
+            ganDuLieu('modalKhoaShop');
+            ganDuLieu('modalCanhBao');
+        })();
+    </script>
+}
