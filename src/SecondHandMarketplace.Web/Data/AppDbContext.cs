@@ -40,6 +40,8 @@ public class AppDbContext : DbContext
     public DbSet<TinNhan> TinNhans => Set<TinNhan>();
     public DbSet<TinhThanh> TinhThanhs => Set<TinhThanh>();
     public DbSet<PhuongXa> PhuongXas => Set<PhuongXa>();
+    /// <summary>View tổng hợp điểm shop — chỉ đọc (xem database/11_danhgia.sql).</summary>
+    public DbSet<DiemCuaHangView> DiemCuaHangViews => Set<DiemCuaHangView>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -412,6 +414,17 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.MaCuaHang)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // View tổng hợp điểm shop — đọc từ database/11_danhgia.sql (MaCuaHang là khóa duy nhất).
+        modelBuilder.Entity<DiemCuaHangView>(e =>
+        {
+            e.HasKey(x => x.MaCuaHang);
+            e.ToView("vw_DiemCuaHang");
+            e.Property(x => x.MaCuaHang).HasColumnName("MaCuaHang");
+            e.Property(x => x.DiemTrungBinh).HasColumnType("decimal(3,2)").HasColumnName("DiemTrungBinh");
+            e.Property(x => x.SoDanhGia).HasColumnName("SoDanhGia");
+            e.Property(x => x.SoDonThanhCong).HasColumnName("SoDonThanhCong");
         });
     }
 }

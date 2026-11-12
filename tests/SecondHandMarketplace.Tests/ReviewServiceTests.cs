@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
+using SecondHandMarketplace.Web.Models.ViewModels.Reviews;
 using SecondHandMarketplace.Web.Services.Reviews;
 using Xunit;
 
@@ -401,5 +402,108 @@ public class ReviewServiceTests
         var dg = await svc.LayDanhGiaTheoDonHangAsync(1);
 
         Assert.Null(dg);
+    }
+
+    // =========================================================
+    // LayDanhSachShopCanRaSoatAsync — rà soát shop điểm thấp (C4/C8)
+    // =========================================================
+
+    private static void SeedDataRaSoatShop(AppDbContext db)
+    {
+        var chu1 = new NguoiDung { MaNguoiDung = 10, HoTen = "Chủ Shop Một", Email = "chu1@test.local", MatKhauBam = "x" };
+        var chu2 = new NguoiDung { MaNguoiDung = 20, HoTen = "Chủ Shop Hai", Email = "chu2@test.local", MatKhauBam = "x" };
+        var chu3 = new NguoiDung { MaNguoiDung = 30, HoTen = "Chủ Shop Ba", Email = "chu3@test.local", MatKhauBam = "x" };
+
+        var shop1 = new CuaHang { MaCuaHang = 100, MaNguoiDung = 10, TenShop = "Shop Điểm Thấp", SoDienThoaiLienHe = "0901", TrangThai = "ACTIVE" };
+        var shop2 = new CuaHang { MaCuaHang = 200, MaNguoiDung = 20, TenShop = "Shop Điểm Cao", SoDienThoaiLienHe = "0902", TrangThai = "ACTIVE" };
+        var shop3 = new CuaHang { MaCuaHang = 300, MaNguoiDung = 30, TenShop = "Shop Chưa Đủ Đánh Giá", SoDienThoaiLienHe = "0903", TrangThai = "ACTIVE" };
+
+        // View tổng hợp:
+        // Shop 1: 2.40 sao, 5 đánh giá => THỎA MÃN (< 3.0 và >= 5)
+        // Shop 2: 4.80 sao, 5 đánh giá => Không thỏa mãn
+        // Shop 3: 2.00 sao, 4 đánh giá => Không thỏa mãn (chưa đủ 5)
+        var view1 = new DiemCuaHangView { MaCuaHang = 100, DiemTrungBinh = 2.40m, SoDanhGia = 5, SoDonThanhCong = 5 };
+        var view2 = new DiemCuaHangView { MaCuaHang = 200, DiemTrungBinh = 4.80m, SoDanhGia = 5, SoDonThanhCong = 5 };
+        var view3 = new DiemCuaHangView { MaCuaHang = 300, DiemTrungBinh = 2.00m, SoDanhGia = 4, SoDonThanhCong = 4 };
+
+        db.NguoiDungs.AddRange(chu1, chu2, chu3);
+        db.CuaHangs.AddRange(shop1, shop2, shop3);
+        db.DiemCuaHangViews.AddRange(view1, view2, view3);
+        db.SaveChanges();
+    }
+
+    [Fact]
+    public async Task LayDanhSachShopCanRaSoat_TabCanRaSoat_LocDungShopDuoi3SaoVaTu5DanhGia()
+    {
+        using var db = GetDb("c8_ra_soat_tab_mac_dinh");
+        SeedDataRaSoatShop(db);
+        var svc = new ReviewService(db);
+
+        var result = await svc.LayDanhSachShopCanRaSoatAsync(new ShopCanRaSoatFilterVm { Tab = "can_ra_soat" });
+
+        Assert.Equal(1, result.TotalItems);
+        Assert.Single(result.Items);
+        var item = result.Items[0];
+        Assert.Equal(100, item.MaCuaHang);
+        Assert.Equal("Shop Điểm Thấp", item.TenShop);
+        Assert.Equal(2.40m, item.DiemTrungBinh);
+        Assert.Equal(5, item.SoDanhGia);
+        Assert.True(item.LaShopCanRaSoat);
+        Assert.Equal(1, result.TongShopCanRaSoat);
+    }
+
+    [Fact]
+    public async Task LayDanhSachShopCanRaSoat_TabAll_TraVeMoiShopCoDanhGia()
+    {
+        using var db = GetDb("c8_ra_soat_tab_all");
+        SeedDataRaSoatShop(db);
+        var svc = new ReviewService(db);
+
+        var result = await svc.LayDanhSachShopCanRaSoatAsync(new ShopCanRaSoatFilterVm { Tab = "all" });
+
+        Assert.Equal(3, result.TotalItems);
+        Assert.Equal(3, result.Items.Count);
+        // Sắp xếp DiemTrungBinh tăng dần: shop 3 (2.00) -> shop 1 (2.40) -> shop 2 (4.80)
+        Assert.Equal(300, result.Items[0].MaCuaHang);
+        Assert.Equal(100, result.Items[1].MaCuaHang);
+        Assert.Equal(200, result.Items[2].MaCuaHang);
+    }
+
+    [Fact]
+    public async Task LayDanhSachShopCanRaSoat_TimKiemTuKhoa_LocDungTheoTenShop()
+    {
+        using var db = GetDb("c8_ra_soat_tim_kiem");
+        SeedDataRaSoatShop(db);
+        var svc = new ReviewService(db);
+
+        var result = await svc.LayDanhSachShopCanRaSoatAsync(new ShopCanRaSoatFilterVm 
+        { 
+            Tab = "all",
+            Search = "Điểm Cao" 
+        });
+
+        Assert.Equal(1, result.TotalItems);
+        Assert.Equal(200, result.Items[0].MaCuaHang);
+        Assert.Equal("Shop Điểm Cao", result.Items[0].TenShop);
+    }
+
+    [Fact]
+    public async Task LayDanhSachShopCanRaSoat_BadgeTongShop_DocLapVoiBoLocTimKiem()
+    {
+        using var db = GetDb("c8_ra_soat_badge_doc_lap");
+        SeedDataRaSoatShop(db);
+        var svc = new ReviewService(db);
+
+        // Tìm từ khóa không khớp shop nào trong tab can_ra_soat
+        var result = await svc.LayDanhSachShopCanRaSoatAsync(new ShopCanRaSoatFilterVm 
+        { 
+            Tab = "can_ra_soat",
+            Search = "KhongTonTai" 
+        });
+
+        Assert.Equal(0, result.TotalItems);
+        Assert.Empty(result.Items);
+        // Nhưng Badge TongShopCanRaSoat vẫn là 1 (tổng toàn hệ thống)
+        Assert.Equal(1, result.TongShopCanRaSoat);
     }
 }

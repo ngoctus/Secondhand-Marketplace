@@ -5,6 +5,7 @@ using SecondHandMarketplace.Web.Common.Constants;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Models.DTOs.Products;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Moderation;
 using SecondHandMarketplace.Web.Services.Products;
 
 namespace SecondHandMarketplace.Web.Controllers.Api.v1;
@@ -15,7 +16,10 @@ namespace SecondHandMarketplace.Web.Controllers.Api.v1;
 [ApiController]
 [Route("api/v1/products")]
 [Produces("application/json")]
-public class ProductsController(IProductService productService) : ControllerBase
+public class ProductsController(
+    IProductService productService,
+    IModerationService moderationService,
+    ILogger<ProductsController> logger) : ControllerBase
 {
     /// <summary>
     /// Tìm kiếm và lọc danh sách sản phẩm công khai có phân trang.
@@ -220,6 +224,17 @@ public class ProductsController(IProductService productService) : ControllerBase
         if (!success)
         {
             return ServiceResult.Fail(ErrorCodes.ModerationRuleViolation, error ?? "Không thể gửi duyệt sản phẩm.").ToActionResult(this);
+        }
+
+        // C2: quét từ khóa ngay sau khi sp_GuiDuyetSanPham thành công (lượt + PhanTichAI QUEUED đã được tạo).
+        // Lỗi quét bất ngờ không được làm hỏng kết quả gửi duyệt: sản phẩm đã ở PENDING_REVIEW và Admin có thể quét lại.
+        try
+        {
+            await moderationService.PhanTichSanPhamAsync(id, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Phân tích từ khóa lỗi sau khi gửi duyệt sản phẩm {ProductId}.", id);
         }
 
         return ServiceResult.Ok("Sản phẩm đã được gửi duyệt thành công.").ToActionResult(this);

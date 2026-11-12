@@ -107,3 +107,90 @@ public sealed class DanhSachDanhGiaCuaToiVm
     public int TotalItems { get; init; }
     public int TotalPages => (int)Math.Ceiling(TotalItems / (double)Math.Max(1, PageSize));
 }
+
+// ============================================================
+// C4 – Admin rà soát shop bị đánh giá thấp
+// ============================================================
+
+/// <summary>
+/// Một shop trong danh sách rà soát của Admin.
+/// Điểm và số đơn lấy từ vw_DiemCuaHang (chỉ tính đánh giá VISIBLE), nên ẩn một đánh giá
+/// sẽ làm thay đổi trực tiếp các chỉ số này ở lần tải kế tiếp.
+/// </summary>
+public sealed class ShopCanRaSoatItemVm
+{
+    public int MaCuaHang { get; init; }
+    public string TenShop { get; init; } = string.Empty;
+    /// <summary>ACTIVE hoặc LOCKED.</summary>
+    public string TrangThaiShop { get; init; } = "ACTIVE";
+    /// <summary>Lý do khóa gần nhất (chỉ có khi TrangThaiShop = LOCKED).</summary>
+    public string? LyDoKhoa { get; init; }
+
+    public int ChuShopId { get; init; }
+    public string TenChuShop { get; init; } = string.Empty;
+    public string EmailChuShop { get; init; } = string.Empty;
+    public string? SoDienThoai { get; init; }
+    /// <summary>Phường/Xã, Tỉnh/Thành; "Chưa cập nhật" nếu shop chưa khai địa chỉ.</summary>
+    public string KhuVuc { get; init; } = string.Empty;
+
+    public decimal DiemTrungBinh { get; init; }
+    public int SoDanhGia { get; init; }
+    public int SoDonThanhCong { get; init; }
+    /// <summary>Số báo cáo vi phạm vào shop và các sản phẩm của shop.</summary>
+    public int SoBaoCao { get; init; }
+    /// <summary>Tiêu chí rà soát: điểm dưới 3.0 và có ít nhất 5 đánh giá VISIBLE.</summary>
+    public bool LaShopCanRaSoat { get; init; }
+}
+
+/// <summary>Bộ lọc trạng thái/tìm kiếm cho trang rà soát shop.</summary>
+public sealed class ShopCanRaSoatFilterVm
+{
+    /// <summary>Từ khóa tìm theo tên shop, tên chủ shop hoặc email.</summary>
+    public string? Search { get; set; }
+
+    /// <summary>"can_ra_soat" (mặc định, điểm &lt; 3.0 và &gt;= 5 đánh giá) hoặc "all".</summary>
+    public string? Tab { get; set; }
+
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+
+    /// <summary>Chuẩn hóa tab về đúng hai giá trị hợp lệ.</summary>
+    public string TabChuanHoa => string.Equals(Tab, "all", StringComparison.OrdinalIgnoreCase)
+        ? "all"
+        : "can_ra_soat";
+}
+
+/// <summary>Kết quả trang danh sách shop cần rà soát (có phân trang và bộ lọc).</summary>
+public sealed class DanhSachShopCanRaSoatVm
+{
+    public IReadOnlyList<ShopCanRaSoatItemVm> Items { get; init; } = Array.Empty<ShopCanRaSoatItemVm>();
+    public int CurrentPage { get; init; }
+    public int PageSize { get; init; }
+    public int TotalItems { get; init; }
+    public int TotalPages => (int)Math.Ceiling(TotalItems / (double)Math.Max(1, PageSize));
+
+    /// <summary>Tổng số shop thỏa tiêu chí điểm thấp trên toàn hệ thống (độc lập với tab/tìm kiếm).</summary>
+    public int TongShopCanRaSoat { get; init; }
+
+    /// <summary>Giữ lại bộ lọc để view dựng lại tab, ô tìm kiếm và liên kết phân trang.</summary>
+    public ShopCanRaSoatFilterVm Filter { get; init; } = new();
+}
+
+/// <summary>Một đơn gần đây của shop, hiển thị kèm trang chi tiết rà soát.</summary>
+public sealed class DonHangGanDayVm
+{
+    public int MaDonHang { get; init; }
+    public string MaDon { get; init; } = string.Empty;
+    public string TenNguoiNhan { get; init; } = string.Empty;
+    public decimal TongTien { get; init; }
+    public string TrangThai { get; init; } = string.Empty;
+    public DateTime NgayTao { get; init; }
+}
+
+/// <summary>Dữ liệu trang chi tiết rà soát: hồ sơ shop + đánh giá (kể cả HIDDEN) + đơn gần đây.</summary>
+public sealed class ChiTietShopRaSoatVm
+{
+    public ShopCanRaSoatItemVm Shop { get; init; } = new();
+    public DanhSachDanhGiaTheoShopVm DanhGias { get; init; } = new();
+    public IReadOnlyList<DonHangGanDayVm> DonHangsGanDay { get; init; } = Array.Empty<DonHangGanDayVm>();
+}

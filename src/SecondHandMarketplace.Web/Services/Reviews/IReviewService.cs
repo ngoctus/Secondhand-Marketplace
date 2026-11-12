@@ -92,4 +92,14 @@ public interface IReviewService
     Task<DanhGiaItemVm?> LayDanhGiaTheoDonHangAsync(
         int maDonHang,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// C4: Danh sách shop cho Admin rà soát, đọc điểm từ vw_DiemCuaHang.
+    /// Tab "can_ra_soat" (mặc định) chỉ lấy shop có DiemTrungBinh &lt; 3.0 và SoDanhGia &gt;= 5;
+    /// tab "all" lấy mọi shop đã có ít nhất một đánh giá VISIBLE.
+    /// Kèm số báo cáo vi phạm vào shop và vào sản phẩm của shop.
+    /// </summary>
+    Task<DanhSachShopCanRaSoatVm> LayDanhSachShopCanRaSoatAsync(
+        ShopCanRaSoatFilterVm filter,
+        CancellationToken cancellationToken = default);
 }

@@ -7,7 +7,7 @@
     <div class="card shadow-sm border-0 rounded-3 p-4">
         <h2 style="font-family:'Playfair Display',serif; font-size:22px;" class="mb-3">Sửa sản phẩm</h2>
 
-        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+        <form asp-area="User" asp-controller="Products" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
             <partial name="_ProductForm" model="Model" />
         </form>
 
