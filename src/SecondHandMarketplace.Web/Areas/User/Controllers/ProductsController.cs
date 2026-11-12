@@ -19,13 +19,15 @@ public class ProductsController : UserBaseController
     private readonly ICategoryService _categories;
     private readonly IModerationService _moderation;
     private readonly IWebHostEnvironment _env;
+    private readonly ILogger<ProductsController> _logger;
 
-    public ProductsController(IProductService products, ICategoryService categories, IModerationService moderation, IWebHostEnvironment env)
+    public ProductsController(IProductService products, ICategoryService categories, IModerationService moderation, IWebHostEnvironment env, ILogger<ProductsController> logger)
     {
         _products = products;
         _categories = categories;
         _moderation = moderation;
         _env = env;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -184,7 +186,15 @@ public class ProductsController : UserBaseController
         }
 
         // C2: gọi ngay sau khi sp_GuiDuyetSanPham thành công; lỗi quét đã được service chuyển thành FAILED, không ném.
-        await _moderation.PhanTichSanPhamAsync(maSanPham);
+        // Vẫn bọc thêm để lỗi hạ tầng (transaction/DB) không làm gián đoạn trải nghiệm người bán.
+        try
+        {
+            await _moderation.PhanTichSanPhamAsync(maSanPham);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Phân tích từ khóa lỗi sau khi gửi duyệt sản phẩm {ProductId}.", maSanPham);
+        }
 
         this.ThongBaoThanhCong("Đã gửi sản phẩm đi kiểm duyệt. Admin sẽ duyệt trong thời gian tới.");
         return RedirectToAction(nameof(Index));

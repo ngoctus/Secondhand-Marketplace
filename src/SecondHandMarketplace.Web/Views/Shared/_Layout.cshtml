@@ -137,13 +137,13 @@
                         </div>
                     </div>
 
-                    <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn-rm-primary">Đăng bán</a>
+                    <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
                 }
                 else
                 {
                     <a asp-area="" asp-controller="Account" asp-action="Login" class="btn-rm-outline">Đăng nhập</a>
                     <a asp-area="" asp-controller="Account" asp-action="Register" class="btn-rm-outline">Đăng ký</a>
-                    <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products" class="btn-rm-primary">Đăng bán</a>
+                    <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-rm-primary">Đăng bán</a>
                 }
             </div>
         </div>

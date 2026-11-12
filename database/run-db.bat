@@ -43,6 +43,7 @@ for %%F in (
     16_luot_kiem_duyet_tu_choi_he_thong.sql
     17_bo_chan_tu_cam_khi_gui_duyet.sql
     18_ghi_vi_pham_low_khi_tu_choi.sql
+    19_chat.sql
     20_cauhinh_ai.sql
     21_dia_chi_khu_vuc.sql
     22_hinh_thuc_nhan.sql
@@ -72,15 +73,6 @@ for %%F in (30_seed_dia_chi_shop.sql 31_seed_san_pham.sql 32_seed_don_hang.sql 3
         sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "%%F"
         if errorlevel 1 (
             echo ERROR: %%F failed.
-            exit /b 1
-        )
-    )
-    if exist "33_seed_danh_gia.sql" (
-        echo Running 33_seed_danh_gia.sql...
-        sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "33_seed_danh_gia.sql"
-        if errorlevel 1 (
-            echo ERROR: 33_seed_danh_gia.sql failed.
-            pause
             exit /b 1
         )
     )
