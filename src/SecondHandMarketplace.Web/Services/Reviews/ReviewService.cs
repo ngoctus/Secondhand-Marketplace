@@ -370,9 +370,6 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
         CancellationToken cancellationToken = default)
     {
         filter   ??= new ShopCanRaSoatFilterVm();
-        if (!db.Database.IsRelational())
-            return await LayDanhSachShopCanRaSoatInMemoryAsync(filter, cancellationToken);
-
         var tab  = filter.TabChuanHoa;
         var page = Math.Max(1, filter.Page);
         var pageSize = Math.Clamp(filter.PageSize <= 0 ? 10 : filter.PageSize, 1, 50);
@@ -449,98 +446,6 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
             TotalItems        = totalItems,
             TongShopCanRaSoat = tongShopCanRaSoat,
             Filter            = filter
-        };
-    }
-
-    /// <summary>Fallback cho môi trường EF Core InMemory (chỉ dùng trong xUnit test).</summary>
-    private async Task<DanhSachShopCanRaSoatVm> LayDanhSachShopCanRaSoatInMemoryAsync(
-        ShopCanRaSoatFilterVm filter,
-        CancellationToken cancellationToken)
-    {
-        var tab = filter.TabChuanHoa;
-        var page = Math.Max(1, filter.Page);
-        var pageSize = Math.Clamp(filter.PageSize <= 0 ? 10 : filter.PageSize, 1, 50);
-
-        var shops = await db.CuaHangs.AsNoTracking()
-            .Include(c => c.NguoiDung)
-            .Include(c => c.TinhThanh)
-            .Include(c => c.PhuongXa)
-            .ToListAsync(cancellationToken);
-
-        var shopIds = shops.Select(s => s.MaCuaHang).ToList();
-        var diemDict = await LayDiemNhieuShopAsync(shopIds, cancellationToken);
-
-        var list = new List<ShopCanRaSoatItemVm>();
-        foreach (var s in shops)
-        {
-            diemDict.TryGetValue(s.MaCuaHang, out var d);
-            var diemTb = d?.DiemTrungBinh ?? 0m;
-            var soDg = d?.SoDanhGia ?? 0;
-            var soDon = d?.SoDonThanhCong ?? 0;
-            var laCanRaSoat = diemTb < 3.0m && soDg >= 5;
-
-            if (tab == "can_ra_soat" && !laCanRaSoat) continue;
-            if (tab == "all" && soDg == 0) continue;
-
-            if (!string.IsNullOrWhiteSpace(filter.Search))
-            {
-                var kw = filter.Search.Trim();
-                if (!s.TenShop.Contains(kw, StringComparison.OrdinalIgnoreCase) &&
-                    !s.NguoiDung.HoTen.Contains(kw, StringComparison.OrdinalIgnoreCase) &&
-                    !s.NguoiDung.Email.Contains(kw, StringComparison.OrdinalIgnoreCase))
-                    continue;
-            }
-
-            var soBaoCao = await db.BaoCaos.CountAsync(b =>
-                (b.LoaiDoiTuong == "SHOP" && b.MaDoiTuong == s.MaCuaHang) ||
-                (b.LoaiDoiTuong == "PRODUCT" &&
-                 db.SanPhams.Any(sp => sp.MaSanPham == b.MaDoiTuong && sp.MaCuaHang == s.MaCuaHang)),
-                cancellationToken);
-
-            list.Add(new ShopCanRaSoatItemVm
-            {
-                MaCuaHang = s.MaCuaHang,
-                TenShop = s.TenShop,
-                TrangThaiShop = s.TrangThai,
-                LyDoKhoa = s.LyDoKhoa,
-                ChuShopId = s.NguoiDung.MaNguoiDung,
-                TenChuShop = s.NguoiDung.HoTen,
-                EmailChuShop = s.NguoiDung.Email,
-                SoDienThoai = s.SoDienThoaiLienHe,
-                KhuVuc = s.PhuongXa != null && s.TinhThanh != null
-                    ? s.PhuongXa.TenPhuongXa + ", " + s.TinhThanh.TenTinhThanh
-                    : (s.KhuVucHienThi ?? "Chưa cập nhật"),
-                DiemTrungBinh = diemTb,
-                SoDanhGia = soDg,
-                SoDonThanhCong = soDon,
-                SoBaoCao = soBaoCao,
-                LaShopCanRaSoat = laCanRaSoat
-            });
-        }
-
-        var totalItems = list.Count;
-        var pagedItems = list
-            .OrderBy(x => x.DiemTrungBinh)
-            .ThenByDescending(x => x.SoDanhGia)
-            .ThenBy(x => x.MaCuaHang)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-
-        var tongShopCanRaSoat = shops.Count(s =>
-        {
-            diemDict.TryGetValue(s.MaCuaHang, out var d);
-            return (d?.DiemTrungBinh ?? 0m) < 3.0m && (d?.SoDanhGia ?? 0) >= 5;
-        });
-
-        return new DanhSachShopCanRaSoatVm
-        {
-            Items = pagedItems,
-            CurrentPage = page,
-            PageSize = pageSize,
-            TotalItems = totalItems,
-            TongShopCanRaSoat = tongShopCanRaSoat,
-            Filter = filter
         };
     }
 

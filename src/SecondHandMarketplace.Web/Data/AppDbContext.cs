@@ -416,10 +416,10 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // View tổng hợp điểm shop — keyless, chỉ dùng để đọc (database/11_danhgia.sql).
+        // View tổng hợp điểm shop — đọc từ database/11_danhgia.sql (MaCuaHang là khóa duy nhất).
         modelBuilder.Entity<DiemCuaHangView>(e =>
         {
-            e.HasNoKey();
+            e.HasKey(x => x.MaCuaHang);
             e.ToView("vw_DiemCuaHang");
             e.Property(x => x.MaCuaHang).HasColumnName("MaCuaHang");
             e.Property(x => x.DiemTrungBinh).HasColumnType("decimal(3,2)").HasColumnName("DiemTrungBinh");
