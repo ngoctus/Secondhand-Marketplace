@@ -4,7 +4,7 @@
 }
 
 <article class="rm-product-card" data-product-id="@Model.Id">
-    <div class="rm-card-media">
+    <div class="rm-card-media" data-rm-media>
         <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@Model.Id" class="rm-card-image-link" tabindex="-1">
             @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
             {
