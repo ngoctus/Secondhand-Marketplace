@@ -1,9 +1,9 @@
 @model ProfileVm
 @{ ViewData["Title"] = "Hồ sơ cá nhân"; }
-<div class="container py-4" style="max-width:760px">
+<div class="container py-4 rm-account-page" style="max-width:760px">
     <h2>Hồ sơ cá nhân</h2>
     <p class="text-muted">Cập nhật thông tin tài khoản của bạn.</p>
-    <form asp-action="Profile" method="post" class="card card-body gap-3">
+    <form asp-action="Profile" method="post" class="card card-body gap-3 rm-account-form">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div><label asp-for="HoTen" class="form-label"></label><input asp-for="HoTen" class="form-control"/><span asp-validation-for="HoTen" class="text-danger"></span></div>
         <div><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" readonly/><small class="text-muted">Email không thể thay đổi.</small></div>

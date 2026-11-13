@@ -166,12 +166,10 @@
             </form>
 
             <div class="rm-mobile-heading">Danh mục</div>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Thời trang">Thời trang</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Điện tử">Điện tử</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Đồ gia dụng">Đồ gia dụng</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Sách">Sách</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Phụ kiện">Phụ kiện</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Nội thất">Nội thất</a>
+            @foreach (var c in menuDanhMuc.Take(6))
+            {
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc">@c.Ten</a>
+            }
 
             <div class="rm-dropdown-divider"></div>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
