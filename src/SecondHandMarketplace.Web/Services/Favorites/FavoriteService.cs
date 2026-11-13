@@ -3,14 +3,21 @@ using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Products;
+using SecondHandMarketplace.Web.Services.Reviews;
 
 namespace SecondHandMarketplace.Web.Services.Favorites;
 
 public class FavoriteService : IFavoriteService
 {
     private readonly AppDbContext _db;
+    private readonly IReviewService _danhGia;
 
-    public FavoriteService(AppDbContext db) => _db = db;
+    public FavoriteService(AppDbContext db, IReviewService danhGia)
+    {
+        _db = db;
+        _danhGia = danhGia;
+    }
 
     public async Task<(bool ThanhCong, bool LaYeuThich)> ToggleAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
     {
@@ -56,21 +63,26 @@ public class FavoriteService : IFavoriteService
                         && f.SanPham.CuaHang.NguoiDung.TrangThai == "ACTIVE");
 
         var total = await query.CountAsync(cancellationToken);
-        var items = await query
+        var duLieuTho = await query
             .OrderByDescending(f => f.NgayTao)
             .Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(f => new ProductCardVm
-            {
-                Id = f.SanPham.MaSanPham,
-                Name = f.SanPham.Ten,
-                Price = f.SanPham.Gia ?? 0m,
-                ImageUrl = f.SanPham.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault()
+            .Select(f => new ProductCardSource(
+                f.SanPham.MaSanPham,
+                f.SanPham.Ten,
+                f.SanPham.Gia,
+                f.SanPham.MoTa,
+                f.SanPham.TrangThai,
+                f.SanPham.MaCuaHang,
+                f.SanPham.CuaHang.TenShop,
+                f.SanPham.CuaHang.Logo,
+                f.SanPham.CuaHang.KhuVucHienThi,
+                f.SanPham.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault()
                              ?? f.SanPham.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).FirstOrDefault(),
-                ShopName = f.SanPham.CuaHang.TenShop,
-                ConditionName = f.SanPham.TinhTrang != null ? f.SanPham.TinhTrang.Ten : null,
-                CategoryName = f.SanPham.DanhMuc != null ? f.SanPham.DanhMuc.Ten : null
-            })
+                f.SanPham.TinhTrang != null ? f.SanPham.TinhTrang.Ten : null,
+                f.SanPham.DanhMuc != null ? f.SanPham.DanhMuc.Ten : null))
             .ToListAsync(cancellationToken);
+
+        var items = await ProductCardMapper.TaoDanhSachAsync(duLieuTho, _danhGia, cancellationToken);
 
         return new PagedResult<ProductCardVm> { Items = items, Page = page, PageSize = pageSize, TotalItems = total };
     }

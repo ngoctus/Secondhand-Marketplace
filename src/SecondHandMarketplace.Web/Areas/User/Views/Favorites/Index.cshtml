@@ -11,8 +11,18 @@
 
     @if (Model.Items.Count == 0)
     {
-        <div class="card text-center p-5 shadow-sm border-0 rounded-3">
-            <p class="text-muted mb-0">Bạn chưa yêu thích sản phẩm nào. Nhấn nút tim trên mỗi sản phẩm để lưu lại đây.</p>
+        <div class="rm-empty-state">
+            <h3>Bạn chưa lưu sản phẩm nào</h3>
+            <p>Nút tim ở góc ảnh mỗi tin đăng sẽ lưu sản phẩm vào đây để bạn so sánh dần.</p>
+            <ol>
+                <li>Mở "Tất cả sản phẩm", lọc theo danh mục, khoảng giá hoặc khu vực.</li>
+                <li>Bấm nút tim trên tin bạn quan tâm để thêm vào danh sách này.</li>
+                <li>Quay lại đây so sánh giá và tình trạng, rồi mở tin để chat với người bán.</li>
+            </ol>
+            <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap">
+                <a asp-area="" asp-controller="Products" asp-action="Index" class="btn-rm-primary">Tìm sản phẩm</a>
+                <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-outline">Đăng bán món của bạn</a>
+            </div>
         </div>
     }
     else

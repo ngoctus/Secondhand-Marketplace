@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using SecondHandMarketplace.Web.Models.ViewModels;
+using SecondHandMarketplace.Web.Models.ViewModels.Areas;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Areas;
+using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Products;
 
 namespace SecondHandMarketplace.Web.Controllers;
@@ -9,49 +12,58 @@ namespace SecondHandMarketplace.Web.Controllers;
 public class ProductsController : Controller
 {
     private readonly IProductService _products;
+    private readonly ICategoryService _categories;
+    private readonly IKhuVucService _khuVuc;
 
-    public ProductsController(IProductService products) => _products = products;
-
-    public async Task<IActionResult> Index([FromQuery] ProductSearchVm filter)
+    public ProductsController(IProductService products, ICategoryService categories, IKhuVucService khuVuc)
     {
-        try
+        _products = products;
+        _categories = categories;
+        _khuVuc = khuVuc;
+    }
+
+    public async Task<IActionResult> Index([FromQuery] ProductSearchVm filter, CancellationToken cancellationToken)
+    {
+        var ketQua = await _products.SearchAsync(filter);
+
+        var danhSachTinh = await _khuVuc.GetTinhThanhAsync(cancellationToken);
+        var danhSachXa = new List<PhuongXaItem>();
+        if (filter.MaTinhThanh is int maTinh)
+            danhSachXa = (await _khuVuc.GetPhuongXaTheoTinhAsync(maTinh, cancellationToken)).ToList();
+
+        var tenTinh = danhSachTinh.FirstOrDefault(t => t.Ma == filter.MaTinhThanh)?.Ten;
+        var tenXa = danhSachXa.FirstOrDefault(x => x.Ma == filter.MaPhuongXa)?.Ten;
+
+        return View(new ProductSearchResultVm
         {
-            var result = await _products.SearchAsync(filter);
-            return View(result);
-        }
-        catch
-        {
-            // Dự phòng nếu kết nối DB bị lỗi thì trang vẫn load tức thì không bị treo
-            return View(new PagedResult<ProductCardVm> { Items = Array.Empty<ProductCardVm>(), Page = 1, PageSize = 12 });
-        }
+            Filter = filter,
+            Result = ketQua,
+            DanhSachDanhMuc = await _categories.GetCategoriesAsync(cancellationToken),
+            DanhSachTinhTrang = await _categories.GetConditionsAsync(cancellationToken),
+            KhuVuc = new ChonKhuVucVm
+            {
+                MaTinh = filter.MaTinhThanh,
+                MaXa = filter.MaPhuongXa,
+                TinhThanhs = danhSachTinh,
+                PhuongXas = danhSachXa,
+                ChoPhepTatCa = true
+            },
+            KhuVucDaChon = (tenXa, tenTinh) switch
+            {
+                (not null, not null) => $"{tenXa}, {tenTinh}",
+                (not null, _) => tenXa,
+                (_, not null) => tenTinh,
+                _ => null
+            }
+        });
     }
 
     public async Task<IActionResult> Details(int id)
     {
-        ProductDetailVm? product = null;
-        try
-        {
-            product = await _products.GetDetailAsync(id);
-        }
-        catch { }
+        var product = await _products.GetDetailAsync(id);
 
-        // Nếu DB chưa có hoặc ID không tồn tại: hiển thị dữ liệu mẫu chuẩn theo Wireframe ảnh 5
-        if (product == null)
-        {
-            product = new ProductDetailVm
-            {
-                Id = id,
-                Name = "Áo khoác denim vintage",
-                Price = 250000,
-                Status = "ACTIVE",
-                CanBuy = true,
-                CategoryName = "Thời trang - Nam",
-                ConditionName = "Rất tốt",
-                ShopName = "Shop An",
-                Description = "Áo khoác denim dáng rộng, size M, màu xanh nhạt. Còn mới khoảng 90%, không rách hay phai màu. Thông số: Dài 68cm - Rộng vai 52cm - Chất liệu denim cotton.",
-                CreatedAt = DateTime.Now.AddDays(-2)
-            };
-        }
+        // Không còn sản phẩm mẫu dựng sẵn: tin không tồn tại, đã bị ẩn hoặc đã xóa mềm phải trả 404 thật.
+        if (product is null) return NotFound();
 
         return View(product);
     }

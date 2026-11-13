@@ -41,6 +41,8 @@ public class ProductFormVm
     public string Ten { get; set; } = string.Empty;
 
     [Display(Name = "Mô tả")]
+    [Required(ErrorMessage = "Mô tả là bắt buộc.")]
+    [MinLength(20, ErrorMessage = "Mô tả cần ít nhất 20 ký tự để người mua hiểu tình trạng món đồ.")]
     [StringLength(4000, ErrorMessage = "Mô tả tối đa 4000 ký tự.")]
     public string? MoTa { get; set; }
 

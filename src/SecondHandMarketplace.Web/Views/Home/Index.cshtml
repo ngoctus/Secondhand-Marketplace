@@ -1,9 +1,21 @@
 @using SecondHandMarketplace.Web.Services.Products
 @using SecondHandMarketplace.Web.Services.Banners
+@using SecondHandMarketplace.Web.Services.Categories
+@using SecondHandMarketplace.Web.Services.Reviews
+@using SecondHandMarketplace.Web.Models.ViewModels.Reviews
 @inject IProductService ProductService
 @inject IBannerService BannerService
+@inject ICategoryService CategoryService
+@inject IReviewService Reviews
 @{
     ViewData["Title"] = "Trang chủ";
+
+    List<SecondHandMarketplace.Web.Models.Entities.DanhMuc> danhMuc = new();
+    try
+    {
+        danhMuc = (await CategoryService.GetCategoriesAsync()).ToList();
+    }
+    catch { }
 
     List<SecondHandMarketplace.Web.Models.Entities.Banner> banners = new();
     try
@@ -20,16 +32,17 @@
     }
     catch { }
 
-    if (sanPhams.Count == 0)
+    // Đánh giá thật từ đơn đã hoàn tất cho khối "Người dùng nói gì"
+    List<DanhGiaNoiBatVm> danhGiaNoiBat = new();
+    try
     {
-        sanPhams = new List<ProductCardVm>
-        {
-            new ProductCardVm { Id = 1, Name = "Áo khoác denim vintage size M", Price = 250000, ShopName = "Shop An", ConditionName = "Rất tốt" },
-            new ProductCardVm { Id = 2, Name = "Máy ảnh film Olympus đã test hoạt động", Price = 1800000, ShopName = "Minh Camera", ConditionName = "Tốt" },
-            new ProductCardVm { Id = 3, Name = "Bộ nồi inox 5 món", Price = 320000, ShopName = "Nhà Bếp Xinh", ConditionName = "Mới" },
-            new ProductCardVm { Id = 4, Name = "Sách Nhà giả kim bản bìa mềm", Price = 60000, ShopName = "Book Corner", ConditionName = "Có dấu vết sử dụng" }
-        };
+        danhGiaNoiBat = (await Reviews.LayDanhGiaNoiBatAsync(3)).ToList();
     }
+    catch { }
+
+    // Thẻ đánh giá theo wireframe chỉ tối đa 3 dòng.
+    string TomTacDanhGia(string noiDung)
+        => noiDung.Length <= 180 ? noiDung : noiDung.Substring(0, 180).TrimEnd() + "…";
 }
 
 <!-- 1. HERO SECTION (Ảnh 2) -->
@@ -132,30 +145,13 @@
     </div>
 
     <div class="category-grid">
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Thời trang" class="category-card">
-            <div class="cat-circle cat-icon" aria-hidden="true">👕</div>
-            <span class="cat-name">Thời trang</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Điện tử" class="category-card">
-            <div class="cat-circle cat-icon" aria-hidden="true">💻</div>
-            <span class="cat-name">Điện tử</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Đồ gia dụng" class="category-card">
-            <div class="cat-circle cat-icon" aria-hidden="true">🏠</div>
-            <span class="cat-name">Đồ gia dụng</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Sách" class="category-card">
-            <div class="cat-circle cat-icon" aria-hidden="true">📚</div>
-            <span class="cat-name">Sách</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Phụ kiện" class="category-card">
-            <div class="cat-circle cat-icon" aria-hidden="true">🎒</div>
-            <span class="cat-name">Phụ kiện</span>
-        </a>
-        <a asp-controller="Products" asp-action="Index" asp-route-Keyword="Nội thất" class="category-card">
-            <div class="cat-circle cat-icon" aria-hidden="true">🪑</div>
-            <span class="cat-name">Nội thất</span>
-        </a>
+        @foreach (var c in danhMuc.Take(6))
+        {
+            <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" class="category-card">
+                <div class="cat-circle"></div>
+                <span class="cat-name">@c.Ten</span>
+            </a>
+        }
     </div>
 </section>
 
@@ -166,9 +162,9 @@
             <div class="section-label">SẢN PHẨM NỔI BẬT</div>
             <h2 class="section-title">Có thể bạn sẽ thích</h2>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 landing-header-actions">
             <span class="btn-rm-primary" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Mới đăng</span>
-            <a asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tốt</a>
+            <a asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tốt</a>
             <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Được quan tâm</a>
         </div>
     </div>
@@ -281,41 +277,44 @@
     <h2 class="section-title">Người dùng nói gì</h2>
     <p style="color: var(--color-text-muted); font-size: 13px; margin: 4px 0 20px;">Chỉ hiển thị đánh giá thật từ giao dịch đã hoàn tất</p>
 
-    <div class="reviews-grid">
-        <div class="review-card">
-            <div class="review-stars">★★★★★</div>
-            <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
-            <div class="review-author">
-                <img class="author-circle" src="~/images/avatar-default.png" alt="Ảnh đại diện người dùng" />
-                <div class="author-info">
-                    <b>Tên người dùng</b>
-                    <span>Đã mua: Tên sản phẩm</span>
+    @if (danhGiaNoiBat.Count == 0)
+    {
+        <p class="reviews-empty">Sàn chưa có đánh giá nào từ giao dịch đã hoàn tất. Đánh giá sẽ hiện ở đây ngay khi người mua xác nhận đơn.</p>
+    }
+    else
+    {
+        <div class="reviews-grid">
+            @foreach (var dg in danhGiaNoiBat)
+            {
+                <div class="review-card">
+                    <div class="review-stars" aria-label="@dg.SoSao/5 sao">
+                        @for (byte s = 1; s <= 5; s++)
+                        {
+                            <span class="@(s <= dg.SoSao ? "star-on" : "star-off")">★</span>
+                        }
+                    </div>
+                    <p class="review-text">@TomTacDanhGia(dg.NoiDung)</p>
+                    <div class="review-author">
+                        <img class="author-circle" src="@(string.IsNullOrWhiteSpace(dg.AnhDaiDienNguoiMua) ? Url.Content("~/images/avatar-default.png") : dg.AnhDaiDienNguoiMua)" alt="Ảnh đại diện @dg.TenNguoiMua" />
+                        <div class="author-info">
+                            <b>@dg.TenNguoiMua</b>
+                            <span>
+                                Đã mua:
+                                @if (dg.MaSanPham.HasValue)
+                                {
+                                    <a asp-controller="Products" asp-action="Details" asp-route-id="@dg.MaSanPham.Value">@dg.TenSanPham</a>
+                                }
+                                else
+                                {
+                                    @dg.TenSanPham
+                                }
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
-        <div class="review-card">
-            <div class="review-stars">★★★★★</div>
-            <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
-            <div class="review-author">
-                <img class="author-circle" src="~/images/avatar-default.png" alt="Ảnh đại diện người dùng" />
-                <div class="author-info">
-                    <b>Tên người dùng</b>
-                    <span>Đã mua: Tên sản phẩm</span>
-                </div>
-            </div>
-        </div>
-        <div class="review-card">
-            <div class="review-stars">★★★★★</div>
-            <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
-            <div class="review-author">
-                <img class="author-circle" src="~/images/avatar-default.png" alt="Ảnh đại diện người dùng" />
-                <div class="author-info">
-                    <b>Tên người dùng</b>
-                    <span>Đã mua: Tên sản phẩm</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    }
 </section>
 
 <!-- 8. BANNER CTA CUỐI TRANG (Ảnh 3) -->

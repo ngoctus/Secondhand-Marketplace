@@ -44,7 +44,12 @@
 .rmchat-send:disabled{opacity:.55;cursor:not-allowed}
 .rmchat-note{margin:0;padding:0 12px 9px;background:#fff;color:var(--muted,#788078);font-size:10.5px;text-align:center}
 
-@media (max-width:520px){
-  .rmchat{right:12px;bottom:12px}
-  .rmchat-panel{position:fixed;left:12px;right:12px;bottom:72px;width:auto;height:min(72vh,540px)}
+/* B7/B10 - màn ≤576px: panel nằm gọn giữa header dính và nút nổi (không chui xuống header, không che nút đóng),
+   nút nổi thu về hình tròn 44px gọn ở góc phải và chừa vùng an toàn dưới đáy điện thoại. */
+@media (max-width:576px){
+  .rmchat{right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px))}
+  .rmchat-toggle{width:44px;height:44px;padding:0;justify-content:center;gap:0}
+  .rmchat-toggle-label{display:none}
+  .rmchat-panel{position:fixed;left:10px;right:10px;top:auto;bottom:calc(64px + env(safe-area-inset-bottom, 0px));
+    width:auto;height:58vh;max-height:calc(100dvh - 200px)}
 }

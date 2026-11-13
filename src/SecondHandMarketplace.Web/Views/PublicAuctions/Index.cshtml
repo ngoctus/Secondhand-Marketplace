@@ -6,13 +6,22 @@
     var tabs = new[] { ("dang-dien-ra", "Đang diễn ra"), ("sap-dien-ra", "Sắp diễn ra"), ("da-ket-thuc", "Đã kết thúc") };
 }
 
-<div class="catalog-page">
-    <div class="section-head">
-        <div><div class="eyebrow">SÀN ĐẤU GIÁ</div><h2>Săn đồ cũ giá tốt</h2></div>
+<div class="container py-4">
+    <nav class="rm-breadcrumb" aria-label="Đường dẫn trang">
+        <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <span class="sep">/</span>
+        <span>Sàn đấu giá</span>
+    </nav>
+
+    <div class="rm-page-head">
+        <div>
+            <div class="section-label">SÀN ĐẤU GIÁ</div>
+            <h1 class="rm-page-title">Săn đồ cũ giá tốt</h1>
+        </div>
         <form method="get" class="auction-search">
             <input type="hidden" name="tab" value="@tab" />
             <input name="q" value="@q" placeholder="Tìm sản phẩm đang đấu giá..." />
-            <button class="primary" type="submit">Tìm</button>
+            <button type="submit" class="btn-rm-primary">Tìm</button>
         </form>
     </div>
 
@@ -25,48 +34,66 @@
 
     @if (Model.Items.Count == 0)
     {
-        <div class="empty panel">Chưa có phiên đấu giá nào trong mục này.</div>
+        <div class="rm-empty-state">
+            <p>Chưa có phiên đấu giá nào trong mục này.</p>
+            <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">Xem tất cả sản phẩm</a>
+        </div>
     }
     else
     {
-        <div class="product-grid">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
             @foreach (var a in Model.Items)
             {
-                <div class="product-card">
-                    <a asp-action="Details" asp-route-id="@a.Id">
-                        @if (!string.IsNullOrEmpty(a.Image))
-                        {
-                            <img src="@a.Image" alt="@a.ProductName" data-fallback />
-                        }
-                        else
-                        {
-
-                            <div class="product-art-fallback">♻</div>
-                        }
-                        <div class="product-info">
-                            <h3 class="product-title">@a.ProductName</h3>
-                            <div class="product-meta"><span>@a.ShopName</span><span>@a.BidCount lượt đặt</span></div>
-                            <div class="price">@HienThi.Tien(a.CurrentPrice)</div>
-                            <div class="card-foot">
-                                <span class="@HienThi.LopTrangThai(a.Status)">@HienThi.TrangThaiPhien(a.Status)</span>
-                                @if (a.Status == "RUNNING")
+                <div class="col">
+                    <article class="rm-product-card" data-product-id="@a.ProductId">
+                        <div class="rm-card-media">
+                            <a asp-action="Details" asp-route-id="@a.Id" class="rm-card-image-link" tabindex="-1">
+                                @if (!string.IsNullOrEmpty(a.Image))
                                 {
-                                    <span class="muted"><span class="js-countdown" data-end="@HienThi.Iso(a.EndAt)"></span></span>
-                                }
-                                else if (a.Status == "SCHEDULED")
-                                {
-                                    <span class="muted">Bắt đầu @HienThi.NgayGio(a.StartAt)</span>
+                                    <img src="@a.Image" alt="@a.ProductName" class="rm-card-image" loading="lazy" data-fallback />
                                 }
                                 else
                                 {
-                                    <span class="muted">@HienThi.NgayGio(a.EndAt)</span>
+                                    <div class="wireframe-placeholder">
+                                        <span>Ảnh sản phẩm 4:5</span>
+                                    </div>
                                 }
+                            </a>
+                            <span class="rm-card-badge">@HienThi.TrangThaiPhien(a.Status)</span>
+                        </div>
+
+                        <div class="rm-card-body">
+                            <h3 class="rm-card-title">
+                                <a asp-action="Details" asp-route-id="@a.Id" title="@a.ProductName">@a.ProductName</a>
+                            </h3>
+                            <div class="rm-card-pricing">
+                                <span class="rm-card-price">@HienThi.Tien(a.CurrentPrice)</span>
+                            </div>
+                            <div class="rm-card-seller">
+                                <span class="seller-circle" aria-hidden="true"></span>
+                                <span>@a.ShopName · @a.BidCount lượt đặt</span>
+                            </div>
+                            <div class="rm-auction-foot">
+                                @if (a.Status == "RUNNING")
+                                {
+                                    <span class="rm-auction-time">Còn <span class="js-countdown" data-end="@HienThi.Iso(a.EndAt)"></span></span>
+                                }
+                                else if (a.Status == "SCHEDULED")
+                                {
+                                    <span class="rm-auction-time">Bắt đầu @HienThi.NgayGio(a.StartAt)</span>
+                                }
+                                else
+                                {
+                                    <span class="rm-auction-time">Kết thúc @HienThi.NgayGio(a.EndAt)</span>
+                                }
+                                <a asp-action="Details" asp-route-id="@a.Id" class="btn-rm-outline rm-auction-cta">Xem phiên</a>
                             </div>
                         </div>
-                    </a>
+                    </article>
                 </div>
             }
         </div>
+
         <partial name="_Pager" model="new PagerVm(Model.Page, Model.TotalPages)" />
     }
 </div>

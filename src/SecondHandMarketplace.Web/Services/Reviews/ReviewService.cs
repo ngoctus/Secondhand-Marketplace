@@ -214,6 +214,39 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
     }
 
     // =========================================================
+    // 2b. Vài đánh giá nổi bật cho trang chủ (B)
+    // =========================================================
+    public async Task<IReadOnlyList<DanhGiaNoiBatVm>> LayDanhGiaNoiBatAsync(
+        int soLuong = 6,
+        CancellationToken cancellationToken = default)
+    {
+        soLuong = Math.Clamp(soLuong, 1, 24);
+
+        return await db.DanhGias.AsNoTracking()
+            .Where(d => d.TrangThai == "VISIBLE"
+                     && d.CuaHang.TrangThai == "ACTIVE"
+                     && d.NoiDung != null && d.NoiDung != "")
+            .OrderByDescending(d => d.NgayTao).ThenByDescending(d => d.MaDanhGia)
+            .Take(soLuong)
+            .Select(d => new DanhGiaNoiBatVm
+            {
+                MaDanhGia          = d.MaDanhGia,
+                SoSao              = d.SoSao,
+                NoiDung            = d.NoiDung!,
+                TenNguoiMua        = d.NguoiMua.HoTen,
+                AnhDaiDienNguoiMua = d.NguoiMua.AnhDaiDien,
+                TenSanPham         = d.DonHang.ChiTiet.Select(ct => ct.TenSanPham).FirstOrDefault() ?? string.Empty,
+                MaSanPham          = d.DonHang.ChiTiet
+                    .Where(ct => !ct.SanPham.DaXoa
+                              && (ct.SanPham.TrangThai == "ACTIVE" || ct.SanPham.TrangThai == "RESERVED" || ct.SanPham.TrangThai == "SOLD"))
+                    .Select(ct => (int?)ct.MaSanPham).FirstOrDefault(),
+                TenShop            = d.CuaHang.TenShop,
+                NgayTao            = d.NgayTao
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    // =========================================================
     // 3. Admin ẩn / hiện đánh giá
     // =========================================================
     public async Task<(bool Success, string? Error)> DoiTrangThaiHienThiAsync(

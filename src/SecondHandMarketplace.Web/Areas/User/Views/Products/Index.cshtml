@@ -27,10 +27,17 @@
 
     @if (Model.Items.Count == 0)
     {
-        <div class="card text-center p-5 shadow-sm border-0 rounded-3">
-            <p class="text-muted mb-3">Bạn chưa có sản phẩm nào. Hãy tạo cửa hàng và đăng bán món đồ đầu tiên.</p>
-            <div class="d-flex justify-content-center gap-2">
-                <a asp-area="User" asp-controller="Shop" asp-action="Index" class="btn-rm-outline">Tạo cửa hàng</a>
+        <div class="rm-empty-state">
+            <h3>Bạn chưa có sản phẩm nào</h3>
+            <p>Cửa hàng là bắt buộc trước khi đăng tin, và tin chỉ hiển thị công khai sau khi kiểm duyệt đạt.</p>
+            <ol>
+                <li>Vào Thiết lập cửa hàng, đặt tên shop và chọn khu vực sinh sống để người mua gần bạn tìm thấy tin của bạn.</li>
+                <li>Đăng bán món đầu tiên với ảnh thật, giá rõ và mô tả đủ các ý hệ thống yêu cầu.</li>
+                <li>Bấm "Lưu và gửi duyệt"; tin sẽ chuyển sang "Đang chờ duyệt".</li>
+                <li>Theo dõi danh sách này — nếu bị từ chối, sửa theo lý do rồi gửi lại.</li>
+            </ol>
+            <div class="d-flex justify-content-center gap-2 mt-4 flex-wrap">
+                <a asp-area="User" asp-controller="Shop" asp-action="Index" class="btn-rm-outline">Thiết lập cửa hàng</a>
                 <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
             </div>
         </div>

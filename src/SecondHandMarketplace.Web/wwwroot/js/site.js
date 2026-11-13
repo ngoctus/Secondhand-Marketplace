@@ -249,3 +249,57 @@
         }
     });
 })();
+
+// =========================================================================
+// Bộ đếm mô tả trong biểu mẫu đăng bán: luật duyệt yêu cầu >= 20 ký tự,
+// báo ngay khi gõ để người bán không phải nhận lỗi sau khi bấm gửi duyệt.
+// =========================================================================
+(() => {
+    const o = document.querySelector('textarea[data-mota-toithieu]');
+    if (!o) return;
+
+    const so = document.getElementById(o.dataset.motaDem);
+    const trangThai = document.getElementById(o.dataset.motaTrangThai);
+    const toiThieu = Number(o.dataset.motaToithieu);
+    const toiDa = Number(o.getAttribute('maxlength') || 0);
+
+    const capNhat = () => {
+        const dai = o.value.trim().length;
+        if (so) so.textContent = `${dai}/${toiDa} ký tự`;
+        if (!trangThai) return;
+        if (dai === 0) {
+            trangThai.textContent = 'Chưa có mô tả';
+            trangThai.className = 'text-muted';
+        } else if (dai < toiThieu) {
+            trangThai.textContent = `Còn thiếu ${toiThieu - dai} ký tự để gửi duyệt`;
+            trangThai.className = 'text-danger';
+        } else {
+            trangThai.textContent = 'Đủ độ dài để gửi duyệt';
+            trangThai.className = 'text-success';
+        }
+    };
+
+    o.addEventListener('input', capNhat);
+    capNhat();
+})();
+
+// =========================================================================
+// B7: nút đóng/mở bảng lọc trên trang tìm kiếm (chỉ hiện trên điện thoại)
+// =========================================================================
+(() => {
+    const panel = document.getElementById('filterPanel');
+    const btn = document.querySelector('.filter-toggle');
+    if (!panel || !btn) return;
+
+    const soLoc = Number(btn.dataset.soBoLoc || 0);
+    const tenLoc = soLoc > 0 ? `bộ lọc (${soLoc})` : 'bộ lọc';
+    const capNhat = () => {
+        const mo = panel.classList.contains('show');
+        btn.textContent = `${mo ? 'Ẩn' : 'Hiện'} ${tenLoc}`;
+        btn.setAttribute('aria-expanded', String(mo));
+    };
+
+    panel.addEventListener('shown.bs.collapse', capNhat);
+    panel.addEventListener('hidden.bs.collapse', capNhat);
+    capNhat();
+})();

@@ -243,8 +243,9 @@ public class ProductsController : UserBaseController
             if (!DinhDangAnhChoPhep.Contains(ext))
                 return (result, $"Định dạng \"{ext}\" không được hỗ trợ. Chỉ nhận jpg, png, webp, gif.");
 
+            // Đuôi file tự đổi được, nội dung thì không: 12 byte đầu phải đúng signature của ảnh.
             if (!await NoiDungAnhHopLeAsync(file, ext))
-                return (result, $"Ảnh \"{Path.GetFileName(file.FileName)}\" không đúng định dạng nội dung.");
+                return (result, $"Ảnh \"{Path.GetFileName(file.FileName)}\" có đuôi {ext} nhưng nội dung không phải ảnh {ext.TrimStart('.').ToUpperInvariant()}. Hãy lưu lại file đúng định dạng rồi tải lên.");
 
             var ten = Guid.NewGuid().ToString("N") + ext;
             var duongDanDia = Path.Combine(thuMuc, ten);

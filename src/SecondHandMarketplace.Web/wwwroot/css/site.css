@@ -727,6 +727,31 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: 2px;
 }
 
+    /* Sao trống của đánh giá thật (so với 5 sao tối đa). */
+    .review-stars .star-off {
+        color: var(--color-border);
+    }
+
+.reviews-empty {
+    margin-top: 24px;
+    padding: 18px 22px;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-white);
+    color: var(--color-text-muted);
+    font-size: 13px;
+}
+
+.author-info span a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+    .author-info span a:hover {
+        color: var(--color-primary);
+    }
+
 .review-text {
     font-size: 13.5px;
     color: var(--color-text-primary);
@@ -1191,6 +1216,20 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+}
+
+/* Nút yêu thích trên trang chi tiết dùng chung class với thẻ sản phẩm (site.js) */
+.detail-actions-row .rm-card-favorite-btn {
+    position: static;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface-white);
+}
+
+img.shop-snippet-avatar {
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
 .detail-actions-row .btn-share {
@@ -2076,6 +2115,630 @@ a.kpi:hover {
     }
 }
 
+/* 16. BO LOC + SAN DAU GIA (dong bo theo design system rm-*) */
+.rm-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.rm-filter-chip {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background-color: var(--color-primary-subtle);
+    color: var(--color-primary-active);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.rm-filter-clear {
+    font-size: 12.5px;
+    color: var(--color-text-muted);
+    text-decoration: underline;
+}
+
+    .rm-filter-clear:hover {
+        color: var(--color-error);
+    }
+
+.rm-page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.rm-page-title {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    margin: 0;
+    color: var(--color-text-primary);
+}
+
+.rm-empty-state {
+    background-color: var(--color-surface);
+    padding: 48px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.rm-panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    margin-top: 18px;
+}
+
+.rm-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+    .rm-panel-head h3, .rm-panel h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 10px;
+        color: var(--color-text-primary);
+    }
+
+.rm-note {
+    background-color: var(--color-warning-bg);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--color-warning);
+    margin: 12px 0;
+}
+
+.rm-auction-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--color-border);
+}
+
+.rm-auction-time {
+    font-size: 12.5px;
+    color: var(--color-text-secondary);
+}
+
+.rm-auction-cta {
+    padding: 6px 14px;
+    font-size: 12.5px;
+    border-radius: 999px;
+}
+
+.muted {
+    color: var(--color-text-muted);
+    font-size: 13px;
+}
+
+.empty {
+    color: var(--color-text-muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 16px 0;
+}
+
+.auction-page {
+    padding-bottom: 40px;
+}
+
+.status-tabs {
+    border-bottom-color: var(--color-border);
+}
+
+    .status-tabs a {
+        color: var(--color-text-muted);
+        font-size: 13px;
+    }
+
+        .status-tabs a.on {
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+.auction-search input {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-white);
+    color: var(--color-text-primary);
+    font: 13px var(--font-main);
+    padding: 9px 12px;
+}
+
+.bid-panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+}
+
+.quick-bids button {
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background-color: var(--color-surface-white);
+    color: var(--color-text-secondary);
+    font-size: 12.5px;
+    padding: 6px 12px;
+}
+
+    .quick-bids button:hover {
+        background-color: var(--color-primary-subtle);
+        color: var(--color-primary-active);
+    }
+
+.bid-input input {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-white);
+    color: var(--color-text-primary);
+    font-size: 14px;
+    padding: 10px 12px;
+    width: 100%;
+    outline: none;
+}
+
+@media(max-width:900px) {
+    .rm-page-head {
+        align-items: stretch;
+    }
+}
+
+/* =====================================================================
+   11. THE SAN PHAM + TIM KIEM KU VUC + CHI TIET (B2, B3, B4, B7)
+   ===================================================================== */
+.rm-card-desc {
+    margin: 0 0 8px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.rm-card-status {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 2;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-pill);
+    background-color: rgba(32, 42, 36, 0.82);
+    color: #fff;
+}
+
+.rm-card-seller .rm-seller-logo {
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.rm-card-rating {
+    margin-left: auto;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--color-star, #C8892B);
+    white-space: nowrap;
+}
+
+.rm-card-rating.is-empty {
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
+
+.rm-card-area {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--color-text-muted);
+}
+
+/* --- Bộ lọc khu vực trong sidebar (B3) --- */
+.filter-khu-vuc select {
+    width: 100%;
+    margin-bottom: 8px;
+    font-size: 13px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 10px);
+    background-color: #fff;
+}
+
+.filter-khu-vuc .form-text {
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+/* Sidebar lọc chỉ rộng 260px: hai select tỉnh/xã phải xếp chồng, nếu chia 50/50 thì
+   Bootstrap col-md-6 vẫn áp dụng ở desktop và chữ trong select bị cắt giữa câu. */
+.filter-khu-vuc .row {
+    --bs-gutter-x: 0;
+    row-gap: 10px;
+}
+
+    .filter-khu-vuc .row > [class*="col-"] {
+        flex: 0 0 100%;
+        width: 100%;
+        max-width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+/* --- Trang chi tiết sản phẩm (B4) --- */
+.detail-shop-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface, #fff);
+}
+
+.detail-shop-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #D3C7B2;
+    flex-shrink: 0;
+}
+
+.detail-shop-name {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-decoration: none;
+}
+
+.detail-shop-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+.detail-shop-meta .is-empty {
+    color: var(--color-text-muted);
+}
+
+.rm-safety-tips {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    background-color: #F6F1E7;
+    border: 1px solid #E6DCC7;
+}
+
+.rm-safety-tips h4 {
+    margin: 0 0 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.rm-safety-tips ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+}
+
+.detail-review-empty {
+    padding: 18px;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    font-size: 13px;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+/* --- Gợi ý nội dung trong biểu mẫu đăng bán (B5) --- */
+.rm-form-hint {
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    background-color: #F6F1E7;
+    border: 1px solid #E6DCC7;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+}
+
+    .rm-form-hint ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+.rm-form-hint-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--color-text-primary);
+}
+
+/* --- Nút nhờ AI gợi ý mô tả trong form đăng bán (B10) --- */
+.rm-ai-mota {
+    margin-top: 8px;
+}
+
+.rm-ai-mota-preview {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    border: 1px dashed #BFD3C6;
+    background-color: #F3F8F4;
+}
+
+.rm-ai-mota-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+}
+
+.rm-ai-mota-text {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--color-text-primary);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+/* --- Trang rỗng có hướng dẫn việc tiếp theo (B7) --- */
+.rm-empty-state {
+    background-color: var(--color-surface, #fff);
+    padding: 40px 24px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    text-align: center;
+}
+
+.rm-empty-state h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.rm-empty-state p {
+    margin: 0 auto 16px;
+    max-width: 520px;
+    font-size: 13.5px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.rm-empty-state ol {
+    margin: 16px auto 0;
+    padding-left: 20px;
+    max-width: 520px;
+    text-align: left;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+}
+
+/* --- Nút mở/đóng bảng lọc trên điện thoại (B7) --- */
+.filter-toggle {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface-white);
+    color: var(--color-text-primary);
+    border-radius: var(--radius-md);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+/* --- Hàng nút của biểu mẫu đăng bán (B7) --- */
+.rm-form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+/* --- Cột tóm tắt đơn hàng dính (trang giỏ hàng & checkout) ---
+   sticky-top mặc định của Bootstrap có z-index 1020, cao hơn .rm-header (1000), nên thẻ này
+   đè lên thanh trên. Kẹp xuống dưới header và bắt đầu dính ngay dưới mép header 70px. */
+.rm-sticky-summary {
+    position: sticky;
+    top: 86px;
+    z-index: 1;
+}
+
+@media (max-width: 991.98px) {
+    /* Cột này đã nằm gọn dưới biểu mẫu, và header mobile tự co giãn nên không tính được offset. */
+    .rm-sticky-summary {
+        position: static;
+    }
+}
+
+/* --- Màn hình hẹp 375px: luồng tìm - lọc - mua --- */
+@media (max-width: 576px) {
+    /* Giữ ô tìm kiếm trên header để vẫn tìm được từ điện thoại. */
+    .rm-header-search {
+        display: flex;
+        order: 3;
+        flex-basis: 100%;
+        margin-top: 10px;
+    }
+
+    .rm-header-inner {
+        flex-wrap: wrap;
+        height: auto;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .search-page-layout {
+        gap: 16px;
+    }
+
+    /* Bộ lọc thành khối gập được, không chiếm hết màn hình. */
+    .filter-sidebar .filter-group {
+        padding: 10px 0;
+    }
+
+    .rm-card-title {
+        font-size: 13.5px;
+        min-height: 0;
+    }
+
+    .detail-shop-box {
+        align-items: flex-start;
+    }
+
+    .detail-actions-row .btn-main,
+    .detail-actions-row form {
+        flex: 1 1 auto;
+    }
+
+    .rm-empty-state {
+        padding: 28px 16px;
+    }
+
+    /* Trang chủ: tiêu đề đề mục đứng trên, các nút điều hướng xuống dòng thay vì tràn */
+    .landing-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .landing-header-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* Danh sách: bộ lọc gọn trong panel, header kết quả xếp dọc */
+    .filter-sidebar {
+        padding: 16px;
+    }
+
+    .filter-header {
+        margin-bottom: 0;
+    }
+
+    .filter-panel {
+        padding-top: 16px;
+    }
+
+    .search-results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+        .search-results-header h2 {
+            font-size: 20px;
+        }
+
+    .sort-select-box {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Chi tiết: ảnh vuông để không phải cuộn dài, các hàng thông tin được phép xuống dòng */
+    .rm-breadcrumb {
+        flex-wrap: wrap;
+        gap: 4px 8px;
+        margin-bottom: 14px;
+    }
+
+    .detail-main-img {
+        aspect-ratio: 1 / 1;
+    }
+
+    .detail-title {
+        font-size: 20px;
+        line-height: 1.3;
+    }
+
+    .detail-pricing-row .main-price {
+        font-size: 21px;
+    }
+
+    .detail-tags-row {
+        flex-wrap: wrap;
+        gap: 6px 10px;
+    }
+
+    /* Một nút giỏ + nút tim trên hàng đầu, "Mua ngay" chiếm hết hàng dưới */
+    .detail-actions-row {
+        align-items: stretch;
+    }
+
+        .detail-actions-row form {
+            flex: 1 1 auto;
+            order: 1;
+        }
+
+        .detail-actions-row .rm-card-favorite-btn {
+            order: 2;
+        }
+
+        .detail-actions-row .btn-main {
+            flex: 1 1 100%;
+            order: 3;
+        }
+
+    .shop-snippet-box {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .detail-content-card {
+        padding: 18px 14px;
+        margin-bottom: 28px;
+    }
+
+    .detail-review-item {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .detail-review-date {
+        align-self: flex-start;
+    }
+
+    /* Biểu mẫu đăng bán: nút hành động chiếm hết bề ngang cho dễ bấm */
+    .rm-form-actions button {
+        flex: 1 1 100%;
+        text-align: center;
+    }
+
+    /* Nút nổi trợ lý AI luôn ghim góc dưới phải: chừa khoảng trống dưới đáy để nút "Đặt giữ hàng"
+       và các nút biểu mẫu không bao giờ bị che khi cuộn tới cuối trang. */
+    .rm-main-content {
+        padding-bottom: 64px;
+    }
+}
 /* ===== Mobile header ===== */
 .rm-mobile-toggle {
     display: none;

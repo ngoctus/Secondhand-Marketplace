@@ -7,6 +7,7 @@ using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Reviews;
 
 namespace SecondHandMarketplace.Web.Services.Products;
 
@@ -15,23 +16,69 @@ public class ProductService : IProductService
     private const int SoAnhToiDa = 10;
 
     private readonly AppDbContext _db;
+    private readonly IReviewService _danhGia;
     private readonly IWebHostEnvironment? _environment;
-    public ProductService(AppDbContext db, IWebHostEnvironment? environment = null)
+
+    public ProductService(AppDbContext db, IReviewService danhGia, IWebHostEnvironment? environment = null)
     {
         _db = db;
+        _danhGia = danhGia;
         _environment = environment;
     }
 
     public async Task<PagedResult<ProductCardVm>> SearchAsync(ProductSearchVm f)
     {
-        // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
-        // cửa hàng và chủ cửa hàng đều đang hoạt động.
+        f.GiaiPhanGia();
+        var query = TaoTruyVanTimKiem(f);
+        var page = Math.Max(1, f.Page);
+        var pageSize = Math.Clamp(f.PageSize, 1, 100);
+        var total = await query.CountAsync();
+
+        var duLieuTho = await SapXepTruyVan(query, f.Sort)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new ProductCardSource(
+                p.MaSanPham,
+                p.Ten,
+                p.Gia,
+                p.MoTa,
+                p.TrangThai,
+                p.MaCuaHang,
+                p.CuaHang.TenShop,
+                p.CuaHang.Logo,
+                p.CuaHang.KhuVucHienThi,
+                p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
+                p.TinhTrang != null ? p.TinhTrang.Ten : null,
+                p.DanhMuc != null ? p.DanhMuc.Ten : null))
+            .ToListAsync();
+
+        var items = await ProductCardMapper.TaoDanhSachAsync(duLieuTho, _danhGia);
+        if (_environment is not null)
+        {
+            foreach (var item in items)
+                item.ImageUrl = ThumbnailIfPresent(item.ImageUrl);
+        }
+
+        return new PagedResult<ProductCardVm>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = total
+        };
+    }
+
+    // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
+    // cửa hàng và chủ cửa hàng đều đang hoạt động.
+    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f)
+    {
         var query = _db.SanPhams
             .AsNoTracking()
             .Include(p => p.CuaHang)
             .ThenInclude(ch => ch.NguoiDung)
             .Include(p => p.Anh)
             .Include(p => p.TinhTrang)
+            .Include(p => p.DanhMuc)
             .Where(p => p.TrangThai == "ACTIVE"
                         && !p.DaXoa
                         && p.CuaHang.TrangThai == "ACTIVE"
@@ -46,105 +93,32 @@ public class ProductService : IProductService
                                      || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
         }
 
-        // Lọc 1 danh mục (đúng tên cột trong DB)
         if (f.CategoryId != null)
             query = query.Where(p => p.MaDanhMuc == f.CategoryId);
-
-        // Lọc danh mục từ checkbox sidebar (chấp nhận cả slug "thoi-trang", ID số, hoặc tên tiếng Việt "Thời trang")
-        if (f.Categories is { Length: > 0 })
-        {
-            var catInputs = f.Categories.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).ToList();
-            if (catInputs.Count > 0)
-            {
-                var mappedNames = new List<string>();
-                var mappedIds = new List<int>();
-
-                foreach (var input in catInputs)
-                {
-                    if (int.TryParse(input, out var cid))
-                    {
-                        mappedIds.Add(cid);
-                    }
-                    else
-                    {
-                        mappedNames.Add(input);
-                        var slug = input.ToLowerInvariant();
-                        if (slug == "thoi-trang") { mappedNames.Add("Thời trang"); mappedIds.Add(1); }
-                        else if (slug == "dien-tu") { mappedNames.Add("Đồ điện tử"); mappedIds.Add(2); }
-                        else if (slug == "do-gia-dung") { mappedNames.Add("Đồ gia dụng"); mappedIds.Add(3); }
-                        else if (slug == "sach") { mappedNames.Add("Sách & văn phòng phẩm"); mappedIds.Add(4); }
-                        else if (slug == "phu-kien" || slug == "xe-co") { mappedNames.Add("Xe cộ & phụ kiện"); mappedIds.Add(5); }
-                        else if (slug == "do-choi") { mappedNames.Add("Đồ chơi & mẹ bé"); mappedIds.Add(6); }
-                        else if (slug == "the-thao") { mappedNames.Add("Thể thao & dã ngoại"); mappedIds.Add(7); }
-                        else if (slug == "noi-that") { mappedNames.Add("Nội thất"); mappedIds.Add(8); }
-                        else if (slug == "khac") { mappedNames.Add("Khác"); mappedIds.Add(9); }
-                    }
-                }
-
-                query = query.Where(p =>
-                    (p.MaDanhMuc != null && mappedIds.Contains(p.MaDanhMuc.Value))
-                    || (p.DanhMuc != null && mappedNames.Contains(p.DanhMuc.Ten)));
-            }
-        }
-
-        // Lọc 1 tình trạng theo mã (LIKE_NEW, GOOD, ...)
         if (f.ConditionId != null)
             query = query.Where(p => p.MaTinhTrang == f.ConditionId);
-
-        // Lọc tình trạng từ radio sidebar (new / like-new / good / fair / worn) -> tra MaTinhTrang theo Ma
-        if (!string.IsNullOrWhiteSpace(f.Condition))
-        {
-            var condCode = f.Condition.Trim().ToUpperInvariant();
-            query = query.Where(p => p.TinhTrang != null && p.TinhTrang.Ma == condCode);
-        }
-
         if (f.MinPrice != null)
             query = query.Where(p => p.Gia >= f.MinPrice);
         if (f.MaxPrice != null)
             query = query.Where(p => p.Gia <= f.MaxPrice);
 
-        // Sắp xếp
-        query = f.Sort switch
-        {
-            "price_asc" => query.OrderBy(p => p.Gia).ThenByDescending(p => p.NgayTao),
-            "price_desc" => query.OrderByDescending(p => p.Gia).ThenByDescending(p => p.NgayTao),
-            _ => query.OrderByDescending(p => p.NgayTao).ThenByDescending(p => p.MaSanPham)
-        };
+        // Khu vực sinh sống (mục A4): lọc theo mã tỉnh/xã của cửa hàng, không tính khoảng cách.
+        if (f.MaTinhThanh != null)
+            query = query.Where(p => p.CuaHang.MaTinhThanh == f.MaTinhThanh);
+        if (f.MaPhuongXa != null)
+            query = query.Where(p => p.CuaHang.MaPhuongXa == f.MaPhuongXa);
 
-        var page = Math.Max(1, f.Page);
-        var pageSize = Math.Clamp(f.PageSize, 1, 100);
-
-        var totalItems = await query.CountAsync();
-        var items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(p => new ProductCardVm
-            {
-                Id = p.MaSanPham,
-                Name = p.Ten,
-                Price = p.Gia ?? 0m,
-                ImageUrl = p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
-                ShopName = p.CuaHang.TenShop,
-                ConditionName = p.TinhTrang != null ? p.TinhTrang.Ten : null,
-                CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null
-            })
-            .ToListAsync();
-
-        if (_environment is not null)
-        {
-            foreach (var item in items)
-                item.ImageUrl = ThumbnailIfPresent(item.ImageUrl);
-        }
-
-        return new PagedResult<ProductCardVm>
-        {
-            Items = items,
-            Page = page,
-            PageSize = pageSize,
-            TotalItems = totalItems
-        };
+        return query;
     }
 
+    private static IQueryable<SanPham> SapXepTruyVan(IQueryable<SanPham> query, string? sort) => sort switch
+    {
+        "price_asc" => query.OrderBy(p => p.Gia).ThenByDescending(p => p.MaSanPham),
+        "price_desc" => query.OrderByDescending(p => p.Gia).ThenByDescending(p => p.MaSanPham),
+        _ => query.OrderByDescending(p => p.NgayTao).ThenByDescending(p => p.MaSanPham)
+    };
+
+    // Thẻ sản phẩm dùng bản thumbnail 640px nếu controller upload đã tạo ra, nếu không thì dùng ảnh gốc.
     private string? ThumbnailIfPresent(string? imageUrl)
     {
         if (string.IsNullOrWhiteSpace(imageUrl) || _environment?.WebRootPath is null) return imageUrl;
@@ -162,29 +136,61 @@ public class ProductService : IProductService
     public async Task<ProductDetailVm?> GetDetailAsync(int id)
     {
         // Giống view vw_SanPhamChiTietCongKhai: xem được ACTIVE, RESERVED, SOLD.
-        return await _db.SanPhams
+        var duLieuTho = await _db.SanPhams
             .AsNoTracking()
             .Where(p => p.MaSanPham == id
                         && !p.DaXoa
                         && (p.TrangThai == "ACTIVE" || p.TrangThai == "RESERVED" || p.TrangThai == "SOLD")
                         && p.CuaHang.TrangThai == "ACTIVE"
                         && p.CuaHang.NguoiDung.TrangThai == "ACTIVE")
-            .Select(p => new ProductDetailVm
+            .Select(p => new
             {
-                Id = p.MaSanPham,
-                Name = p.Ten,
-                Description = p.MoTa,
-                Price = p.Gia ?? 0m,
-                Status = p.TrangThai,
-                CanBuy = p.TrangThai == "ACTIVE",
+                p.MaSanPham,
+                p.MaCuaHang,
+                p.MaDanhMuc,
+                p.Ten,
+                p.MoTa,
+                p.Gia,
+                p.TrangThai,
+                p.NgayTao,
                 CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null,
                 ConditionName = p.TinhTrang != null ? p.TinhTrang.Ten : null,
                 ShopName = p.CuaHang.TenShop,
                 ShopDescription = p.CuaHang.MoTa,
-                CreatedAt = p.NgayTao,
-                Images = p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()
+                ShopLogo = p.CuaHang.Logo,
+                ShopKhuVuc = p.CuaHang.KhuVucHienThi,
+                ImageUrls = p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()
             })
             .FirstOrDefaultAsync();
+
+        if (duLieuTho is null) return null;
+
+        // Điểm sao chỉ lấy từ vw_DiemCuaHang qua IReviewService (C). View trả 0 khi chưa có đánh giá
+        // nên phải kiểm tra SoDanhGia > 0 mới coi là có điểm.
+        var diem = await _danhGia.LayDiemCuaHangAsync(duLieuTho.MaCuaHang);
+
+        return new ProductDetailVm
+        {
+            Id = duLieuTho.MaSanPham,
+            Name = duLieuTho.Ten,
+            Description = duLieuTho.MoTa,
+            Price = duLieuTho.Gia ?? 0m,
+            Status = duLieuTho.TrangThai,
+            CanBuy = duLieuTho.TrangThai == "ACTIVE",
+            CategoryId = duLieuTho.MaDanhMuc,
+            CategoryName = duLieuTho.CategoryName,
+            ConditionName = duLieuTho.ConditionName,
+            CreatedAt = duLieuTho.NgayTao,
+            Images = duLieuTho.ImageUrls,
+            ShopId = duLieuTho.MaCuaHang,
+            ShopName = duLieuTho.ShopName,
+            ShopDescription = duLieuTho.ShopDescription,
+            ShopLogoUrl = duLieuTho.ShopLogo,
+            DiemTrungBinh = diem is not null && diem.SoDanhGia > 0 ? diem.DiemTrungBinh : null,
+            SoDanhGia = diem?.SoDanhGia ?? 0,
+            SoDonThanhCong = diem?.SoDonThanhCong ?? 0,
+            KhuVuc = duLieuTho.ShopKhuVuc
+        };
     }
 
     // =====================================================================

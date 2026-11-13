@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Services.Products;
+using SecondHandMarketplace.Web.Services.Reviews;
 using Xunit;
 
 namespace SecondHandMarketplace.Tests;
@@ -38,7 +39,7 @@ public class ProductDeletionTests
         db.GioHangs.Add(new GioHang { MaGioHang = 1, MaNguoiDung = 99, MaSanPham = productId });
         await db.SaveChangesAsync();
 
-        var service = new ProductService(db);
+        var service = new ProductService(db, new ReviewService(db));
         var (success, error) = await service.DeleteAsync(userId, productId);
 
         Assert.True(success);
@@ -66,7 +67,7 @@ public class ProductDeletionTests
         db.SanPhams.Add(new SanPham { MaSanPham = 202, MaCuaHang = shopId, Ten = "Đã cọc", TrangThai = "RESERVED", DaXoa = false });
         await db.SaveChangesAsync();
 
-        var service = new ProductService(db);
+        var service = new ProductService(db, new ReviewService(db));
 
         var (soldOk, soldErr) = await service.DeleteAsync(userId, 201);
         Assert.False(soldOk);
@@ -88,7 +89,7 @@ public class ProductDeletionTests
         db.SanPhams.Add(new SanPham { MaSanPham = 50, MaCuaHang = 1, Ten = "SP của User 1", TrangThai = "ACTIVE", DaXoa = false });
         await db.SaveChangesAsync();
 
-        var service = new ProductService(db);
+        var service = new ProductService(db, new ReviewService(db));
         var (ok, err) = await service.DeleteAsync(2, 50); // User 2 tries to delete User 1's product
 
         Assert.False(ok);
