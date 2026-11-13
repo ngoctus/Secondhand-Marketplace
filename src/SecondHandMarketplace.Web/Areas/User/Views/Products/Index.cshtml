@@ -73,6 +73,10 @@
                                         <div>
                                             <b>@p.Ten</b>
                                             <div class="text-muted small">@p.SoLuongAnh ảnh</div>
+                                            @if (p.TrangThai == "REJECTED" && !string.IsNullOrWhiteSpace(p.LyDoTuChoiGanNhat))
+                                            {
+                                                <div class="small text-danger mt-1"><strong>Lý do từ chối:</strong> @p.LyDoTuChoiGanNhat</div>
+                                            }
                                         </div>
                                     </div>
                                 </td>
