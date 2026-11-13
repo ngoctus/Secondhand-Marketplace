@@ -345,7 +345,7 @@
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 
     const targets = document.querySelectorAll(
-        '.landing-section, .help-section, .detail-info-panel, .rm-auth-card, .panel, .rm-panel, .kpi'
+        '.landing-section, .category-card, .rm-product-card, .search-page-layout, .help-section, .detail-info-panel, .rm-auth-card, .panel, .rm-panel, .kpi'
     );
     if (!targets.length) return;
 
@@ -362,6 +362,12 @@
             if (!entry.isIntersecting) return;
             entry.target.classList.add('is-visible');
             observer.unobserve(entry.target);
+            const clearReveal = event => {
+                if (event.target !== entry.target) return;
+                entry.target.classList.remove('rm-reveal', 'is-visible');
+                entry.target.removeEventListener('animationend', clearReveal);
+            };
+            entry.target.addEventListener('animationend', clearReveal);
         });
     }, { threshold: 0.08, rootMargin: '0px 0px -24px 0px' });
 

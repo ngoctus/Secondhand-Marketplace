@@ -3317,17 +3317,47 @@ body.rm-modal-open {
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes rmMenuIn {
+    from { opacity: 0; transform: translateY(-7px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes rmDrawerIn {
+    from { opacity: 0; transform: translateY(-9px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rmGentleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
 .rm-motion-ready .rm-reveal:not(.is-visible) { opacity: 0; transform: translateY(14px); }
 .rm-motion-ready .rm-reveal.is-visible { animation: rmFadeUp .48s cubic-bezier(.2,.7,.2,1) both; }
 
 @media (prefers-reduced-motion: no-preference) {
     .landing-hero, .help-hero { animation: rmFadeUp .55s cubic-bezier(.2,.7,.2,1) both; }
+    .hero-image-box { animation: rmGentleFloat 6s ease-in-out 700ms infinite; }
+    .rm-dropdown-menu:not([hidden]) { animation: rmMenuIn .18s ease-out both; transform-origin: top center; }
+    .rm-mobile-drawer:not([hidden]) { animation: rmDrawerIn .22s ease-out both; transform-origin: top center; }
+    .landing-section.is-visible .category-card:nth-child(1) { animation-delay: 40ms; }
+    .landing-section.is-visible .category-card:nth-child(2) { animation-delay: 90ms; }
+    .landing-section.is-visible .category-card:nth-child(3) { animation-delay: 140ms; }
+    .landing-section.is-visible .category-card:nth-child(4) { animation-delay: 190ms; }
+    .landing-section.is-visible .category-card:nth-child(5) { animation-delay: 240ms; }
+    .landing-section.is-visible .category-card:nth-child(6) { animation-delay: 290ms; }
+    .landing-section.is-visible .row > .col:nth-child(1) .rm-product-card { animation-delay: 35ms; }
+    .landing-section.is-visible .row > .col:nth-child(2) .rm-product-card { animation-delay: 90ms; }
+    .landing-section.is-visible .row > .col:nth-child(3) .rm-product-card { animation-delay: 145ms; }
+    .landing-section.is-visible .row > .col:nth-child(4) .rm-product-card { animation-delay: 200ms; }
     .rm-card-image { transition: transform .45s cubic-bezier(.2,.7,.2,1); }
     .rm-card-image-link:hover .rm-card-image { transform: scale(1.035); }
     .detail-main-img img { transition: transform .45s cubic-bezier(.2,.7,.2,1); }
     .detail-main-img:hover img { transform: scale(1.015); }
     .rm-card-favorite-btn { transition: transform .18s ease, background-color .18s ease; }
     .rm-card-favorite-btn:hover { transform: translateY(-1px) scale(1.04); }
+    .btn-rm-primary:active, .btn-rm-secondary:active, .btn-rm-outline:active, .btn-main:active, .btn-primary:active { transform: translateY(1px) scale(.985); }
+    .rm-footer-contact a, .rm-footer-links a { transition: color .18s ease, transform .18s ease; }
 }
 
 @media (max-width: 768px) {
