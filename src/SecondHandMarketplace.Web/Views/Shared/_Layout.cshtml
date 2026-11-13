@@ -49,14 +49,14 @@
             </a>
 
             <!-- Search Bar pill theo Wireframe -->
-            <form class="rm-header-search" asp-area="" asp-controller="Products" asp-action="Index" method="get">
+            <form class="rm-header-search" asp-area="" asp-controller="Products" asp-action="Index" method="get" role="search" aria-label="Tìm sản phẩm">
                 <span class="search-icon" aria-hidden="true">
                     <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="9" cy="9" r="6"></circle>
                         <line x1="13.5" y1="13.5" x2="18" y2="18"></line>
                     </svg>
                 </span>
-                <input type="search" name="Keyword" class="search-input" placeholder="Tìm món đồ bạn cần..." value="@(Context.Request.Query["Keyword"])" autocomplete="off" />
+                <input type="search" name="Keyword" class="search-input" placeholder="Tìm món đồ bạn cần..." value="@(Context.Request.Query["Keyword"])" autocomplete="off" aria-label="Từ khóa sản phẩm" />
             </form>
 
             <!-- Menu điều hướng ngang -->
@@ -149,7 +149,10 @@
                         </div>
                     </div>
 
-                    <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+                    @if (User.IsInRole("USER"))
+                    {
+                        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+                    }
                 }
                 else
                 {
@@ -160,9 +163,9 @@
             </div>
         </div>
         <div class="rm-mobile-drawer" id="mobileDrawer" hidden>
-            <form asp-area="" asp-controller="Products" asp-action="Index" method="get" class="mb-3">
+            <form asp-area="" asp-controller="Products" asp-action="Index" method="get" class="mb-3" role="search" aria-label="Tìm sản phẩm">
                 <input type="search" name="Keyword" class="form-control" placeholder="Tìm món đồ bạn cần..."
-                       value="@(Context.Request.Query["Keyword"])" autocomplete="off" />
+                       value="@(Context.Request.Query["Keyword"])" autocomplete="off" aria-label="Từ khóa sản phẩm" />
             </form>
 
             <div class="rm-mobile-heading">Danh mục</div>
@@ -173,7 +176,7 @@
 
             <div class="rm-dropdown-divider"></div>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000">Giá tốt</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1">Giá tốt</a>
 
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
             {
@@ -181,7 +184,27 @@
                 <div class="rm-mobile-heading">Quản trị</div>
                 <partial name="_AdminLinks" />
             }
-            @if (User.Identity?.IsAuthenticated != true)
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="rm-dropdown-divider"></div>
+                <div class="rm-mobile-heading">Tài khoản</div>
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a>
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="ChangePassword">Đổi mật khẩu</a>
+                @if (User.IsInRole("USER"))
+                {
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">Yêu thích</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê cửa hàng</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng của tôi</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Products" asp-action="Create">Đăng sản phẩm</a>
+                }
+                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
+                    <button type="submit" class="rm-dropdown-item text-danger">Đăng xuất</button>
+                </form>
+            }
+            else
             {
                 <div class="rm-dropdown-divider"></div>
                 <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="Login">Đăng nhập</a>
@@ -239,19 +262,24 @@
                     </ul>
                 </div>
 
-                <!-- Cột 5: Mạng xã hội -->
+                <!-- Cột 5: Liên hệ và hỗ trợ -->
                 <div>
-                    <h4 class="rm-footer-heading">Mạng xã hội</h4>
-                    <div class="rm-social-icons">
-                        <a class="social-circle" href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook">f</a>
-                        <a class="social-circle" href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube">▶</a>
-                        <a class="social-circle" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram">📸</a>
+                    <h4 class="rm-footer-heading">Liên hệ &amp; hỗ trợ</h4>
+                    <div class="rm-footer-contact">
+                        <a href="mailto:amin@local.com"><i class="bi bi-envelope" aria-hidden="true"></i><span>amin@local.com</span></a>
+                        <a href="tel:19001314"><i class="bi bi-telephone" aria-hidden="true"></i><span>1900 1314</span></a>
+                        <div class="rm-footer-address"><i class="bi bi-geo-alt" aria-hidden="true"></i><span>Lê Văn Việt, phường Tăng Nhơn Phú, Thủ Đức, TP.HCM</span></div>
+                        <a asp-controller="Help" asp-action="Index" asp-fragment="faq"><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Trung tâm hướng dẫn</span></a>
+                        <a asp-controller="Help" asp-action="Index" asp-fragment="su-co"><i class="bi bi-tools" aria-hidden="true"></i><span>Xử lý sự cố giao dịch</span></a>
+                        <a asp-area="User" asp-controller="Disputes" asp-action="Index"><i class="bi bi-chat-square-text" aria-hidden="true"></i><span>Khiếu nại &amp; tranh chấp</span></a>
+                        <a asp-area="User" asp-controller="Reports" asp-action="Index"><i class="bi bi-flag" aria-hidden="true"></i><span>Lịch sử báo cáo</span></a>
                     </div>
+                    <p class="rm-footer-contact-note">Với vấn đề về đơn hàng, vui lòng chuẩn bị mã đơn để được hỗ trợ nhanh hơn.</p>
                 </div>
             </div>
 
             <div class="rm-footer-bottom">
-                © 2026 Re:Market. Bảo lưu mọi quyền.
+                © @DateTime.Now.Year Re:Market. Bảo lưu mọi quyền.
             </div>
         </div>
     </footer>
