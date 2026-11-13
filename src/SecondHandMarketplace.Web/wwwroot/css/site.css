@@ -3022,3 +3022,363 @@ body.rm-modal-open {
     .rm-toast b {
         font-size: 13.5px;
     }
+
+/* ============================================================
+   KHUNG NHAN CHO TRANG DON HANG (nguoi ban + admin)
+   Cac class .panel / .note / .primary / .reject / .smallbtn / .full
+   du dung trong view tu truoc nhung chua tung duoc dinh nghia,
+   nen trang tro xau theo mac dinh trinh duyet. Khoi nay ken theo
+   mau cua app, khong doi ten class trong view.
+   ============================================================ */
+.panel {
+    background-color: var(--color-surface-white);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+    .panel h3 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--color-text-primary);
+        margin: 0 0 12px;
+    }
+
+    .panel .panel-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+        .panel .panel-head h3 {
+            margin: 0;
+        }
+
+    .panel > .table {
+        margin-bottom: 0;
+    }
+
+.note {
+    background-color: var(--color-surface);
+    border-left: 3px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+    margin: 0 0 12px;
+}
+
+a.primary,
+button.primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    padding: 10px 16px;
+    font-family: var(--font-main);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #FFFFFF !important;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+    a.primary:hover,
+    button.primary:hover {
+        background-color: var(--color-primary-hover);
+        border-color: var(--color-primary-hover);
+        transform: translateY(-1px);
+    }
+
+    a.primary:active,
+    button.primary:active {
+        background-color: var(--color-primary-active);
+        transform: none;
+    }
+
+button.reject,
+a.reject {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #FFFFFF;
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-md);
+    padding: 10px 16px;
+    font-family: var(--font-main);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--color-error);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+
+    button.reject:hover,
+    a.reject:hover {
+        background-color: var(--color-error-bg);
+        color: var(--color-error);
+    }
+
+.full {
+    display: block;
+    width: 100%;
+}
+
+.smallbtn {
+    display: inline-block;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background-color: #FFFFFF;
+    transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+}
+
+a.smallbtn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: var(--color-primary-subtle);
+}
+
+/* Bang don hang: dau trang nhe, dong co hover */
+.table-wrap .table {
+    font-size: 13px;
+}
+
+.table-wrap thead th {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+    padding: 10px 12px;
+    white-space: nowrap;
+}
+
+.table-wrap tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    vertical-align: middle;
+}
+
+.table-wrap tbody tr {
+    transition: background-color .15s ease;
+}
+
+    .table-wrap tbody tr:hover {
+        background-color: var(--color-surface);
+    }
+
+    .table-wrap tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+/* O vuong nho thay anh bi lot; trong the san pham thi cho full khung 4:5 */
+.product-art-fallback {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    border-radius: var(--radius-md);
+    background-color: #E8DEC9;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    overflow: hidden;
+}
+
+    .product-art-fallback .fallback-text {
+        display: none;
+    }
+
+.rm-card-media .product-art-fallback {
+    width: 100%;
+    height: 100%;
+    flex: none;
+    border-radius: var(--radius-lg);
+    font-size: 12px;
+}
+
+    .rm-card-media .product-art-fallback .fallback-text {
+        display: inline;
+        margin-left: 6px;
+    }
+
+/* Form trong panel: textarea/label cua dong don hang chua co class */
+.panel textarea {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    font-family: var(--font-main);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    background-color: #FFFFFF;
+    resize: vertical;
+}
+
+    .panel textarea:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px var(--color-primary-subtle);
+    }
+
+.panel .field {
+    display: block;
+    margin-bottom: 12px;
+}
+
+    .panel .field > label {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+    }
+
+    .panel .field > textarea {
+        margin-top: 6px;
+    }
+
+.panel hr {
+    border: 0;
+    border-top: 1px solid var(--color-border-subtle);
+    margin: 16px 0;
+}
+
+/* Khong nhac nguoi ban xac nhan tien: lat nhe mau canh bao */
+.rm-khung-tien {
+    background-color: var(--color-warning-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+}
+
+.rm-khung-tien-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+    .rm-khung-tien-title .bi {
+        color: var(--color-warning);
+    }
+
+    .rm-khung-tien-title span {
+        color: var(--color-error);
+    }
+
+.rm-khung-tien-note {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    margin-bottom: 10px;
+}
+
+/* Tong tien trong chi tiet don: thang hang voi bang san pham */
+.order-sum {
+    border-top: 1px solid var(--color-border-subtle);
+    padding-top: 10px;
+}
+
+/* Trang thong bao: bo vien xanh nang, thay bang dau nhan te nhe */
+.rm-thong-bao .list-group {
+    gap: 10px;
+}
+
+.rm-thong-bao .list-group-item {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg) !important;
+    padding: 14px 16px;
+    background-color: var(--color-surface-white);
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+
+    .rm-thong-bao .list-group-item:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .rm-thong-bao .list-group-item.is-unread {
+        border-left: 3px solid var(--color-primary);
+        background-color: var(--color-surface);
+    }
+
+.rm-thong-bao .tb-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+.rm-thong-bao .tb-body {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+}
+
+.rm-thong-bao .tb-meta {
+    font-size: 11.5px;
+    color: var(--color-text-muted);
+    margin-top: 6px;
+}
+
+.rm-thong-bao .tb-badge {
+    background-color: var(--color-primary-subtle);
+    color: var(--color-primary);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+}
+
+.rm-thong-bao .tb-read {
+    font-size: 11.5px;
+    color: var(--color-text-muted);
+}
+
+.rm-thong-bao .btn-outline-secondary {
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+}
+
+    .rm-thong-bao .btn-outline-secondary:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        background-color: var(--color-primary-subtle);
+    }
+
+.rm-thong-bao .tb-head h2 {
+    font-size: 26px;
+    margin: 0;
+}

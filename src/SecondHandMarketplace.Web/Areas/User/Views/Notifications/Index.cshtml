@@ -8,29 +8,29 @@
         _ => "Hệ thống"
     };
 }
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="container py-4 rm-thong-bao">
+    <div class="d-flex justify-content-between align-items-center mb-3 tb-head">
         <h2 class="mb-0">Thông báo</h2>
         <span class="text-muted">Chưa đọc: <strong>@Model.UnreadCount</strong></span>
     </div>
 
     @if (Model.Items.Count == 0)
     {
-        <div class="empty">Bạn chưa có thông báo nào.</div>
+        <div class="empty panel">Bạn chưa có thông báo nào.</div>
     }
     else
     {
         <div class="list-group mb-3">
             @foreach (var item in Model.Items)
             {
-                <div class="list-group-item d-flex justify-content-between align-items-start gap-3 @(item.DaDoc ? "" : "list-group-item-light border-start border-success border-3")">
+                <div class="list-group-item d-flex justify-content-between align-items-start gap-3 @(item.DaDoc ? null : "is-unread")">
                     <div>
-                        <div class="@(item.DaDoc ? "" : "fw-bold")">
+                        <div class="tb-title">
                             @item.TieuDe
-                            @if (!item.DaDoc) { <span class="badge bg-success ms-1">Mới</span> }
+                            @if (!item.DaDoc) { <span class="tb-badge">MỚI</span> }
                         </div>
-                        <div>@item.NoiDung</div>
-                        <div class="small text-muted">@TenLoai(item.Loai) · @HienThi.NgayGio(item.NgayTao)</div>
+                        <div class="tb-body">@item.NoiDung</div>
+                        <div class="tb-meta">@TenLoai(item.Loai) · @HienThi.NgayGio(item.NgayTao)</div>
                     </div>
                     @if (!item.DaDoc)
                     {
@@ -42,7 +42,7 @@
                     }
                     else
                     {
-                        <span class="small text-muted flex-shrink-0">Đã đọc</span>
+                        <span class="tb-read flex-shrink-0">Đã đọc</span>
                     }
                 </div>
             }
