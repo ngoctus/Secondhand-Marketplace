@@ -5,6 +5,7 @@ namespace SecondHandMarketplace.Web.Services.Disputes;
 /// <summary>Nghiệp vụ Tranh chấp và Khiếu nại đơn hàng.</summary>
 public interface IDisputeService
 {
+    Task<(bool HopLe, string? ThongBao, MoTranhChapViewModel? ViewModel, int? MaTranhChapHienCo)> ChuanBiMoTranhChapAsync(int userId, int maDonHang);
     Task<(bool ThanhCong, string? ThongBao)> MoTranhChapAsync(int maNguoiMua, MoTranhChapViewModel vm);
     Task<(bool ThanhCong, string? ThongBao)> NguoiBanPhanHoiAsync(int maChuShop, int maTranhChap, string phanHoi);
     Task<TranhChapDetailViewModel?> LayChiTietTranhChapAsync(int maTranhChap);

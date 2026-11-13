@@ -25,7 +25,7 @@
     List<ProductCardVm> sanPhams = new();
     try
     {
-        sanPhams = await ProductService.SearchAsync(new ProductSearchVm());
+        sanPhams = (await ProductService.SearchAsync(new ProductSearchVm())).Items.ToList();
     }
     catch { }
 }
@@ -58,9 +58,10 @@
         </div>
     </div>
     <div class="hero-image-box">
-        <div class="wireframe-placeholder">
-            <span>Hình minh họa hero</span>
-        </div>
+        <img src="~/images/hero-marketplace.jpg"
+             alt="Đồ dùng secondhand được tái sử dụng: laptop, máy ảnh, tai nghe và quần áo"
+             class="hero-image"
+             asp-append-version="true" />
     </div>
 </section>
 
@@ -85,7 +86,7 @@
                 <div class="carousel-item @(i == 0 ? "active" : null)">
                     @if (!string.IsNullOrWhiteSpace(b.LienKet))
                     {
-                        <a href="@b.LienKet" class="d-block">
+                        <a href="@(SecondHandMarketplace.Web.Common.UrlAnToan.HopLe(b.LienKet) ? b.LienKet : "#")" class="d-block">
                             <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100 d-none d-md-block" style="aspect-ratio:10/3; object-fit:cover;" data-fallback />
                             <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100 d-md-none" style="aspect-ratio:16/9; object-fit:cover;" data-fallback />
                         </a>
@@ -94,11 +95,12 @@
                     {
                         <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100" style="aspect-ratio:10/3; object-fit:cover;" data-fallback />
                     }
-                    @if (!string.IsNullOrWhiteSpace(b.MoTa))
+                    @* Chỉ hiển thị caption HTML khi ảnh không phải là banner SVG (vì banner SVG đã có chữ thiết kế sẵn bên trong ảnh) *@
+                    @if (!string.IsNullOrWhiteSpace(b.MoTa) && !b.DuongDanAnh.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
                     {
-                        <div class="carousel-caption d-none d-md-block text-start" style="background:rgba(0,0,0,.35); border-radius:10px; padding:8px 14px;">
-                            <h5 class="mb-1">@b.TieuDe</h5>
-                            <p class="mb-0 small">@b.MoTa</p>
+                        <div class="carousel-caption d-none d-md-block text-start" style="background:rgba(15,23,42,.75); backdrop-filter:blur(6px); border-radius:10px; padding:10px 16px; bottom:20px; left:30px; max-width:60%;">
+                            <h5 class="mb-1 text-white fw-bold">@b.TieuDe</h5>
+                            <p class="mb-0 small text-white-50">@b.MoTa</p>
                         </div>
                     }
                 </div>
@@ -196,10 +198,8 @@
 <!-- 5. GIÁ TRỊ BỀN VỮNG (Ảnh 3) -->
 <section class="landing-section">
     <div class="sustainability-row">
-        <div style="aspect-ratio: 16 / 10; width: 100%;">
-            <div class="wireframe-placeholder">
-                <span>Ảnh tái sử dụng</span>
-            </div>
+        <div class="sustainability-image-wrap">
+            <img src="~/images/sustainable-reuse.jpg" alt="Trái đất xanh với biểu tượng tái chế, đại diện cho lối sống bền vững" class="sustainability-image" asp-append-version="true" />
         </div>
         <div>
             <div class="section-label">GIÁ TRỊ BỀN VỮNG</div>
@@ -234,22 +234,22 @@
 
     <div class="trust-grid">
         <div class="trust-card">
-            <div class="trust-dot"></div>
+            <div class="trust-dot" aria-hidden="true">✓</div>
             <h4>Kiểm duyệt sản phẩm</h4>
             <p>Mọi tin đăng được duyệt trước khi hiển thị.</p>
         </div>
         <div class="trust-card">
-            <div class="trust-dot"></div>
+            <div class="trust-dot" aria-hidden="true">↔</div>
             <h4>Giao dịch an toàn</h4>
             <p>Hướng dẫn gặp mặt, thanh toán, kiểm hàng.</p>
         </div>
         <div class="trust-card">
-            <div class="trust-dot"></div>
+            <div class="trust-dot" aria-hidden="true">♡</div>
             <h4>Quy định cộng đồng</h4>
             <p>Nguyên tắc đăng bán và ứng xử rõ ràng.</p>
         </div>
         <div class="trust-card">
-            <div class="trust-dot"></div>
+            <div class="trust-dot" aria-hidden="true">!</div>
             <h4>Báo cáo vi phạm</h4>
             <p>Gửi báo cáo nhanh, có đội ngũ xử lý.</p>
         </div>
@@ -267,7 +267,7 @@
             <div class="review-stars">★★★★★</div>
             <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
             <div class="review-author">
-                <div class="author-circle"></div>
+                <img class="author-circle" src="~/images/avatar-default.png" alt="Ảnh đại diện người dùng" />
                 <div class="author-info">
                     <b>Tên người dùng</b>
                     <span>Đã mua: Tên sản phẩm</span>
@@ -278,7 +278,7 @@
             <div class="review-stars">★★★★★</div>
             <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
             <div class="review-author">
-                <div class="author-circle"></div>
+                <img class="author-circle" src="~/images/avatar-default.png" alt="Ảnh đại diện người dùng" />
                 <div class="author-info">
                     <b>Tên người dùng</b>
                     <span>Đã mua: Tên sản phẩm</span>
@@ -289,7 +289,7 @@
             <div class="review-stars">★★★★★</div>
             <p class="review-text">Nội dung nhận xét của người mua về trải nghiệm giao dịch (tối đa 3 dòng).</p>
             <div class="review-author">
-                <div class="author-circle"></div>
+                <img class="author-circle" src="~/images/avatar-default.png" alt="Ảnh đại diện người dùng" />
                 <div class="author-info">
                     <b>Tên người dùng</b>
                     <span>Đã mua: Tên sản phẩm</span>

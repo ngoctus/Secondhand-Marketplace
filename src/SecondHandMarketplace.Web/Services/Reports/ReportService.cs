@@ -52,7 +52,7 @@ public class ReportService : IReportService
         }
 
         // Chuẩn hóa loại đối tượng thành chữ in hoa trước khi so sánh chống trùng
-        var loaiDoiTuong = (vm.LoaiDoiTuong ?? string.Empty).Trim().ToUpper();
+        var loaiDoiTuong = (vm.LoaiDoiTuong ?? string.Empty).Trim().ToUpperInvariant();
         if (loaiDoiTuong != "PRODUCT" && loaiDoiTuong != "USER" && loaiDoiTuong != "SHOP")
         {
             return (false, "Loại đối tượng báo cáo không hợp lệ.");
@@ -76,6 +76,11 @@ public class ReportService : IReportService
             case "PRODUCT":
                 var sp = await _db.SanPhams.FindAsync(vm.MaDoiTuong);
                 if (sp == null || sp.DaXoa) return (false, "Sản phẩm không tồn tại.");
+                var chuShop = await _db.CuaHangs.AsNoTracking()
+                    .Where(c => c.MaCuaHang == sp.MaCuaHang)
+                    .Select(c => c.MaNguoiDung)
+                    .FirstOrDefaultAsync();
+                if (chuShop == maNguoiBaoCao) return (false, "Không thể tự báo cáo sản phẩm của cửa hàng mình.");
                 break;
             case "USER":
                 var nd = await _db.NguoiDungs.FindAsync(vm.MaDoiTuong);
@@ -139,14 +144,16 @@ public class ReportService : IReportService
             .Include(x => x.NguoiXuLy)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(trangThai))
+        var ttChuan = trangThai?.Trim().ToUpperInvariant();
+        if (ttChuan is "PENDING" or "RESOLVED" or "DISMISSED")
         {
-            query = query.Where(x => x.TrangThai == trangThai);
+            query = query.Where(x => x.TrangThai == ttChuan);
         }
 
-        if (!string.IsNullOrEmpty(loaiDoiTuong))
+        var loaiChuan = loaiDoiTuong?.Trim().ToUpperInvariant();
+        if (loaiChuan is "PRODUCT" or "USER" or "SHOP")
         {
-            query = query.Where(x => x.LoaiDoiTuong == loaiDoiTuong);
+            query = query.Where(x => x.LoaiDoiTuong == loaiChuan);
         }
 
         var totalItems = await query.CountAsync();
@@ -195,16 +202,21 @@ public class ReportService : IReportService
             // Ghi Audit Log thành công
             await _audit.LogAsync(adminId, "DISMISS_REPORT", "BaoCao", maBaoCao, "SUCCESS", lyDoBoQua);
 
-            // Gửi thông báo cho người báo cáo
-            await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
-                "Kết quả xem xét báo cáo",
-                $"Báo cáo của bạn đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} đã được ban quản trị xem xét và ghi nhận không vi phạm quy định.",
-                bc.MaBaoCao);
+            // Gửi thông báo cho người báo cáo (best-effort)
+            try
+            {
+                await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
+                    "Kết quả xem xét báo cáo",
+                    $"Báo cáo của bạn đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} đã được ban quản trị xem xét và ghi nhận không vi phạm quy định.",
+                    bc.MaBaoCao);
+            }
+            catch { /* Best-effort */ }
 
             return (true, "Đã bỏ qua báo cáo thành công.");
         }
         else if (hanhDong == "RESOLVE")
         {
+            using var tx = _db.Database.IsRelational() ? await _db.Database.BeginTransactionAsync() : null;
             var lyDoXuLy = string.IsNullOrWhiteSpace(ghiChu) ? $"Vi phạm quy định theo báo cáo #{bc.MaBaoCao}" : ghiChu.Trim();
             if (lyDoXuLy.Length > 500)
             {
@@ -218,34 +230,63 @@ public class ReportService : IReportService
                 var (okUser, errUser) = await _userAdmin.LockUserAsync(adminId, bc.MaDoiTuong, lyDoXuLy);
                 if (!okUser)
                 {
-                    await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errUser);
-                    return (false, errUser ?? "Không thể khóa tài khoản người dùng.");
+                    var userTarget = await _db.NguoiDungs.FindAsync(bc.MaDoiTuong);
+                    if (userTarget != null && userTarget.TrangThai == "LOCKED")
+                    {
+                        lyDoXuLy += " (Người dùng đã bị khóa trước đó)";
+                    }
+                    else
+                    {
+                        await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errUser);
+                        return (false, errUser ?? "Không thể khóa tài khoản người dùng.");
+                    }
                 }
 
-                await _notifications.CreateAsync(bc.MaDoiTuong, NotificationTypes.System,
-                    "Tài khoản của bạn đã bị khóa",
-                    $"Tài khoản của bạn đã bị khóa do vi phạm quy định sàn: {lyDoXuLy}");
+                try
+                {
+                    await _notifications.CreateAsync(bc.MaDoiTuong, NotificationTypes.System,
+                        "Tài khoản của bạn đã bị khóa",
+                        $"Tài khoản của bạn đã bị khóa do vi phạm quy định sàn: {lyDoXuLy}");
+                }
+                catch { /* Best effort */ }
             }
             else if (bc.LoaiDoiTuong == "SHOP")
             {
                 var (okShop, errShop) = await _shopService.LockShopAsync(adminId, bc.MaDoiTuong, lyDoXuLy);
                 if (!okShop)
                 {
-                    await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errShop);
-                    return (false, errShop ?? "Không thể khóa cửa hàng.");
+                    var shopTarget = await _db.CuaHangs.FindAsync(bc.MaDoiTuong);
+                    if (shopTarget != null && shopTarget.TrangThai == "LOCKED")
+                    {
+                        lyDoXuLy += " (Cửa hàng đã bị khóa trước đó)";
+                    }
+                    else
+                    {
+                        await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errShop);
+                        return (false, errShop ?? "Không thể khóa cửa hàng.");
+                    }
                 }
 
-                var shop = await _db.CuaHangs.FindAsync(bc.MaDoiTuong);
-                if (shop != null)
+                try
                 {
-                    await _notifications.CreateAsync(shop.MaNguoiDung, NotificationTypes.System,
-                        "Cửa hàng của bạn đã bị khóa",
-                        $"Cửa hàng '{shop.TenShop}' đã bị tạm khóa do vi phạm chính sách: {lyDoXuLy}");
+                    var shop = await _db.CuaHangs.FindAsync(bc.MaDoiTuong);
+                    if (shop != null)
+                    {
+                        await _notifications.CreateAsync(shop.MaNguoiDung, NotificationTypes.System,
+                            "Cửa hàng của bạn đã bị khóa",
+                            $"Cửa hàng '{shop.TenShop}' đã bị tạm khóa do vi phạm chính sách: {lyDoXuLy}");
+                    }
                 }
+                catch { /* Best effort */ }
             }
             else if (bc.LoaiDoiTuong == "PRODUCT")
             {
-                if (_db.Database.IsRelational())
+                var spTarget = await _db.SanPhams.FindAsync(bc.MaDoiTuong);
+                if (spTarget != null && spTarget.TrangThai == "REMOVED")
+                {
+                    lyDoXuLy += " (Sản phẩm đã ở trạng thái bị gỡ trước đó)";
+                }
+                else if (_db.Database.IsRelational())
                 {
                     try
                     {
@@ -296,10 +337,49 @@ public class ReportService : IReportService
                 var product = await _db.SanPhams.Include(p => p.CuaHang).FirstOrDefaultAsync(p => p.MaSanPham == bc.MaDoiTuong);
                 if (product?.CuaHang != null)
                 {
-                    await _notifications.CreateAsync(product.CuaHang.MaNguoiDung, NotificationTypes.Product,
-                        "Sản phẩm bị gỡ bỏ do vi phạm",
-                        $"Sản phẩm '{product.Ten}' đã bị ban quản trị gỡ bỏ khỏi sàn. Lý do: {lyDoXuLy}",
-                        bc.MaDoiTuong);
+                    var chuShopId = product.CuaHang.MaNguoiDung;
+                    try
+                    {
+                        await _notifications.CreateAsync(chuShopId, NotificationTypes.Product,
+                            "Sản phẩm bị gỡ bỏ do vi phạm",
+                            $"Sản phẩm '{product.Ten}' đã bị ban quản trị gỡ bỏ khỏi sàn. Lý do: {lyDoXuLy}",
+                            bc.MaDoiTuong);
+                    }
+                    catch { /* Best-effort: lỗi thông báo không làm hỏng giao dịch gỡ sản phẩm */ }
+
+                    // Đếm số vi phạm chuẩn xác: các sản phẩm vi phạm khác nhau (distinct) + vi phạm kiểm duyệt
+                    var countViPhamKiemDuyet = await _db.LichSuViPhams.CountAsync(v => v.MaNguoiBan == chuShopId);
+                    
+                    var countSpBiBaoCao = await _db.BaoCaos
+                        .Where(b => b.TrangThai == "RESOLVED" && b.LoaiDoiTuong == "PRODUCT" &&
+                                    _db.SanPhams.Any(p => p.MaSanPham == b.MaDoiTuong && p.CuaHang.MaNguoiDung == chuShopId && p.MaSanPham != bc.MaDoiTuong))
+                        .Select(b => b.MaDoiTuong)
+                        .Distinct()
+                        .CountAsync();
+
+                    var countBaoCaoNguoiDungShop = await _db.BaoCaos
+                        .Where(b => b.TrangThai == "RESOLVED" &&
+                                    ((b.LoaiDoiTuong == "USER" && b.MaDoiTuong == chuShopId) ||
+                                     (b.LoaiDoiTuong == "SHOP" && _db.CuaHangs.Any(c => c.MaCuaHang == b.MaDoiTuong && c.MaNguoiDung == chuShopId))))
+                        .CountAsync();
+
+                    var tongViPham = countViPhamKiemDuyet + countSpBiBaoCao + countBaoCaoNguoiDungShop + 1; // +1 cho sản phẩm bị gỡ hiện tại
+                    if (tongViPham >= 3)
+                    {
+                        var lyDoKhoa = $"Tự động khóa: Đạt {tongViPham} lần vi phạm/bị gỡ do báo cáo và kiểm duyệt (ngưỡng 3 gậy).";
+                        var (okUser, _) = await _userAdmin.LockUserAsync(adminId, chuShopId, lyDoKhoa);
+                        var (okShop, _) = await _shopService.LockShopAsync(adminId, product.MaCuaHang, lyDoKhoa);
+                        if (okUser || okShop)
+                        {
+                            try
+                            {
+                                await _notifications.CreateAsync(chuShopId, NotificationTypes.System,
+                                    "Tài khoản của bạn đã bị khóa",
+                                    $"Tài khoản và cửa hàng của bạn đã bị khóa tự động vì tích lũy {tongViPham} lần vi phạm (đạt ngưỡng 3 gậy). Vui lòng liên hệ ban quản trị để được hỗ trợ.");
+                            }
+                            catch { /* Best-effort */ }
+                        }
+                    }
                 }
             }
 
@@ -309,15 +389,23 @@ public class ReportService : IReportService
             bc.NguoiXuLyId = adminId;
             bc.NgayXuLy = now;
             await _db.SaveChangesAsync();
+            if (tx != null)
+            {
+                await tx.CommitAsync();
+            }
 
             // Ghi Audit Log xử lý báo cáo thành công
             await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "SUCCESS", lyDoXuLy);
 
-            // Gửi thông báo cảm ơn người báo cáo
-            await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
-                "Báo cáo của bạn đã được xử lý",
-                $"Ban quản trị đã tiến hành xử lý vi phạm đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} theo báo cáo của bạn. Cảm ơn sự đóng góp của bạn!",
-                bc.MaBaoCao);
+            // Gửi thông báo cảm ơn người báo cáo (best-effort)
+            try
+            {
+                await _notifications.CreateAsync(bc.MaNguoiBaoCao, NotificationTypes.System,
+                    "Báo cáo của bạn đã được xử lý",
+                    $"Ban quản trị đã tiến hành xử lý vi phạm đối với {bc.LoaiDoiTuong} #{bc.MaDoiTuong} theo báo cáo của bạn. Cảm ơn sự đóng góp của bạn!",
+                    bc.MaBaoCao);
+            }
+            catch { /* Best-effort */ }
 
             return (true, "Đã cập nhật xử lý báo cáo thành công.");
         }

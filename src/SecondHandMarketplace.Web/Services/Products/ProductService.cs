@@ -1,4 +1,5 @@
 using System.Data;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
@@ -6,6 +7,7 @@ using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Reviews;
 
 namespace SecondHandMarketplace.Web.Services.Products;
 
@@ -14,24 +16,23 @@ public class ProductService : IProductService
     private const int SoAnhToiDa = 10;
 
     private readonly AppDbContext _db;
-    private readonly IShopDisplayReader _hienThiShop;
+    private readonly IReviewService _danhGia;
+    private readonly IWebHostEnvironment? _environment;
 
-    public ProductService(AppDbContext db, IShopDisplayReader hienThiShop)
+    public ProductService(AppDbContext db, IReviewService danhGia, IWebHostEnvironment? environment = null)
     {
         _db = db;
-        _hienThiShop = hienThiShop;
+        _danhGia = danhGia;
+        _environment = environment;
     }
 
-    public async Task<List<ProductCardVm>> SearchAsync(ProductSearchVm f) =>
-        (await SearchPagedAsync(f)).Items.ToList();
-
-    public async Task<PagedResult<ProductCardVm>> SearchPagedAsync(ProductSearchVm f)
+    public async Task<PagedResult<ProductCardVm>> SearchAsync(ProductSearchVm f)
     {
         f.GiaiPhanGia();
-        var query = await TaoTruyVanTimKiemAsync(f);
-        var total = await query.CountAsync();
+        var query = TaoTruyVanTimKiem(f);
         var page = Math.Max(1, f.Page);
-        var pageSize = ProductSearchVm.PageSize;
+        var pageSize = Math.Clamp(f.PageSize, 1, 100);
+        var total = await query.CountAsync();
 
         var duLieuTho = await SapXepTruyVan(query, f.Sort)
             .Skip((page - 1) * pageSize)
@@ -45,12 +46,18 @@ public class ProductService : IProductService
                 p.MaCuaHang,
                 p.CuaHang.TenShop,
                 p.CuaHang.Logo,
+                p.CuaHang.KhuVucHienThi,
                 p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
                 p.TinhTrang != null ? p.TinhTrang.Ten : null,
                 p.DanhMuc != null ? p.DanhMuc.Ten : null))
             .ToListAsync();
 
-        var items = await ProductCardMapper.TaoDanhSachAsync(duLieuTho, _hienThiShop);
+        var items = await ProductCardMapper.TaoDanhSachAsync(duLieuTho, _danhGia);
+        if (_environment is not null)
+        {
+            foreach (var item in items)
+                item.ImageUrl = ThumbnailIfPresent(item.ImageUrl);
+        }
 
         return new PagedResult<ProductCardVm>
         {
@@ -63,10 +70,15 @@ public class ProductService : IProductService
 
     // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
     // cửa hàng và chủ cửa hàng đều đang hoạt động.
-    private async Task<IQueryable<SanPham>> TaoTruyVanTimKiemAsync(ProductSearchVm f)
+    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f)
     {
         var query = _db.SanPhams
             .AsNoTracking()
+            .Include(p => p.CuaHang)
+            .ThenInclude(ch => ch.NguoiDung)
+            .Include(p => p.Anh)
+            .Include(p => p.TinhTrang)
+            .Include(p => p.DanhMuc)
             .Where(p => p.TrangThai == "ACTIVE"
                         && !p.DaXoa
                         && p.CuaHang.TrangThai == "ACTIVE"
@@ -77,8 +89,10 @@ public class ProductService : IProductService
             var tuKhoa = f.Keyword.Trim();
             var tuKhoaChuanHoa = TextHelper.ChuanHoa(tuKhoa);
             query = query.Where(p => p.ChuoiTimKiem.Contains(tuKhoaChuanHoa)
-                                     || p.CuaHang.TenShop.Contains(tuKhoa));
+                                     || p.CuaHang.TenShop.Contains(tuKhoa)
+                                     || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
         }
+
         if (f.CategoryId != null)
             query = query.Where(p => p.MaDanhMuc == f.CategoryId);
         if (f.ConditionId != null)
@@ -88,13 +102,11 @@ public class ProductService : IProductService
         if (f.MaxPrice != null)
             query = query.Where(p => p.Gia <= f.MaxPrice);
 
-        if (f.MaTinhThanh != null || f.MaPhuongXa != null)
-        {
-            var shopTrongKhuVuc = await _hienThiShop.LayCuaHangTrongKhuVucAsync(f.MaTinhThanh, f.MaPhuongXa);
-            // null = bảng khu vực của A chưa tồn tại: bỏ qua bộ lọc còn hơn là trả về trang trống.
-            if (shopTrongKhuVuc != null)
-                query = query.Where(p => shopTrongKhuVuc.Contains(p.MaCuaHang));
-        }
+        // Khu vực sinh sống (mục A4): lọc theo mã tỉnh/xã của cửa hàng, không tính khoảng cách.
+        if (f.MaTinhThanh != null)
+            query = query.Where(p => p.CuaHang.MaTinhThanh == f.MaTinhThanh);
+        if (f.MaPhuongXa != null)
+            query = query.Where(p => p.CuaHang.MaPhuongXa == f.MaPhuongXa);
 
         return query;
     }
@@ -105,6 +117,21 @@ public class ProductService : IProductService
         "price_desc" => query.OrderByDescending(p => p.Gia).ThenByDescending(p => p.MaSanPham),
         _ => query.OrderByDescending(p => p.NgayTao).ThenByDescending(p => p.MaSanPham)
     };
+
+    // Thẻ sản phẩm dùng bản thumbnail 640px nếu controller upload đã tạo ra, nếu không thì dùng ảnh gốc.
+    private string? ThumbnailIfPresent(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl) || _environment?.WebRootPath is null) return imageUrl;
+        var cleanUrl = imageUrl.Split('?', '#')[0];
+        if (!cleanUrl.StartsWith("/uploads/products/", StringComparison.OrdinalIgnoreCase)) return imageUrl;
+        var relative = cleanUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var directory = Path.GetDirectoryName(relative) ?? string.Empty;
+        var thumbName = Path.GetFileNameWithoutExtension(relative) + "-thumb.webp";
+        var thumbPath = Path.Combine(_environment.WebRootPath, directory, thumbName);
+        return System.IO.File.Exists(thumbPath)
+            ? "/" + Path.Combine(directory, thumbName).Replace(Path.DirectorySeparatorChar, '/')
+            : imageUrl;
+    }
 
     public async Task<ProductDetailVm?> GetDetailAsync(int id)
     {
@@ -131,14 +158,16 @@ public class ProductService : IProductService
                 ShopName = p.CuaHang.TenShop,
                 ShopDescription = p.CuaHang.MoTa,
                 ShopLogo = p.CuaHang.Logo,
+                ShopKhuVuc = p.CuaHang.KhuVucHienThi,
                 ImageUrls = p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()
             })
             .FirstOrDefaultAsync();
 
         if (duLieuTho is null) return null;
 
-        var hienThi = await _hienThiShop.LayTheoCuaHangAsync([duLieuTho.MaCuaHang]);
-        hienThi.TryGetValue(duLieuTho.MaCuaHang, out var shop);
+        // Điểm sao chỉ lấy từ vw_DiemCuaHang qua IReviewService (C). View trả 0 khi chưa có đánh giá
+        // nên phải kiểm tra SoDanhGia > 0 mới coi là có điểm.
+        var diem = await _danhGia.LayDiemCuaHangAsync(duLieuTho.MaCuaHang);
 
         return new ProductDetailVm
         {
@@ -157,10 +186,10 @@ public class ProductService : IProductService
             ShopName = duLieuTho.ShopName,
             ShopDescription = duLieuTho.ShopDescription,
             ShopLogoUrl = duLieuTho.ShopLogo,
-            DiemTrungBinh = shop?.DiemTrungBinh,
-            SoDanhGia = shop?.SoDanhGia ?? 0,
-            SoDonThanhCong = shop?.SoDonThanhCong ?? 0,
-            KhuVuc = shop?.KhuVuc
+            DiemTrungBinh = diem is not null && diem.SoDanhGia > 0 ? diem.DiemTrungBinh : null,
+            SoDanhGia = diem?.SoDanhGia ?? 0,
+            SoDonThanhCong = diem?.SoDonThanhCong ?? 0,
+            KhuVuc = duLieuTho.ShopKhuVuc
         };
     }
 
@@ -197,7 +226,9 @@ public class ProductService : IProductService
                 NgayCapNhat = p.NgayCapNhat,
                 AnhDaiDien = p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault()
                                  ?? p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).FirstOrDefault(),
-                SoLuongAnh = p.Anh.Count
+                SoLuongAnh = p.Anh.Count,
+                PhanTichThatBai = _db.LuotKiemDuyets.Any(l => l.MaSanPham == p.MaSanPham
+                    && l.QuyetDinh == null && l.PhanTich != null && l.PhanTich.TrangThai == "FAILED")
             })
             .ToListAsync(cancellationToken);
 
@@ -220,6 +251,7 @@ public class ProductService : IProductService
                 Gia = p.Gia,
                 MaDanhMuc = p.MaDanhMuc,
                 MaTinhTrang = p.MaTinhTrang,
+                TrangThai = p.TrangThai,
                 AnhHienTai = p.Anh.OrderBy(a => a.ThuTu)
                     .Select(a => new ProductImageVm { MaAnh = a.MaAnhSP, DuongDan = a.DuongDan, LaAnhChinh = a.LaAnhChinh })
                     .ToList()
@@ -288,7 +320,7 @@ public class ProductService : IProductService
             .FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && x.MaCuaHang == shop!.MaCuaHang && !x.DaXoa, cancellationToken);
         if (sp is null) return (false, "Không tìm thấy sản phẩm hoặc sản phẩm không thuộc cửa hàng của bạn.");
         if (sp.TrangThai == "PENDING_REVIEW") return (false, "Sản phẩm đang chờ duyệt, không thể chỉnh sửa.");
-        if (sp.TrangThai is "RESERVED" or "SOLD") return (false, "Sản phẩm đã có đơn đặt/đã bán, không thể chỉnh sửa.");
+        if (sp.TrangThai is "RESERVED" or "SOLD" or "REMOVED") return (false, "Sản phẩm đã có đơn đặt/đã bán hoặc đã bị gỡ, không thể chỉnh sửa.");
 
         var (hopLe, thongBao) = await KiemTraDanhMucTinhTrangAsync(form, cancellationToken);
         if (!hopLe) return (false, thongBao);
@@ -359,6 +391,47 @@ public class ProductService : IProductService
         return (true, null);
     }
 
+    public async Task<(bool Success, string? Error)> DeleteAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
+    {
+        var (loi, shop) = await KiemTraTruDangBanAsync(maNguoiDung, cancellationToken);
+        if (loi is not null) return (false, loi);
+
+        var cuaHangId = shop!.MaCuaHang;
+        var thuocSo = await _db.SanPhams.AsNoTracking()
+            .AnyAsync(x => x.MaSanPham == maSanPham && x.MaCuaHang == cuaHangId && !x.DaXoa, cancellationToken);
+        if (!thuocSo) return (false, "Không tìm thấy sản phẩm hoặc sản phẩm không thuộc cửa hàng của bạn.");
+
+        if (!_db.Database.IsRelational())
+        {
+            var sp = await _db.SanPhams.FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && !x.DaXoa, cancellationToken);
+            if (sp is null) return (false, "Sản phẩm không tồn tại.");
+            if (sp.TrangThai is "SOLD" or "RESERVED")
+                return (false, "Sản phẩm đã có đơn hàng hoặc đã bán, không thể xóa.");
+
+            sp.DaXoa = true;
+            sp.ThoiGianXoa = DateTime.UtcNow;
+            sp.NgayCapNhat = DateTime.UtcNow;
+
+            var cartItems = await _db.GioHangs.Where(g => g.MaSanPham == maSanPham).ToListAsync(cancellationToken);
+            _db.GioHangs.RemoveRange(cartItems);
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return (true, null);
+        }
+
+        try
+        {
+            await _db.Database.ExecuteSqlInterpolatedAsync(
+                $@"EXEC dbo.sp_XoaMemSanPham @MaSanPham={maSanPham}, @MaNguoiDung={maNguoiDung}",
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            return (false, SqlLoi.ThongBao(ex));
+        }
+        return (true, null);
+    }
+
     public async Task<(bool Success, string? Error)> GuiDuyetAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
     {
         var (loi, _) = await KiemTraTruDangBanAsync(maNguoiDung, cancellationToken);
@@ -418,10 +491,12 @@ public class ProductService : IProductService
         if (loi is not null) return (false, loi);
 
         var anh = await _db.AnhSanPhams
-            .Where(a => a.MaAnhSP == maAnh && a.MaSanPham == maSanPham
-                        && a.SanPham.MaCuaHang == shop!.MaCuaHang && !a.SanPham.DaXoa)
-            .FirstOrDefaultAsync(cancellationToken);
+            .Include(a => a.SanPham)
+            .FirstOrDefaultAsync(a => a.MaAnhSP == maAnh && a.MaSanPham == maSanPham
+                                      && a.SanPham.MaCuaHang == shop!.MaCuaHang && !a.SanPham.DaXoa, cancellationToken);
         if (anh is null) return (false, "Không tìm thấy ảnh.");
+        var loiTrangThai = LoiTrangThaiKhongChoSuaAnh(anh.SanPham.TrangThai);
+        if (loiTrangThai is not null) return (false, loiTrangThai);
         if (anh.LaAnhChinh) return (true, null);
 
         // Index UNIQUE filtered (MaSanPham WHERE LaAnhChinh=1): phải bỏ ảnh chính cũ TRƯỚC khi bật ảnh mới.
@@ -439,9 +514,12 @@ public class ProductService : IProductService
         if (loi is not null) return (false, loi);
 
         var anh = await _db.AnhSanPhams
+            .Include(a => a.SanPham)
             .FirstOrDefaultAsync(a => a.MaAnhSP == maAnh && a.MaSanPham == maSanPham
                                       && a.SanPham.MaCuaHang == shop!.MaCuaHang && !a.SanPham.DaXoa, cancellationToken);
         if (anh is null) return (false, "Không tìm thấy ảnh.");
+        var loiTrangThai = LoiTrangThaiKhongChoSuaAnh(anh.SanPham.TrangThai);
+        if (loiTrangThai is not null) return (false, loiTrangThai);
 
         var wasMain = anh.LaAnhChinh;
         _db.AnhSanPhams.Remove(anh);
@@ -461,6 +539,15 @@ public class ProductService : IProductService
         }
         return (true, null);
     }
+
+    private static string? LoiTrangThaiKhongChoSuaAnh(string trangThai) => trangThai switch
+    {
+        "PENDING_REVIEW" => "Sản phẩm đang chờ duyệt, không thể chỉnh sửa ảnh.",
+        "RESERVED" or "SOLD" => "Sản phẩm đã có đơn đặt/đã bán, không thể chỉnh sửa ảnh.",
+        "REMOVED" => "Sản phẩm đã bị gỡ, không thể chỉnh sửa ảnh.",
+        "ACTIVE" => "Sản phẩm đang bán, hãy ẩn sản phẩm trước khi chỉnh sửa ảnh.",
+        _ => null
+    };
 
     private async Task<(string? Error, CuaHang? Shop)> KiemTraTruDangBanAsync(int maNguoiDung, CancellationToken ct)
     {

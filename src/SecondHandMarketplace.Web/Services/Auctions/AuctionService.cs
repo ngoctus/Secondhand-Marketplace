@@ -1,4 +1,5 @@
-﻿using System.Data;
+using System.Data;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
@@ -6,16 +7,28 @@ using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels;
 using SecondHandMarketplace.Web.Models.ViewModels.Auctions;
+using SecondHandMarketplace.Web.Services.Realtime;
 
 namespace SecondHandMarketplace.Web.Services.Auctions;
 
-public sealed class AuctionService(AppDbContext db) : IAuctionService
+public sealed class AuctionService(AppDbContext db, IAuctionRealtime realtime) : IAuctionService
 {
     private static SqlParameter Tien(string ten, decimal v) =>
         new(ten, SqlDbType.Decimal) { Value = v, Precision = 18, Scale = 2 };
 
     private static SqlParameter Gio(string ten, DateTime v) =>
         new(ten, SqlDbType.DateTime2) { Value = v };
+
+    /// <summary>Đẩy trạng thái trung lập (userId = null nên không lộ IsLeader/Mine) tới phòng đấu giá.</summary>
+    private async Task BroadcastAsync(int auctionId)
+    {
+        try
+        {
+            var neutral = await GetStatusAsync(auctionId, null, CancellationToken.None);
+            if (neutral is not null) await realtime.BroadcastStatusAsync(auctionId, neutral);
+        }
+        catch { /* realtime chỉ là phụ trợ, lỗi đẩy tin không được làm hỏng giao dịch đã commit */ }
+    }
 
     private static IQueryable<AuctionCardVm> ToCard(IQueryable<PhienDauGia> q) => q.Select(p => new AuctionCardVm
     {
@@ -64,7 +77,8 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
         IQueryable<PhienDauGia> sorted = tab switch
         {
             "sap-dien-ra" => query.Where(p => p.TrangThai == "SCHEDULED" && p.ThoiGianBatDau > now).OrderBy(p => p.ThoiGianBatDau),
-            "da-ket-thuc" => query.Where(p => p.TrangThai == "ENDED").OrderByDescending(p => p.ThoiGianKetThuc),
+            "da-ket-thuc" => query.Where(p => p.TrangThai == "ENDED" || p.TrangThai == "CANCELLED" || p.ThoiGianKetThuc <= now)
+                                   .OrderByDescending(p => p.ThoiGianKetThuc),
             _ => query.Where(p => (p.TrangThai == "SCHEDULED" || p.TrangThai == "RUNNING")
                                   && p.ThoiGianBatDau <= now && p.ThoiGianKetThuc > now).OrderBy(p => p.ThoiGianKetThuc)
         };
@@ -95,7 +109,10 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
             .Include(x => x.SanPham).ThenInclude(s => s.TinhTrang)
             .Include(x => x.NguoiThang)
             .AsSplitQuery()
-            .FirstOrDefaultAsync(x => x.MaPhienDauGia == id, ct);
+            .FirstOrDefaultAsync(x => x.MaPhienDauGia == id
+                                      && !x.SanPham.DaXoa
+                                      && x.SanPham.CuaHang.TrangThai == "ACTIVE"
+                                      && x.SanPham.CuaHang.NguoiDung.TrangThai == "ACTIVE", ct);
         if (p is null) return null;
 
         var now = DateTime.UtcNow;
@@ -167,11 +184,38 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
     public async Task<(bool Ok, string? Error)> PlaceBidAsync(int id, int userId, decimal amount, CancellationToken ct = default)
     {
         if (amount <= 0) return (false, "Số tiền đặt giá không hợp lệ.");
+
+        // Báo lỗi sớm ở C#; sp_DatGia kiểm tra lại trong transaction (chốt chặn cuối).
+        var thongTin = await db.PhienDauGias.AsNoTracking()
+            .Where(p => p.MaPhienDauGia == id)
+            .Select(p => new
+            {
+                SanPhamTrangThai = p.SanPham.TrangThai,
+                SanPhamDaXoa = p.SanPham.DaXoa,
+                ShopTrangThai = p.SanPham.CuaHang.TrangThai
+            })
+            .FirstOrDefaultAsync(ct);
+        if (thongTin is not null)
+        {
+            if (thongTin.SanPhamDaXoa || thongTin.SanPhamTrangThai is not ("ACTIVE" or "RESERVED"))
+                return (false, "Sản phẩm đã bị gỡ hoặc không còn bán, không thể đặt giá.");
+            if (thongTin.ShopTrangThai != "ACTIVE")
+                return (false, "Cửa hàng đang bị khóa, không thể đặt giá.");
+        }
+
+        // Lấy người dẫn đầu CŨ để cảnh báo "bị vượt giá" realtime (nội dung thông báo vẫn do sp_DatGia ghi).
+        var nguoiDanDauCu = await db.PhienDauGias.AsNoTracking()
+            .Where(p => p.MaPhienDauGia == id).Select(p => p.MaNguoiDanDau).FirstOrDefaultAsync(ct);
+
         try
         {
             await db.Database.ExecuteSqlRawAsync(
                 "EXEC dbo.sp_DatGia @MaPhienDauGia, @MaNguoiDung, @SoTien",
                 new object[] { new SqlParameter("@MaPhienDauGia", id), new SqlParameter("@MaNguoiDung", userId), Tien("@SoTien", amount) }, ct);
+            await BroadcastAsync(id);
+            if (nguoiDanDauCu is int cu && cu != userId)
+                await realtime.PushLatestNotificationAsync(cu, $"/dau-gia/{id}");
+
             return (true, null);
         }
         catch (SqlException ex) { return (false, SqlLoi.ThongBao(ex)); }
@@ -232,6 +276,9 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
                 "EXEC dbo.sp_HuyPhienDauGia @MaPhienDauGia, @MaNguoiDung, @LyDo",
                 new object[] { new SqlParameter("@MaPhienDauGia", id), new SqlParameter("@MaNguoiDung", actorId),
                                new SqlParameter("@LyDo", (object?)reason ?? DBNull.Value) }, ct);
+            await BroadcastAsync(id);
+            await realtime.PushToParticipantsAsync(id);
+
             return (true, null);
         }
         catch (SqlException ex) { return (false, SqlLoi.ThongBao(ex)); }
@@ -239,14 +286,18 @@ public sealed class AuctionService(AppDbContext db) : IAuctionService
 
     public Task<PagedResult<AuctionCardVm>> SearchAdminAsync(string? status, string? q, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = db.PhienDauGias.AsNoTracking().AsQueryable();
-        if (status is "SCHEDULED" or "RUNNING" or "ENDED" or "CANCELLED") query = query.Where(p => p.TrangThai == status);
+        var query = db.PhienDauGias.AsNoTracking().Where(p => !p.SanPham.DaXoa);
+        var statusChuan = status?.Trim().ToUpperInvariant();
+        if (statusChuan is "SCHEDULED" or "RUNNING" or "ENDED" or "CANCELLED") query = query.Where(p => p.TrangThai == statusChuan);
         if (!string.IsNullOrWhiteSpace(q))
         {
             var k = q.Trim();
+            var kChuan = TextHelper.ChuanHoa(k);
             query = int.TryParse(k, out var idPhien)
-                ? query.Where(p => p.MaPhienDauGia == idPhien || p.SanPham.Ten.Contains(k))
-                : query.Where(p => p.SanPham.Ten.Contains(k) || p.SanPham.CuaHang.TenShop.Contains(k));
+                ? query.Where(p => p.MaPhienDauGia == idPhien
+                                   || p.SanPham.ChuoiTimKiem.Contains(kChuan)
+                                   || p.SanPham.CuaHang.TenShop.Contains(k))
+                : query.Where(p => p.SanPham.ChuoiTimKiem.Contains(kChuan) || p.SanPham.CuaHang.TenShop.Contains(k));
         }
         return PageAsync(query.OrderByDescending(p => p.NgayTao), page, pageSize, ct);
     }

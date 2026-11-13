@@ -1,4 +1,4 @@
-﻿@model OrderDetailVm
+@model OrderDetailVm
 @{
     ViewData["Title"] = "Đơn " + Model.MaDon;
     var tiep = OrderRules.TiepTheoChoNguoiBan(Model.Status);
@@ -7,7 +7,7 @@
 <p class="muted mt-3"><a asp-action="Index">← Danh sách đơn bán</a></p>
 <div class="page-head">
     <div><h2>Đơn @Model.MaDon</h2><p class="muted">Người mua: @Model.BuyerName · Đặt lúc @HienThi.NgayGio(Model.CreatedAt)</p></div>
-    <span class="@HienThi.LopTrangThai(Model.Status)">@HienThi.TrangThaiDon(Model.Status)</span>
+    <span class="@HienThi.LopTrangThai(Model.Status)">@HienThi.TrangThaiDon(Model.Status, Model.HinhThucNhan)</span>
 </div>
 
 @inject SecondHandMarketplace.Web.Data.AppDbContext DbContext
@@ -30,6 +30,11 @@
     </div>
 }
 
+@if (!string.IsNullOrWhiteSpace(Model.DeliveryWindow))
+{
+    <div class="alert alert-light border rounded-3"><strong>Khung giờ nhận:</strong> @Model.DeliveryWindow</div>
+}
+
 <div class="row g-4">
     <div class="col-lg-8">
         <partial name="_ChiTietDon" model="Model" />
@@ -48,6 +53,26 @@
             else if (Model.Status == "COMPLETED")
             {
                 <div class="note">Đơn đã hoàn tất, sản phẩm đã chuyển sang trạng thái đã bán.</div>
+            }
+
+            @* Task D5: Nút xác nhận nhận tiền thủ công (VietQR / Tiền mặt) *@
+            @if (Model.PaymentStatus != "PAID" && Model.Status != "CANCELLED")
+            {
+                <div class="p-3 bg-light border rounded-3 mb-3">
+                    <div class="small fw-bold text-dark mb-1">
+                        <i class="bi bi-wallet2 text-warning me-1"></i>Thanh toán: <span class="text-danger">Chưa xác nhận tiền</span>
+                    </div>
+                    <div class="text-muted small mb-2" style="font-size: 11.5px;">
+                        Kiểm tra tài khoản ngân hàng hoặc khi nhận tiền mặt xong, người bán bấm nút xác nhận bên dưới (Task D5):
+                    </div>
+                    <form asp-action="XacNhanNhanTien" method="post" onsubmit="return confirm('Bạn xác nhận đã nhận đủ tiền @HienThi.Tien(Model.Total) từ người mua?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-success w-100 rounded-pill btn-sm fw-semibold py-2">
+                            <i class="bi bi-check-circle-fill me-1"></i> Đã nhận tiền thành công
+                        </button>
+                    </form>
+                </div>
             }
 
             @foreach (var s in tiep)

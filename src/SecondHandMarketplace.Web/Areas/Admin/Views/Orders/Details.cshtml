@@ -12,6 +12,11 @@
     <span class="@HienThi.LopTrangThai(Model.Status)">@HienThi.TrangThaiDon(Model.Status)</span>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(Model.DeliveryWindow))
+{
+    <div class="alert alert-light border rounded-3"><strong>Khung giờ nhận:</strong> @Model.DeliveryWindow</div>
+}
+
 <div class="row g-4">
     <div class="col-lg-8"><partial name="_ChiTietDon" model="Model" /></div>
     <div class="col-lg-4">

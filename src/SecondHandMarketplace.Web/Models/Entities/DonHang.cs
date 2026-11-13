@@ -5,6 +5,7 @@ namespace SecondHandMarketplace.Web.Models.Entities;
 /// TrangThai: PENDING, CONFIRMED, SHIPPING, DELIVERED, COMPLETED, CANCELLED.
 /// PhuongThucThanhToan: COD, BANK_TRANSFER, ONLINE.
 /// TrangThaiThanhToan: UNPAID, PENDING, PAID, REFUNDED, FAILED.
+/// HinhThucNhan: GIAO_HANG (Giao hàng tận nơi), GAP_TRUC_TIEP (Gặp mặt trực tiếp).
 /// NguoiHuy: BUYER, SELLER, ADMIN, SYSTEM.
 /// </summary>
 public class DonHang
@@ -16,12 +17,14 @@ public class DonHang
     public string TenNguoiNhan { get; set; } = string.Empty;
     public string SoDienThoaiNhan { get; set; } = string.Empty;
     public string DiaChiNhan { get; set; } = string.Empty;
+    public string? KhungGioNhan { get; set; }
     public decimal TienHang { get; set; }
     public decimal PhiVanChuyen { get; set; }
     public decimal TongTien { get; set; }
     public string PhuongThucThanhToan { get; set; } = "COD";
     public string TrangThaiThanhToan { get; set; } = "UNPAID";
     public string TrangThai { get; set; } = "PENDING";
+    public string HinhThucNhan { get; set; } = "GIAO_HANG";
     public string? NguoiHuy { get; set; }
     public string? LyDoHuy { get; set; }
     public DateTime? ThoiGianHuy { get; set; }

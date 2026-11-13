@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Models.ViewModels.Account;
 using SecondHandMarketplace.Web.Services.Auth;
@@ -48,6 +49,7 @@ public sealed class AccountController(IAuthService authService) : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login(LoginVm model, CancellationToken cancellationToken)
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");

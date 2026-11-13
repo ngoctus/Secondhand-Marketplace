@@ -1,20 +1,41 @@
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Security;
+using SecondHandMarketplace.Web.Services.AuditLogs;
 
 namespace SecondHandMarketplace.Web.Services.Auth;
 
-public sealed class AuthService(AppDbContext db, IMatKhauService passwordService) : IAuthService
+public sealed class AuthService(
+    AppDbContext db,
+    IMatKhauService passwordService,
+    IAuditLogService audit,
+    ILogger<AuthService> logger) : IAuthService
 {
     public async Task<NguoiDung?> AuthenticateAsync(string email, string password, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = NormalizeEmail(email);
         var user = await db.NguoiDungs.AsNoTracking()
             .SingleOrDefaultAsync(x => x.Email == normalizedEmail, cancellationToken);
-        if (user is null || !string.Equals(user.TrangThai, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+        if (user is null)
+        {
+            await GhiNhatKyAsync(null, "LOGIN", null, "FAILED", "Email không tồn tại.");
             return null;
-        return passwordService.KiemTra(password, user.MatKhauBam) ? user : null;
+        }
+        if (!string.Equals(user.TrangThai, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+        {
+            await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "DENIED", "Tài khoản đang bị khóa.");
+            return null;
+        }
+        if (!passwordService.KiemTra(password, user.MatKhauBam))
+        {
+            await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "FAILED", "Mật khẩu không chính xác.");
+            return null;
+        }
+
+        await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "SUCCESS");
+        return user;
     }
 
     public async Task<(bool Success, string? Error, NguoiDung? User)> RegisterAsync(
@@ -37,13 +58,15 @@ public sealed class AuthService(AppDbContext db, IMatKhauService passwordService
         try
         {
             await db.SaveChangesAsync(cancellationToken);
-            return (true, null, user);
         }
         catch (DbUpdateException)
         {
             db.Entry(user).State = EntityState.Detached;
             return (false, "Email hoặc số điện thoại đã được đăng ký.", null);
         }
+
+        await GhiNhatKyAsync(user.MaNguoiDung, "REGISTER", user.MaNguoiDung, "SUCCESS", chiTiet: $"Email: {user.Email}");
+        return (true, null, user);
     }
 
     public Task<NguoiDung?> GetUserAsync(int userId, CancellationToken cancellationToken = default) =>
@@ -54,6 +77,8 @@ public sealed class AuthService(AppDbContext db, IMatKhauService passwordService
     {
         var user = await db.NguoiDungs.SingleOrDefaultAsync(x => x.MaNguoiDung == userId, cancellationToken);
         if (user is null) return (false, "Không tìm thấy tài khoản.");
+        if (!string.IsNullOrWhiteSpace(avatar) && !UrlAnToan.HopLe(avatar))
+            return (false, "Ảnh đại diện phải là URL http/https.");
         var normalizedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
         if (normalizedPhone is not null && await db.NguoiDungs.AnyAsync(x => x.MaNguoiDung != userId && x.SoDienThoai == normalizedPhone, cancellationToken))
             return (false, "Số điện thoại đã được sử dụng.");
@@ -76,8 +101,28 @@ public sealed class AuthService(AppDbContext db, IMatKhauService passwordService
         user.MatKhauBam = passwordService.Bam(newPassword);
         user.NgayCapNhat = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+
+        await GhiNhatKyAsync(userId, "CHANGE_PASSWORD", userId, "SUCCESS");
         return (true, null);
     }
 
     private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
+
+    /// <summary>
+    /// Ghi nhật ký sau khi thao tác đã lưu. Lỗi nhật ký (hoặc In-Memory không có sp_GhiNhatKy)
+    /// không được làm hỏng luồng đăng ký/đăng nhập/đổi mật khẩu.
+    /// </summary>
+    private async Task GhiNhatKyAsync(int? maNguoiDung, string hanhDong, int? doiTuongId, string ketQua,
+        string? lyDo = null, string? chiTiet = null)
+    {
+        if (!db.Database.IsRelational()) return;
+        try
+        {
+            await audit.LogAsync(maNguoiDung, hanhDong, "NguoiDung", doiTuongId, ketQua, lyDo, chiTiet);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Không ghi được nhật ký {HanhDong}.", hanhDong);
+        }
+    }
 }

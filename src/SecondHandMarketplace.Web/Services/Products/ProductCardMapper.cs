@@ -1,8 +1,9 @@
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Reviews;
 
 namespace SecondHandMarketplace.Web.Services.Products;
 
-/// <summary>Một dòng sản phẩm vừa truy vấn xong, chưa có điểm sao và khu vực.</summary>
+/// <summary>Một dòng sản phẩm vừa truy vấn xong, chưa có điểm sao.</summary>
 public sealed record ProductCardSource(
     int MaSanPham,
     string Ten,
@@ -12,24 +13,27 @@ public sealed record ProductCardSource(
     int MaCuaHang,
     string TenShop,
     string? Logo,
+    string? KhuVuc,
     string? DuongDanAnh,
     string? ConditionName,
     string? CategoryName);
 
 /// <summary>
-/// Dựng thẻ sản phẩm từ dữ liệu thô. Điểm sao và khu vực lấy một lần cho cả trang
-/// (không truy vấn theo từng thẻ), nên mọi trang dùng _ProductCard đều hiển thị đủ 6 thành phần.
+/// Dựng thẻ sản phẩm từ dữ liệu thô. Điểm sao của mọi shop trong trang lấy một lần qua
+/// IReviewService (nguồn duy nhất là view vw_DiemCuaHang của C), không truy vấn theo từng thẻ.
 /// </summary>
 public static class ProductCardMapper
 {
     public static async Task<List<ProductCardVm>> TaoDanhSachAsync(
-        IReadOnlyList<ProductCardSource> sources, IShopDisplayReader hienThiShop, CancellationToken ct = default)
+        IReadOnlyList<ProductCardSource> sources, IReviewService danhGia, CancellationToken ct = default)
     {
-        var hienThi = await hienThiShop.LayTheoCuaHangAsync(sources.Select(s => s.MaCuaHang), ct);
+        var diem = await danhGia.LayDiemNhieuShopAsync(sources.Select(s => s.MaCuaHang).Distinct(), ct);
 
         return sources.Select(s =>
         {
-            hienThi.TryGetValue(s.MaCuaHang, out var shop);
+            diem.TryGetValue(s.MaCuaHang, out var shop);
+            // View trả DiemTrungBinh = 0 khi shop chưa có đánh giá VISIBLE nào: chỉ hiện sao khi thực sự có đánh giá.
+            var coDanhGia = shop is not null && shop.SoDanhGia > 0;
             return new ProductCardVm
             {
                 Id = s.MaSanPham,
@@ -43,9 +47,9 @@ public static class ProductCardMapper
                 CategoryName = s.CategoryName,
                 MoTaNgan = ProductCardVm.TaoMoTaNgan(s.MoTa),
                 Status = s.TrangThai,
-                DiemTrungBinh = shop?.DiemTrungBinh,
+                DiemTrungBinh = coDanhGia ? shop!.DiemTrungBinh : null,
                 SoDanhGia = shop?.SoDanhGia ?? 0,
-                KhuVuc = shop?.KhuVuc
+                KhuVuc = s.KhuVuc
             };
         }).ToList();
     }

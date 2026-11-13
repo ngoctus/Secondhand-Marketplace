@@ -79,6 +79,11 @@ public class OrdersController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
 
+        // Khóa phí vận chuyển phía server: Gặp mặt trực tiếp luôn là 0đ;
+        // Giao hàng tận nơi áp dụng chính sách Freeship (0đ) toàn sàn, khóa chặt server-side chống client can thiệp qua hidden input
+        model.PhiVanChuyen = 0;
+        ModelState.Remove(nameof(model.PhiVanChuyen));
+
         if (!ModelState.IsValid)
         {
             if (model.MaSanPhamMuaNgay.HasValue)
@@ -116,10 +121,50 @@ public class OrdersController : UserBaseController
 
     /// <summary>Màn hình xác nhận đặt hàng thành công.</summary>
     [HttpGet]
-    public IActionResult XacNhan(string? maDon)
+    public async Task<IActionResult> XacNhan(string? maDon)
     {
-        ViewBag.DanhSachMaDon = (maDon ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries);
-        return View();
+        var userId = User.LayNguoiDungId()!.Value;
+        var listMa = (maDon ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+        ViewBag.DanhSachMaDon = listMa.ToArray();
+
+        var donHangs = await _orderService.LayDanhSachDonTheoMaAsync(userId, listMa);
+        return View(donHangs);
+    }
+
+    /// <summary>Xác nhận thanh toán chuyển khoản giả lập.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> XacNhanThanhToan(int? maDonHang, string? dsMaDonHang, string? returnUrl = null)
+    {
+        var userId = User.LayNguoiDungId()!.Value;
+        if (!string.IsNullOrEmpty(dsMaDonHang))
+        {
+            var ids = dsMaDonHang.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                 .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
+                                 .Where(id => id > 0)
+                                 .ToList();
+            if (ids.Count > 0)
+            {
+                var (okAll, msgAll) = await _orderService.XacNhanThanhToanTatCaChuyenKhoanAsync(userId, ids);
+                if (okAll) this.ThongBaoThanhCong(msgAll ?? "Đã xác nhận thanh toán chuyển khoản.");
+                else this.ThongBaoLoi(msgAll ?? "Không thể xác nhận thanh toán.");
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        if (maDonHang.HasValue)
+        {
+            var (ok, msg) = await _orderService.XacNhanThanhToanChuyenKhoanAsync(userId, maDonHang.Value);
+            if (ok) this.ThongBaoThanhCong(msg ?? "Đã xác nhận thanh toán chuyển khoản.");
+            else this.ThongBaoLoi(msg ?? "Không thể xác nhận thanh toán.");
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+            return RedirectToAction(nameof(ChiTiet), new { id = maDonHang.Value });
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     /// <summary>Người mua yêu cầu hủy đơn.</summary>
@@ -162,28 +207,4 @@ public class OrdersController : UserBaseController
         return RedirectToAction(nameof(ChiTiet), new { id = maDonHang });
     }
 
-    /// <summary>Người mua mở khiếu nại tranh chấp cho đơn hàng.</summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MoTranhChap(int maDonHang, string lyDo, string? bangChungAnh = null)
-    {
-        var userId = User.LayNguoiDungId()!.Value;
-        var (thanhCong, thongBao) = await _disputeService.MoTranhChapAsync(userId, new MoTranhChapViewModel
-        {
-            MaDonHang = maDonHang,
-            LyDo = lyDo,
-            BangChungAnh = bangChungAnh
-        });
-
-        if (thanhCong)
-        {
-            this.ThongBaoThanhCong(thongBao ?? "Đã mở khiếu nại đơn hàng thành công.");
-        }
-        else
-        {
-            this.ThongBaoLoi(thongBao ?? "Không thể mở khiếu nại.");
-        }
-
-        return RedirectToAction(nameof(ChiTiet), new { id = maDonHang });
-    }
 }

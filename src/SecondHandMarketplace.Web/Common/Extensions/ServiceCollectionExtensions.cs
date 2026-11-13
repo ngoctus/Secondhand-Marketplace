@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Services.Auctions;
 using SecondHandMarketplace.Web.Services.OrderManagement;
@@ -20,6 +20,9 @@ using SecondHandMarketplace.Web.Services.Reports;
 using SecondHandMarketplace.Web.Services.Reviews;
 using SecondHandMarketplace.Web.Services.Accounts;
 using SecondHandMarketplace.Web.Services.Shops;
+using SecondHandMarketplace.Web.Services.Realtime;
+using SecondHandMarketplace.Web.Services.Chat;
+using SecondHandMarketplace.Web.Services.Areas;
 
 namespace SecondHandMarketplace.Web.Common.Extensions;
 
@@ -33,16 +36,15 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Thêm service mới? Đăng ký ở đây (1 dòng). Lỗi "Unable to resolve service..." = quên dòng này.
+    /// ThÃªm service má»›i? ÄÄƒng kÃ½ á»Ÿ Ä‘Ã¢y (1 dÃ²ng). Lá»—i "Unable to resolve service..." = quÃªn dÃ²ng nÃ y.
     /// </summary>
     public static IServiceCollection AddAppServices(this IServiceCollection services)
     {
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<IShopService, ShopService>();
+        services.AddScoped<IKhuVucService, KhuVucService>();
         services.AddScoped<IProductService, ProductService>();
-        // B1/B3: điểm sao (view của C) và khu vực (bảng của A) có thể chưa tồn tại, reader tự bỏ qua khi thiếu.
-        services.AddScoped<IShopDisplayReader, ShopDisplayReader>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddAiChat();   // C3: IAiChatService (typed HttpClient), IAiSettingsService, IAiRequestThrottle
@@ -60,8 +62,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IBannerService, BannerService>();
         services.AddScoped<IDashboardService, DashboardService>();
-        // Phần E
+        // Pháº§n E
         services.AddScoped<IOrderManagementService, OrderManagementService>();
+        services.AddScoped<IChatService, ChatService>();
+        services.AddScoped<IAuctionRealtime, AuctionRealtime>();
         services.AddScoped<IAuctionService, AuctionService>();
         services.AddHostedService<AuctionBackgroundService>();
 

@@ -163,3 +163,89 @@
         });
     }
 })();
+
+
+// =========================================================================
+// Lightbox Modal phóng to ảnh không tràn viền & Chuyển ảnh Thumbnail
+// =========================================================================
+(() => {
+    let modal = null;
+    let imgEl = null;
+    let capEl = null;
+
+    const createModal = () => {
+        if (modal) return;
+        modal = document.createElement('div');
+        modal.id = 'rmImageLightbox';
+        modal.className = 'rm-lightbox-overlay';
+        modal.hidden = true;
+        modal.innerHTML = `
+            <div class="rm-lightbox-container">
+                <button type="button" class="rm-lightbox-close" aria-label="Đóng">&times;</button>
+                <div class="rm-lightbox-body">
+                    <img class="rm-lightbox-img" src="" alt="Ảnh phóng to" />
+                    <div class="rm-lightbox-caption"></div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        imgEl = modal.querySelector('.rm-lightbox-img');
+        capEl = modal.querySelector('.rm-lightbox-caption');
+        const closeBtn = modal.querySelector('.rm-lightbox-close');
+
+        const closeLightbox = () => {
+            modal.hidden = true;
+            if (imgEl) imgEl.src = '';
+            document.body.classList.remove('rm-modal-open');
+        };
+
+        closeBtn.addEventListener('click', closeLightbox);
+        modal.addEventListener('click', (e) => {
+            if (!e.target.closest('.rm-lightbox-img')) {
+                closeLightbox();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal && !modal.hidden) {
+                closeLightbox();
+            }
+        });
+    };
+
+    const openLightbox = (src, caption) => {
+        if (!src) return;
+        createModal();
+        imgEl.src = src;
+        capEl.textContent = caption || '';
+        modal.hidden = false;
+        document.body.classList.add('rm-modal-open');
+    };
+
+    // Bắt sự kiện click vào ảnh phóng to
+    document.addEventListener('click', (e) => {
+        const zoomImg = e.target.closest('.detail-main-img img, .auction-main-img, img[data-zoomable]');
+        if (zoomImg) {
+            e.preventDefault();
+            const caption = zoomImg.alt || zoomImg.title || document.querySelector('.detail-title, .bid-title')?.textContent?.trim() || '';
+            openLightbox(zoomImg.src, caption);
+        }
+    });
+
+    // Bắt sự kiện click vào thumbnail để đổi ảnh chính
+    document.addEventListener('click', (e) => {
+        const thumb = e.target.closest('.detail-thumbnails .thumbnail-item, .auction-thumbs img');
+        if (!thumb) return;
+
+        const thumbImg = thumb.tagName === 'IMG' ? thumb : thumb.querySelector('img');
+        if (!thumbImg) return;
+
+        const mainImg = document.querySelector('#mainProductImg, .detail-main-img img, #mainImage, .auction-main-img');
+        if (mainImg) {
+            mainImg.src = thumbImg.src;
+            document.querySelectorAll('.detail-thumbnails .thumbnail-item, .auction-thumbs img').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        }
+    });
+})();

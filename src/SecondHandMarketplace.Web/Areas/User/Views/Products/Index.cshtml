@@ -22,7 +22,7 @@
             <h2 style="font-family:'Playfair Display',serif; font-size:24px;">Sản phẩm của tôi</h2>
             <p class="text-muted mb-0" style="font-size:13.5px;">Quản lý danh sách sản phẩm của cửa hàng bạn.</p>
         </div>
-        <a asp-action="Create" class="btn-rm-primary">+ Đăng bán</a>
+        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">+ Đăng bán</a>
     </div>
 
     @if (Model.Items.Count == 0)
@@ -31,7 +31,7 @@
             <p class="text-muted mb-3">Bạn chưa có sản phẩm nào. Hãy tạo cửa hàng và đăng bán món đồ đầu tiên.</p>
             <div class="d-flex justify-content-center gap-2">
                 <a asp-area="User" asp-controller="Shop" asp-action="Index" class="btn-rm-outline">Tạo cửa hàng</a>
-                <a asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+                <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
             </div>
         </div>
     }
@@ -74,11 +74,12 @@
                                 <td class="small text-muted">@HienThi.NgayGio(p.NgayCapNhat)</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
-                                        @if (p.TrangThai is "DRAFT" or "REJECTED" or "HIDDEN" or "REMOVED")
+                                        @if (p.TrangThai is "DRAFT" or "REJECTED" or "HIDDEN" or "REMOVED"
+                                             || (p.TrangThai == "PENDING_REVIEW" && p.PhanTichThatBai))
                                         {
                                             <form asp-action="GuiDuyet" method="post" class="d-inline">
                                                 <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit" class="btn-rm-outline btn-sm">Gửi duyệt</button>
+                                                <button type="submit" class="btn-rm-outline btn-sm">@(p.TrangThai == "PENDING_REVIEW" ? "Phân tích lại" : "Gửi duyệt")</button>
                                             </form>
                                         }
                                         @if (p.TrangThai == "ACTIVE")
@@ -95,6 +96,13 @@
                                         @if (p.TrangThai is "ACTIVE" or "RESERVED" or "SOLD")
                                         {
                                             <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">Xem trang bán</a>
+                                        }
+                                        @if (p.TrangThai != "RESERVED" && p.TrangThai != "SOLD")
+                                        {
+                                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này không? Thao tác này không thể hoàn tác.');">
+                                                <input type="hidden" name="id" value="@p.Id" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" style="padding: 4px 10px; font-size: 13px; border-radius: 6px;">Xóa</button>
+                                            </form>
                                         }
                                     </div>
                                 </td>

@@ -62,7 +62,8 @@
             <!-- Khu vực sinh sống (thành phần chọn khu vực của A, mục A4) -->
             <div class="filter-group filter-khu-vuc">
                 <div class="filter-title">Khu vực sinh sống</div>
-                <partial name="_ChonKhuVuc" optional="true" />
+                <partial name="_ChonKhuVuc" model="Model.KhuVuc" />
+                <div class="form-text">Lọc theo nơi người bán sinh sống, không phải khoảng cách tới bạn.</div>
             </div>
 
             <!-- Danh mục -->
@@ -179,48 +180,12 @@
 
             @if (ketQua.TotalPages > 1)
             {
-                var tu = Math.Max(1, ketQua.Page - 2);
-                var den = Math.Min(ketQua.TotalPages, tu + 4);
-                <nav class="rm-pagination" aria-label="Phân trang">
-                    @if (ketQua.Page > 1)
-                    {
-                        <a href="@LocUrl("page", (ketQua.Page - 1).ToString())" class="rm-page-item">‹</a>
-                    }
-                    else
-                    {
-                        <span class="rm-page-item is-disabled">‹</span>
-                    }
-                    @if (tu > 1)
-                    {
-                        <a href="@LocUrl("page", "1")" class="rm-page-item">1</a>
-                        <span class="rm-page-item rm-page-ellipsis">…</span>
-                    }
-                    @for (var p = tu; p <= den; p++)
-                    {
-                        if (p == ketQua.Page)
-                        {
-                            <span class="rm-page-item is-active">@p</span>
-                        }
-                        else
-                        {
-                            <a href="@LocUrl("page", p.ToString())" class="rm-page-item">@p</a>
-                        }
-                    }
-                    @if (den < ketQua.TotalPages)
-                    {
-                        <span class="rm-page-item rm-page-ellipsis">…</span>
-                        <a href="@LocUrl("page", ketQua.TotalPages.ToString())" class="rm-page-item">@ketQua.TotalPages</a>
-                    }
-                    @if (ketQua.Page < ketQua.TotalPages)
-                    {
-                        <a href="@LocUrl("page", (ketQua.Page + 1).ToString())" class="rm-page-item">›</a>
-                    }
-                    else
-                    {
-                        <span class="rm-page-item is-disabled">›</span>
-                    }
-                </nav>
+                <partial name="_Pager" model="new PagerVm(ketQua.Page, ketQua.TotalPages)" />
             }
         }
     </main>
 </div>
+
+@section Scripts {
+    <script src="~/js/khu-vuc.js" asp-append-version="true"></script>
+}

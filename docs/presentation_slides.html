@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Bài Tập Lớn - Sàn Thương Mại Điện Tử Đồ Cũ (Secondhand Marketplace)</title>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0b132b 0%, #1c2541 50%, #1f2a44 100%);
+      --card-bg: rgba(30, 41, 59, 0.85);
+      --card-border: rgba(148, 163, 184, 0.15);
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.25);
+      --secondary: #818cf8;
+      --accent: #34d399;
+      --accent-glow: rgba(52, 211, 153, 0.2);
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Progress Bar */
+    .progress-container {
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      width: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8, #34d399);
+      width: 8.33%;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px #38bdf8;
+    }
+
+    /* Main Presentation Container */
+    .deck-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .slide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.96);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 92vw;
+      max-width: 1300px;
+      height: 82vh;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px var(--primary-glow);
+      padding: 40px 50px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* Slide Header */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+
+    .slide-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .slide-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slide-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .grid-5 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+    }
+
+    /* Cards */
+    .feature-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .feature-card h3 {
+      font-size: 17px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .feature-card p, .feature-card ul {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .feature-card ul {
+      padding-left: 18px;
+    }
+    .feature-card li {
+      margin-bottom: 6px;
+    }
+
+    /* Member Card */
+    .member-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .member-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+    .member-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1e293b, #334155);
+      border: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 20px;
+      color: #fff;
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+    .member-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .member-mssv {
+      font-size: 13px;
+      color: var(--warning);
+      background: rgba(251, 191, 36, 0.1);
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px dashed rgba(251, 191, 36, 0.4);
+      letter-spacing: 1px;
+    }
+    .member-role {
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .member-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: left;
+      line-height: 1.5;
+      width: 100%;
+      margin-top: 6px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    /* Diagram Styles */
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 20px;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      margin: 12px 0;
+    }
+    .flow-node {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px 18px;
+      text-align: center;
+      flex: 1;
+      position: relative;
+    }
+    .flow-node.active-node {
+      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.1);
+    }
+    .flow-node.success-node {
+      border-color: var(--accent);
+      background: rgba(52, 211, 153, 0.1);
+    }
+    .flow-arrow {
+      color: var(--text-muted);
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    /* Highlight Badges */
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      margin-right: 4px;
+      margin-bottom: 4px;
+    }
+    .tag-blue { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .tag-green { background: rgba(52, 211, 153, 0.2); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4); }
+    .tag-purple { background: rgba(129, 140, 248, 0.2); color: #818cf8; border: 1px solid rgba(129, 140, 248, 0.4); }
+    .tag-amber { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+
+    /* Bottom Navigation Bar */
+    .nav-bar {
+      height: 65px;
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 40px;
+      z-index: 90;
+    }
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-nav {
+      background: #1e293b;
+      color: #f1f5f9;
+      border: 1px solid #334155;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-nav:hover {
+      background: var(--primary);
+      color: #0f172a;
+      border-color: var(--primary);
+    }
+    .slide-counter {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 600;
+      min-width: 90px;
+      text-align: center;
+    }
+    .btn-fullscreen {
+      background: transparent;
+      border: 1px solid #334155;
+      color: var(--text-muted);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-fullscreen:hover {
+      color: #fff;
+      border-color: #94a3b8;
+    }
+
+    /* Key indicators */
+    .key-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    kbd {
+      background: #334155;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #cbd5e1;
+      border: 1px solid #475569;
+    }
+
+    /* Title Slide Specifics */
+    .title-hero {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .project-logo {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+    }
+    .main-heading {
+      font-size: 38px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #ffffff, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .sub-heading {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 800px;
+      line-height: 1.5;
+    }
+
+    /* Stat Box */
+    .stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      padding: 12px 20px;
+      border-radius: 12px;
+      color: #34d399;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Progress Bar -->
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- Deck Container -->
+  <div class="deck-container">
+
+    <!-- ==================== SLIDE 1: TRANG BÌA ==================== -->
+    <div class="slide active" id="slide-1">
+      <div class="slide-content">
+        <div class="title-hero">
+          <div class="project-logo">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+          </div>
+          <span class="slide-badge">Báo Cáo Bài Tập Lớn - Công Nghệ Web & Phần Mềm</span>
+          <h1 class="main-heading">HỆ THỐNG SÀN THƯƠNG MẠI ĐIỆN TỬ ĐỒ CŨ</h1>
+          <p class="sub-heading">SECONDHAND MARKETPLACE - NỀN TẢNG MUA BÁN & ĐẤU GIÁ HÀNG ĐÃ QUA SỬ DỤNG CHUYÊN BIỆT</p>
+          <div style="font-size: 14px; color: #cbd5e1; margin-top: 4px;">
+            <strong>Công nghệ:</strong> ASP.NET Core MVC (.NET 10) • SQL Server Data-First • EF Core • Cookie/JWT Hybrid
+          </div>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <h3 style="font-size: 15px; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; text-align: center;">
+            Danh Sách Thành Viên Thực Hiện (Nhóm 5 Người)
+          </h3>
+          <div class="grid-5">
+            <!-- Member A -->
+            <div class="member-card">
+              <div class="member-avatar">A</div>
+              <div class="member-name">Thành viên A (Leader)</div>
+              <div class="member-mssv">MSSV: ....................</div>
+              <div class="member-role">Tài khoản & Quản trị Lõi</div>
+              <div class="member-desc">
+                • Auth Cookie + JWT<br>
+                • Admin User & Shop<br>
+                • Danh mục & Audit Log
+              </div>
+            </div>
+            <!-- Member B -->
+            <div class="member-card">
+              <div class="member-avatar">B</div>
+              <div class="member-name">Thành viên B</div>
+              <div class="member-mssv">MSSV: ....................</div>
+              <div class="member-role">Sản phẩm & Nội dung</div>
+              <div class="member-desc">
+                • Đăng bán đa ảnh<br>
+                • Quản lý kho hàng shop<br>
+                • Tìm kiếm & Wishlist
+              </div>
+            </div>
+            <!-- Member C -->
+            <div class="member-card">
+              <div class="member-avatar">C</div>
+              <div class="member-name">Thành viên C</div>
+              <div class="member-mssv">MSSV: ....................</div>
+              <div class="member-role">Kiểm duyệt & AI</div>
+              <div class="member-desc">
+                • Duyệt tin đăng Admin<br>
+                • Lọc từ cấm & AI Chat<br>
+                • Đánh giá & Thông báo
+              </div>
+            </div>
+            <!-- Member D -->
+            <div class="member-card">
+              <div class="member-avatar">D</div>
+              <div class="member-name">Thành viên D</div>
+              <div class="member-mssv">MSSV: ....................</div>
+              <div class="member-role">Giỏ hàng & Khiếu nại</div>
+              <div class="member-desc">
+                • Giỏ hàng & Checkout<br>
+                • Khóa đồng thời (Qty=1)<br>
+                • Tranh chấp & Báo cáo
+              </div>
+            </div>
+            <!-- Member E -->
+            <div class="member-card">
+              <div class="member-avatar">E</div>
+              <div class="member-name">Thành viên E</div>
+              <div class="member-mssv">MSSV: ....................</div>
+              <div class="member-role">Bán hàng & Đấu giá</div>
+              <div class="member-desc">
+                • Quản lý đơn bán Shop<br>
+                • Phòng đấu giá Realtime<br>
+                • Background Sweep Worker
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 2: ĐẶT VẤN ĐỀ & MỤC TIÊU ==================== -->
+    <div class="slide" id="slide-2">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">TỔNG QUAN DỰ ÁN</span>
+          <span>1. Đặt Vấn Đề & Mục Tiêu Nghiên Cứu</span>
+        </div>
+        <div class="tag tag-blue">Đặc thù Secondhand</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-2">
+          <div class="feature-card">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              Thực Trạng & Vấn Đề Của Sàn Đồ Cũ
+            </h3>
+            <ul>
+              <li><strong>Tính chất độc bản (Số lượng = 1):</strong> Không giống hàng loạt trên Shopee/Lazada; mỗi sản phẩm đồ cũ chỉ có đúng 1 món. Dễ xảy ra tranh chấp khi nhiều người cùng bấm mua một lúc.</li>
+              <li><strong>Rủi ro gian lận & Hàng giả:</strong> Người bán mô tả sai lệch tình trạng hàng, sử dụng từ ngữ nhạy cảm, lừa đảo chuyển cọc.</li>
+              <li><strong>Định giá khó khăn:</strong> Người bán không biết sản phẩm đã qua sử dụng của mình nên định giá bao nhiêu là hợp lý.</li>
+              <li><strong>Thiếu cơ chế bảo vệ sau mua:</strong> Không có quy trình phân xử tranh chấp công bằng giữa người mua và người bán khi hàng bị lỗi.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              Mục Tiêu Giải Pháp Của Nhóm
+            </h3>
+            <ul>
+              <li><strong>Xây dựng sàn TMĐT Secondhand chuyên biệt:</strong> Hỗ trợ cả 2 mô hình Mua bán truyền thống và Đấu giá trực tuyến.</li>
+              <li><strong>Giải quyết triệt để Concurrency (Race Condition):</strong> Ứng dụng Transaction khóa đồng thời ở mức Database (`UPDLOCK, HOLDLOCK`) và Filtered Unique Index đảm bảo không bao giờ bị bán trùng.</li>
+              <li><strong>Kiểm duyệt 2 tầng + Trợ lý ảo AI:</strong> Tự động lọc từ khóa cấm, kiểm duyệt thủ công bởi Admin và tích hợp AI Chatbot gợi ý định giá theo tình trạng.</li>
+              <li><strong>Cơ chế Tranh chấp & Báo cáo minh bạch:</strong> Quy trình khiếu nại hoàn tiền, đổi trả với sự can thiệp và phán quyết từ Admin.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="flow-diagram" style="margin-top: 20px;">
+          <div class="flow-node">
+            <div style="font-weight: 700; color: #fff;">Người Bán (Seller)</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Đăng tin, đấu giá, quản lý đơn</div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node active-node">
+            <div style="font-weight: 700; color: var(--primary);">Hệ Thống Trung Tâm (Core Engine)</div>
+            <div style="font-size: 12px; color: var(--primary);">AI Moderation • Race Lock • Sweep Service</div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node">
+            <div style="font-weight: 700; color: #fff;">Người Mua (Buyer)</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Tìm kiếm, đặt hàng tách shop, trả giá</div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node success-node">
+            <div style="font-weight: 700; color: var(--accent);">Admin Phán Quyết</div>
+            <div style="font-size: 12px; color: var(--accent);">Duyệt tin, trọng tài tranh chấp</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 3: CÔNG NGHỆ & KIẾN TRÚC ==================== -->
+    <div class="slide" id="slide-3">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">KIẾN TRÚC HỆ THỐNG</span>
+          <span>2. Công Nghệ & Mô Hình Kiến Trúc</span>
+        </div>
+        <div class="tag tag-green">Enterprise Architecture</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-3">
+          <div class="feature-card">
+            <h3>Backend & Framework</h3>
+            <p><strong>ASP.NET Core (.NET 10 MVC)</strong></p>
+            <ul>
+              <li>Phân vùng theo <strong>Areas</strong> rõ ràng: `/Admin`, `/User` và Public Web.</li>
+              <li>Kiến trúc phân tầng: Controllers ➔ Services ➔ Data Layer (AppDbContext) ➔ Database.</li>
+              <li>Background Hosted Service: Quét và chốt phiên đấu giá chạy nền độc lập.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Database-First Strategy</h3>
+            <p><strong>Microsoft SQL Server</strong></p>
+            <ul>
+              <li><strong>Single Source of Truth:</strong> CSDL là trung tâm quản lý toàn bộ ràng buộc nghiệp vụ.</li>
+              <li>Hơn 20 Stored Procedures và User Defined Functions (UDF) kiểm tra chuyển đổi trạng thái hợp lệ.</li>
+              <li>Triggers tự động kiểm tra giới hạn ảnh, định dạng và tính toàn vẹn dữ liệu.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Bảo Mật & Xác Thực</h3>
+            <p><strong>Hybrid Authentication</strong></p>
+            <ul>
+              <li><strong>Cookie Auth:</strong> Dành cho trình duyệt web Razor MVC, an toàn chống XSS/CSRF.</li>
+              <li><strong>JWT Bearer:</strong> Cung cấp endpoint RESTful API `/api/...` cho client di động.</li>
+              <li>Mật khẩu mã hóa chuẩn <strong>BCrypt</strong> muối ngẫu nhiên (không phụ thuộc Identity mặc định).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px;">
+          <h4 style="font-size: 15px; color: var(--primary); margin-bottom: 10px;">Sơ Đồ Phân Tầng Ứng Dụng (Layered Architecture):</h4>
+          <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; text-align: center;">
+            <div style="flex: 1; background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #38bdf8;">
+              <span class="tag tag-blue">UI Layer</span><br>
+              <small>Razor Views (.cshtml) + Bootstrap + Custom CSS/JS + AJAX</small>
+            </div>
+            <div style="color: var(--primary); font-size: 20px;">⇄</div>
+            <div style="flex: 1; background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #818cf8;">
+              <span class="tag tag-purple">Controller / API Layer</span><br>
+              <small>Admin Area • User Area • Public Controllers • REST API</small>
+            </div>
+            <div style="color: var(--secondary); font-size: 20px;">⇄</div>
+            <div style="flex: 1; background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #34d399;">
+              <span class="tag tag-green">Service & Business Logic</span><br>
+              <small>OrderRules • DisputeService • AiChatService • AuctionSweep</small>
+            </div>
+            <div style="color: var(--accent); font-size: 20px;">⇄</div>
+            <div style="flex: 1; background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #fbbf24;">
+              <span class="tag tag-amber">Data & SQL Server</span><br>
+              <small>Stored Procedures • Functions • Triggers • Views • UPDLOCK</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 4: PHÂN CÔNG 5 THÀNH VIÊN (WBS) ==================== -->
+    <div class="slide" id="slide-4">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">TỔ CHỨC DỰ ÁN</span>
+          <span>3. Phân Chia Trách Nhiệm 5 Thành Viên (WBS)</span>
+        </div>
+        <div class="tag tag-purple">Ma Trận Công Việc Cân Bằng</div>
+      </div>
+      <div class="slide-content">
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
+          Dự án được chia thành 5 module độc lập nhưng tương tác chặt chẽ theo hướng Database ➔ Entity ➔ Service ➔ Controller ➔ Views. Mỗi thành viên chịu trách nhiệm trọn gói một mảng:
+        </p>
+
+        <div class="grid-5" style="gap: 12px;">
+          <div class="feature-card" style="padding: 14px;">
+            <div style="font-weight: 700; color: var(--primary); font-size: 15px;">Thành viên A (Leader)</div>
+            <div style="font-size: 12px; color: var(--warning);">MSSV: ....................</div>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;">
+            <ul style="font-size: 12px; padding-left: 14px;">
+              <li><strong>A1:</strong> Auth Cookie/JWT + Profile</li>
+              <li><strong>A2:</strong> Quản trị User (Khóa/Mở)</li>
+              <li><strong>A3:</strong> Quản trị Cửa hàng (Shop)</li>
+              <li><strong>A4:</strong> CRUD Danh mục & Tình trạng</li>
+              <li><strong>A5:</strong> Hệ thống Audit Logs</li>
+              <li><strong>A6:</strong> Nền tảng & Setup DB lõi</li>
+            </ul>
+          </div>
+
+          <div class="feature-card" style="padding: 14px;">
+            <div style="font-weight: 700; color: var(--secondary); font-size: 15px;">Thành viên B</div>
+            <div style="font-size: 12px; color: var(--warning);">MSSV: ....................</div>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;">
+            <ul style="font-size: 12px; padding-left: 14px;">
+              <li><strong>B6:</strong> Layout, Navbar, Footer</li>
+              <li><strong>B1:</strong> Đăng/Sửa tin đăng + Upload ảnh</li>
+              <li><strong>B2:</strong> Quản lý kho hàng shop</li>
+              <li><strong>B3:</strong> Trang chủ, Tìm kiếm, Lọc giá</li>
+              <li><strong>B4:</strong> Banner quảng cáo động</li>
+              <li><strong>B5:</strong> Sản phẩm yêu thích (Wishlist)</li>
+            </ul>
+          </div>
+
+          <div class="feature-card" style="padding: 14px;">
+            <div style="font-weight: 700; color: var(--accent); font-size: 15px;">Thành viên C</div>
+            <div style="font-size: 12px; color: var(--warning);">MSSV: ....................</div>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;">
+            <ul style="font-size: 12px; padding-left: 14px;">
+              <li><strong>C5:</strong> In-app Notification System</li>
+              <li><strong>C2:</strong> Bộ lọc từ khóa cấm nhạy cảm</li>
+              <li><strong>C3:</strong> AI Chatbot & Tư vấn giá</li>
+              <li><strong>C1:</strong> Admin kiểm duyệt tin đăng</li>
+              <li><strong>C4:</strong> Đánh giá & Phản hồi sau mua</li>
+            </ul>
+          </div>
+
+          <div class="feature-card" style="padding: 14px; border-color: rgba(56, 189, 248, 0.4);">
+            <div style="font-weight: 700; color: #38bdf8; font-size: 15px;">Thành viên D</div>
+            <div style="font-size: 12px; color: var(--warning);">MSSV: ....................</div>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;">
+            <ul style="font-size: 12px; padding-left: 14px;">
+              <li><strong>D1:</strong> Quản lý Giỏ hàng đồ cũ</li>
+              <li><strong>D2:</strong> Checkout & Đặt hàng tách shop</li>
+              <li><strong>D3:</strong> Quản lý Đơn mua & Hủy đơn</li>
+              <li><strong>D4:</strong> Hệ thống Khiếu nại (Dispute)</li>
+              <li><strong>D5:</strong> Báo cáo vi phạm (Report)</li>
+              <li><strong>*Core:</strong> Khóa giữ chỗ Concurrency</li>
+            </ul>
+          </div>
+
+          <div class="feature-card" style="padding: 14px;">
+            <div style="font-weight: 700; color: #f43f5e; font-size: 15px;">Thành viên E</div>
+            <div style="font-size: 12px; color: var(--warning);">MSSV: ....................</div>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;">
+            <ul style="font-size: 12px; padding-left: 14px;">
+              <li><strong>E1:</strong> Shop quản lý đơn bán hàng</li>
+              <li><strong>E2:</strong> Admin giám sát toàn bộ đơn</li>
+              <li><strong>E3:</strong> Phòng đấu giá trực tuyến</li>
+              <li><strong>E4:</strong> Background Auction Sweeper</li>
+              <li><strong>*Core:</strong> Thống kê doanh thu sàn</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 5: CHI TIẾT MODULE A ==================== -->
+    <div class="slide" id="slide-5">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">CHI TIẾT MODULE</span>
+          <span>4. Module A: Xác Thực & Quản Trị Hệ Thống</span>
+        </div>
+        <div class="tag tag-blue">Thành viên A (Leader) - MSSV: ....................</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-2">
+          <div class="feature-card">
+            <h3>Tính Năng Đã Thực Hiện</h3>
+            <ul>
+              <li><strong>Hệ thống Đăng nhập / Đăng ký:</strong> Sử dụng Cookie Authentication, hỗ trợ mã hóa mật khẩu BCrypt, chuẩn hóa email không phân biệt hoa thường.</li>
+              <li><strong>REST API Authentication:</strong> Cung cấp JWT Bearer Token tại `/api/auth/login` cho ứng dụng di động hoặc bên thứ 3.</li>
+              <li><strong>Hồ sơ & Đổi mật khẩu:</strong> Cập nhật họ tên, số điện thoại, địa chỉ nhận hàng mặc định và ảnh đại diện.</li>
+              <li><strong>Quản trị Người dùng & Shop:</strong> Khóa/Mở khóa tài khoản kèm lý do (`LyDoKhoa`); bảo vệ tuyệt đối tài khoản ADMIN không thể bị khóa.</li>
+              <li><strong>Quản trị Danh mục & Tình trạng:</strong> CRUD Danh mục với cơ chế xóa mềm (ẩn danh mục nếu đang có sản phẩm liên kết).</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Kỹ Thuật Nổi Bật & Database</h3>
+            <ul>
+              <li><strong>Audit Log Service (`sp_GhiNhatKy`):</strong> Mọi hành động nhạy cảm của Admin (khóa user, duyệt shop, đổi trạng thái) đều được ghi nhận vào bảng `NhatKyHeThong` với IP, thời gian và dữ liệu thay đổi.</li>
+              <li><strong>Stored Procedure `sp_TaoCuaHang`:</strong> Đảm bảo một người dùng chỉ được phép sở hữu tối đa 1 Shop trong hệ thống.</li>
+              <li><strong>Bộ lọc Admin mạnh mẽ:</strong> Phân trang server-side, tìm kiếm theo email/tên/ngày tạo, lọc theo trạng thái hoạt động.</li>
+            </ul>
+            <div style="background: #0f172a; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 12px; color: #38bdf8;">
+              EXEC dbo.sp_GhiNhatKy @NguoiDungId, N'KHOA_USER', N'Khóa tài khoản do vi phạm chính sách', @IpAddress;
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 6: CHI TIẾT MODULE B ==================== -->
+    <div class="slide" id="slide-6">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">CHI TIẾT MODULE</span>
+          <span>5. Module B: Vòng Đời Sản Phẩm & Nội Dung Công Khai</span>
+        </div>
+        <div class="tag tag-purple">Thành viên B - MSSV: ....................</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-2">
+          <div class="feature-card">
+            <h3>Vòng Đời Sản Phẩm Người Bán</h3>
+            <ul>
+              <li><strong>Đăng bán & Upload đa ảnh:</strong> Hỗ trợ tải lên nhiều ảnh vào `wwwroot/uploads`, kiểm tra định dạng và kích thước hợp lệ.</li>
+              <li><strong>Quản lý Ảnh sản phẩm:</strong> Chọn ảnh chính (`LaAnhChinh`), sắp xếp thứ tự (`ThuTu`), tuân thủ Trigger `trg_AnhSanPham_GioiHan` (tối đa 10 ảnh/sản phẩm).</li>
+              <li><strong>Quản lý kho hàng shop:</strong> Danh sách sản phẩm của người bán qua View `vw_SanPhamCuaShop`, lọc trạng thái: <em>Nháp ➔ Chờ duyệt ➔ Đang bán ➔ Đã bán</em>.</li>
+              <li><strong>Gửi duyệt & Xóa mềm:</strong> Kích hoạt `sp_GuiDuyetSanPham`, xóa mềm qua `sp_XoaMemSanPham` để bảo toàn lịch sử giao dịch.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Giao Diện & Tính Năng Công Khai</h3>
+            <ul>
+              <li><strong>Bộ khung dùng chung (Layout B6):</strong> Thiết kế Header thông minh thay đổi theo vai trò (Khách, User, Admin), tích hợp giỏ hàng và chuông thông báo.</li>
+              <li><strong>Tìm kiếm & Bộ lọc nâng cao:</strong> Tìm kiếm theo từ khóa kết hợp lọc đa tiêu chí (Danh mục, Khoảng giá, Tình trạng hàng mới/cũ %).</li>
+              <li><strong>Banner Quảng cáo động:</strong> Bảng `Banner` quản lý hình ảnh slider trang chủ, liên kết và thời gian hiển thị.</li>
+              <li><strong>Sản phẩm Yêu thích (Wishlist):</strong> Thả tim sản phẩm bằng AJAX không cần tải lại trang, ràng buộc Unique 1 User - 1 Sản phẩm.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 7: CHI TIẾT MODULE C ==================== -->
+    <div class="slide" id="slide-7">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">CHI TIẾT MODULE</span>
+          <span>6. Module C: Kiểm Duyệt Thông Minh, AI & Đánh Giá</span>
+        </div>
+        <div class="tag tag-green">Thành viên C - MSSV: ....................</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-2">
+          <div class="feature-card">
+            <h3>Kiểm Duyệt Tin Đăng & Từ Khóa Cấm</h3>
+            <ul>
+              <li><strong>Bộ lọc từ khóa nhạy cảm (`TuKhoaCam`):</strong> Tự động quét tiêu đề và mô tả khi người bán đăng tin. Đánh dấu cờ cảnh báo nếu chứa nội dung vi phạm.</li>
+              <li><strong>Admin Review Portal:</strong> Giao diện dành riêng cho Admin kiểm duyệt sản phẩm mới. Cho phép Phê duyệt (`APPROVED`) hoặc Từ chối kèm lý do (`REJECTED`).</li>
+              <li><strong>Lịch sử kiểm duyệt:</strong> Lưu vết vào bảng `LuotKiemDuyet` người duyệt, thời gian và lý do từ chối.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>AI Chatbot & Đánh Giá Sau Mua</h3>
+            <ul>
+              <li><strong>Trợ lý AI Chatbot:</strong> Tích hợp dịch vụ AI thông minh, hỗ trợ người mua giải đáp thắc mắc và phân tích gợi ý mức giá hợp lý cho món đồ cũ.</li>
+              <li><strong>Hệ thống Đánh giá (Reviews):</strong> Chỉ người mua có đơn hàng trạng thái `HOAN_TAT` mới được quyền đánh giá sao và nhận xét (chống review ảo).</li>
+              <li><strong>Thông báo In-App (`NotificationService`):</strong> Hệ thống chuông thông báo thời gian thực; tự động gửi thông báo khi có đơn mới, duyệt tin hoặc tranh chấp.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="flow-diagram" style="margin-top: 16px;">
+          <div class="flow-node">
+            <strong>1. Người Bán Đăng Tin</strong><br>
+            <small>Tiêu đề, mô tả, ảnh, giá</small>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node active-node">
+            <strong>2. Quét Từ Cấm & AI</strong><br>
+            <small>Cảnh báo từ nhạy cảm</small>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node">
+            <strong>3. Admin Duyệt Tin</strong><br>
+            <small>Chấp thuận hoặc từ chối</small>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node success-node">
+            <strong>4. Gửi Thông Báo</strong><br>
+            <small>In-app notification chuông</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 8: CHI TIẾT MODULE D ==================== -->
+    <div class="slide" id="slide-8">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">CHI TIẾT MODULE TRỌNG TÂM</span>
+          <span>7. Module D: Giỏ Hàng, Đặt Hàng & Cơ Chế Tranh Chấp</span>
+        </div>
+        <div class="tag tag-blue">Thành viên D - MSSV: ....................</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-2">
+          <div class="feature-card">
+            <h3>Quy Trình Mua Hàng & Tách Đơn</h3>
+            <ul>
+              <li><strong>Giỏ hàng đồ cũ:</strong> Thêm vào giỏ qua `sp_ThemVaoGio`, xem giỏ tự động nhóm theo cửa hàng (`vw_GioHangChiTiet`). Ngăn chặn chủ shop tự mua hàng của mình.</li>
+              <li><strong>Đặt hàng tự tách đơn (`sp_DatHangTuGio`):</strong> Giỏ hàng chứa nhiều sản phẩm từ nhiều shop khác nhau được tách tự động thành các đơn hàng độc lập qua `sp_TaoDonHangTheoShop`.</li>
+              <li><strong>Quản lý đơn mua:</strong> Theo dõi tiến trình đơn hàng, xem chi tiết và hủy đơn khi hàng chưa được giao.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Giải Quyết Bài Toán Độc Bản (Số Lượng = 1)</h3>
+            <ul>
+              <li><strong>Thách thức:</strong> Hai khách hàng cùng mở trang chi tiết và cùng bấm "Mua Ngay" một chiếc áo duy nhất.</li>
+              <li><strong>Giải pháp Concurrency:</strong>
+                <br>• Dùng <code>WITH (UPDLOCK, HOLDLOCK)</code> trong Stored Procedure.
+                <br>• Filtered Unique Index <code>UX_ChiTietDonHang_DangGiuCho</code> trên SQL Server chặn triệt để 2 giao dịch giữ chỗ cùng lúc.
+                <br>• Người nhanh tay mua thành công, người chậm tay lập tức nhận thông báo "Sản phẩm đã được mua bởi người khác".
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="feature-card" style="margin-top: 14px;">
+          <h3>Quy Trình Xử Lý Tranh Chấp & Báo Cáo Vi Phạm (Disputes & Reports)</h3>
+          <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; text-align: center; font-size: 13px;">
+            <div style="flex: 1; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #f87171;">
+              <strong>1. Mở Tranh Chấp</strong><br>
+              <small>Người mua tải ảnh chứng cứ hàng lỗi</small>
+            </div>
+            <div style="color: var(--text-muted);">➔</div>
+            <div style="flex: 1; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #fbbf24;">
+              <strong>2. Đóng Băng Đơn</strong><br>
+              <small>Chuyển trạng thái TRANH_CHAP</small>
+            </div>
+            <div style="color: var(--text-muted);">➔</div>
+            <div style="flex: 1; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #38bdf8;">
+              <strong>3. Người Bán Phản Hồi</strong><br>
+              <small>Giải trình sự việc</small>
+            </div>
+            <div style="color: var(--text-muted);">➔</div>
+            <div style="flex: 1; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #34d399;">
+              <strong>4. Admin Phán Quyết</strong><br>
+              <small>Hoàn tiền người mua hoặc Trả tiền shop</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 9: CHI TIẾT MODULE E ==================== -->
+    <div class="slide" id="slide-9">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">CHI TIẾT MODULE</span>
+          <span>8. Module E: Bán Hàng, Thống Kê & Đấu Giá Trực Tuyến</span>
+        </div>
+        <div class="tag tag-amber">Thành viên E - MSSV: ....................</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-2">
+          <div class="feature-card">
+            <h3>Quản Lý Đơn Bán & Thống Kê</h3>
+            <ul>
+              <li><strong>Xử lý đơn phía Người bán:</strong> `SellerOrdersController` cho phép chủ shop xem danh sách đơn hàng được đặt, xác nhận đơn, đóng gói, chuyển đơn vị vận chuyển hoặc hủy đơn kèm lý do.</li>
+              <li><strong>Ràng buộc chuyển trạng thái:</strong> Sử dụng Function `fn_ChuyenTrangThaiDonHangHopLe` đảm bảo trạng thái không bị nhảy cóc (vd: Không thể chuyển từ "Chờ xác nhận" thẳng sang "Đã giao").</li>
+              <li><strong>Thống kê Doanh thu:</strong> Dashboard tổng hợp số lượng đơn, doanh thu theo ngày/tháng, sản phẩm bán chạy nhất.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Hệ Thống Đấu Giá Sản Phẩm (Auction)</h3>
+            <ul>
+              <li><strong>Tạo phòng đấu giá:</strong> Thiết lập giá khởi điểm, bước giá tối thiểu và thời gian đếm ngược kết thúc.</li>
+              <li><strong>Đặt giá trực tiếp (Bidding):</strong> Người mua trả giá cạnh tranh, hệ thống kiểm tra bước giá hợp lệ và cập nhật mức giá cao nhất tức thì.</li>
+              <li><strong>Background Worker (`AuctionSweepService`):</strong>
+                <br>• Dịch vụ nền chạy ngầm chu kỳ quét định kỳ.
+                <br>• Tự động phát hiện các phiên đấu giá đã hết giờ.
+                <br>• Chốt người thắng cuộc và tự động tạo đơn hàng tương ứng hoặc hủy phiên nếu không có lượt ra giá nào.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 10: DATABASE & DATA-FIRST ==================== -->
+    <div class="slide" id="slide-10">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">THIẾT KẾ CƠ SỞ DỮ LIỆU</span>
+          <span>9. Thiết Kế Database & Quy Tắc Data-First</span>
+        </div>
+        <div class="tag tag-blue">Strict Business Rules at Database Level</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-3">
+          <div class="feature-card">
+            <h3>Bảng Dữ Liệu Phân Hệ</h3>
+            <ul style="font-size: 13px;">
+              <li><strong>Lõi (Core):</strong> NguoiDung, CuaHang, SanPham, AnhSanPham, DanhMuc.</li>
+              <li><strong>Giao dịch:</strong> DonHang, ChiTietDonHang, LichSuTrangThaiDonHang, GioHang, ThanhToan.</li>
+              <li><strong>Phụ trợ:</strong> PhienDauGia, LuotRaGia, TranhChap, BaoCao, DanhGia, Banner, TuKhoaCam, ThongBao, NhatKyHeThong.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Stored Procedures Trọng Yếu</h3>
+            <ul style="font-size: 13px;">
+              <li><code>sp_DatHangTuGio</code>: Đặt hàng từ giỏ, khóa giữ chỗ, tách đơn.</li>
+              <li><code>sp_TaoDonHangTheoShop</code>: Tách đơn hàng con theo từng shop.</li>
+              <li><code>sp_CapNhatTrangThaiDon</code>: Cập nhật trạng thái và ghi log lịch sử.</li>
+              <li><code>sp_GhiNhatKy</code>: Ghi log kiểm toán toàn sàn.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Functions & Triggers</h3>
+            <ul style="font-size: 13px;">
+              <li><code>fn_ChuyenTrangThaiDonHangHopLe</code>: State Machine đơn hàng.</li>
+              <li><code>fn_TinhTongTienDonHang</code>: Tính toán tổng tiền chính xác.</li>
+              <li><code>trg_ChiTietDonHang_KiemTra</code>: Chặn can thiệp dữ liệu chi tiết đơn.</li>
+              <li><code>trg_AnhSanPham_GioiHan</code>: Giới hạn tối đa số ảnh đăng tải.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
+          <h4 style="font-size: 14px; color: var(--accent); margin-bottom: 8px;">State Machine: Vòng đời Trạng thái Đơn hàng (Bảo vệ bởi Function & SP):</h4>
+          <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center; text-align: center; font-size: 12px;">
+            <div style="flex: 1; background: #1e293b; padding: 8px; border-radius: 6px; border: 1px solid #94a3b8;">CHO_XAC_NHAN<br><small>(Chờ shop duyệt)</small></div>
+            <div>➔</div>
+            <div style="flex: 1; background: #1e293b; padding: 8px; border-radius: 6px; border: 1px solid #38bdf8;">DANG_DONG_GOI<br><small>(Đóng gói hàng)</small></div>
+            <div>➔</div>
+            <div style="flex: 1; background: #1e293b; padding: 8px; border-radius: 6px; border: 1px solid #818cf8;">DANG_GIAO<br><small>(Đang vận chuyển)</small></div>
+            <div>➔</div>
+            <div style="flex: 1; background: #1e293b; padding: 8px; border-radius: 6px; border: 1px solid #fbbf24;">DA_GIAO<br><small>(Khách đã nhận)</small></div>
+            <div>➔</div>
+            <div style="flex: 1; background: #1e293b; padding: 8px; border-radius: 6px; border: 1px solid #34d399;">HOAN_TAT<br><small>(Chốt đơn / Đánh giá)</small></div>
+          </div>
+          <div style="text-align: center; margin-top: 6px; font-size: 11px; color: var(--danger);">
+            * Các trạng thái đặc biệt: <strong>DA_HUY</strong> (Hủy khi chưa giao) • <strong>TRANH_CHAP</strong> (Khiếu nại) • <strong>DA_HOAN_TIEN</strong> (Admin phân xử hoàn cọc).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 11: ĐẢM BẢO CHẤT LƯỢNG & TESTING ==================== -->
+    <div class="slide" id="slide-11">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">ĐẢM BẢO CHẤT LƯỢNG</span>
+          <span>10. Kiểm Thử Hệ Thống & Quản Lý Dự Án</span>
+        </div>
+        <div class="tag tag-green">100% Tests Passed</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-2">
+          <div class="feature-card">
+            <h3>Kết Quả Kiểm Thử Tự Động (Unit Testing)</h3>
+            <div class="stat-badge">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <span>115 / 115 Tests Passed (100%)</span>
+            </div>
+            <ul style="margin-top: 10px;">
+              <li><strong>Công nghệ kiểm thử:</strong> xUnit, Moq, EF Core InMemory Mocking.</li>
+              <li><strong>Bao phủ các ca kiểm thử phức tạp:</strong>
+                <br>• Kiểm tra hợp lệ State Machine đơn hàng (`OrderServiceTests`).
+                <br>• Kiểm tra quy trình tranh chấp & bằng chứng (`DisputeServiceTests`).
+                <br>• Kiểm tra chống gửi báo cáo trùng lặp (`ReportServiceTests`).
+                <br>• Kiểm tra phân quyền truy cập và kiểm duyệt tin đăng.
+              </li>
+              <li><strong>Build Health:</strong> 0 Warnings, 0 Errors trên toàn bộ Solution.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Quy Trình Quản Lý & Phối Hợp Nhóm</h3>
+            <ul>
+              <li><strong>Mô hình Git Flow chuyên nghiệp:</strong>
+                <br>• Mỗi thành viên làm việc trên một feature branch riêng biệt.
+                <br>• Tích hợp liên tục qua nhánh `test-all` với quy trình review code và giải quyết conflict nghiêm ngặt.
+              </li>
+              <li><strong>Quản lý công việc trên Atlassian Jira:</strong>
+                <br>• Board Scrum/Kanban gồm 26 Task chính (A1–A6, B1–B6, C1–C5, D1–D5, E1–E4).
+                <br>• Theo dõi sát sao tiến độ và backlog của từng thành viên.
+              </li>
+              <li><strong>Tài liệu bàn giao:</strong> Hướng dẫn cài đặt database qua file script batch (`run-db.bat`, `reset-db.bat`), tài liệu REST API JWT và tài liệu kiến trúc.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SLIDE 12: TỔNG KẾT & HƯỚNG PHÁT TRIỂN ==================== -->
+    <div class="slide" id="slide-12">
+      <div class="slide-header">
+        <div class="slide-title">
+          <span class="slide-badge">KẾT LUẬN & ĐÁNH GIÁ</span>
+          <span>11. Tổng Kết Dự Án & Hướng Phát Triển</span>
+        </div>
+        <div class="tag tag-blue">Hoàn Thành Xuất Sắc</div>
+      </div>
+      <div class="slide-content">
+        <div class="grid-2">
+          <div class="feature-card">
+            <h3>Kết Quả Đạt Được</h3>
+            <ul>
+              <li>Hoàn thành 100% khối lượng công việc đề ra cho cả 5 thành viên.</li>
+              <li>Hệ thống vận hành mượt mà, giải quyết xuất sắc bài toán <strong>độc bản của đồ secondhand</strong> và ngăn chặn hoàn toàn tình trạng bán trùng (Race condition).</li>
+              <li>Giao diện hiện đại, thân thiện, phân quyền mạch lạc giữa Khách hàng, Người bán và Quản trị viên (Admin).</li>
+              <li>Tính năng nổi bật mang tính thực tế cao: Phòng đấu giá tự động chốt, AI Chatbot tư vấn giá và bộ lọc từ khóa cấm.</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h3>Hướng Phát Triển Tương Lai</h3>
+            <ul>
+              <li><strong>Tích hợp cổng thanh toán trực tuyến:</strong> Kết nối VNPAY, MoMo, ZaloPay với cơ chế Escrow (giữ tiền tạm thời cho đến khi người mua nhận hàng thành công).</li>
+              <li><strong>Tích hợp dịch vụ giao vận thứ ba:</strong> Đồng bộ API Giao Hàng Nhanh (GHN), Giao Hàng Tiết Kiệm (GHTK) để tự động tính phí ship và lấy mã vận đơn.</li>
+              <li><strong>Ứng dụng di động (Mobile App):</strong> Xây dựng app Flutter/React Native kết nối trực tiếp với hệ thống qua cụm RESTful API JWT đã sẵn sàng.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; text-align: center; background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 16px; padding: 20px;">
+          <h2 style="color: #fff; font-size: 24px; margin-bottom: 8px;">CẢM ƠN THẦY VÀ CÁC BẠN ĐÃ LẮNG NGHE!</h2>
+          <p style="color: var(--text-muted); font-size: 15px;">Nhóm xin sẵn sàng lắng nghe các ý kiến nhận xét và giải đáp câu hỏi (Q&A).</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="nav-bar">
+    <div class="key-hint">
+      Phím tắt: <kbd>◀</kbd> <kbd>▶</kbd> hoặc <kbd>Space</kbd> để chuyển slide
+    </div>
+
+    <div class="nav-controls">
+      <button class="btn-nav" id="prevBtn" onclick="prevSlide()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        Trước
+      </button>
+
+      <span class="slide-counter" id="slideCounter">Slide 1 / 12</span>
+
+      <button class="btn-nav" id="nextBtn" onclick="nextSlide()">
+        Tiếp
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+
+    <div>
+      <button class="btn-fullscreen" onclick="toggleFullScreen()" title="Toàn màn hình">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 12;
+
+    function showSlide(slideIndex) {
+      if (slideIndex < 1) slideIndex = 1;
+      if (slideIndex > totalSlides) slideIndex = totalSlides;
+      currentSlide = slideIndex;
+
+      for (let i = 1; i <= totalSlides; i++) {
+        const slide = document.getElementById(`slide-${i}`);
+        if (slide) {
+          slide.classList.remove('active');
+        }
+      }
+
+      const activeSlide = document.getElementById(`slide-${currentSlide}`);
+      if (activeSlide) {
+        activeSlide.classList.add('active');
+        activeSlide.scrollTop = 0;
+      }
+
+      document.getElementById('slideCounter').innerText = `Slide ${currentSlide} / ${totalSlides}`;
+      document.getElementById('progressBar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+      document.getElementById('prevBtn').style.opacity = currentSlide === 1 ? '0.4' : '1';
+      document.getElementById('nextBtn').style.opacity = currentSlide === totalSlides ? '0.4' : '1';
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        showSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        showSlide(currentSlide - 1);
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.log(err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      } else if (e.key === 'Home') {
+        showSlide(1);
+      } else if (e.key === 'End') {
+        showSlide(totalSlides);
+      }
+    });
+
+    // Touch swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+    window.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+    window.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      if (touchEndX < touchStartX - 50) nextSlide();
+      if (touchEndX > touchStartX + 50) prevSlide();
+    });
+
+    // Initialize
+    showSlide(1);
+  </script>
+</body>
+</html>

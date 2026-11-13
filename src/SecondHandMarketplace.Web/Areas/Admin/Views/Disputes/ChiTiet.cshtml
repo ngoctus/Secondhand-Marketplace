@@ -28,18 +28,18 @@
                         <label class="form-label text-muted small mb-1">Lý do khiếu nại</label>
                         <div class="p-3 bg-light rounded-3 fw-medium text-danger">@Model.LyDo</div>
                     </div>
-                    @if (!string.IsNullOrWhiteSpace(Model.BangChungAnh))
+                    @if (UrlAnToan.HopLe(Model.BangChungAnh))
                     {
                         <div class="mb-3">
                             <label class="form-label text-muted small mb-1">Bằng chứng hình ảnh</label>
                             <div>
-                                <a href="@Model.BangChungAnh" target="_blank">
+                                <a href="@Model.BangChungAnh" target="_blank" rel="noopener noreferrer">
                                     <img src="@Model.BangChungAnh" class="img-thumbnail rounded-3" style="max-height: 250px;" alt="Bằng chứng tranh chấp" />
                                 </a>
                             </div>
                         </div>
                     }
-                    <div class="text-muted small">Thời gian tạo: @Model.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    <div class="text-muted small">Thời gian tạo: @HienThi.NgayGio(Model.NgayTao)</div>
                 </div>
             </div>
 
@@ -49,7 +49,7 @@
                     @if (!string.IsNullOrWhiteSpace(Model.PhanHoiNguoiBan))
                     {
                         <div class="p-3 bg-light rounded-3 mb-2">@Model.PhanHoiNguoiBan</div>
-                        <div class="text-muted small">Thời gian phản hồi: @Model.NgayPhanHoi?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                        <div class="text-muted small">Thời gian phản hồi: @HienThi.NgayGio(Model.NgayPhanHoi)</div>
                     }
                     else
                     {
@@ -68,7 +68,7 @@
                         {
                             <div class="small text-secondary mb-2"><strong>Ghi chú nội bộ:</strong> @Model.GhiChuAdmin</div>
                         }
-                        <div class="text-muted small">Thời gian giải quyết: @Model.NgayGiaiQuyet?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") bởi Admin #@Model.NguoiXuLyId</div>
+                        <div class="text-muted small">Thời gian giải quyết: @HienThi.NgayGio(Model.NgayGiaiQuyet) bởi Admin #@Model.NguoiXuLyId</div>
                     </div>
                 </div>
             }
@@ -97,7 +97,7 @@
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Trạng thái tranh chấp:</span>
                         <span class="badge @(Model.TrangThai == "OPEN" ? "bg-warning text-dark" : Model.TrangThai == "RESOLVED" ? "bg-success" : Model.TrangThai == "REJECTED" ? "bg-secondary" : "bg-info")">
-                            @Model.TrangThai
+                            @HienThi.TrangThaiTranhChap(Model.TrangThai)
                         </span>
                     </div>
                 </div>
@@ -113,19 +113,32 @@
                             <input type="hidden" name="maTranhChap" value="@Model.MaTranhChap" />
                             <div class="mb-3">
                                 <label class="form-label fw-semibold small">Quyết định xử lý <span class="text-danger">*</span></label>
-                                <select name="phanQuyet" class="form-select form-select-sm rounded-2" required>
-                                    <option value="">-- Chọn quyết định --</option>
-                                    <option value="REFUND_BUYER">Hoàn tiền cho người mua (Hủy đơn hàng)</option>
-                                    @if (Model.TrangThaiDonHang != "COMPLETED")
-                                    {
-                                        <option value="RELEASE_SELLER">Thanh toán cho người bán (Hoàn tất đơn)</option>
-                                    }
-                                    <option value="REJECT">Bác bỏ khiếu nại (Giữ nguyên trạng thái)</option>
-                                </select>
+                                @if (Model.TrangThaiDonHang == "CANCELLED")
+                                {
+                                    <div class="alert alert-secondary py-2 small mb-2">
+                                        <i class="bi bi-info-circle me-1"></i> Đơn hàng này đã ở trạng thái <strong>Đã hủy</strong>. Chỉ có thể bác bỏ hoặc giữ nguyên khiếu nại.
+                                    </div>
+                                    <select name="phanQuyet" class="form-select form-select-sm rounded-2" required>
+                                        <option value="">-- Chọn quyết định --</option>
+                                        <option value="REJECT">Bác bỏ khiếu nại (Giữ nguyên trạng thái)</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <select name="phanQuyet" class="form-select form-select-sm rounded-2" required>
+                                        <option value="">-- Chọn quyết định --</option>
+                                        <option value="REFUND_BUYER">Hoàn tiền cho người mua (Hủy đơn hàng)</option>
+                                        @if (Model.TrangThaiDonHang == "DELIVERED" || Model.TrangThaiDonHang == "SHIPPING")
+                                        {
+                                            <option value="RELEASE_SELLER">Thanh toán cho người bán (Hoàn tất đơn)</option>
+                                        }
+                                        <option value="REJECT">Bác bỏ khiếu nại (Giữ nguyên trạng thái)</option>
+                                    </select>
+                                }
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold small">Ghi chú / Căn cứ phân xử</label>
-                                <textarea name="ghiChu" rows="3" class="form-control form-control-sm rounded-2" maxlength="500" placeholder="Nhập căn cứ xử lý..."></textarea>
+                                <textarea name="ghiChu" rows="3" class="form-control form-control-sm rounded-2" maxlength="400" placeholder="Nhập căn cứ xử lý..."></textarea>
                             </div>
                             <button type="submit" class="btn btn-success w-100 btn-sm rounded-pill py-2 fw-semibold"
                                     style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">

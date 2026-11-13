@@ -35,6 +35,13 @@ public class AppDbContext : DbContext
     public DbSet<LuotDatGia> LuotDatGias => Set<LuotDatGia>();
     public DbSet<YeuThich> YeuThichs => Set<YeuThich>();
     public DbSet<Banner> Banners => Set<Banner>();
+    public DbSet<DanhGia> DanhGias => Set<DanhGia>();
+    public DbSet<HoiThoai> HoiThoais => Set<HoiThoai>();
+    public DbSet<TinNhan> TinNhans => Set<TinNhan>();
+    public DbSet<TinhThanh> TinhThanhs => Set<TinhThanh>();
+    public DbSet<PhuongXa> PhuongXas => Set<PhuongXa>();
+    /// <summary>View tổng hợp điểm shop — chỉ đọc (xem database/11_danhgia.sql).</summary>
+    public DbSet<DiemCuaHangView> DiemCuaHangViews => Set<DiemCuaHangView>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -65,10 +72,46 @@ public class AppDbContext : DbContext
             e.Property(x => x.Logo).IsUnicode(false).HasMaxLength(500);
             e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(10);
             e.Property(x => x.LyDoKhoa).HasMaxLength(500);
+            e.Property(x => x.DiaChiChiTiet).HasMaxLength(300);
+            e.Property(x => x.KhuVucHienThi).HasMaxLength(100);
+            e.Property(x => x.NganHang).HasMaxLength(100);
+            e.Property(x => x.MaNganHang).IsUnicode(false).HasMaxLength(10);
+            e.Property(x => x.SoTaiKhoan).IsUnicode(false).HasMaxLength(30);
+            e.Property(x => x.TenChuTaiKhoan).HasMaxLength(100);
             e.HasOne(x => x.NguoiDung)
                 .WithMany()
                 .HasForeignKey(x => x.MaNguoiDung)
                 .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.TinhThanh)
+                .WithMany()
+                .HasForeignKey(x => x.MaTinhThanh)
+                .OnDelete(DeleteBehavior.NoAction);
+            e.HasOne(x => x.PhuongXa)
+                .WithMany()
+                .HasForeignKey(x => x.MaPhuongXa)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<TinhThanh>(e =>
+        {
+            e.ToTable("TinhThanh");
+            e.HasKey(x => x.MaTinhThanh);
+            e.Property(x => x.MaTinhThanh).ValueGeneratedNever();   // mã cố định theo danh mục hành chính, không IDENTITY
+            e.Property(x => x.TenTinhThanh).HasMaxLength(100);
+            e.Property(x => x.MaHanhChinh).IsUnicode(false).HasMaxLength(10);
+        });
+
+        modelBuilder.Entity<PhuongXa>(e =>
+        {
+            e.ToTable("PhuongXa");
+            e.HasKey(x => x.MaPhuongXa);
+            e.Property(x => x.MaPhuongXa).ValueGeneratedNever();
+            e.Property(x => x.TenPhuongXa).HasMaxLength(100);
+            e.Property(x => x.MaHanhChinh).IsUnicode(false).HasMaxLength(10);
+            e.HasOne(x => x.TinhThanh)
+                .WithMany(t => t.PhuongXas)
+                .HasForeignKey(x => x.MaTinhThanh)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<DanhMuc>(e =>
@@ -156,6 +199,7 @@ public class AppDbContext : DbContext
         {
             e.ToTable("GioHang");
             e.HasKey(x => x.MaGioHang);
+            e.HasIndex(x => new { x.MaNguoiDung, x.MaSanPham }).IsUnique();
             e.HasOne(x => x.NguoiDung)
                 .WithMany()
                 .HasForeignKey(x => x.MaNguoiDung)
@@ -173,6 +217,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.TienHang).HasPrecision(18, 2);
             e.Property(x => x.PhiVanChuyen).HasPrecision(18, 2);
             e.Property(x => x.TongTien).HasPrecision(18, 2);
+            e.Property(x => x.HinhThucNhan).IsUnicode(false).HasMaxLength(20).HasDefaultValue("GIAO_HANG");
 
             e.HasOne(x => x.NguoiDung)
                 .WithMany()
@@ -273,12 +318,31 @@ public class AppDbContext : DbContext
             e.HasKey(x => x.MaThongBao);
         });
 
+        modelBuilder.Entity<HoiThoai>(e =>
+        {
+            e.ToTable("HoiThoai");
+            e.HasKey(x => x.MaHoiThoai);
+            e.Property(x => x.NoiDungCuoi).HasMaxLength(200);
+            e.HasIndex(x => new { x.MaNguoiDung1, x.MaNguoiDung2 }).IsUnique();
+            e.HasOne(x => x.NguoiDung1).WithMany().HasForeignKey(x => x.MaNguoiDung1).OnDelete(DeleteBehavior.NoAction);
+            e.HasOne(x => x.NguoiDung2).WithMany().HasForeignKey(x => x.MaNguoiDung2).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<TinNhan>(e =>
+        {
+            e.ToTable("TinNhan");
+            e.HasKey(x => x.MaTinNhan);
+            e.Property(x => x.NoiDung).HasMaxLength(1000);
+            e.HasOne(x => x.HoiThoai).WithMany(h => h.TinNhans).HasForeignKey(x => x.MaHoiThoai).OnDelete(DeleteBehavior.NoAction);
+            e.HasOne(x => x.NguoiGui).WithMany().HasForeignKey(x => x.MaNguoiGui).OnDelete(DeleteBehavior.NoAction);
+        });
+
         modelBuilder.Entity<TranhChap>(e =>
         {
             e.ToTable("TranhChap");
             e.HasKey(x => x.MaTranhChap);
             e.Property(x => x.LyDo).HasMaxLength(500);
-            e.Property(x => x.BangChungAnh).IsUnicode(false).HasMaxLength(500);
+            e.Property(x => x.BangChungAnh).HasMaxLength(500);
             e.Property(x => x.PhanHoiNguoiBan).HasMaxLength(1000);
             e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(20);
             e.Property(x => x.PhanQuyet).HasMaxLength(500);
@@ -292,6 +356,9 @@ public class AppDbContext : DbContext
         {
             e.ToTable("BaoCao");
             e.HasKey(x => x.MaBaoCao);
+            e.HasIndex(x => new { x.MaNguoiBaoCao, x.LoaiDoiTuong, x.MaDoiTuong })
+                .HasFilter("[TrangThai] = 'PENDING'")
+                .IsUnique();
             e.Property(x => x.LoaiDoiTuong).IsUnicode(false).HasMaxLength(10);
             e.Property(x => x.LyDo).HasMaxLength(255);
             e.Property(x => x.MoTa).HasMaxLength(1000);
@@ -326,6 +393,38 @@ public class AppDbContext : DbContext
             e.HasKey(x => x.MaLuotDatGia);
             e.Property(x => x.SoTien).HasPrecision(18, 2);
             e.HasOne(x => x.NguoiDung).WithMany().HasForeignKey(x => x.MaNguoiDung).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<DanhGia>(e =>
+        {
+            e.ToTable("DanhGia");
+            e.HasKey(x => x.MaDanhGia);
+            e.Property(x => x.NoiDung).HasMaxLength(1000);
+            e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(10);
+            e.HasIndex(x => x.MaDonHang).IsUnique();
+            e.HasOne(x => x.DonHang)
+                .WithOne()
+                .HasForeignKey<DanhGia>(x => x.MaDonHang)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.NguoiMua)
+                .WithMany()
+                .HasForeignKey(x => x.MaNguoiMua)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.CuaHang)
+                .WithMany()
+                .HasForeignKey(x => x.MaCuaHang)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // View tổng hợp điểm shop — đọc từ database/11_danhgia.sql (MaCuaHang là khóa duy nhất).
+        modelBuilder.Entity<DiemCuaHangView>(e =>
+        {
+            e.HasKey(x => x.MaCuaHang);
+            e.ToView("vw_DiemCuaHang");
+            e.Property(x => x.MaCuaHang).HasColumnName("MaCuaHang");
+            e.Property(x => x.DiemTrungBinh).HasColumnType("decimal(3,2)").HasColumnName("DiemTrungBinh");
+            e.Property(x => x.SoDanhGia).HasColumnName("SoDanhGia");
+            e.Property(x => x.SoDonThanhCong).HasColumnName("SoDonThanhCong");
         });
     }
 }

@@ -32,7 +32,7 @@ public class ReportsController : UserBaseController
             return RedirectToAction(nameof(Index));
         }
 
-        ViewBag.ReturnUrl = returnUrl;
+        ViewBag.ReturnUrl = (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) ? returnUrl : null;
         var vm = new TaoBaoCaoViewModel
         {
             LoaiDoiTuong = string.IsNullOrWhiteSpace(loai) ? "PRODUCT" : loai.ToUpper(),
@@ -49,7 +49,7 @@ public class ReportsController : UserBaseController
     {
         if (!ModelState.IsValid)
         {
-            ViewBag.ReturnUrl = returnUrl;
+            ViewBag.ReturnUrl = (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) ? returnUrl : null;
             return View(vm);
         }
 
@@ -67,7 +67,7 @@ public class ReportsController : UserBaseController
         }
 
         this.ThongBaoLoi(thongBao ?? "Không thể gửi báo cáo.");
-        ViewBag.ReturnUrl = returnUrl;
+        ViewBag.ReturnUrl = (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) ? returnUrl : null;
         return View(vm);
     }
 }

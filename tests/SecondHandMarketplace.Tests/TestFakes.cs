@@ -71,7 +71,8 @@ public class FakeShopService : IShopService
     public (bool Success, string? Error) LockResult { get; set; } = (true, null);
 
     public Task<CuaHang?> GetByOwnerAsync(int userId, CancellationToken cancellationToken = default) => Task.FromResult<CuaHang?>(null);
-    public Task<(bool Success, string? Error)> SaveAsync(int userId, string name, string phone, string? description, string? logo, CancellationToken cancellationToken = default) => Task.FromResult((true, (string?)null));
+    public Task<(bool Success, string? Error)> SaveAsync(int userId, ShopSaveInput input, CancellationToken cancellationToken = default) => Task.FromResult((true, (string?)null));
+    public Task<SecondHandMarketplace.Web.Models.ViewModels.Shop.ShopPublicVm?> GetPublicShopAsync(int id, int page = 1, int pageSize = 12, CancellationToken cancellationToken = default) => Task.FromResult<SecondHandMarketplace.Web.Models.ViewModels.Shop.ShopPublicVm?>(null);
     
     public Task<(bool Success, string? Error)> LockShopAsync(int? actorId, int shopId, string? reason, CancellationToken cancellationToken = default)
     {

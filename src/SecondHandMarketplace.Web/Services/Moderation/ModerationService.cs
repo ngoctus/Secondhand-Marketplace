@@ -157,18 +157,27 @@ public sealed class ModerationService(
             turn.QuyetDinhTuDong = true;
 
             // PENDING_REVIEW -> REJECTED là bước hợp lệ của fn_ChuyenTrangThaiSanPhamHopLe; ghi lịch sử với SYSTEM.
-            product.TrangThai = ModerationPolicy.ProductRejected;
-            product.NgayCapNhat = now;
-            db.LichSuTrangThaiSanPhams.Add(new LichSuTrangThaiSanPham
+            // Trên SQL thật, để sp_ChuyenTrangThaiSanPham làm chốt chặn cuối (state machine + lịch sử).
+            // In-Memory (test) không chạy được SP nên cập nhật trực tiếp.
+            if (db.Database.IsRelational())
             {
-                MaSanPham = product.MaSanPham,
-                TrangThaiCu = ModerationPolicy.ProductPending,
-                TrangThaiMoi = ModerationPolicy.ProductRejected,
-                LoaiNguoiThucHien = "SYSTEM",
-                NguoiThucHienId = null,
-                LyDo = reason,
-                ThoiGian = now
-            });
+                // Không gán product.TrangThai ở đây; SP sẽ cập nhật sau khi SaveChanges.
+            }
+            else
+            {
+                product.TrangThai = ModerationPolicy.ProductRejected;
+                product.NgayCapNhat = now;
+                db.LichSuTrangThaiSanPhams.Add(new LichSuTrangThaiSanPham
+                {
+                    MaSanPham = product.MaSanPham,
+                    TrangThaiCu = ModerationPolicy.ProductPending,
+                    TrangThaiMoi = ModerationPolicy.ProductRejected,
+                    LoaiNguoiThucHien = "SYSTEM",
+                    NguoiThucHienId = null,
+                    LyDo = reason,
+                    ThoiGian = now
+                });
+            }
 
             post.AutoRejected = true;
             post.Reason = reason;
@@ -176,6 +185,14 @@ public sealed class ModerationService(
         }
 
         await db.SaveChangesAsync(ct);
+
+        if (post.AutoRejected && db.Database.IsRelational())
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync($@"EXEC dbo.sp_ChuyenTrangThaiSanPham
+                @MaSanPham={product.MaSanPham}, @TrangThaiMoi={"REJECTED"}, @LoaiNguoiThucHien={"SYSTEM"},
+                @NguoiThucHienId={null}, @LyDo={post.Reason}", ct);
+        }
+
         await tx.CommitAsync(ct);
         return post;
     }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Disputes;
@@ -20,6 +21,39 @@ public class DisputeService : IDisputeService
         _audit = audit;
     }
 
+    public async Task<(bool HopLe, string? ThongBao, MoTranhChapViewModel? ViewModel, int? MaTranhChapHienCo)> ChuanBiMoTranhChapAsync(int userId, int maDonHang)
+    {
+        var donHang = await _db.DonHangs
+            .Include(d => d.CuaHang)
+            .FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == userId);
+
+        if (donHang == null)
+        {
+            return (false, "Không tìm thấy đơn hàng cần khiếu nại hoặc bạn không phải người mua.", null, null);
+        }
+
+        if (donHang.TrangThai != "SHIPPING" && donHang.TrangThai != "DELIVERED" && donHang.TrangThai != "COMPLETED")
+        {
+            return (false, "Chỉ có thể mở khiếu nại đối với đơn hàng đang giao, đã giao hoặc đã hoàn tất.", null, null);
+        }
+
+        var tranhChapHienCo = await _db.TranhChaps.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
+        if (tranhChapHienCo != null)
+        {
+            return (false, "Đơn hàng này đã có khiếu nại trước đó.", null, tranhChapHienCo.MaTranhChap);
+        }
+
+        var vm = new MoTranhChapViewModel
+        {
+            MaDonHang = donHang.MaDonHang,
+            MaDon = donHang.MaDon,
+            TenShop = donHang.CuaHang?.TenShop ?? "Cửa hàng",
+            TongTien = donHang.TongTien
+        };
+
+        return (true, null, vm, null);
+    }
+
     public async Task<(bool ThanhCong, string? ThongBao)> MoTranhChapAsync(int maNguoiMua, MoTranhChapViewModel vm)
     {
         // 1. Kiểm tra lý do bắt buộc và độ dài
@@ -37,6 +71,11 @@ public class DisputeService : IDisputeService
         if (!string.IsNullOrWhiteSpace(vm.BangChungAnh) && vm.BangChungAnh.Trim().Length > 500)
         {
             return (false, "Đường dẫn ảnh bằng chứng không được vượt quá 500 ký tự.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(vm.BangChungAnh) && !UrlAnToan.HopLe(vm.BangChungAnh))
+        {
+            return (false, "Đường dẫn ảnh bằng chứng phải là URL http/https.");
         }
 
         // 2. Kiểm tra đơn hàng và quyền sở hữu
@@ -57,13 +96,12 @@ public class DisputeService : IDisputeService
             return (false, "Chỉ có thể mở khiếu nại đối với đơn hàng đang giao, đã giao hoặc đã hoàn tất.");
         }
 
-        // 4. Chống mở trùng khiếu nại đang xử lý hoặc đã được giải quyết
-        var daCoTranhChap = await _db.TranhChaps.AnyAsync(t =>
-            t.MaDonHang == vm.MaDonHang && (t.TrangThai == "OPEN" || t.TrangThai == "PROCESSING" || t.TrangThai == "RESOLVED"));
+        // 4. Chống mở trùng khiếu nại: Mỗi đơn hàng chỉ được mở khiếu nại 1 lần duy nhất
+        var daCoTranhChap = await _db.TranhChaps.AnyAsync(t => t.MaDonHang == vm.MaDonHang);
 
         if (daCoTranhChap)
         {
-            return (false, "Đơn hàng này đã có khiếu nại đang chờ xử lý hoặc đã được giải quyết xong.");
+            return (false, "Đơn hàng này đã có khiếu nại đang chờ xử lý hoặc đã kết thúc và không thể mở lại.");
         }
 
         var now = DateTime.UtcNow;
@@ -88,14 +126,18 @@ public class DisputeService : IDisputeService
             return (false, "Đơn hàng này đang có khiếu nại đang chờ xử lý.");
         }
 
-        // Gửi thông báo cho Người bán (chủ cửa hàng)
-        await _notifications.CreateAsync(
-            donHang.CuaHang.MaNguoiDung,
-            NotificationTypes.Order,
-            "Đơn hàng phát sinh khiếu nại tranh chấp",
-            $"Người mua đã mở khiếu nại cho đơn hàng #{donHang.MaDon}. Lý do: {lyDoTrim}. Vui lòng kiểm tra và phản hồi.",
-            tranhChap.MaTranhChap
-        );
+        // Gửi thông báo cho Người bán (chủ cửa hàng) - best effort
+        try
+        {
+            await _notifications.CreateAsync(
+                donHang.CuaHang.MaNguoiDung,
+                NotificationTypes.Order,
+                "Đơn hàng phát sinh khiếu nại tranh chấp",
+                $"Người mua đã mở khiếu nại cho đơn hàng #{donHang.MaDon}. Lý do: {lyDoTrim}. Vui lòng kiểm tra và phản hồi.",
+                donHang.MaDonHang
+            );
+        }
+        catch { /* Best effort: không làm gián đoạn khiếu nại đã lưu */ }
 
         return (true, "Đã gửi yêu cầu khiếu nại tranh chấp thành công. Người bán và Ban quản trị sẽ tiến hành xử lý.");
     }
@@ -136,14 +178,18 @@ public class DisputeService : IDisputeService
 
         await _db.SaveChangesAsync();
 
-        // Gửi thông báo cho Người mua
-        await _notifications.CreateAsync(
-            tc.MaNguoiTao,
-            NotificationTypes.Order,
-            "Người bán đã phản hồi khiếu nại",
-            $"Người bán đã phản hồi khiếu nại đơn hàng #{tc.DonHang.MaDon}: \"{phanHoiTrim}\"",
-            tc.MaTranhChap
-        );
+        // Gửi thông báo cho Người mua (best-effort)
+        try
+        {
+            await _notifications.CreateAsync(
+                tc.MaNguoiTao,
+                NotificationTypes.Order,
+                "Người bán đã phản hồi khiếu nại",
+                $"Người bán đã phản hồi khiếu nại đơn hàng #{tc.DonHang.MaDon}: \"{phanHoiTrim}\"",
+                tc.MaDonHang
+            );
+        }
+        catch { /* Best-effort: không làm hỏng phản hồi nếu thông báo thất bại */ }
 
         return (true, "Đã gửi phản hồi thành công.");
     }
@@ -241,9 +287,10 @@ public class DisputeService : IDisputeService
             .Include(t => t.NguoiXuLy)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(trangThai))
+        var ttChuan = trangThai?.Trim().ToUpperInvariant();
+        if (ttChuan is "OPEN" or "PROCESSING" or "RESOLVED" or "REJECTED")
         {
-            query = query.Where(t => t.TrangThai == trangThai);
+            query = query.Where(t => t.TrangThai == ttChuan);
         }
 
         var totalItems = await query.CountAsync();
@@ -306,11 +353,16 @@ public class DisputeService : IDisputeService
             return (false, "Tranh chấp này đã được phân xử trước đó.");
         }
 
+        if (!string.IsNullOrWhiteSpace(ghiChu) && ghiChu.Trim().Length > 400)
+        {
+            return (false, "Ghi chú của quản trị viên không được vượt quá 400 ký tự.");
+        }
+
         using var tx = _db.Database.IsRelational() ? await _db.Database.BeginTransactionAsync() : null;
         var now = DateTime.UtcNow;
         tc.NguoiXuLyId = adminId;
         tc.NgayGiaiQuyet = now;
-        tc.GhiChuAdmin = ghiChu;
+        tc.GhiChuAdmin = ghiChu?.Trim();
         var trangThaiDonCu = tc.DonHang.TrangThai;
 
         try
@@ -320,6 +372,12 @@ public class DisputeService : IDisputeService
             tc.TrangThai = "RESOLVED";
             tc.PhanQuyet = "Chấp thuận khiếu nại: Hoàn tiền cho người mua và hủy đơn.";
             var lyDoAdmin = string.IsNullOrWhiteSpace(ghiChu) ? tc.PhanQuyet : $"{tc.PhanQuyet} Ghi chú: {ghiChu.Trim()}";
+            if (lyDoAdmin.Length > 500)
+            {
+                var cut = 500;
+                if (char.IsHighSurrogate(lyDoAdmin[cut - 1])) cut--;
+                lyDoAdmin = lyDoAdmin[..cut];
+            }
 
             if (_db.Database.IsRelational())
             {
@@ -385,6 +443,12 @@ public class DisputeService : IDisputeService
             tc.TrangThai = "RESOLVED";
             tc.PhanQuyet = "Bác bỏ khiếu nại: Thanh toán hoàn tất cho người bán.";
             var lyDoAdmin = string.IsNullOrWhiteSpace(ghiChu) ? tc.PhanQuyet : $"{tc.PhanQuyet} Ghi chú: {ghiChu.Trim()}";
+            if (lyDoAdmin.Length > 500)
+            {
+                var cut = 500;
+                if (char.IsHighSurrogate(lyDoAdmin[cut - 1])) cut--;
+                lyDoAdmin = lyDoAdmin[..cut];
+            }
 
             // Fix #6: Nếu đơn đã COMPLETED thì không gọi đổi trạng thái đơn nữa
             if (tc.DonHang.TrangThai != "COMPLETED")
@@ -461,9 +525,20 @@ public class DisputeService : IDisputeService
         await _db.SaveChangesAsync();
         if (tx != null) await tx.CommitAsync();
     }
+    catch (Microsoft.Data.SqlClient.SqlException sqlEx)
+    {
+        if (tx != null)
+        {
+            try { await tx.RollbackAsync(); } catch { }
+        }
+        return (false, SecondHandMarketplace.Web.Common.SqlLoi.ThongBao(sqlEx));
+    }
     catch (Exception ex)
     {
-        if (tx != null) await tx.RollbackAsync();
+        if (tx != null)
+        {
+            try { await tx.RollbackAsync(); } catch { }
+        }
         return (false, SecondHandMarketplace.Web.Common.SqlLoi.ThongBao(ex));
     }
 
@@ -477,12 +552,12 @@ public class DisputeService : IDisputeService
         await _notifications.CreateAsync(tc.MaNguoiTao, NotificationTypes.Order,
             "Kết quả xử lý khiếu nại đơn hàng",
             $"Tranh chấp đơn hàng #{tc.DonHang.MaDon} đã có kết quả: {tc.PhanQuyet}",
-            tc.MaTranhChap);
+            tc.MaDonHang);
 
         await _notifications.CreateAsync(tc.DonHang.CuaHang.MaNguoiDung, NotificationTypes.Order,
             "Kết quả xử lý khiếu nại đơn hàng",
             $"Tranh chấp đơn hàng #{tc.DonHang.MaDon} đã có kết quả: {tc.PhanQuyet}",
-            tc.MaTranhChap);
+            tc.MaDonHang);
     }
     catch
     {

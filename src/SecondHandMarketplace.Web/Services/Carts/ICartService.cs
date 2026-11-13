@@ -10,5 +10,6 @@ public interface ICartService
     Task<bool> CapNhatTrangThaiChonAsync(int maNguoiDung, int maGioHang, bool daChon);
     Task<bool> CapNhatChonTatCaTheoShopAsync(int maNguoiDung, int maCuaHang, bool daChon);
     Task<bool> XoaKhoiGioAsync(int maNguoiDung, int maGioHang);
+    Task<int> XoaMonKhongKhaDungAsync(int maNguoiDung);
     Task<int> DemSoLuongMonAsync(int maNguoiDung);
 }

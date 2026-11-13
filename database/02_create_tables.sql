@@ -216,6 +216,7 @@ CREATE TABLE PhanTichAI (
     TrangThai          varchar(12)    NOT NULL CONSTRAINT DF_PhanTichAI_TrangThai DEFAULT ('QUEUED'),
     SoLanThu           int            NOT NULL CONSTRAINT DF_PhanTichAI_SoLanThu  DEFAULT (0),
     MucRuiRo           varchar(10)    NULL,
+    MucDoTuKhoa        varchar(4)     NULL,
     DauHieu            nvarchar(max)  NULL,
     DeXuat             varchar(15)    NULL,
     GiaiThich          nvarchar(2000) NULL,

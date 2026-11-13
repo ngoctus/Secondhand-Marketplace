@@ -1,109 +1,195 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Orders.CheckoutViewModel
 @{
-    ViewData["Title"] = "Xác nhận & Thanh toán";
+    ViewData["Title"] = "Xác nhận & Đặt hàng";
+    var defaultMemo = "REMARKET " + (string.IsNullOrEmpty(Model.SoDienThoaiNhan) ? "THANHTOAN" : Model.SoDienThoaiNhan);
 }
 
-<div class="container my-4" style="max-width: 1050px;">
-    <!-- Tiêu đề -->
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+<div class="container my-4" style="max-width: 1080px;">
+    <!-- Tiêu đề & Breadcrumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
         <div>
-            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-shield-lock text-success"></i> Xác nhận & Đặt hàng</h2>
-            <p class="text-muted small mb-0">Vui lòng kiểm tra địa chỉ nhận hàng và phương thức thanh toán trước khi hoàn tất.</p>
+            <h2 class="h3 fw-bold text-dark mb-1" style="font-family: 'Playfair Display', serif;">
+                <i class="bi bi-shield-check text-success me-2"></i>Xác nhận & Đặt hàng
+            </h2>
+            <p class="text-muted small mb-0">Kiểm tra thông tin giao nhận và chọn phương thức thanh toán thuận tiện nhất.</p>
         </div>
-        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-            &larr; Quay lại giỏ hàng
+        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại giỏ hàng
         </a>
     </div>
 
     <partial name="_ThongBao" />
 
-    <form asp-area="User" asp-controller="Orders" asp-action="DatHang" method="post">
+    <form asp-area="User" asp-controller="Orders" asp-action="DatHang" method="post" id="checkoutForm">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="MaSanPhamMuaNgay" />
         <input type="hidden" asp-for="TienHang" />
         <input type="hidden" asp-for="PhiVanChuyen" />
 
         <div class="row g-4">
-            <!-- Cột trái: Thông tin nhận hàng & Phương thức thanh toán -->
+            <!-- CỘT TRÁI: THÔNG TIN GIAO NHẬN & PHƯƠNG THỨC THANH TOÁN -->
             <div class="col-lg-7">
-                <!-- 1. Địa chỉ nhận hàng -->
+                <!-- 1. Hình thức nhận hàng & Địa chỉ -->
                 <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4">
                     <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
-                        <i class="bi bi-geo-alt-fill text-danger"></i> 1. Địa chỉ nhận hàng
+                        <span class="badge bg-success rounded-circle px-2 py-1" style="font-size: 13px;">1</span>
+                        <span>Hình thức nhận & Thông tin người nhận</span>
                     </h5>
 
-                    <div class="mb-3">
-                        <label asp-for="TenNguoiNhan" class="form-label fw-semibold small text-dark">Họ và tên người nhận <span class="text-danger">*</span></label>
-                        <input asp-for="TenNguoiNhan" class="form-control rounded-3" placeholder="Nhập họ tên đầy đủ..." />
-                        <span asp-validation-for="TenNguoiNhan" class="text-danger small"></span>
+                    <!-- Chọn hình thức nhận hàng (Task D3) -->
+                    <label class="form-label fw-semibold small text-dark mb-2">
+                        Hình thức giao dịch <span class="text-danger">*</span>
+                    </label>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="delivery-option-card border rounded-3 p-3 d-flex align-items-start gap-2 h-100 cursor-pointer @(Model.HinhThucNhan == "GIAO_HANG" ? "delivery-active" : "")" for="htn_giao">
+                                <input class="form-check-input mt-1" type="radio" asp-for="HinhThucNhan" id="htn_giao" value="GIAO_HANG" />
+                                <div>
+                                    <div class="fw-bold text-dark small"><i class="bi bi-truck text-primary me-1"></i> Giao hàng tận nơi</div>
+                                    <div class="text-muted" style="font-size: 11px;">Người bán gửi hàng tận nhà cho bạn.</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="delivery-option-card border rounded-3 p-3 d-flex align-items-start gap-2 h-100 cursor-pointer @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "delivery-active" : "")" for="htn_gap">
+                                <input class="form-check-input mt-1" type="radio" asp-for="HinhThucNhan" id="htn_gap" value="GAP_TRUC_TIEP" />
+                                <div>
+                                    <div class="fw-bold text-dark small"><i class="bi bi-people-fill text-success me-1"></i> Gặp mặt trực tiếp</div>
+                                    <div class="text-muted" style="font-size: 11px;">Hẹn gặp kiểm tra đồ trực tiếp, 0đ ship.</div>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="SoDienThoaiNhan" class="form-label fw-semibold small text-dark">Số điện thoại liên hệ <span class="text-danger">*</span></label>
-                        <input asp-for="SoDienThoaiNhan" class="form-control rounded-3" placeholder="Ví dụ: 0912345678" />
-                        <span asp-validation-for="SoDienThoaiNhan" class="text-danger small"></span>
+                        <label asp-for="TenNguoiNhan" class="form-label fw-semibold small text-dark">
+                            Họ và tên người nhận <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-person"></i></span>
+                            <input asp-for="TenNguoiNhan" class="form-control rounded-end-3 border-start-0" placeholder="Ví dụ: Nguyễn Văn An" required maxlength="100" />
+                        </div>
+                        <span asp-validation-for="TenNguoiNhan" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SoDienThoaiNhan" class="form-label fw-semibold small text-dark">
+                            Số điện thoại liên hệ <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-telephone"></i></span>
+                            <input asp-for="SoDienThoaiNhan" class="form-control rounded-end-3 border-start-0" placeholder="Ví dụ: 0912345678" required maxlength="15" />
+                        </div>
+                        <span asp-validation-for="SoDienThoaiNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
 
                     <div class="mb-2">
-                        <label asp-for="DiaChiNhan" class="form-label fw-semibold small text-dark">Địa chỉ giao hàng chi tiết <span class="text-danger">*</span></label>
-                        <textarea asp-for="DiaChiNhan" rows="3" class="form-control rounded-3" placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..."></textarea>
-                        <span asp-validation-for="DiaChiNhan" class="text-danger small"></span>
+                        <label asp-for="DiaChiNhan" id="lblDiaChiNhan" class="form-label fw-semibold small text-dark">
+                            @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Địa điểm hẹn gặp mong muốn" : "Địa chỉ giao hàng chi tiết") <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted align-items-start pt-2"><i class="bi bi-geo-alt"></i></span>
+                            <textarea asp-for="DiaChiNhan" id="txtDiaChiNhan" rows="3" class="form-control rounded-end-3 border-start-0" 
+                                      placeholder="@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Ví dụ: Quán cafe X, cổng trường UTC2, công viên Y..." : "Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố...")" required maxlength="500"></textarea>
+                        </div>
+                        <span asp-validation-for="DiaChiNhan" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <div class="mb-2">
+                        <label asp-for="KhungGioNhan" class="form-label fw-semibold small text-dark">Khung giờ hoặc lưu ý khi nhận hàng</label>
+                        <input asp-for="KhungGioNhan" class="form-control rounded-3" maxlength="200" placeholder="Ví dụ: sau 18:00, né giờ hành chính, hoặc linh động" />
+                        <span asp-validation-for="KhungGioNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
                 </div>
 
                 <!-- 2. Phương thức thanh toán -->
                 <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4">
                     <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
-                        <i class="bi bi-wallet2 text-success"></i> 2. Phương thức thanh toán
+                        <span class="badge bg-success rounded-circle px-2 py-1" style="font-size: 13px;">2</span>
+                        <span>Chọn phương thức thanh toán</span>
                     </h5>
 
-                    <div class="d-flex flex-column gap-3">
+                    <div class="d-flex flex-column gap-3 mb-3" id="paymentOptions">
                         <!-- COD -->
-                        <label class="border rounded-3 p-3 d-flex align-items-start gap-3 cursor-pointer bg-light">
-                            <input class="form-check-input mt-1" type="radio" asp-for="PhuongThucThanhToan" id="pt_cod" value="COD" checked />
-                            <div>
-                                <div class="fw-bold text-dark"><i class="bi bi-cash-stack text-success me-1"></i> Thanh toán tiền mặt khi nhận hàng (COD)</div>
-                                <div class="text-secondary small mt-1">Bạn chỉ thanh toán cho người giao hàng khi đã kiểm tra kiện hàng.</div>
+                        <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 cursor-pointer transition-all @(Model.PhuongThucThanhToan == "COD" ? "payment-active" : "")" for="pt_cod">
+                            <input class="form-check-input mt-1" type="radio" asp-for="PhuongThucThanhToan" id="pt_cod" value="COD" />
+                            <div class="flex-grow-1">
+                                <div class="fw-bold text-dark d-flex align-items-center justify-content-between">
+                                    <span><i class="bi bi-cash-stack text-success me-2 fs-5"></i>Thanh toán khi nhận hàng (COD)</span>
+                                    <span class="badge bg-light text-secondary border small">Phổ biến</span>
+                                </div>
+                                <div class="text-secondary small mt-1">Kiểm tra kiện hàng trước khi thanh toán tiền mặt cho shipper.</div>
                             </div>
                         </label>
 
-                        <!-- Bank transfer -->
-                        <label class="border rounded-3 p-3 d-flex align-items-start gap-3 cursor-pointer">
+                        <!-- Chuyển khoản VietQR -->
+                        <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 cursor-pointer transition-all @(Model.PhuongThucThanhToan == "BANK_TRANSFER" ? "payment-active" : "")" for="pt_bank">
                             <input class="form-check-input mt-1" type="radio" asp-for="PhuongThucThanhToan" id="pt_bank" value="BANK_TRANSFER" />
-                            <div>
-                                <div class="fw-bold text-dark"><i class="bi bi-bank text-primary me-1"></i> Chuyển khoản ngân hàng (VietQR)</div>
-                                <div class="text-secondary small mt-1">Chuyển tiền nhanh 24/7 qua mã VietQR hoặc số tài khoản ngân hàng.</div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold text-dark d-flex align-items-center justify-content-between">
+                                    <span><i class="bi bi-qr-code-scan text-primary me-2 fs-5"></i>Chuyển khoản ngân hàng (VietQR)</span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">Khuyên dùng</span>
+                                </div>
+                                <div class="text-secondary small mt-1">Quét mã VietQR tiện lợi 24/7 từ mọi ứng dụng ngân hàng hoặc ví điện tử.</div>
                             </div>
                         </label>
 
                         <!-- Online -->
-                        <label class="border rounded-3 p-3 d-flex align-items-start gap-3 cursor-pointer">
-                            <input class="form-check-input mt-1" type="radio" asp-for="PhuongThucThanhToan" id="pt_online" value="ONLINE" />
-                            <div>
-                                <div class="fw-bold text-dark"><i class="bi bi-credit-card text-warning me-1"></i> Ví điện tử / Thẻ thanh toán</div>
-                                <div class="text-secondary small mt-1">Hỗ trợ thanh toán bảo mật tức thì qua cổng trực tuyến.</div>
+                        <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 opacity-50" for="pt_online">
+                            <input class="form-check-input mt-1" type="radio" id="pt_online" value="ONLINE" disabled />
+                            <div class="flex-grow-1">
+                                <div class="fw-bold text-dark d-flex align-items-center justify-content-between">
+                                    <span><i class="bi bi-credit-card text-warning me-2 fs-5"></i>Ví điện tử / Thẻ thanh toán</span>
+                                    <span class="badge bg-light text-secondary border small">Sắp hỗ trợ</span>
+                                </div>
+                                <div class="text-secondary small mt-1">Thanh toán online chưa được tích hợp; phương thức này hiện chưa thể chọn.</div>
                             </div>
                         </label>
+                    </div>
+
+                    <!-- Khung xem trước mã QR VietQR giả định khi chọn BANK_TRANSFER -->
+                    <div id="vietqrBox" style="display: @(Model.PhuongThucThanhToan == "BANK_TRANSFER" ? "block" : "none");">
+                        <partial name="_VietQRCard" model='new SecondHandMarketplace.Web.Models.ViewModels.Orders.VietQrViewModel {
+                            SoTien = Model.TongThanhToan,
+                            NoiDung = defaultMemo,
+                            NganHang = "MB Bank (Quân Đội)",
+                            SoTaiKhoan = "0987654321",
+                            ChuTaiKhoan = "SAN THUONG MAI RE:MARKET",
+                            ChoPhepXacNhan = false
+                        }' />
                     </div>
                 </div>
             </div>
 
-            <!-- Cột phải: Danh sách sản phẩm & Tổng tiền -->
+            <!-- CỘT PHẢI: TÓM TẮT ĐƠN HÀNG & NÚT ĐẶT HÀNG -->
             <div class="col-lg-5">
-                <div class="card border-0 shadow-sm rounded-4 bg-white sticky-top p-4" style="top: 90px;">
-                    <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom">Món đồ đặt mua</h5>
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 sticky-top" style="top: 24px;">
+                    <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between">
+                        <span>Món đồ đặt mua</span>
+                        <span class="badge bg-light text-muted border fw-normal" style="font-size: 11px;">Không đổi trả đồ cũ</span>
+                    </h5>
 
-                    <div class="pe-1 mb-3" style="max-height: 280px; overflow-y: auto;">
+                    <!-- Danh sách sản phẩm -->
+                    <div class="product-summary-list pe-1 mb-3" style="max-height: 320px; overflow-y: auto;">
                         @if (Model.SanPhamMuaNgay != null)
                         {
                             <div class="d-flex align-items-center gap-3 p-2 rounded-3 bg-light border mb-2">
-                                <img src="@(string.IsNullOrEmpty(Model.SanPhamMuaNgay.AnhDaiDien) ? "https://placehold.co/55x55?text=SP" : Model.SanPhamMuaNgay.AnhDaiDien)" 
-                                     class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;" alt="@Model.SanPhamMuaNgay.TenSanPham" />
+                                <img src="@(string.IsNullOrEmpty(Model.SanPhamMuaNgay.AnhDaiDien) ? "/uploads/products/placeholder.svg" : Model.SanPhamMuaNgay.AnhDaiDien)" 
+                                     class="rounded-3 border bg-white" style="width: 58px; height: 58px; object-fit: cover;" 
+                                     alt="@Model.SanPhamMuaNgay.TenSanPham"
+                                     onerror="this.src='/uploads/banners/banner-1.svg';" />
                                 <div class="flex-grow-1 min-w-0">
-                                    <div class="fw-semibold text-truncate small text-dark">@Model.SanPhamMuaNgay.TenSanPham</div>
-                                    <div class="text-muted small" style="font-size: 11px;">Shop: @Model.SanPhamMuaNgay.TenShop</div>
+                                    <div class="fw-semibold text-truncate small text-dark" title="@Model.SanPhamMuaNgay.TenSanPham">
+                                        @Model.SanPhamMuaNgay.TenSanPham
+                                    </div>
+                                    <div class="text-muted small" style="font-size: 11px;">
+                                        <i class="bi bi-shop me-1 text-success"></i>Shop: @Model.SanPhamMuaNgay.TenShop
+                                    </div>
+                                    <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">SL: 1 độc bản</div>
                                 </div>
-                                <div class="fw-bold text-success text-nowrap small">@Model.SanPhamMuaNgay.Gia.ToString("N0") ₫</div>
+                                <div class="fw-bold text-success text-nowrap small">
+                                    @Model.SanPhamMuaNgay.Gia.ToString("N0") ₫
+                                </div>
                             </div>
                         }
                         else if (Model.GioHang != null)
@@ -111,17 +197,25 @@
                             @foreach (var shop in Model.GioHang.DanhSachNhomShop)
                             {
                                 <div class="mb-3">
-                                    <div class="small fw-bold text-dark mb-1"><i class="bi bi-shop text-success"></i> @shop.TenShop</div>
+                                    <div class="small fw-bold text-dark mb-1 d-flex align-items-center gap-1">
+                                        <i class="bi bi-shop text-success"></i> <span>@shop.TenShop</span>
+                                    </div>
                                     @foreach (var it in shop.Items)
                                     {
                                         <div class="d-flex align-items-center gap-3 p-2 rounded-3 bg-light border mb-2">
-                                            <img src="@(string.IsNullOrEmpty(it.AnhDaiDien) ? "https://placehold.co/55x55?text=SP" : it.AnhDaiDien)" 
-                                                 class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;" alt="@it.TenSanPham" />
+                                            <img src="@(string.IsNullOrEmpty(it.AnhDaiDien) ? "/uploads/products/placeholder.svg" : it.AnhDaiDien)" 
+                                                 class="rounded-3 border bg-white" style="width: 54px; height: 54px; object-fit: cover;" 
+                                                 alt="@it.TenSanPham"
+                                                 onerror="this.src='/uploads/banners/banner-1.svg';" />
                                             <div class="flex-grow-1 min-w-0">
-                                                <div class="fw-semibold text-truncate small text-dark">@it.TenSanPham</div>
-                                                <div class="text-muted small" style="font-size: 11px;">SL: 1 (duy nhất)</div>
+                                                <div class="fw-semibold text-truncate small text-dark" title="@it.TenSanPham">
+                                                    @it.TenSanPham
+                                                </div>
+                                                <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">SL: 1 độc bản</div>
                                             </div>
-                                            <div class="fw-bold text-success text-nowrap small">@it.Gia.ToString("N0") ₫</div>
+                                            <div class="fw-bold text-success text-nowrap small">
+                                                @it.Gia.ToString("N0") ₫
+                                            </div>
                                         </div>
                                     }
                                 </div>
@@ -129,7 +223,7 @@
                         }
                     </div>
 
-                    <!-- Chi tiết thanh toán -->
+                    <!-- Bảng tính tiền -->
                     <div class="border-top pt-3 mb-4">
                         <div class="d-flex justify-content-between mb-2 small">
                             <span class="text-muted">Tiền hàng:</span>
@@ -137,20 +231,25 @@
                         </div>
                         <div class="d-flex justify-content-between mb-2 small">
                             <span class="text-muted">Phí vận chuyển:</span>
-                            <span class="fw-semibold text-success">@(Model.PhiVanChuyen == 0 ? "Miễn phí" : Model.PhiVanChuyen.ToString("N0") + " ₫")</span>
+                            <span class="fw-semibold text-success" id="phiVanChuyenTxt">
+                                @(Model.PhiVanChuyen == 0 ? "Miễn phí" : Model.PhiVanChuyen.ToString("N0") + " ₫")
+                            </span>
                         </div>
                         <div class="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                            <span class="fw-bold text-dark">Tổng thanh toán:</span>
-                            <span class="h4 fw-bold text-success mb-0">@Model.TongThanhToan.ToString("N0") ₫</span>
+                            <span class="fw-bold text-dark fs-6">Tổng thanh toán:</span>
+                            <span class="h4 fw-bold text-success mb-0" id="tongThanhToanTxt">
+                                @Model.TongThanhToan.ToString("N0") ₫
+                            </span>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success py-2 w-100 fw-semibold rounded-pill"
-                            style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
-                        <i class="bi bi-check-circle-fill me-1"></i> Xác nhận đặt hàng
+                    <!-- Nút đặt hàng -->
+                    <button type="submit" class="btn btn-rm-order w-100 py-3 fw-bold rounded-pill text-white shadow-sm" id="btnSubmitOrder">
+                        <i class="bi bi-bag-check-fill me-2 fs-5"></i>Xác nhận đặt hàng
                     </button>
-                    <div class="text-center text-muted small mt-2" style="font-size: 11px;">
-                        <i class="bi bi-shield-check text-success"></i> Giao dịch được bảo vệ bởi sàn Re:Market
+
+                    <div class="text-center text-muted small mt-3" style="font-size: 11.5px;">
+                        <i class="bi bi-shield-lock-fill text-success me-1"></i> Giao dịch bảo vệ người mua bởi <strong>Re:Market Guarantee</strong>
                     </div>
                 </div>
             </div>
@@ -158,6 +257,127 @@
     </form>
 </div>
 
+<style>
+.cursor-pointer { cursor: pointer; }
+.transition-all { transition: all 0.2s ease-in-out; }
+
+.payment-card {
+    background-color: #ffffff;
+    border-color: #e2e8f0 !important;
+}
+.payment-card:hover {
+    border-color: #cbd5e1 !important;
+    background-color: #f8fafc;
+}
+.delivery-option-card {
+    transition: all 0.2s ease;
+}
+.delivery-active {
+    border-color: #1f5c3d !important;
+    background-color: rgba(31, 92, 61, 0.05) !important;
+    box-shadow: 0 2px 6px rgba(31, 92, 61, 0.1);
+}
+.payment-active {
+    border-color: #1f5c3d !important;
+    background-color: rgba(31, 92, 61, 0.04) !important;
+    box-shadow: 0 2px 8px rgba(31, 92, 61, 0.08);
+}
+.btn-rm-order {
+    background-color: #1f5c3d;
+    border: none;
+    letter-spacing: 0.3px;
+    transition: all 0.2s ease;
+}
+.btn-rm-order:hover {
+    background-color: #16432c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(31, 92, 61, 0.25) !important;
+}
+.product-summary-list::-webkit-scrollbar {
+    width: 5px;
+}
+.product-summary-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+</style>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const paymentRadios = document.querySelectorAll('input[name="PhuongThucThanhToan"]');
+        const paymentCards = document.querySelectorAll('.payment-card');
+        const vietqrBox = document.getElementById('vietqrBox');
+
+        function updatePaymentUI() {
+            let selectedVal = 'COD';
+            paymentRadios.forEach(radio => {
+                const card = radio.closest('.payment-card');
+                if (radio.checked) {
+                    selectedVal = radio.value;
+                    card.classList.add('payment-active');
+                } else {
+                    card.classList.remove('payment-active');
+                }
+            });
+
+            if (selectedVal === 'BANK_TRANSFER') {
+                vietqrBox.style.display = 'block';
+            } else {
+                vietqrBox.style.display = 'none';
+            }
+        }
+
+        paymentRadios.forEach(radio => {
+            radio.addEventListener('change', updatePaymentUI);
+        });
+
+        updatePaymentUI();
+
+        // Xử lý đổi hình thức nhận hàng (Task D3)
+        const deliveryRadios = document.querySelectorAll('input[name="HinhThucNhan"]');
+        const deliveryCards = document.querySelectorAll('.delivery-option-card');
+        const lblDiaChiNhan = document.getElementById('lblDiaChiNhan');
+        const txtDiaChiNhan = document.getElementById('txtDiaChiNhan');
+
+        function updateDeliveryUI() {
+            let selectedVal = 'GIAO_HANG';
+            deliveryRadios.forEach(radio => {
+                const card = radio.closest('.delivery-option-card');
+                if (radio.checked) {
+                    selectedVal = radio.value;
+                    card.classList.add('delivery-active');
+                } else {
+                    card.classList.remove('delivery-active');
+                }
+            });
+
+            const tienHang = @Model.TienHang;
+            const originalPhiVc = @Model.PhiVanChuyen;
+            const phiVcTxt = document.getElementById('phiVanChuyenTxt');
+            const totalTxt = document.getElementById('tongThanhToanTxt');
+            const inputPhiVc = document.getElementById('PhiVanChuyen');
+
+            if (selectedVal === 'GAP_TRUC_TIEP') {
+                if (lblDiaChiNhan) lblDiaChiNhan.innerHTML = 'Địa điểm hẹn gặp mong muốn <span class="text-danger">*</span>';
+                if (txtDiaChiNhan) txtDiaChiNhan.placeholder = 'Ví dụ: Quán cafe X, cổng trường UTC2, công viên Y...';
+                if (phiVcTxt) phiVcTxt.textContent = 'Miễn phí (0 ₫)';
+                if (totalTxt) totalTxt.textContent = tienHang.toLocaleString('vi-VN') + ' ₫';
+                if (inputPhiVc) inputPhiVc.value = '0';
+            } else {
+                if (lblDiaChiNhan) lblDiaChiNhan.innerHTML = 'Địa chỉ giao hàng chi tiết <span class="text-danger">*</span>';
+                if (txtDiaChiNhan) txtDiaChiNhan.placeholder = 'Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố...';
+                if (phiVcTxt) phiVcTxt.textContent = (originalPhiVc === 0 ? 'Miễn phí' : originalPhiVc.toLocaleString('vi-VN') + ' ₫');
+                if (totalTxt) totalTxt.textContent = (tienHang + originalPhiVc).toLocaleString('vi-VN') + ' ₫';
+                if (inputPhiVc) inputPhiVc.value = originalPhiVc;
+            }
+        }
+
+        deliveryRadios.forEach(radio => {
+            radio.addEventListener('change', updateDeliveryUI);
+        });
+        updateDeliveryUI();
+    });
+    </script>
 }

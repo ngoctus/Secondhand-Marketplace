@@ -1,4 +1,5 @@
 using SecondHandMarketplace.Web.Models.Entities;
+using SecondHandMarketplace.Web.Models.ViewModels.Areas;
 using SecondHandMarketplace.Web.Models.ViewModels;
 
 namespace SecondHandMarketplace.Web.Models.ViewModels.Products;
@@ -6,7 +7,7 @@ namespace SecondHandMarketplace.Web.Models.ViewModels.Products;
 /// <summary>Bộ lọc tìm kiếm sản phẩm (query string: /Products?Keyword=iphone&amp;PriceRange=2&amp;sort=price_asc&amp;page=2)</summary>
 public class ProductSearchVm
 {
-    public string? Keyword { get; set; }          // tên sản phẩm hoặc tên cửa hàng
+    public string? Keyword { get; set; }          // tên sản phẩm, tên cửa hàng hoặc tên danh mục
     public int? CategoryId { get; set; }          // DanhMuc.MaDanhMuc
     public int? ConditionId { get; set; }         // TinhTrangSanPham.MaTinhTrang
     public int? MaTinhThanh { get; set; }         // TinhThanh.MaTinhThanh (khu vực sinh sống, không phải khoảng cách)
@@ -16,8 +17,10 @@ public class ProductSearchVm
     public int? PriceRange { get; set; }          // index trong KhoPhanGia; ưu tiên hơn MinPrice/MaxPrice
     public string? Sort { get; set; }             // newest | price_asc | price_desc
     public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = DefaultPageSize;
 
-    public const int PageSize = 24;
+    /// <summary>Mức phân trang dùng khi caller (API, AI tool, trang chủ) không tự chỉ định.</summary>
+    public const int DefaultPageSize = 24;
 
     public static readonly PriceRangeOption[] KhoPhanGia =
     [
@@ -59,6 +62,9 @@ public sealed class ProductSearchResultVm
 
     public IReadOnlyList<DanhMuc> DanhSachDanhMuc { get; init; } = [];
     public IReadOnlyList<TinhTrangSanPham> DanhSachTinhTrang { get; init; } = [];
+
+    /// <summary>Dữ liệu dropdown khu vực của thành phần _ChonKhuVuc (mục A4).</summary>
+    public ChonKhuVucVm KhuVuc { get; init; } = new();
 
     /// <summary>Tên tỉnh/xã đang lọc, hiển thị trên chip bộ lọc; null khi chưa có hoặc chưa chọn.</summary>
     public string? KhuVucDaChon { get; init; }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
 namespace SecondHandMarketplace.Web.Models.ViewModels.Disputes;
@@ -18,6 +19,9 @@ public class MoTranhChapViewModel
 
     [StringLength(500, ErrorMessage = "Đường dẫn ảnh bằng chứng tối đa 500 ký tự.")]
     public string? BangChungAnh { get; set; }
+
+    [Display(Name = "Tệp ảnh bằng chứng")]
+    public IFormFile? FileDinhKem { get; set; }
 }
 
 /// <summary>Chi tiết một tranh chấp đơn hàng.</summary>

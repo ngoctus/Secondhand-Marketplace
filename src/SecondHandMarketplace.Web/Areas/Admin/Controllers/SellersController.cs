@@ -11,7 +11,8 @@ public sealed class SellersController(AppDbContext db, IShopService shops) : Adm
     [HttpGet]
     public async Task<IActionResult> Index(string? search, string? status, CancellationToken cancellationToken)
     {
-        var query = db.CuaHangs.AsNoTracking().Include(x => x.NguoiDung).AsQueryable();
+        var query = db.CuaHangs.AsNoTracking()
+            .Include(x => x.NguoiDung).Include(x => x.TinhThanh).Include(x => x.PhuongXa).AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
         {
             var keyword = search.Trim();

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
+using SecondHandMarketplace.Web.Services.Realtime;
 
 namespace SecondHandMarketplace.Web.Services.Auctions;
 
@@ -54,6 +55,7 @@ public sealed class AuctionBackgroundService(IServiceScopeFactory scopes, IConfi
                     new object[] { new SqlParameter("@MaPhienDauGia", id) }, ct);
                 _soLanLoi.Remove(id);
                 log.LogInformation("Đã chốt phiên đấu giá {Id}.", id);
+                await PushClosedAsync(scope.ServiceProvider, id);
             }
             catch (SqlException ex)
             {
@@ -73,6 +75,7 @@ public sealed class AuctionBackgroundService(IServiceScopeFactory scopes, IConfi
                             }, ct);
                         _soLanLoi.Remove(id);
                         log.LogWarning("Đã hủy phiên đấu giá {Id} sau {Max} lần chốt lỗi.", id, ToiDaLanThu);
+                        await PushClosedAsync(scope.ServiceProvider, id);
                     }
                     catch (SqlException ex2)
                     {
@@ -80,6 +83,22 @@ public sealed class AuctionBackgroundService(IServiceScopeFactory scopes, IConfi
                     }
                 }
             }
+        }
+    }
+
+    private async Task PushClosedAsync(IServiceProvider sp, int id)
+    {
+        try
+        {
+            var auctions = sp.GetRequiredService<IAuctionService>();
+            var realtime = sp.GetRequiredService<IAuctionRealtime>();
+            var status = await auctions.GetStatusAsync(id, null);   // trung lập, ai xem cũng nhận được
+            if (status is not null) await realtime.BroadcastStatusAsync(id, status);
+            await realtime.PushToParticipantsAsync(id);             // người thắng, chủ shop, người từng đặt giá
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            log.LogWarning(ex, "Không đẩy được realtime khi chốt phiên {Id}.", id);
         }
     }
 }

@@ -1,0 +1,377 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Reviews.ChiTietShopRaSoatVm
+@{
+    ViewData["Title"] = "Chi tiết rà soát shop";
+    var shop = Model.Shop;
+    var danhGias = Model.DanhGias;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="container-fluid my-4 px-md-4" style="max-width: 1250px;">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb small mb-1">
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" class="text-decoration-none">Rà soát shop</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">@shop.TenShop</li>
+                </ol>
+            </nav>
+            <h2 class="h3 fw-bold text-dark mb-0">
+                <i class="bi bi-shop text-danger"></i> @shop.TenShop
+                @if (shop.TrangThaiShop == "LOCKED")
+                {
+                    <span class="badge bg-danger align-middle">Đã khóa</span>
+                }
+                else
+                {
+                    <span class="badge bg-success align-middle">Hoạt động</span>
+                }
+            </h2>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+               asp-area="Admin" asp-controller="Orders" asp-action="Index" asp-route-shopId="@shop.MaCuaHang">
+                <i class="bi bi-receipt"></i> Lịch sử đơn
+            </a>
+            <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3"
+                    data-bs-toggle="modal" data-bs-target="#modalCanhBao">
+                <i class="bi bi-megaphone"></i> Gửi cảnh cáo
+            </button>
+            @if (shop.TrangThaiShop == "LOCKED")
+            {
+                <form asp-action="UnlockShop" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="maCuaHang" value="@shop.MaCuaHang" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button class="btn btn-success btn-sm rounded-pill px-3">
+                        <i class="bi bi-unlock"></i> Mở khóa shop
+                    </button>
+                </form>
+            }
+            else
+            {
+                <button type="button" class="btn btn-danger btn-sm rounded-pill px-3"
+                        data-bs-toggle="modal" data-bs-target="#modalKhoaShop">
+                    <i class="bi bi-lock"></i> Khóa shop
+                </button>
+            }
+        </div>
+    </div>
+
+    <partial name="_ThongBao" />
+
+    @if (shop.LaShopCanRaSoat)
+    {
+        <div class="alert alert-danger border-0 rounded-4 d-flex align-items-start gap-3 shadow-sm">
+            <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+            <div>
+                <strong>Cảnh báo chất lượng:</strong>
+                shop đang có điểm trung bình
+                <strong>@shop.DiemTrungBinh.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) sao</strong>
+                từ @shop.SoDanhGia đánh giá hiển thị — dưới ngưỡng 3.0 sao.
+                Hãy rà soát nội dung đánh giá, gửi cảnh cáo hoặc khóa shop nếu cần thiết.
+            </div>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-person-vcard"></i> Thông tin shop & chủ shop</h6>
+                    <div class="row g-3 small">
+                        <div class="col-sm-6">
+                            <div class="text-muted">Chủ shop</div>
+                            <div class="fw-semibold text-dark">@shop.TenChuShop</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted">Email</div>
+                            <div class="fw-semibold text-dark">@shop.EmailChuShop</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted">Điện thoại</div>
+                            <div class="fw-semibold text-dark">@(string.IsNullOrWhiteSpace(shop.SoDienThoai) ? "—" : shop.SoDienThoai)</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted">Khu vực</div>
+                            <div class="fw-semibold text-dark">@shop.KhuVuc</div>
+                        </div>
+                        @if (shop.TrangThaiShop == "LOCKED" && !string.IsNullOrWhiteSpace(shop.LyDoKhoa))
+                        {
+                            <div class="col-12">
+                                <div class="text-muted">Lý do khóa</div>
+                                <div class="text-danger fw-semibold">@shop.LyDoKhoa</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="row g-3 h-100">
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm rounded-4 bg-white h-100 text-center">
+                        <div class="card-body">
+                            <div class="text-muted small">Điểm trung bình</div>
+                            <div class="fs-3 fw-bold @(shop.DiemTrungBinh < 3.0m ? "text-danger" : "text-success")">
+                                @shop.DiemTrungBinh.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+                                <i class="bi bi-star-fill fs-5"></i>
+                            </div>
+                            <div class="text-muted small">@shop.SoDanhGia đánh giá hiển thị</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm rounded-4 bg-white h-100 text-center">
+                        <div class="card-body">
+                            <div class="text-muted small">Đơn hoàn tất</div>
+                            <div class="fs-3 fw-bold text-dark">@shop.SoDonThanhCong</div>
+                            <div class="text-muted small">đơn COMPLETED</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4 bg-white">
+                        <div class="card-body py-2 text-center">
+                            <span class="text-muted small">Báo cáo vi phạm (shop & sản phẩm):</span>
+                            @if (shop.SoBaoCao > 0)
+                            {
+                                <span class="badge bg-danger rounded-pill px-3 ms-1">@shop.SoBaoCao</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted rounded-pill px-3 ms-1">0</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden mb-4">
+        <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-chat-square-text"></i> Đánh giá của khách hàng</h5>
+            <span class="text-muted small">@danhGias.TotalItems đánh giá (gồm cả đánh giá đã ẩn)</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th class="ps-3" style="min-width: 170px;">Người mua</th>
+                        <th style="width: 120px;">Số sao</th>
+                        <th style="width: 140px;">Ngày tạo</th>
+                        <th style="min-width: 300px;">Nội dung nhận xét</th>
+                        <th style="width: 110px;">Trạng thái</th>
+                        <th class="text-end pe-3" style="width: 190px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (danhGias.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">Shop chưa có đánh giá nào.</td>
+                        </tr>
+                    }
+                    @foreach (var dg in danhGias.Items)
+                    {
+                        <tr class="@(dg.TrangThai == "HIDDEN" ? "table-light" : "")">
+                            <td class="ps-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (!string.IsNullOrWhiteSpace(dg.AnhDaiDienNguoiMua))
+                                    {
+                                        <img src="@dg.AnhDaiDienNguoiMua" alt="" width="30" height="30"
+                                             class="rounded-circle object-fit-cover" />
+                                    }
+                                    else
+                                    {
+                                        <span class="rounded-circle bg-secondary-subtle d-inline-flex align-items-center justify-content-center"
+                                              style="width:30px;height:30px;"><i class="bi bi-person text-secondary"></i></span>
+                                    }
+                                    <span class="fw-semibold text-dark">@dg.TenNguoiMua</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-warning" title="@dg.SoSao / 5 sao">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi @(i <= dg.SoSao ? "bi-star-fill" : "bi-star") @(i <= dg.SoSao ? "" : "text-secondary-subtle")"></i>
+                                    }
+                                </span>
+                                <div class="small text-muted">@dg.SoSao/5</div>
+                            </td>
+                            <td class="small text-muted">@HienThi.NgayGio(dg.NgayTao)</td>
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(dg.NoiDung))
+                                {
+                                    <span class="text-muted fst-italic">Không có nhận xét.</span>
+                                }
+                                else
+                                {
+                                    <span>@dg.NoiDung</span>
+                                }
+                            </td>
+                            <td>
+                                @if (dg.TrangThai == "VISIBLE")
+                                {
+                                    <span class="badge bg-success rounded-pill">VISIBLE</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary rounded-pill">HIDDEN</span>
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                <form asp-action="ToggleReviewStatus" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="maDanhGia" value="@dg.MaDanhGia" />
+                                    <input type="hidden" name="maCuaHang" value="@shop.MaCuaHang" />
+                                    <input type="hidden" name="trangThaiMoi" value="@(dg.TrangThai == "VISIBLE" ? "HIDDEN" : "VISIBLE")" />
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    @if (dg.TrangThai == "VISIBLE")
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                title="Ẩn đánh giá này; điểm shop sẽ tính lại ngay"
+                                                onclick="return confirm('Ẩn đánh giá này? Điểm trung bình của shop sẽ được tính lại từ các đánh giá VISIBLE còn lại.');">
+                                            <i class="bi bi-eye-slash"></i> Ẩn đánh giá vi phạm
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                                                title="Hiển thị lại đánh giá này">
+                                            <i class="bi bi-eye"></i> Hiện đánh giá
+                                        </button>
+                                    }
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (danhGias.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                <span class="text-muted small">Trang @danhGias.Page / @danhGias.TotalPages</span>
+                <nav aria-label="Phân trang đánh giá">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(danhGias.Page <= 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Details" asp-route-id="@shop.MaCuaHang"
+                               asp-route-page="@(danhGias.Page - 1)">&laquo; Trước</a>
+                        </li>
+                        <li class="page-item disabled"><span class="page-link">@danhGias.Page</span></li>
+                        <li class="page-item @(danhGias.Page >= danhGias.TotalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Details" asp-route-id="@shop.MaCuaHang"
+                               asp-route-page="@(danhGias.Page + 1)">Sau &raquo;</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="card-header bg-white border-0 pt-3 pb-0">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history"></i> 5 đơn hàng gần nhất</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th class="ps-3">Mã đơn</th>
+                        <th>Người nhận</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày đặt</th>
+                        <th class="text-end pe-3"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.DonHangsGanDay.Count == 0)
+                    {
+                        <tr><td colspan="6" class="text-center py-4 text-muted">Shop chưa có đơn hàng nào.</td></tr>
+                    }
+                    @foreach (var don in Model.DonHangsGanDay)
+                    {
+                        <tr>
+                            <td class="ps-3 fw-semibold text-dark">@don.MaDon</td>
+                            <td>@don.TenNguoiNhan</td>
+                            <td>@HienThi.Tien(don.TongTien)</td>
+                            <td><span class="@HienThi.LopTrangThai(don.TrangThai)">@HienThi.TrangThaiDon(don.TrangThai)</span></td>
+                            <td class="small text-muted">@HienThi.NgayGio(don.NgayTao)</td>
+                            <td class="text-end pe-3">
+                                <a class="btn btn-sm btn-outline-secondary rounded-pill"
+                                   asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@don.MaDonHang">
+                                    Chi tiết
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@* Modal khóa shop *@
+<div class="modal fade" id="modalKhoaShop" tabindex="-1" aria-labelledby="modalKhoaShopLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="LockShop" method="post" class="modal-content border-0 rounded-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="maCuaHang" value="@shop.MaCuaHang" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-danger" id="modalKhoaShopLabel">
+                    <i class="bi bi-lock"></i> Khóa cửa hàng @shop.TenShop
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label fw-semibold small">Lý do khóa <span class="text-danger">*</span></label>
+                <textarea name="reason" class="form-control" rows="3" maxlength="500" required
+                          placeholder="Ví dụ: Nhiều đánh giá phản ánh hàng không đúng mô tả, shop không phản hồi..."></textarea>
+                <div class="form-text">Tối đa 500 ký tự. Lý do được lưu vào nhật ký hệ thống.</div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-danger rounded-pill px-3">
+                    <i class="bi bi-lock"></i> Xác nhận khóa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* Modal gửi cảnh cáo *@
+<div class="modal fade" id="modalCanhBao" tabindex="-1" aria-labelledby="modalCanhBaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="Warn" method="post" class="modal-content border-0 rounded-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="maCuaHang" value="@shop.MaCuaHang" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-warning" id="modalCanhBaoLabel">
+                    <i class="bi bi-megaphone"></i> Gửi cảnh cáo chất lượng dịch vụ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Gửi thông báo hệ thống tới chủ shop <strong>@shop.TenChuShop</strong>.</p>
+                <label class="form-label fw-semibold small">Nội dung cảnh cáo <span class="text-danger">*</span></label>
+                <textarea name="reason" class="form-control" rows="4" maxlength="1000" required
+                          placeholder="Ví dụ: Shop có 5 đánh giá 1-2 sao phản ánh hàng không đúng mô tả. Đề nghị cải thiện chất lượng và phản hồi khách hàng."></textarea>
+                <div class="form-text">Tối đa 1 000 ký tự. Chủ shop sẽ nhận được thông báo ngay.</div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-warning rounded-pill px-3">
+                    <i class="bi bi-send"></i> Gửi cảnh cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

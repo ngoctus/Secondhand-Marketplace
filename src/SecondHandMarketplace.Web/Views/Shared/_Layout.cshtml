@@ -32,6 +32,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body class="rm-body">
@@ -39,6 +40,9 @@
     <header class="rm-header">
         <div class="rm-header-inner">
             <!-- Brand Logo -->
+            <button type="button" class="rm-mobile-toggle" id="mobileMenuBtn" aria-label="Mở menu" aria-expanded="false" aria-controls="mobileDrawer">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
+            </button>
             <a class="rm-brand" asp-area="" asp-controller="Home" asp-action="Index">
                 <span class="rm-brand-badge" aria-hidden="true"></span>
                 <span>Re:Market</span>
@@ -75,7 +79,6 @@
 
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1">Giá tốt</a>
-                <a class="rm-nav-link" asp-area="" asp-controller="PublicAuctions" asp-action="Index">Đấu giá</a>
 
                 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
                 {
@@ -85,19 +88,7 @@
                             <svg viewBox="0 0 12 8" width="10" height="6" fill="currentColor"><path d="M1.41 0L6 4.58L10.59 0L12 1.41L6 7.41L0 1.41L1.41 0Z"/></svg>
                         </button>
                         <div class="rm-dropdown-menu" id="adminDropdownMenu" aria-labelledby="adminMenuBtn" hidden>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Thống kê hệ thống</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Orders" asp-action="Index">Quản lý đơn hàng</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Auctions" asp-action="Index">Quản lý đấu giá</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Users" asp-action="Index">Người dùng</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Sellers" asp-action="Index">Cửa hàng</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Products" asp-action="Index">Duyệt sản phẩm</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Categories" asp-action="Index">Danh mục</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Banners" asp-action="Index">Banner</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Disputes" asp-action="Index">Tranh chấp</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="Reports" asp-action="Index">Báo cáo vi phạm</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="ForbiddenKeywords" asp-action="Index">Từ khóa cấm</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">Nhật ký hệ thống</a>
-                            <a class="rm-dropdown-item" asp-area="Admin" asp-controller="AiSettings" asp-action="Index">Cấu hình AI</a>
+                            <partial name="_AdminLinks" />
                         </div>
                     </div>
                 }
@@ -142,8 +133,8 @@
                             {
                                 <div class="rm-dropdown-divider"></div>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua của tôi</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">Đánh giá của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán (Shop)</a>
-                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Auctions" asp-action="Index">Đấu giá của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê doanh thu</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">Yêu thích</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng của tôi</a>
@@ -158,15 +149,46 @@
                         </div>
                     </div>
 
-                    <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn-rm-primary">Đăng bán</a>
+                    <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
                 }
                 else
                 {
                     <a asp-area="" asp-controller="Account" asp-action="Login" class="btn-rm-outline">Đăng nhập</a>
                     <a asp-area="" asp-controller="Account" asp-action="Register" class="btn-rm-outline">Đăng ký</a>
-                    <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products" class="btn-rm-primary">Đăng bán</a>
+                    <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-rm-primary">Đăng bán</a>
                 }
             </div>
+        </div>
+        <div class="rm-mobile-drawer" id="mobileDrawer" hidden>
+            <form asp-area="" asp-controller="Products" asp-action="Index" method="get" class="mb-3">
+                <input type="search" name="Keyword" class="form-control" placeholder="Tìm món đồ bạn cần..."
+                       value="@(Context.Request.Query["Keyword"])" autocomplete="off" />
+            </form>
+
+            <div class="rm-mobile-heading">Danh mục</div>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Thời trang">Thời trang</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Điện tử">Điện tử</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Đồ gia dụng">Đồ gia dụng</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Sách">Sách</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Phụ kiện">Phụ kiện</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Nội thất">Nội thất</a>
+
+            <div class="rm-dropdown-divider"></div>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000">Giá tốt</a>
+
+            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
+            {
+                <div class="rm-dropdown-divider"></div>
+                <div class="rm-mobile-heading">Quản trị</div>
+                <partial name="_AdminLinks" />
+            }
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <div class="rm-dropdown-divider"></div>
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="Register">Đăng ký</a>
+            }
         </div>
     </header>
 
@@ -225,9 +247,9 @@
                 <div>
                     <h4 class="rm-footer-heading">Mạng xã hội</h4>
                     <div class="rm-social-icons">
-                        <span class="social-circle" aria-hidden="true"></span>
-                        <span class="social-circle" aria-hidden="true"></span>
-                        <span class="social-circle" aria-hidden="true"></span>
+                        <a class="social-circle" href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook">f</a>
+                        <a class="social-circle" href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube">▶</a>
+                        <a class="social-circle" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram">📸</a>
                     </div>
                 </div>
             </div>
@@ -243,7 +265,13 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script src="~/js/realtime.js" asp-append-version="true" data-hub="@Url.Content("~/hubs/notification")"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
+    <partial name="_ChatWidget" />
     <partial name="_AiChatWidget" />
 </body>
 </html>

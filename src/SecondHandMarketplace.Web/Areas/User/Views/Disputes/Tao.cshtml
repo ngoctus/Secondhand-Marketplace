@@ -38,7 +38,7 @@
             </div>
         </div>
 
-        <form asp-action="Tao" method="post">
+        <form asp-action="Tao" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="MaDonHang" />
             <input type="hidden" asp-for="MaDon" />
@@ -53,11 +53,16 @@
             </div>
 
             <div class="mb-4">
-                <label asp-for="BangChungAnh" class="form-label fw-semibold text-dark">Ảnh bằng chứng (URL hoặc đường dẫn ảnh)</label>
-                <input asp-for="BangChungAnh" type="text" class="form-control rounded-3"
-                       placeholder="Ví dụ: /uploads/disputes/evidence.jpg hoặc liên kết hình ảnh mở hàng..." />
+                <label class="form-label fw-semibold text-dark">Ảnh bằng chứng khiếu nại</label>
+                <div class="mb-2">
+                    <input asp-for="FileDinhKem" type="file" class="form-control rounded-3" accept="image/png,image/jpeg,image/webp" />
+                    <span asp-validation-for="FileDinhKem" class="text-danger small"></span>
+                </div>
+                <div class="form-text small mb-2">Hoặc nhập liên kết ảnh trực tiếp:</div>
+                <input asp-for="BangChungAnh" type="text" class="form-control rounded-3 form-control-sm"
+                       placeholder="Ví dụ: /uploads/disputes/evidence.jpg hoặc liên kết hình ảnh..." />
                 <span asp-validation-for="BangChungAnh" class="text-danger small"></span>
-                <div class="form-text small">Khuyến khích cung cấp ảnh hoặc video mở kiện hàng để BQT xử lý nhanh nhất.</div>
+                <div class="form-text small">Khuyến khích tải lên ảnh chụp rõ gói hàng, lỗi sản phẩm hoặc hóa đơn để Ban quản trị xử lý nhanh nhất.</div>
             </div>
 
             <div class="d-flex gap-2">

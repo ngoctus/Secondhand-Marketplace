@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Services.AuditLogs;
 
@@ -20,6 +20,15 @@ public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog)
         user.LyDoKhoa = reason;
         user.ThoiGianKhoa = DateTime.UtcNow;
         user.NgayCapNhat = DateTime.UtcNow;
+
+        var shops = await db.CuaHangs.Where(c => c.MaNguoiDung == userId && c.TrangThai == "ACTIVE").ToListAsync(cancellationToken);
+        foreach (var s in shops)
+        {
+            s.TrangThai = "LOCKED";
+            s.LyDoKhoa = reason;
+            s.NgayCapNhat = DateTime.UtcNow;
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         await auditLog.LogAsync(actorId, "LOCK_USER", "NguoiDung", userId, "SUCCESS", reason);
         return (true, null);
@@ -35,6 +44,15 @@ public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog)
         user.LyDoKhoa = null;
         user.ThoiGianKhoa = null;
         user.NgayCapNhat = DateTime.UtcNow;
+
+        var shops = await db.CuaHangs.Where(c => c.MaNguoiDung == userId && c.TrangThai == "LOCKED").ToListAsync(cancellationToken);
+        foreach (var s in shops)
+        {
+            s.TrangThai = "ACTIVE";
+            s.LyDoKhoa = null;
+            s.NgayCapNhat = DateTime.UtcNow;
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         await auditLog.LogAsync(actorId, "UNLOCK_USER", "NguoiDung", userId);
         return (true, null);

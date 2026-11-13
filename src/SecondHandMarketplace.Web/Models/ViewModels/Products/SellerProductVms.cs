@@ -14,6 +14,9 @@ public class MyProductVm
     public DateTime NgayCapNhat { get; set; }
     public string? AnhDaiDien { get; set; }
     public int SoLuongAnh { get; set; }
+
+    /// <summary>Lượt đang mở có PhanTichAI = FAILED (lỗi hệ thống) → cho phép gửi duyệt/phân tích lại.</summary>
+    public bool PhanTichThatBai { get; set; }
 }
 
 /// <summary>Ảnh đã có của sản phẩm, dùng trong form sửa (B1).</summary>
@@ -54,4 +57,7 @@ public class ProductFormVm
     public List<DanhMuc> DanhSachDanhMuc { get; set; } = new();
     public List<TinhTrangSanPham> DanhSachTinhTrang { get; set; } = new();
     public List<ProductImageVm> AnhHienTai { get; set; } = new();
+
+    /// <summary>Trạng thái hiện tại của sản phẩm (chỉ để đọc, không nhận từ form POST).</summary>
+    public string TrangThai { get; set; } = string.Empty;
 }

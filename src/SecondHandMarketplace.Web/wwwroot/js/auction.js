@@ -1,4 +1,4 @@
-// Đấu giá: đếm ngược + polling giá mỗi vài giây (không dùng SignalR).
+// Đấu giá: đếm ngược + SignalR (polling chỉ là dự phòng).
 // Trang chi tiết: <div id="auction" data-id data-status data-status-url data-bid-url data-start data-end data-now data-min data-step>
 // Trang danh sách: các thẻ <span class="js-countdown" data-end="ISO">.
 (() => {
@@ -64,7 +64,7 @@
         if (empty) empty.hidden = bids.length > 0;
     }
 
-    function apply(d) {
+    function apply(d, neutral = false) {
         const oldPrice = $('current-price').textContent;
         st.status = d.status;
         st.min = d.minNextBid;
@@ -81,8 +81,10 @@
         const badge = $('status-badge');
         badge.textContent = d.statusText;
         badge.className = 'st st-' + d.status.toLowerCase();
-        $('leader-badge').hidden = !(d.isLeader && isOpen());
-        renderBids(d.bids);
+        if (!neutral) {   // payload từ hub không có dữ liệu riêng của người xem
+            $('leader-badge').hidden = !(d.isLeader && isOpen());
+            renderBids(d.bids);
+        }
 
         // Phiên kết thúc hoặc bị hủy: tải lại trang để hiện người thắng / lý do
         if (!isOpen()) { clearInterval(st.timer); setTimeout(() => location.reload(), 800); }
@@ -98,8 +100,48 @@
 
     renderCountdown();
     setInterval(renderCountdown, 1000);
-    st.timer = setInterval(poll, 3000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+
+    // ----- SignalR: server đẩy cập nhật; polling chậm lại làm dự phòng -----
+    const FAST = 3000, SLOW = 20000;
+    const setPolling = (ms) => { clearInterval(st.timer); st.timer = setInterval(poll, ms); };
+    let pollSoon = null;
+    const pollDebounced = () => { clearTimeout(pollSoon); pollSoon = setTimeout(poll, 250); };
+
+    const setLive = (state) => {
+        const dot = $('live-dot');
+        if (!dot) return;
+        dot.dataset.state = state;
+        dot.textContent = state === 'on' ? '● Trực tiếp' : state === 'connecting' ? '● Đang kết nối...' : '● Mất kết nối';
+    };
+
+    function startHub() {
+        if (typeof signalR === 'undefined' || !isOpen() || !root.dataset.hubUrl) { setPolling(FAST); return; }
+
+        const conn = new signalR.HubConnectionBuilder()
+            .withUrl(root.dataset.hubUrl)
+            .withAutomaticReconnect([0, 1000, 3000, 5000, 10000])
+            .build();
+
+        // Sau khi reconnect connectionId đổi nên phải JoinAuction lại, nếu không sẽ không nhận được tin nữa.
+        const join = async () => {
+            await conn.invoke('JoinAuction', Number(root.dataset.id));
+            setLive('on');
+            setPolling(SLOW);
+            poll();
+        };
+
+        conn.on('ReceiveBidUpdate', (d) => { apply(d, true); pollDebounced(); });
+        conn.on('ViewerCount', (n) => { const el = $('viewer-count'); if (el) el.textContent = n; });
+        conn.onreconnecting(() => { setLive('connecting'); setPolling(FAST); });
+        conn.onreconnected(() => join().catch(() => setLive('off')));
+        conn.onclose(() => { setLive('off'); setPolling(FAST); });
+
+        setLive('connecting');
+        setPolling(FAST);   // chạy polling nhanh cho tới khi hub kết nối xong
+        conn.start().then(join).catch(() => { setLive('off'); setPolling(FAST); });
+    }
+    startHub();
 
     // ----- Đặt giá -----
     const form = $('bid-form');

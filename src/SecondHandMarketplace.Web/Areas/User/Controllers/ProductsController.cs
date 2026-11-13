@@ -4,6 +4,7 @@ using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Moderation;
 using SecondHandMarketplace.Web.Services.Products;
+using SkiaSharp;
 
 namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
@@ -18,13 +19,15 @@ public class ProductsController : UserBaseController
     private readonly ICategoryService _categories;
     private readonly IModerationService _moderation;
     private readonly IWebHostEnvironment _env;
+    private readonly ILogger<ProductsController> _logger;
 
-    public ProductsController(IProductService products, ICategoryService categories, IModerationService moderation, IWebHostEnvironment env)
+    public ProductsController(IProductService products, ICategoryService categories, IModerationService moderation, IWebHostEnvironment env, ILogger<ProductsController> logger)
     {
         _products = products;
         _categories = categories;
         _moderation = moderation;
         _env = env;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -52,6 +55,7 @@ public class ProductsController : UserBaseController
 
         if (!ModelState.IsValid)
         {
+            XoaAnhDaLuu(anh);
             await DienDanhMucAsync(form);
             return View(form);
         }
@@ -59,6 +63,7 @@ public class ProductsController : UserBaseController
         var (ok, loi, maSanPham) = await _products.CreateAsync(userId, form, anh);
         if (!ok)
         {
+            XoaAnhDaLuu(anh);
             ModelState.AddModelError(string.Empty, loi!);
             await DienDanhMucAsync(form);
             return View(form);
@@ -87,12 +92,15 @@ public class ProductsController : UserBaseController
         var userId = User.LayNguoiDungId()!.Value;
         if (form.Id is null || form.Id != id) form.Id = id;
 
+        var truoc = await _products.GetFormAsync(userId, id);
+
         var (anh, loiLuu) = await LuuAnhLenDiaAsync(AnhMoi);
         if (loiLuu is not null) ModelState.AddModelError(string.Empty, loiLuu);
 
         if (!ModelState.IsValid)
         {
-            form.AnhHienTai = (await _products.GetFormAsync(userId, id))?.AnhHienTai ?? new();
+            XoaAnhDaLuu(anh);
+            form.AnhHienTai = truoc?.AnhHienTai ?? new();
             await DienDanhMucAsync(form);
             return View(form);
         }
@@ -100,12 +108,16 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.UpdateAsync(userId, id, form, anh);
         if (!ok)
         {
+            XoaAnhDaLuu(anh);
             ModelState.AddModelError(string.Empty, loi!);
+            form.AnhHienTai = truoc?.AnhHienTai ?? new();
             await DienDanhMucAsync(form);
             return View(form);
         }
 
-        if (GuiDuyet == true) return await GuiDuyetVaChuyenVeIndexAsync(userId, id);
+        // Sản phẩm đang bán mà sửa nội dung/ảnh thì phải duyệt lại để không lách kiểm duyệt.
+        if (GuiDuyet == true || truoc?.TrangThai == "ACTIVE")
+            return await GuiDuyetVaChuyenVeIndexAsync(userId, id);
 
         this.ThongBaoThanhCong("Đã cập nhật sản phẩm.");
         return RedirectToAction(nameof(Index));
@@ -127,6 +139,17 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.HideAsync(userId, id);
         if (ok) this.ThongBaoThanhCong("Đã ẩn sản phẩm.");
         else this.ThongBaoLoi(loi ?? "Không ẩn được sản phẩm.");
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var userId = User.LayNguoiDungId()!.Value;
+        var (ok, loi) = await _products.DeleteAsync(userId, id);
+        if (ok) this.ThongBaoThanhCong("Đã xóa sản phẩm thành công.");
+        else this.ThongBaoLoi(loi ?? "Không thể xóa sản phẩm.");
         return RedirectToAction(nameof(Index));
     }
 
@@ -163,7 +186,15 @@ public class ProductsController : UserBaseController
         }
 
         // C2: gọi ngay sau khi sp_GuiDuyetSanPham thành công; lỗi quét đã được service chuyển thành FAILED, không ném.
-        await _moderation.PhanTichSanPhamAsync(maSanPham);
+        // Vẫn bọc thêm để lỗi hạ tầng (transaction/DB) không làm gián đoạn trải nghiệm người bán.
+        try
+        {
+            await _moderation.PhanTichSanPhamAsync(maSanPham);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Phân tích từ khóa lỗi sau khi gửi duyệt sản phẩm {ProductId}.", maSanPham);
+        }
 
         this.ThongBaoThanhCong("Đã gửi sản phẩm đi kiểm duyệt. Admin sẽ duyệt trong thời gian tới.");
         return RedirectToAction(nameof(Index));
@@ -173,6 +204,24 @@ public class ProductsController : UserBaseController
     {
         form.DanhSachDanhMuc = (await _categories.GetCategoriesAsync()).ToList();
         form.DanhSachTinhTrang = (await _categories.GetConditionsAsync()).ToList();
+    }
+
+    /// <summary>Xóa file vừa lưu nhưng không dùng được (validate/DB thất bại) để tránh file rác.</summary>
+    private void XoaAnhDaLuu(IEnumerable<ProductImageInput> anh)
+    {
+        foreach (var a in anh)
+        {
+            var tuongDoi = a.DuongDan.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var duongDan = Path.Combine(_env.WebRootPath, tuongDoi);
+            var thumbPath = Path.Combine(Path.GetDirectoryName(duongDan)!, Path.GetFileNameWithoutExtension(duongDan) + "-thumb.webp");
+            try
+            {
+                if (System.IO.File.Exists(duongDan)) System.IO.File.Delete(duongDan);
+                if (System.IO.File.Exists(thumbPath)) System.IO.File.Delete(thumbPath);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
     }
 
     /// <summary>Lưu file lên wwwroot/uploads/products; trả về danh sách (đường dẫn, dung lượng) cho service.</summary>
@@ -194,29 +243,62 @@ public class ProductsController : UserBaseController
             if (!DinhDangAnhChoPhep.Contains(ext))
                 return (result, $"Định dạng \"{ext}\" không được hỗ trợ. Chỉ nhận jpg, png, webp, gif.");
 
-            // Đuôi file tự đổi được, nội dung thì không: đọc 12 byte đầu để xác nhận đây thật sự là ảnh.
-            var dauFile = new byte[12];
-            int daDoc;
-            await using (var mo = file.OpenReadStream())
-            {
-                daDoc = await mo.ReadAsync(dauFile);
-            }
-
-            var loaiThuc = AnhDinhDang.LoaiThuc(dauFile.AsSpan(0, daDoc));
-            var tenFile = Path.GetFileName(file.FileName);
-            if (loaiThuc is null)
-                return (result, $"Ảnh \"{tenFile}\" không phải file ảnh hợp lệ (chỉ nhận ảnh JPG, PNG, WEBP hoặc GIF).");
-            if (!AnhDinhDang.DuKhopVoI(loaiThuc, ext[1..]))
-                return (result, $"Ảnh \"{tenFile}\" có đuôi {ext} nhưng nội dung là ảnh {loaiThuc.ToUpperInvariant()}. Hãy lưu lại file đúng định dạng rồi tải lên.");
+            // Đuôi file tự đổi được, nội dung thì không: 12 byte đầu phải đúng signature của ảnh.
+            if (!await NoiDungAnhHopLeAsync(file, ext))
+                return (result, $"Ảnh \"{Path.GetFileName(file.FileName)}\" có đuôi {ext} nhưng nội dung không phải ảnh {ext.TrimStart('.').ToUpperInvariant()}. Hãy lưu lại file đúng định dạng rồi tải lên.");
 
             var ten = Guid.NewGuid().ToString("N") + ext;
             var duongDanDia = Path.Combine(thuMuc, ten);
+            var thumbnailPath = Path.Combine(thuMuc, Path.GetFileNameWithoutExtension(ten) + "-thumb.webp");
             await using (var mo = System.IO.File.Create(duongDanDia))
             {
                 await file.CopyToAsync(mo);
             }
+
+            try
+            {
+                using var source = System.IO.File.OpenRead(duongDanDia);
+                using var codec = SKCodec.Create(source);
+                var info = codec?.Info;
+                if (info is null || info.Value.Width > 12000 || info.Value.Height > 12000 || (long)info.Value.Width * info.Value.Height > 80_000_000)
+                    throw new InvalidDataException("Image dimensions exceed the allowed limit.");
+
+                using var image = SKBitmap.Decode(codec!);
+                if (image is null) throw new InvalidDataException("Image could not be decoded.");
+                var scale = Math.Min(1d, 640d / Math.Max(image.Width, image.Height));
+                var width = Math.Max(1, (int)Math.Round(image.Width * scale));
+                var height = Math.Max(1, (int)Math.Round(image.Height * scale));
+                using var thumbnail = image.Resize(new SKImageInfo(width, height), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
+                if (thumbnail is null) throw new InvalidDataException("Thumbnail could not be generated.");
+                using var encoded = thumbnail.Encode(SKEncodedImageFormat.Webp, 78);
+                if (encoded is null) throw new InvalidDataException("WebP encoding failed.");
+                await using var output = System.IO.File.Create(thumbnailPath);
+                encoded.SaveTo(output);
+            }
+            catch (Exception)
+            {
+                System.IO.File.Delete(duongDanDia);
+                if (System.IO.File.Exists(thumbnailPath)) System.IO.File.Delete(thumbnailPath);
+                return (result, $"Ảnh \"{Path.GetFileName(file.FileName)}\" không thể xử lý. Vui lòng tải lại ảnh hợp lệ.");
+            }
+
             result.Add(new ProductImageInput($"/uploads/products/{thu}/{ten}", (int)file.Length));
         }
         return (result, null);
+    }
+
+    private static async Task<bool> NoiDungAnhHopLeAsync(IFormFile file, string extension)
+    {
+        var header = new byte[12];
+        await using var stream = file.OpenReadStream();
+        var read = await stream.ReadAsync(header);
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => read >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF,
+            ".png" => read >= 8 && header.AsSpan(0, 8).SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }),
+            ".webp" => read >= 12 && header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46 && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50,
+            ".gif" => read >= 6 && header.AsSpan(0, 6).SequenceEqual("GIF87a"u8) || read >= 6 && header.AsSpan(0, 6).SequenceEqual("GIF89a"u8),
+            _ => false
+        };
     }
 }

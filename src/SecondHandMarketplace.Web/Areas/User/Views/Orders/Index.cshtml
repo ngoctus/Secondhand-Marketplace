@@ -35,11 +35,11 @@
 
             <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "SHIPPING" ? "btn-success" : "btn-light text-secondary")" 
                style="@(currentFilter == "SHIPPING" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="SHIPPING">Đang giao hàng</a>
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="SHIPPING">Đang giao / Hẹn gặp</a>
 
             <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "DELIVERED" ? "btn-success" : "btn-light text-secondary")" 
                style="@(currentFilter == "DELIVERED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="DELIVERED">Đã giao</a>
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="DELIVERED">Đã giao / Nhận hàng</a>
 
             <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "COMPLETED" ? "btn-success" : "btn-light text-secondary")" 
                style="@(currentFilter == "COMPLETED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
@@ -79,27 +79,17 @@
                         <span class="font-monospace text-secondary small">Mã đơn: #@don.MaDon</span>
                     </div>
                     <div>
-                        @switch (don.TrangThai)
-                        {
-                            case "PENDING":
-                                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill small">Chờ xác nhận</span>
-                                break;
-                            case "CONFIRMED":
-                                <span class="badge bg-info text-dark px-3 py-1 rounded-pill small">Shop đã xác nhận</span>
-                                break;
-                            case "SHIPPING":
-                                <span class="badge bg-primary px-3 py-1 rounded-pill small">Đang giao hàng</span>
-                                break;
-                            case "DELIVERED":
-                                <span class="badge bg-success-subtle text-success border border-success px-3 py-1 rounded-pill small">Đã giao hàng</span>
-                                break;
-                            case "COMPLETED":
-                                <span class="badge bg-success px-3 py-1 rounded-pill small">Hoàn tất</span>
-                                break;
-                            case "CANCELLED":
-                                <span class="badge bg-secondary px-3 py-1 rounded-pill small">Đã hủy</span>
-                                break;
-                        }
+                        <span class="badge @(don.TrangThai switch {
+                            "PENDING" => "bg-warning text-dark",
+                            "CONFIRMED" => "bg-info text-dark",
+                            "SHIPPING" => "bg-primary",
+                            "DELIVERED" => "bg-success-subtle text-success border border-success",
+                            "COMPLETED" => "bg-success",
+                            "CANCELLED" => "bg-secondary",
+                            _ => "bg-secondary"
+                        }) px-3 py-1 rounded-pill small">
+                            @HienThi.TrangThaiDon(don.TrangThai, don.HinhThucNhan)
+                        </span>
                     </div>
                 </div>
 
@@ -121,7 +111,7 @@
                     <!-- Footer của thẻ đơn hàng -->
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3">
                         <div class="text-muted small">
-                            Ngày đặt: @don.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            Ngày đặt: @HienThi.NgayGio(don.NgayTao)
                             @if (!string.IsNullOrEmpty(don.LyDoHuy))
                             {
                                 <div class="text-danger small mt-1">Lý do hủy: @don.LyDoHuy</div>
