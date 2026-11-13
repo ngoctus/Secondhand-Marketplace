@@ -1,0 +1,98 @@
+@{
+    ViewData["Title"] = "Trung tâm hướng dẫn";
+}
+
+<nav class="rm-breadcrumb" aria-label="Đường dẫn trang">
+    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+    <span class="sep">/</span>
+    <span>Trung tâm hướng dẫn</span>
+</nav>
+
+<header class="help-hero">
+    <span class="help-eyebrow">RE:MARKET · TRUNG TÂM HỖ TRỢ</span>
+    <h1>Giao dịch rõ ràng,<br />mua bán an tâm hơn.</h1>
+    <p>Tìm hiểu trạng thái đơn hàng, cách xử lý khi có vấn đề và cách bảo vệ tài khoản của bạn.</p>
+    <a class="btn-rm-primary" asp-area="User" asp-controller="Orders" asp-action="Index">Theo dõi đơn hàng</a>
+</header>
+
+<div class="help-layout">
+    <aside class="help-index" aria-label="Mục lục hướng dẫn">
+        <strong>Nội dung</strong>
+        <a href="#giao-dich">Giao dịch an toàn</a>
+        <a href="#trang-thai">Trạng thái đơn hàng</a>
+        <a href="#su-co">Khi có sự cố</a>
+        <a href="#bao-mat">Bảo mật tài khoản</a>
+        <a href="#faq">Câu hỏi thường gặp</a>
+    </aside>
+
+    <main class="help-content">
+        <section class="help-section" id="giao-dich">
+            <span class="help-number">01</span>
+            <div>
+                <h2>Giao dịch an toàn</h2>
+                <p>Trao đổi trong trang đơn hàng và kiểm tra kỹ sản phẩm, người bán, số tiền trước khi thanh toán.</p>
+                <div class="help-callout"><i class="bi bi-info-circle"></i><span>Chuyển khoản VietQR hiện được trả trực tiếp tới tài khoản do shop cung cấp; Re:Market không giữ tiền và không tự xác minh giao dịch ngân hàng. Chỉ chuyển đúng số tiền, nội dung và tài khoản trên chi tiết đơn. Nếu thông tin không khớp, hãy dừng giao dịch và liên hệ shop.</span></div>
+                <ul>
+                    <li>Ưu tiên gặp tại nơi công cộng nếu chọn hình thức nhận trực tiếp.</li>
+                    <li>Không gửi mật khẩu, mã OTP hoặc ảnh giấy tờ cho người bán.</li>
+                    <li>Chỉ xác nhận đã nhận hàng sau khi đã kiểm tra sản phẩm.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="help-section" id="trang-thai">
+            <span class="help-number">02</span>
+            <div>
+                <h2>Trạng thái đơn hàng</h2>
+                <div class="help-status-list">
+                    <article><span class="help-status-dot pending"></span><div><strong>Chờ xác nhận</strong><p>Shop đang xem đơn. Nếu không còn nhu cầu, bạn có thể hủy khi nút hủy vẫn khả dụng.</p></div></article>
+                    <article><span class="help-status-dot confirmed"></span><div><strong>Shop đã xác nhận</strong><p>Shop đã nhận đơn và chuẩn bị giao hàng hoặc thống nhất điểm hẹn.</p></div></article>
+                    <article><span class="help-status-dot shipping"></span><div><strong>Đang giao / đang hẹn nhận</strong><p>Đơn đang trên đường giao hoặc hai bên đang thực hiện lịch hẹn.</p></div></article>
+                    <article><span class="help-status-dot delivered"></span><div><strong>Đã giao / chờ bạn xác nhận</strong><p>Kiểm tra hàng trước. Chỉ chọn “Đã nhận được hàng” khi bạn đã thực sự nhận và đồng ý hoàn tất.</p></div></article>
+                    <article><span class="help-status-dot completed"></span><div><strong>Hoàn tất</strong><p>Giao dịch đã kết thúc. Bạn có thể gửi đánh giá cho shop.</p></div></article>
+                    <article><span class="help-status-dot cancelled"></span><div><strong>Đã hủy</strong><p>Đơn đã dừng. Mở chi tiết đơn để xem lý do và người thực hiện hủy.</p></div></article>
+                </div>
+                <p class="help-muted">Thanh toán có trạng thái riêng với đơn hàng: COD được trả khi nhận hàng; chuyển khoản chỉ được đánh dấu đã thanh toán sau khi shop xác nhận thủ công.</p>
+            </div>
+        </section>
+
+        <section class="help-section" id="su-co">
+            <span class="help-number">03</span>
+            <div>
+                <h2>Khi có sự cố</h2>
+                <ol class="help-steps">
+                    <li>Mở <a asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua</a> và vào đúng đơn để xem trạng thái, thông tin shop và lịch sử cập nhật.</li>
+                    <li>Nếu hàng chưa nhận, sai mô tả hoặc giao dịch có vấn đề, dùng mục <strong>Khiếu nại / Tranh chấp</strong> trong chi tiết đơn khi nút này khả dụng. Ghi rõ sự việc và đính kèm bằng chứng liên quan.</li>
+                    <li>Nếu phát hiện tài khoản hoặc nội dung vi phạm, gửi báo cáo qua <a asp-area="User" asp-controller="Reports" asp-action="Tao">biểu mẫu báo cáo</a>.</li>
+                    <li>Giữ lại mã đơn, nội dung trao đổi và chứng từ thanh toán để đối chiếu.</li>
+                </ol>
+                <p class="help-muted">Đừng xác nhận hoàn tất hoặc chuyển thêm tiền để “mở khóa” đơn theo yêu cầu ngoài hệ thống.</p>
+            </div>
+        </section>
+
+        <section class="help-section" id="bao-mat">
+            <span class="help-number">04</span>
+            <div>
+                <h2>Bảo mật tài khoản</h2>
+                <div class="help-security-grid">
+                    <article><i class="bi bi-key"></i><strong>Dùng mật khẩu riêng</strong><p>Không dùng lại mật khẩu từ email, mạng xã hội hoặc dịch vụ khác.</p></article>
+                    <article><i class="bi bi-shield-lock"></i><strong>Giữ kín mã OTP</strong><p>Mã đặt lại mật khẩu chỉ dùng một lần, có hiệu lực 10 phút. Không chia sẻ mã với bất kỳ ai.</p></article>
+                    <article><i class="bi bi-person-lock"></i><strong>Đăng xuất thiết bị lạ</strong><p>Đăng xuất sau khi dùng máy công cộng. Nếu nghi ngờ lộ mật khẩu, đổi mật khẩu ngay và đăng nhập lại.</p></article>
+                </div>
+                <p>Mật khẩu được lưu dưới dạng băm. Đăng nhập và yêu cầu đặt lại mật khẩu có giới hạn tần suất để giảm thử đoán tự động.</p>
+                <a class="btn-rm-outline" asp-controller="Account" asp-action="ChangePassword">Đổi mật khẩu</a>
+            </div>
+        </section>
+
+        <section class="help-section" id="faq">
+            <span class="help-number">05</span>
+            <div>
+                <h2>Câu hỏi thường gặp</h2>
+                <details class="help-faq"><summary>Tôi chuyển khoản rồi nhưng đơn vẫn chưa được xác nhận?</summary><p>Shop cần kiểm tra giao dịch trên tài khoản ngân hàng của họ và cập nhật thủ công. Nếu đã chuyển đúng thông tin mà trạng thái chưa đổi, liên hệ shop từ đơn hàng và giữ chứng từ giao dịch.</p></details>
+                <details class="help-faq"><summary>Tôi có thể hủy đơn ở trạng thái nào?</summary><p>Khả năng hủy phụ thuộc trạng thái hiện tại và quy tắc đơn hàng. Nếu nút hủy còn xuất hiện trong chi tiết đơn, bạn có thể gửi yêu cầu kèm lý do.</p></details>
+                <details class="help-faq"><summary>Khi nào tôi được đánh giá shop?</summary><p>Sau khi đơn hoàn tất. Mở chi tiết đơn để gửi đánh giá; mỗi đơn chỉ có một đánh giá.</p></details>
+                <details class="help-faq"><summary>Tôi quên mật khẩu thì làm gì?</summary><p>Chọn “Quên mật khẩu?” ở trang đăng nhập, nhận mã OTP qua email và đặt mật khẩu mới trong thời hạn của mã.</p></details>
+            </div>
+        </section>
+    </main>
+</div>

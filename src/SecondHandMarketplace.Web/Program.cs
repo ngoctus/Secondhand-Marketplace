@@ -21,6 +21,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddControllersWithViews();
+        builder.Services.AddMemoryCache();
         builder.Services.AddDataProtection();
         builder.Services.AddRateLimiter(options =>
         {

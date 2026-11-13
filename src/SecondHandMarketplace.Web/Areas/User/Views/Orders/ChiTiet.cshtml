@@ -6,6 +6,16 @@
     var danhGiaHienTai = Model.TrangThai == "COMPLETED"
         ? await ReviewService.LayDanhGiaTheoDonHangAsync(Model.MaDonHang)
         : null;
+    var huongDanTrangThai = Model.TrangThai switch
+    {
+        "PENDING" => "Shop đang xem đơn. Bạn có thể hủy nếu chưa còn nhu cầu và thao tác hủy vẫn khả dụng.",
+        "CONFIRMED" => "Shop đã xác nhận và đang chuẩn bị giao hàng hoặc thống nhất lịch hẹn.",
+        "SHIPPING" => "Đơn đang được giao hoặc hai bên đang thực hiện lịch hẹn nhận hàng.",
+        "DELIVERED" => "Kiểm tra sản phẩm trước khi xác nhận đã nhận. Chỉ xác nhận khi hàng đã ở với bạn.",
+        "COMPLETED" => "Giao dịch đã hoàn tất. Bạn có thể đánh giá shop để chia sẻ trải nghiệm.",
+        "CANCELLED" => "Đơn hàng đã bị hủy. Xem lý do bên dưới hoặc trong lịch sử trạng thái.",
+        _ => "Theo dõi lịch sử bên dưới để xem các lần cập nhật của đơn hàng."
+    };
 }
 <div class="container my-4" style="max-width: 950px;">
 
@@ -107,6 +117,16 @@
                     }
                 }
             </div>
+        </div>
+
+        <div class="order-status-guidance mt-3" role="status">
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
+            <span>@huongDanTrangThai
+                @if (Model.PhuongThucThanhToan == "BANK_TRANSFER" && Model.TrangThaiThanhToan != "PAID" && Model.TrangThai != "CANCELLED")
+                {
+                    <text> Shop cần kiểm tra giao dịch chuyển khoản và xác nhận riêng trạng thái thanh toán.</text>
+                }
+            </span>
         </div>
 
         <!-- Khung xác nhận hủy đơn inline -->
