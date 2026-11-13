@@ -55,19 +55,24 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_PhuongXa_MaHanhChinh'
     CREATE UNIQUE INDEX UX_PhuongXa_MaHanhChinh ON dbo.PhuongXa (MaHanhChinh);
 GO
 
--- 3. CuaHang: thêm 8 cột, tất cả cho phép NULL ---------------------------------
+-- 3. CuaHang: thêm 8 cột, tất cả cho phép NULL. Kiểm tra từng cột để phục hồi được
+-- database nâng cấp dở dang (tránh chỉ kiểm tra MaTinhThanh rồi bỏ sót các cột còn lại).
 IF COL_LENGTH('dbo.CuaHang', 'MaTinhThanh') IS NULL
-BEGIN
-    ALTER TABLE dbo.CuaHang ADD
-        MaTinhThanh     int            NULL,
-        MaPhuongXa      int            NULL,
-        DiaChiChiTiet   nvarchar(300)  NULL,
-        KhuVucHienThi   nvarchar(100)  NULL,
-        NganHang        nvarchar(100)  NULL,
-        MaNganHang      varchar(10)    NULL,   -- mã BIN VietQR (6 chữ số), D4 dùng để sinh mã QR
-        SoTaiKhoan      varchar(30)    NULL,
-        TenChuTaiKhoan  nvarchar(100)  NULL;
-END
+    ALTER TABLE dbo.CuaHang ADD MaTinhThanh int NULL;
+IF COL_LENGTH('dbo.CuaHang', 'MaPhuongXa') IS NULL
+    ALTER TABLE dbo.CuaHang ADD MaPhuongXa int NULL;
+IF COL_LENGTH('dbo.CuaHang', 'DiaChiChiTiet') IS NULL
+    ALTER TABLE dbo.CuaHang ADD DiaChiChiTiet nvarchar(300) NULL;
+IF COL_LENGTH('dbo.CuaHang', 'KhuVucHienThi') IS NULL
+    ALTER TABLE dbo.CuaHang ADD KhuVucHienThi nvarchar(100) NULL;
+IF COL_LENGTH('dbo.CuaHang', 'NganHang') IS NULL
+    ALTER TABLE dbo.CuaHang ADD NganHang nvarchar(100) NULL;
+IF COL_LENGTH('dbo.CuaHang', 'MaNganHang') IS NULL
+    ALTER TABLE dbo.CuaHang ADD MaNganHang varchar(10) NULL;
+IF COL_LENGTH('dbo.CuaHang', 'SoTaiKhoan') IS NULL
+    ALTER TABLE dbo.CuaHang ADD SoTaiKhoan varchar(30) NULL;
+IF COL_LENGTH('dbo.CuaHang', 'TenChuTaiKhoan') IS NULL
+    ALTER TABLE dbo.CuaHang ADD TenChuTaiKhoan nvarchar(100) NULL;
 GO
 
 -- 4. Hai khóa ngoại từ CuaHang (đặt ở batch riêng để cột đã tồn tại khi biên dịch) --

@@ -20,6 +20,7 @@ Chạy `run-db.bat` trên database mới để tạo database `SecondHandMarketp
 - `12_tranhchap_baocao.sql`: phần Tranh chấp và Báo cáo (người D phụ trách).
 - `13_daugia.sql`: phần Đấu giá (người E phụ trách).
 - `14_donhang_admin.sql`: thủ tục Admin can thiệp đơn hàng `sp_AdminCapNhatTrangThaiDon` (người E phụ trách).
+- `34_password_reset_otp.sql`: bảng lưu OTP đặt lại mật khẩu.
 - `22_checkout_delivery_window.sql`: bổ sung khung giờ nhận hàng cho đơn; chạy khi nâng cấp database đã có dữ liệu.
 
 Bốn file `10`–`13` được tạo sẵn chỉ có `USE SecondHandMarketplace; GO`; file `14` do người E bổ sung thêm. Thành viên phụ trách bổ sung SQL vào đúng file của mình, không sửa `02_create_tables.sql` hoặc `09_seed_data.sql`.
@@ -30,9 +31,13 @@ Bốn file `10`–`13` được tạo sẵn chỉ có `USE SecondHandMarketplace
 
 Khởi tạo Production theo hướng dẫn trong `docs/deployment-runbook.md`; tài khoản admin production dùng `24_seed_admin_deploy.template.sql` với BCrypt hash cung cấp ngoài repo.
 
+Nếu database hiện có báo thiếu cột khu vực/ngân hàng của `CuaHang` (ví dụ `DiaChiChiTiet`, `MaPhuongXa`, `MaTinhThanh`), chạy lại `21_dia_chi_khu_vuc.sql` trong SQL Server Management Studio. Script có kiểm tra tồn tại từng cột và không xóa dữ liệu; không dùng `reset-db.bat` cho database cần giữ lại.
+
 `07_functions.sql` phải chạy trước `06_procedures.sql` vì stored procedure sử dụng các hàm đã định nghĩa. Các thay đổi schema chạy trước thủ tục tương ứng.
 
 `23_checkout_delivery_window.sql` thêm cột khung giờ nhận theo kiểu migration và được chạy sau khi tạo các bảng, trước khi tạo thủ tục đặt hàng.
+
+Khi nâng cấp database đã có dữ liệu, chạy riêng `34_password_reset_otp.sql` một lần. Cấu hình SMTP qua `Email:Smtp` trong User Secrets hoặc biến môi trường (`Email__Smtp__Host`, `Email__Smtp__Port`, `Email__Smtp__From`, `Email__Smtp__Username`, `Email__Smtp__Password`). Không commit mật khẩu SMTP thật.
 
 ## Tài khoản dữ liệu mẫu
 

@@ -99,7 +99,7 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
         if (!ModelState.IsValid) return RedirectToAction(nameof(ForgotPassword));
         var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
         TempData[sent ? "OtpSent" : "Loi"] = sent
-            ? "Nếu email thuộc một tài khoản đang hoạt động, mã xác nhận mới sẽ được gửi tới hộp thư đó."
+            ? "Nếu email thuộc một tài khoản đang hoạt động và đã qua thời gian chờ, mã xác nhận sẽ được gửi tới hộp thư đó."
             : "Chưa gửi được email xác nhận. Vui lòng thử lại sau.";
         return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
     }
