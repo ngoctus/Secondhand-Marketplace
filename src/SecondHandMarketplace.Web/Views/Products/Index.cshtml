@@ -36,7 +36,19 @@
 <div class="search-page-layout">
     <!-- CỘT BỘ LỌC (Sidebar) -->
     <aside class="filter-sidebar">
-        <form method="get" asp-action="Index">
+        <div class="filter-header">
+            <h3>Bộ lọc</h3>
+            <div class="d-flex align-items-center gap-2">
+                <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-reset">Xóa</a>
+                @* Điện thoại: để gọn bảng lọc dưới nút này người mua thấy kết quả trước khi phải cuộn qua bộ lọc. *@
+                <button type="button" class="filter-toggle d-lg-none" data-bs-toggle="collapse" data-bs-target="#filterPanel"
+                        data-so-bo-loc="@chips.Count" aria-controls="filterPanel" aria-expanded="false">
+                    Hiện bộ lọc@(chips.Count > 0 ? $" ({chips.Count})" : "")
+                </button>
+            </div>
+        </div>
+
+        <form method="get" asp-action="Index" id="filterPanel" class="filter-panel collapse d-lg-block">
             @* Khu vực đã chọn phải đi theo mọi link sắp xếp/phân trang của trang này. *@
             @if (f.MaTinhThanh.HasValue)
             {
@@ -46,11 +58,6 @@
             {
                 <input type="hidden" name="MaPhuongXa" value="@f.MaPhuongXa" />
             }
-
-            <div class="filter-header">
-                <h3>Bộ lọc</h3>
-                <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-reset">Xóa</a>
-            </div>
 
             <!-- Tìm trong kết quả: trên điện thoại ô search của header có thể bị thu gọn -->
             <div class="filter-group">

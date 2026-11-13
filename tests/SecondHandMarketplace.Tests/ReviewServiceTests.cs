@@ -506,4 +506,128 @@ public class ReviewServiceTests
         // Nhưng Badge TongShopCanRaSoat vẫn là 1 (tổng toàn hệ thống)
         Assert.Equal(1, result.TongShopCanRaSoat);
     }
+
+    // =========================================================
+    // LayDanhGiaNoiBatAsync — khối "Người dùng nói gì" trang chủ (B)
+    // =========================================================
+
+    /// <summary>Shop ACTIVE/INACTIVE theo tham số, ba đơn COMPLETED, một sản phẩm còn bán và một đã xóa.</summary>
+    private static void SeedNoiBatNen(AppDbContext db, string trangThaiShop = "ACTIVE")
+    {
+        SeedCoSo(db, "COMPLETED");
+        db.CuaHangs.Find(1)!.TrangThai = trangThaiShop;
+
+        foreach (var i in new[] { 2, 3 })
+        {
+            db.DonHangs.Add(new DonHang
+            {
+                MaDonHang = i, MaDon = $"DH00{i}", MaNguoiDung = 1, MaCuaHang = 1,
+                TenNguoiNhan = "Nguoi Mua", SoDienThoaiNhan = "099", DiaChiNhan = "123",
+                TrangThai = "COMPLETED", NgayTao = DateTime.UtcNow, NgayCapNhat = DateTime.UtcNow
+            });
+        }
+
+        db.SanPhams.AddRange(
+            new SanPham { MaSanPham = 1, MaCuaHang = 1, Ten = "Quạt đứng Senko", ChuoiTimKiem = "quat dung senko", Gia = 350000, TrangThai = "ACTIVE", NgayTao = DateTime.UtcNow, NgayCapNhat = DateTime.UtcNow },
+            new SanPham { MaSanPham = 2, MaCuaHang = 1, Ten = "Bàn ủi Tefal", ChuoiTimKiem = "ban ui tefal", Gia = 350000, TrangThai = "SOLD", DaXoa = true, NgayTao = DateTime.UtcNow, NgayCapNhat = DateTime.UtcNow },
+            new SanPham { MaSanPham = 3, MaCuaHang = 1, Ten = "Máy xay Philips", ChuoiTimKiem = "may xay philips", Gia = 400000, TrangThai = "SOLD", NgayTao = DateTime.UtcNow, NgayCapNhat = DateTime.UtcNow });
+
+        db.ChiTietDonHangs.AddRange(
+            new ChiTietDonHang { MaChiTietDonHang = 1, MaDonHang = 1, MaSanPham = 1, TenSanPham = "Quạt đứng Senko", Gia = 350000 },
+            new ChiTietDonHang { MaChiTietDonHang = 2, MaDonHang = 2, MaSanPham = 2, TenSanPham = "Bàn ủi Tefal", Gia = 350000 },
+            new ChiTietDonHang { MaChiTietDonHang = 3, MaDonHang = 3, MaSanPham = 3, TenSanPham = "Máy xay Philips", Gia = 400000 });
+
+        db.SaveChanges();
+    }
+
+    private static DanhGia DanhGiaNoiBat(int maDonHang, byte soSao, string? noiDung, string trangThai, DateTime ngayTao) =>
+        new DanhGia
+        {
+            MaDonHang = maDonHang, MaNguoiMua = 1, MaCuaHang = 1,
+            SoSao = soSao, NoiDung = noiDung, TrangThai = trangThai, NgayTao = ngayTao
+        };
+
+    [Fact]
+    public async Task LayDanhGiaNoiBat_LocDanhGiaHiddenVaKhongCoNoiDung()
+    {
+        using var db = GetDb("noi_bat_loc");
+        SeedNoiBatNen(db);
+        var now = DateTime.UtcNow;
+        db.DanhGias.AddRange(
+            DanhGiaNoiBat(1, 5, "Quạt chạy êm, còn đủ lồng quạt.", "VISIBLE", now),
+            DanhGiaNoiBat(2, 4, null, "VISIBLE", now),
+            DanhGiaNoiBat(3, 1, "Bị lỗi công tắc.", "HIDDEN", now));
+        await db.SaveChangesAsync();
+
+        var result = await new ReviewService(db).LayDanhGiaNoiBatAsync();
+
+        var item = Assert.Single(result);
+        Assert.Equal("Quạt chạy êm, còn đủ lồng quạt.", item.NoiDung);
+        Assert.Equal((byte)5, item.SoSao);
+    }
+
+    [Fact]
+    public async Task LayDanhGiaNoiBat_ThuMoiNhatTruDauVaKhongVuotSoLuong()
+    {
+        using var db = GetDb("noi_bat_thu_tu");
+        SeedNoiBatNen(db);
+        var now = DateTime.UtcNow;
+        db.DanhGias.AddRange(
+            DanhGiaNoiBat(1, 5, "Cũ nhất.", "VISIBLE", now.AddHours(-5)),
+            DanhGiaNoiBat(2, 4, "Mới nhất.", "VISIBLE", now),
+            DanhGiaNoiBat(3, 3, "Ở giữa.", "VISIBLE", now.AddHours(-2)));
+        await db.SaveChangesAsync();
+
+        var result = await new ReviewService(db).LayDanhGiaNoiBatAsync(soLuong: 2);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Mới nhất.", result[0].NoiDung);
+        Assert.Equal("Ở giữa.", result[1].NoiDung);
+    }
+
+    [Fact]
+    public async Task LayDanhGiaNoiBat_TraMaSanPhamChiKhiTrangVanXemDuoc()
+    {
+        using var db = GetDb("noi_bat LienKet");
+        SeedNoiBatNen(db);
+        var now = DateTime.UtcNow;
+        db.DanhGias.AddRange(
+            DanhGiaNoiBat(2, 4, "Bàn ủi còn tốt.", "VISIBLE", now),        // sản phẩm đã xóa
+            DanhGiaNoiBat(3, 5, "Máy xay chạy êm.", "VISIBLE", now));      // sản phẩm SOLD
+        await db.SaveChangesAsync();
+
+        var result = await new ReviewService(db).LayDanhGiaNoiBatAsync();
+
+        var daXoa = result.Single(d => d.TenSanPham == "Bàn ủi Tefal");
+        Assert.Null(daXoa.MaSanPham);
+
+        var sold = result.Single(d => d.TenSanPham == "Máy xay Philips");
+        Assert.Equal(3, sold.MaSanPham);
+    }
+
+    [Fact]
+    public async Task LayDanhGiaNoiBat_ShopNgungBan_KhongHienThi()
+    {
+        using var db = GetDb("noi_bat_shop_khoa");
+        SeedNoiBatNen(db, trangThaiShop: "INACTIVE");
+        db.DanhGias.Add(DanhGiaNoiBat(1, 5, "Tốt.", "VISIBLE", DateTime.UtcNow));
+        await db.SaveChangesAsync();
+
+        Assert.Empty(await new ReviewService(db).LayDanhGiaNoiBatAsync());
+    }
+
+    [Fact]
+    public async Task LayDanhGiaNoiBat_KhongLoEmailNguoiMua()
+    {
+        using var db = GetDb("noi_bat_rieng_tu");
+        SeedNoiBatNen(db);
+        db.DanhGias.Add(DanhGiaNoiBat(1, 5, "Giao dịch vui vẻ.", "VISIBLE", DateTime.UtcNow));
+        await db.SaveChangesAsync();
+
+        var item = Assert.Single(await new ReviewService(db).LayDanhGiaNoiBatAsync());
+
+        Assert.Equal("Nguoi Mua", item.TenNguoiMua);
+        Assert.Equal("Shop Test", item.TenShop);
+        Assert.DoesNotContain("Email", typeof(DanhGiaNoiBatVm).GetProperties().Select(p => p.Name));
+    }
 }

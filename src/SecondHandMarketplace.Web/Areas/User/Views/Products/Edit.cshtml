@@ -1,4 +1,4 @@
-@model ProductFormVm
+﻿@model ProductFormVm
 @{
     ViewData["Title"] = "Sửa sản phẩm";
 }
@@ -22,4 +22,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/ai-mo-ta.js" asp-append-version="true" defer
+            data-ai-mota-chat-url="@Url.Content("~/api/ai/chat")"
+            data-ai-mota-status-url="@Url.Content("~/api/ai/status")"></script>
 }

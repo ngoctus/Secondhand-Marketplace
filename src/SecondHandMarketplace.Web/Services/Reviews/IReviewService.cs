@@ -44,6 +44,14 @@ public interface IReviewService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Lấy vài đánh giá VISIBLE mới nhất trên toàn sàn, có nội dung chữ, từ shop đang ACTIVE.
+    /// Dùng cho trang chủ (khối "Người dùng nói gì"). Không lộ Email/SoDienThoai người mua.
+    /// </summary>
+    Task<IReadOnlyList<DanhGiaNoiBatVm>> LayDanhGiaNoiBatAsync(
+        int soLuong = 6,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Ẩn hoặc hiện một đánh giá (chỉ Admin).
     /// TrangThaiMoi phải là "VISIBLE" hoặc "HIDDEN".
     /// Khi đánh giá bị HIDDEN, vw_DiemCuaHang tự động loại nó khỏi điểm trung bình.

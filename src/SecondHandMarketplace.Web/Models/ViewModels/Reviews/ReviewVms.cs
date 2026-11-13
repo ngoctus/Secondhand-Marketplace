@@ -48,6 +48,24 @@ public sealed class DanhGiaItemVm
 }
 
 /// <summary>
+/// Dòng đánh giá nổi bật cho khối "Người dùng nói gì" ở trang chủ (B).
+/// Chỉ thông tin công khai: tên + ảnh đại diện người mua, tên sản phẩm đã mua, tên shop.
+/// MaSanPham null khi sản phẩm đã gỡ bán, để trang chủ không đặt link vào trang 404.
+/// </summary>
+public sealed class DanhGiaNoiBatVm
+{
+    public int MaDanhGia { get; init; }
+    public byte SoSao { get; init; }
+    public string NoiDung { get; init; } = string.Empty;
+    public string TenNguoiMua { get; init; } = string.Empty;
+    public string? AnhDaiDienNguoiMua { get; init; }
+    public string TenSanPham { get; init; } = string.Empty;
+    public int? MaSanPham { get; init; }
+    public string TenShop { get; init; } = string.Empty;
+    public DateTime NgayTao { get; init; }
+}
+
+/// <summary>
 /// Kết quả trả về khi admin lọc/xem đánh giá theo shop, kèm thống kê điểm.
 /// </summary>
 public sealed class DanhSachDanhGiaTheoShopVm

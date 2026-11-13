@@ -30,6 +30,9 @@ public class ProductDetailVm
 
     public bool CoDanhGia => DiemTrungBinh.HasValue && SoDanhGia > 0;
 
+    /// <summary>Nhãn điểm: vw_DiemCuaHang trả 0 khi chưa có đánh giá hiển thị nên phải dựa vào số lượt đánh giá.</summary>
+    public string DanhGiaHienThi => CoDanhGia ? $"{DiemTrungBinh:0.0} ★ · {SoDanhGia} đánh giá" : "Chưa có đánh giá";
+
     public string TrangThaiHienThi => Status switch
     {
         "RESERVED" => "Đang được giữ chỗ",

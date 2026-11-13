@@ -33,9 +33,42 @@
 
     <div class="col-12">
         <label asp-for="MoTa" class="form-label">Mô tả <span class="text-danger">*</span></label>
-        <textarea asp-for="MoTa" class="form-control" rows="5" maxlength="4000"
-                  placeholder="Nêu rõ tình trạng, nguồn gốc, lỗi/hư hại (nếu có)... Tối thiểu 20 ký tự khi gửi duyệt."></textarea>
+        <textarea asp-for="MoTa" class="form-control" rows="6" maxlength="4000"
+                  data-mota-toithieu="20" data-mota-dem="motaDem" data-mota-trang-thai="motaTrangThai"
+                  placeholder="Ví dụ: Áo khoác denim mua 2023, mặc khoảng 10 lần, không phai màu, không rách. Còn thiếu 1 cúc tay áo. Giao kèm móc treo, không hộp. Bán vì đổi phong cách."></textarea>
+        <div class="d-flex justify-content-between flex-wrap gap-2 mt-1">
+            <small class="text-muted" id="motaDem"></small>
+            <small id="motaTrangThai" class="fw-semibold"></small>
+        </div>
         <span asp-validation-for="MoTa" class="text-danger small"></span>
+
+        @* B10: nhờ AI soạn trước mô tả từ thông tin đã nhập ở trên; người bán vẫn phải tự kiểm lại trước khi gửi duyệt. *@
+        <div class="rm-ai-mota" id="aiGoiYMota">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <button type="button" class="btn-rm-outline btn-sm" data-ai-mota-goi hidden>Nhờ AI gợi ý mô tả</button>
+                <small class="text-muted" data-ai-mota-trang-thai role="status"></small>
+            </div>
+            <div class="rm-ai-mota-preview" data-ai-mota-xem-truoc hidden>
+                <div class="rm-ai-mota-label">Bản nháp AI gợi ý (kiểm tra lại thông tin trước khi dùng)</div>
+                <div class="rm-ai-mota-text" data-ai-mota-noi-dung></div>
+                <div class="d-flex gap-2 flex-wrap mt-2">
+                    <button type="button" class="btn-rm-primary btn-sm" data-ai-mota-dien>Điền vào ô mô tả</button>
+                    <button type="button" class="btn-rm-outline btn-sm" data-ai-mota-bo-qua>Bỏ qua</button>
+                </div>
+            </div>
+        </div>
+
+        @* Gợi ý nội dung theo luật duyệt: thiếu một trong các ý này là tin dễ bị trả lại. *@
+        <div class="rm-form-hint mt-2">
+            <div class="rm-form-hint-title">Mô tả nên có đủ 5 ý</div>
+            <ul>
+                <li>Tình trạng thực tế: còn mới khoảng bao nhiêu %, đã sửa chữa gì chưa.</li>
+                <li>Thời gian đã sử dụng và nguồn gốc (mua khi nào, ở đâu).</li>
+                <li>Phụ kiện đi kèm: hộp, sạc, remote, hóa đơn... (nếu không có thì ghi rõ).</li>
+                <li>Lỗi/hư hại còn lại: trầy, phai, thiếu cúc, tróc da... để người mua không bị bất ngờ.</li>
+                <li>Lý do bán và cách giao hàng bạn chấp nhận (gặp trực tiếp hay gửi chuyển phát).</li>
+            </ul>
+        </div>
     </div>
 
     <div class="col-12">
@@ -72,7 +105,18 @@
     }
 </div>
 
-<div class="d-flex gap-2 mt-4">
+<div class="rm-form-actions">
     <button type="submit" class="btn-rm-primary">Lưu nháp</button>
     <button type="submit" name="GuiDuyet" value="true" class="btn-rm-secondary">Lưu và gửi duyệt</button>
+</div>
+
+<div class="rm-form-hint mt-3">
+    <div class="rm-form-hint-title">Điều kiện để tin đăng được duyệt</div>
+    <ul>
+        <li>Tên từ 5 ký tự, giá lớn hơn 0.</li>
+        <li>Mô tả từ 20 ký tự và có đủ các ý ở trên.</li>
+        <li>Có ít nhất 1 ảnh thật của món đồ (tối đa 10 ảnh).</li>
+        <li>Đã chọn danh mục và tình trạng còn hiệu lực.</li>
+    </ul>
+    <div class="mt-1">Lưu nháp khi chưa xong; hệ thống chỉ kiểm duyệt khi bạn bấm "Lưu và gửi duyệt".</div>
 </div>
