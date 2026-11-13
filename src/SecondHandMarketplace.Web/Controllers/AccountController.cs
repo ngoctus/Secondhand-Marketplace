@@ -10,7 +10,7 @@ using SecondHandMarketplace.Web.Services.Auth;
 
 namespace SecondHandMarketplace.Web.Controllers;
 
-public sealed class AccountController(IAuthService authService) : Controller
+public sealed class AccountController(IAuthService authService, IPasswordResetService passwordResetService) : Controller
 {
     [AllowAnonymous]
     [HttpGet]
@@ -45,6 +45,63 @@ public sealed class AccountController(IAuthService authService) : Controller
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
         return View(new LoginVm { ReturnUrl = returnUrl });
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult ForgotPassword()
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+        return View(new ForgotPasswordVm());
+    }
+
+    [AllowAnonymous]
+    [HttpPost, ValidateAntiForgeryToken]
+    [EnableRateLimiting("password-reset")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordVm model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid) return View(model);
+        var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
+        if (!sent)
+        {
+            ModelState.AddModelError(string.Empty, "Chưa gửi được email xác nhận. Vui lòng thử lại sau.");
+            return View(model);
+        }
+        TempData["OtpSent"] = "Nếu email thuộc một tài khoản đang hoạt động, mã xác nhận sẽ được gửi tới hộp thư đó.";
+        return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult ResetPassword(string email) => View(new ResetPasswordOtpVm { Email = email ?? string.Empty });
+
+    [AllowAnonymous]
+    [HttpPost, ValidateAntiForgeryToken]
+    [EnableRateLimiting("password-reset")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordOtpVm model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid) return View(model);
+        var result = await passwordResetService.ResetPasswordAsync(model.Email, model.Code, model.NewPassword, cancellationToken);
+        if (!result.Success)
+        {
+            ModelState.AddModelError(string.Empty, result.Error ?? "Không thể đặt lại mật khẩu.");
+            return View(model);
+        }
+        TempData["ThanhCong"] = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.";
+        return RedirectToAction(nameof(Login));
+    }
+
+    [AllowAnonymous]
+    [HttpPost, ValidateAntiForgeryToken]
+    [EnableRateLimiting("password-reset")]
+    public async Task<IActionResult> ResendResetCode(ForgotPasswordVm model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid) return RedirectToAction(nameof(ForgotPassword));
+        var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
+        TempData[sent ? "OtpSent" : "Loi"] = sent
+            ? "Nếu email thuộc một tài khoản đang hoạt động, mã xác nhận mới sẽ được gửi tới hộp thư đó."
+            : "Chưa gửi được email xác nhận. Vui lòng thử lại sau.";
+        return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
     }
 
     [HttpPost]

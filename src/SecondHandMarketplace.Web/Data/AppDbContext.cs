@@ -40,12 +40,22 @@ public class AppDbContext : DbContext
     public DbSet<TinNhan> TinNhans => Set<TinNhan>();
     public DbSet<TinhThanh> TinhThanhs => Set<TinhThanh>();
     public DbSet<PhuongXa> PhuongXas => Set<PhuongXa>();
+    public DbSet<PasswordResetOtp> PasswordResetOtps => Set<PasswordResetOtp>();
     /// <summary>View tổng hợp điểm shop — chỉ đọc (xem database/11_danhgia.sql).</summary>
     public DbSet<DiemCuaHangView> DiemCuaHangViews => Set<DiemCuaHangView>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<PasswordResetOtp>(e =>
+        {
+            e.ToTable("PasswordResetOtp");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Email).IsUnicode(false).HasMaxLength(256);
+            e.Property(x => x.CodeProtected).HasMaxLength(512);
+            e.HasIndex(x => new { x.Email, x.CreatedAtUtc });
+        });
 
         modelBuilder.Entity<NguoiDung>(e =>
         {
