@@ -22,6 +22,7 @@
     if (!string.IsNullOrWhiteSpace(f.TenPhanGia)) chips.Add(f.TenPhanGia);
     if (f.ConditionId is int maTinhTrang)
         chips.Add(Model.DanhSachTinhTrang.FirstOrDefault(t => t.MaTinhTrang == maTinhTrang)?.Ten ?? "Tình trạng");
+    if (!string.IsNullOrWhiteSpace(Model.KhuVucDaChon)) chips.Add(Model.KhuVucDaChon);
 }
 
 <!-- Breadcrumb (Ảnh 4) -->
@@ -36,14 +37,32 @@
     <!-- CỘT BỘ LỌC (Sidebar) -->
     <aside class="filter-sidebar">
         <form method="get" asp-action="Index">
-            @if (!string.IsNullOrWhiteSpace(keyword))
+            @* Khu vực đã chọn phải đi theo mọi link sắp xếp/phân trang của trang này. *@
+            @if (f.MaTinhThanh.HasValue)
             {
-                <input type="hidden" name="Keyword" value="@keyword" />
+                <input type="hidden" name="MaTinhThanh" value="@f.MaTinhThanh" />
+            }
+            @if (f.MaPhuongXa.HasValue)
+            {
+                <input type="hidden" name="MaPhuongXa" value="@f.MaPhuongXa" />
             }
 
             <div class="filter-header">
                 <h3>Bộ lọc</h3>
                 <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-reset">Xóa</a>
+            </div>
+
+            <!-- Tìm trong kết quả: trên điện thoại ô search của header có thể bị thu gọn -->
+            <div class="filter-group">
+                <div class="filter-title">Từ khóa</div>
+                <input type="search" name="Keyword" value="@keyword" class="filter-keyword-input"
+                       placeholder="VD: xe đạp, laptop, áo khoác..." />
+            </div>
+
+            <!-- Khu vực sinh sống (thành phần chọn khu vực của A, mục A4) -->
+            <div class="filter-group filter-khu-vuc">
+                <div class="filter-title">Khu vực sinh sống</div>
+                <partial name="_ChonKhuVuc" optional="true" />
             </div>
 
             <!-- Danh mục -->
@@ -131,9 +150,19 @@
 
         @if (ketQua.Items.Count == 0)
         {
-            <div style="background-color: var(--color-surface); padding: 48px; border-radius: var(--radius-lg); text-align: center;">
-                <p style="color: var(--color-text-secondary); margin-bottom: 16px;">Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
-                <a asp-action="Index" class="btn-rm-outline">Xem tất cả sản phẩm</a>
+            <div class="rm-empty-state">
+                <h3>Chưa có sản phẩm nào khớp</h3>
+                <p>Bộ lọc hiện đang quá chặt hoặc khu vực bạn chọn chưa có người bán nào đăng tin.</p>
+                <ol>
+                    <li>Bỏ bớt bộ lọc danh mục, khoảng giá hoặc tình trạng.</li>
+                    <li>Thử từ khóa ngắn hơn, ví dụ "áo khoác" thay vì "áo khoác jeans nữ form rộng".</li>
+                    <li>Chuyển sang khu vực khác hoặc để "Tất cả khu vực".</li>
+                    <li>Chưa tìm được món bạn cần? Bấm "Đăng bán" để người khác hỏi mua món của bạn.</li>
+                </ol>
+                <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap">
+                    <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-rm-outline">Xóa bộ lọc giá và tình trạng</a>
+                    <a asp-action="Index" class="btn-rm-primary">Xem tất cả sản phẩm</a>
+                </div>
             </div>
         }
         else

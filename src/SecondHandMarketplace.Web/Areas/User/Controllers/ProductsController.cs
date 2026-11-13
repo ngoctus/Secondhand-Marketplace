@@ -194,6 +194,21 @@ public class ProductsController : UserBaseController
             if (!DinhDangAnhChoPhep.Contains(ext))
                 return (result, $"Định dạng \"{ext}\" không được hỗ trợ. Chỉ nhận jpg, png, webp, gif.");
 
+            // Đuôi file tự đổi được, nội dung thì không: đọc 12 byte đầu để xác nhận đây thật sự là ảnh.
+            var dauFile = new byte[12];
+            int daDoc;
+            await using (var mo = file.OpenReadStream())
+            {
+                daDoc = await mo.ReadAsync(dauFile);
+            }
+
+            var loaiThuc = AnhDinhDang.LoaiThuc(dauFile.AsSpan(0, daDoc));
+            var tenFile = Path.GetFileName(file.FileName);
+            if (loaiThuc is null)
+                return (result, $"Ảnh \"{tenFile}\" không phải file ảnh hợp lệ (chỉ nhận ảnh JPG, PNG, WEBP hoặc GIF).");
+            if (!AnhDinhDang.DuKhopVoI(loaiThuc, ext[1..]))
+                return (result, $"Ảnh \"{tenFile}\" có đuôi {ext} nhưng nội dung là ảnh {loaiThuc.ToUpperInvariant()}. Hãy lưu lại file đúng định dạng rồi tải lên.");
+
             var ten = Guid.NewGuid().ToString("N") + ext;
             var duongDanDia = Path.Combine(thuMuc, ten);
             await using (var mo = System.IO.File.Create(duongDanDia))

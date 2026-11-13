@@ -14,8 +14,13 @@ public class ProductService : IProductService
     private const int SoAnhToiDa = 10;
 
     private readonly AppDbContext _db;
+    private readonly IShopDisplayReader _hienThiShop;
 
-    public ProductService(AppDbContext db) => _db = db;
+    public ProductService(AppDbContext db, IShopDisplayReader hienThiShop)
+    {
+        _db = db;
+        _hienThiShop = hienThiShop;
+    }
 
     public async Task<List<ProductCardVm>> SearchAsync(ProductSearchVm f) =>
         (await SearchPagedAsync(f)).Items.ToList();
@@ -23,25 +28,29 @@ public class ProductService : IProductService
     public async Task<PagedResult<ProductCardVm>> SearchPagedAsync(ProductSearchVm f)
     {
         f.GiaiPhanGia();
-        var query = TaoTruyVanTimKiem(f);
+        var query = await TaoTruyVanTimKiemAsync(f);
         var total = await query.CountAsync();
         var page = Math.Max(1, f.Page);
         var pageSize = ProductSearchVm.PageSize;
 
-        var items = await SapXepTruyVan(query, f.Sort)
+        var duLieuTho = await SapXepTruyVan(query, f.Sort)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(p => new ProductCardVm
-            {
-                Id = p.MaSanPham,
-                Name = p.Ten,
-                Price = p.Gia ?? 0m,
-                ImageUrl = p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
-                ShopName = p.CuaHang.TenShop,
-                ConditionName = p.TinhTrang != null ? p.TinhTrang.Ten : null,
-                CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null
-            })
+            .Select(p => new ProductCardSource(
+                p.MaSanPham,
+                p.Ten,
+                p.Gia,
+                p.MoTa,
+                p.TrangThai,
+                p.MaCuaHang,
+                p.CuaHang.TenShop,
+                p.CuaHang.Logo,
+                p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
+                p.TinhTrang != null ? p.TinhTrang.Ten : null,
+                p.DanhMuc != null ? p.DanhMuc.Ten : null))
             .ToListAsync();
+
+        var items = await ProductCardMapper.TaoDanhSachAsync(duLieuTho, _hienThiShop);
 
         return new PagedResult<ProductCardVm>
         {
@@ -54,7 +63,7 @@ public class ProductService : IProductService
 
     // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
     // cửa hàng và chủ cửa hàng đều đang hoạt động.
-    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f)
+    private async Task<IQueryable<SanPham>> TaoTruyVanTimKiemAsync(ProductSearchVm f)
     {
         var query = _db.SanPhams
             .AsNoTracking()
@@ -79,6 +88,14 @@ public class ProductService : IProductService
         if (f.MaxPrice != null)
             query = query.Where(p => p.Gia <= f.MaxPrice);
 
+        if (f.MaTinhThanh != null || f.MaPhuongXa != null)
+        {
+            var shopTrongKhuVuc = await _hienThiShop.LayCuaHangTrongKhuVucAsync(f.MaTinhThanh, f.MaPhuongXa);
+            // null = bảng khu vực của A chưa tồn tại: bỏ qua bộ lọc còn hơn là trả về trang trống.
+            if (shopTrongKhuVuc != null)
+                query = query.Where(p => shopTrongKhuVuc.Contains(p.MaCuaHang));
+        }
+
         return query;
     }
 
@@ -92,29 +109,59 @@ public class ProductService : IProductService
     public async Task<ProductDetailVm?> GetDetailAsync(int id)
     {
         // Giống view vw_SanPhamChiTietCongKhai: xem được ACTIVE, RESERVED, SOLD.
-        return await _db.SanPhams
+        var duLieuTho = await _db.SanPhams
             .AsNoTracking()
             .Where(p => p.MaSanPham == id
                         && !p.DaXoa
                         && (p.TrangThai == "ACTIVE" || p.TrangThai == "RESERVED" || p.TrangThai == "SOLD")
                         && p.CuaHang.TrangThai == "ACTIVE"
                         && p.CuaHang.NguoiDung.TrangThai == "ACTIVE")
-            .Select(p => new ProductDetailVm
+            .Select(p => new
             {
-                Id = p.MaSanPham,
-                Name = p.Ten,
-                Description = p.MoTa,
-                Price = p.Gia ?? 0m,
-                Status = p.TrangThai,
-                CanBuy = p.TrangThai == "ACTIVE",
+                p.MaSanPham,
+                p.MaCuaHang,
+                p.MaDanhMuc,
+                p.Ten,
+                p.MoTa,
+                p.Gia,
+                p.TrangThai,
+                p.NgayTao,
                 CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null,
                 ConditionName = p.TinhTrang != null ? p.TinhTrang.Ten : null,
                 ShopName = p.CuaHang.TenShop,
                 ShopDescription = p.CuaHang.MoTa,
-                CreatedAt = p.NgayTao,
-                Images = p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()
+                ShopLogo = p.CuaHang.Logo,
+                ImageUrls = p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()
             })
             .FirstOrDefaultAsync();
+
+        if (duLieuTho is null) return null;
+
+        var hienThi = await _hienThiShop.LayTheoCuaHangAsync([duLieuTho.MaCuaHang]);
+        hienThi.TryGetValue(duLieuTho.MaCuaHang, out var shop);
+
+        return new ProductDetailVm
+        {
+            Id = duLieuTho.MaSanPham,
+            Name = duLieuTho.Ten,
+            Description = duLieuTho.MoTa,
+            Price = duLieuTho.Gia ?? 0m,
+            Status = duLieuTho.TrangThai,
+            CanBuy = duLieuTho.TrangThai == "ACTIVE",
+            CategoryId = duLieuTho.MaDanhMuc,
+            CategoryName = duLieuTho.CategoryName,
+            ConditionName = duLieuTho.ConditionName,
+            CreatedAt = duLieuTho.NgayTao,
+            Images = duLieuTho.ImageUrls,
+            ShopId = duLieuTho.MaCuaHang,
+            ShopName = duLieuTho.ShopName,
+            ShopDescription = duLieuTho.ShopDescription,
+            ShopLogoUrl = duLieuTho.ShopLogo,
+            DiemTrungBinh = shop?.DiemTrungBinh,
+            SoDanhGia = shop?.SoDanhGia ?? 0,
+            SoDonThanhCong = shop?.SoDonThanhCong ?? 0,
+            KhuVuc = shop?.KhuVuc
+        };
     }
 
     // =====================================================================

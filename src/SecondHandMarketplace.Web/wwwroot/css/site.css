@@ -2067,3 +2067,223 @@ a.kpi:hover {
         align-items: stretch;
     }
 }
+
+/* =====================================================================
+   11. THE SAN PHAM + TIM KIEM KU VUC + CHI TIET (B2, B3, B4, B7)
+   ===================================================================== */
+.rm-card-desc {
+    margin: 0 0 8px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.rm-card-status {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 2;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-pill);
+    background-color: rgba(32, 42, 36, 0.82);
+    color: #fff;
+}
+
+.rm-card-seller .rm-seller-logo {
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.rm-card-rating {
+    margin-left: auto;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--color-star, #C8892B);
+    white-space: nowrap;
+}
+
+.rm-card-rating.is-empty {
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
+
+.rm-card-area {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--color-text-muted);
+}
+
+/* --- Bộ lọc khu vực trong sidebar (B3) --- */
+.filter-khu-vuc select {
+    width: 100%;
+    margin-bottom: 8px;
+    font-size: 13px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 10px);
+    background-color: #fff;
+}
+
+.filter-khu-vuc .form-text {
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+/* --- Trang chi tiết sản phẩm (B4) --- */
+.detail-shop-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface, #fff);
+}
+
+.detail-shop-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #D3C7B2;
+    flex-shrink: 0;
+}
+
+.detail-shop-name {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-decoration: none;
+}
+
+.detail-shop-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+.detail-shop-meta .is-empty {
+    color: var(--color-text-muted);
+}
+
+.rm-safety-tips {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    background-color: #F6F1E7;
+    border: 1px solid #E6DCC7;
+}
+
+.rm-safety-tips h4 {
+    margin: 0 0 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.rm-safety-tips ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+}
+
+.detail-review-empty {
+    padding: 18px;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    font-size: 13px;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+/* --- Trang rỗng có hướng dẫn việc tiếp theo (B7) --- */
+.rm-empty-state {
+    background-color: var(--color-surface, #fff);
+    padding: 40px 24px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    text-align: center;
+}
+
+.rm-empty-state h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.rm-empty-state p {
+    margin: 0 auto 16px;
+    max-width: 520px;
+    font-size: 13.5px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.rm-empty-state ol {
+    margin: 16px auto 0;
+    padding-left: 20px;
+    max-width: 520px;
+    text-align: left;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+}
+
+/* --- Màn hình hẹp 375px: luồng tìm - lọc - mua --- */
+@media (max-width: 576px) {
+    /* Giữ ô tìm kiếm trên header để vẫn tìm được từ điện thoại. */
+    .rm-header-search {
+        display: flex;
+        order: 3;
+        flex-basis: 100%;
+        margin-top: 10px;
+    }
+
+    .rm-header-inner {
+        flex-wrap: wrap;
+        height: auto;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .search-page-layout {
+        gap: 16px;
+    }
+
+    /* Bộ lọc thành khối gập được, không chiếm hết màn hình. */
+    .filter-sidebar .filter-group {
+        padding: 10px 0;
+    }
+
+    .rm-card-title {
+        font-size: 13.5px;
+        min-height: 0;
+    }
+
+    .detail-shop-box {
+        align-items: flex-start;
+    }
+
+    .detail-actions-row .btn-main,
+    .detail-actions-row form {
+        flex: 1 1 auto;
+    }
+
+    .rm-empty-state {
+        padding: 28px 16px;
+    }
+}

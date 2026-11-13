@@ -21,6 +21,12 @@
         <!-- Badge tình trạng ở góc trên trái -->
         <span class="rm-card-badge">@conditionText</span>
 
+        <!-- Trạng thái giao dịch, chỉ ghi khi không còn hàng -->
+        @if (!Model.ConHang)
+        {
+            <span class="rm-card-status">@Model.TrangThaiHienThi</span>
+        }
+
         <!-- Nút yêu thích ở góc trên phải -->
         <button type="button" class="rm-card-favorite-btn" data-product-id="@Model.Id" aria-label="Thêm vào yêu thích">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -40,9 +46,39 @@
             <span class="rm-card-price">@Model.Price.ToString("N0")đ</span>
         </div>
 
+        @if (!string.IsNullOrWhiteSpace(Model.MoTaNgan))
+        {
+            <p class="rm-card-desc">@Model.MoTaNgan</p>
+        }
+
         <div class="rm-card-seller">
-            <span class="seller-circle" aria-hidden="true"></span>
+            @if (!string.IsNullOrWhiteSpace(Model.ShopLogoUrl))
+            {
+                <img src="@Model.ShopLogoUrl" alt="" class="seller-circle rm-seller-logo" loading="lazy" data-fallback />
+            }
+            else
+            {
+                <span class="seller-circle" aria-hidden="true"></span>
+            }
             <span>@(string.IsNullOrWhiteSpace(Model.ShopName) ? "Cửa hàng" : Model.ShopName)</span>
+            <span class="rm-card-rating @(Model.CoDanhGia ? "" : "is-empty")">
+                @if (Model.CoDanhGia)
+                {
+                    <text>★ @Model.DanhGiaHienThi</text>
+                }
+                else
+                {
+                    <text>@Model.DanhGiaHienThi</text>
+                }
+            </span>
+        </div>
+
+        <div class="rm-card-area">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>@Model.KhuVucHienThi</span>
         </div>
     </div>
 </article>

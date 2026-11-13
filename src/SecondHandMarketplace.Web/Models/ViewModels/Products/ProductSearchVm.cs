@@ -9,6 +9,8 @@ public class ProductSearchVm
     public string? Keyword { get; set; }          // tên sản phẩm hoặc tên cửa hàng
     public int? CategoryId { get; set; }          // DanhMuc.MaDanhMuc
     public int? ConditionId { get; set; }         // TinhTrangSanPham.MaTinhTrang
+    public int? MaTinhThanh { get; set; }         // TinhThanh.MaTinhThanh (khu vực sinh sống, không phải khoảng cách)
+    public int? MaPhuongXa { get; set; }          // PhuongXa.MaPhuongXa
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
     public int? PriceRange { get; set; }          // index trong KhoPhanGia; ưu tiên hơn MinPrice/MaxPrice
@@ -57,4 +59,7 @@ public sealed class ProductSearchResultVm
 
     public IReadOnlyList<DanhMuc> DanhSachDanhMuc { get; init; } = [];
     public IReadOnlyList<TinhTrangSanPham> DanhSachTinhTrang { get; init; } = [];
+
+    /// <summary>Tên tỉnh/xã đang lọc, hiển thị trên chip bộ lọc; null khi chưa có hoặc chưa chọn.</summary>
+    public string? KhuVucDaChon { get; init; }
 }

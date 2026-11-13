@@ -41,6 +41,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<IShopService, ShopService>();
         services.AddScoped<IProductService, ProductService>();
+        // B1/B3: điểm sao (view của C) và khu vực (bảng của A) có thể chưa tồn tại, reader tự bỏ qua khi thiếu.
+        services.AddScoped<IShopDisplayReader, ShopDisplayReader>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddAiChat();   // C3: IAiChatService (typed HttpClient), IAiSettingsService, IAiRequestThrottle
