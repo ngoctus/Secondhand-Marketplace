@@ -1,16 +1,27 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 
 namespace SecondHandMarketplace.Web.Services.Categories;
 
-public sealed class CategoryService(AppDbContext db) : ICategoryService
+public sealed class CategoryService(AppDbContext db, IMemoryCache cache) : ICategoryService
 {
+    private static readonly TimeSpan DanhMucCacheTime = TimeSpan.FromMinutes(5);
+
     public async Task<IReadOnlyList<DanhMuc>> GetCategoriesAsync(CancellationToken cancellationToken = default) =>
-        await db.DanhMucs.AsNoTracking().OrderBy(x => x.ThuTuHienThi).ThenBy(x => x.Ten).ToListAsync(cancellationToken);
+        await cache.GetOrCreateAsync("catalog:categories", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = DanhMucCacheTime;
+            return await db.DanhMucs.AsNoTracking().OrderBy(x => x.ThuTuHienThi).ThenBy(x => x.Ten).ToListAsync(cancellationToken);
+        }) ?? [];
 
     public async Task<IReadOnlyList<TinhTrangSanPham>> GetConditionsAsync(CancellationToken cancellationToken = default) =>
-        await db.TinhTrangSanPhams.AsNoTracking().OrderBy(x => x.ThuTuHienThi).ThenBy(x => x.Ten).ToListAsync(cancellationToken);
+        await cache.GetOrCreateAsync("catalog:conditions", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = DanhMucCacheTime;
+            return await db.TinhTrangSanPhams.AsNoTracking().OrderBy(x => x.ThuTuHienThi).ThenBy(x => x.Ten).ToListAsync(cancellationToken);
+        }) ?? [];
 
     public async Task<(bool Success, string? Error, int Id)> SaveCategoryAsync(int? id, string name, int order, bool visible, CancellationToken cancellationToken = default)
     {
@@ -22,6 +33,7 @@ public sealed class CategoryService(AppDbContext db) : ICategoryService
         entity.Ten = name; entity.ThuTuHienThi = order; entity.DangHienThi = visible;
         if (!id.HasValue) db.DanhMucs.Add(entity);
         await db.SaveChangesAsync(cancellationToken);
+        cache.Remove("catalog:categories");
         return (true, null, entity.MaDanhMuc);
     }
 
@@ -33,6 +45,7 @@ public sealed class CategoryService(AppDbContext db) : ICategoryService
         if (inUse) entity.DangHienThi = false;
         else db.DanhMucs.Remove(entity);
         await db.SaveChangesAsync(cancellationToken);
+        cache.Remove("catalog:categories");
         return (true, inUse ? "Danh mục đang có sản phẩm nên đã được ẩn thay vì xóa." : "Đã xóa danh mục.");
     }
 
@@ -46,6 +59,7 @@ public sealed class CategoryService(AppDbContext db) : ICategoryService
         entity.Ma = code; entity.Ten = name; entity.MoTa = description?.Trim(); entity.ThuTuHienThi = order; entity.DangSuDung = active;
         if (!id.HasValue) db.TinhTrangSanPhams.Add(entity);
         await db.SaveChangesAsync(cancellationToken);
+        cache.Remove("catalog:conditions");
         return (true, null, entity.MaTinhTrang);
     }
 
@@ -57,6 +71,7 @@ public sealed class CategoryService(AppDbContext db) : ICategoryService
         if (inUse) entity.DangSuDung = false;
         else db.TinhTrangSanPhams.Remove(entity);
         await db.SaveChangesAsync(cancellationToken);
+        cache.Remove("catalog:conditions");
         return (true, inUse ? "Tình trạng đang được sản phẩm sử dụng nên đã được ẩn." : "Đã xóa tình trạng.");
     }
 }

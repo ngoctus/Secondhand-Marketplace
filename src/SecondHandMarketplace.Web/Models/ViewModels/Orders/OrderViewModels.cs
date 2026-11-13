@@ -33,11 +33,29 @@ public class CheckoutViewModel
     public int? MaSanPhamMuaNgay { get; set; }
     public CartIndexViewModel? GioHang { get; set; }
     public CartItemViewModel? SanPhamMuaNgay { get; set; }
+    public List<ThongTinThanhToanShopVm> ThanhToanTheoShop { get; set; } = new();
+    public bool CoTheChuyenKhoan => ThanhToanTheoShop.Count > 0 && ThanhToanTheoShop.All(x => x.CoTheChuyenKhoan);
     public decimal TienHang { get; set; }
 
     [Range(0, 10000000, ErrorMessage = "Phí vận chuyển phải từ 0đ trở lên.")]
     public decimal PhiVanChuyen { get; set; }
     public decimal TongThanhToan => TienHang + PhiVanChuyen;
+}
+
+/// <summary>Thông tin chuyển khoản do từng cửa hàng cung cấp; luôn kiểm tra đủ dữ liệu trước khi tạo VietQR.</summary>
+public sealed class ThongTinThanhToanShopVm
+{
+    public int MaCuaHang { get; set; }
+    public string TenShop { get; set; } = string.Empty;
+    public string? NganHang { get; set; }
+    public string? MaNganHang { get; set; }
+    public string? SoTaiKhoan { get; set; }
+    public string? TenChuTaiKhoan { get; set; }
+    public bool CoTheChuyenKhoan =>
+        !string.IsNullOrWhiteSpace(NganHang) &&
+        MaNganHang is { Length: 6 } && MaNganHang.All(char.IsDigit) &&
+        SoTaiKhoan is { Length: >= 6 and <= 25 } && SoTaiKhoan.All(char.IsDigit) &&
+        !string.IsNullOrWhiteSpace(TenChuTaiKhoan);
 }
 
 /// <summary>Kết quả sau khi đặt hàng.</summary>
@@ -55,6 +73,7 @@ public class DonHangItemViewModel
     public string MaDon { get; set; } = string.Empty;
     public int MaCuaHang { get; set; }
     public string TenShop { get; set; } = string.Empty;
+    public ThongTinThanhToanShopVm? ThanhToanShop { get; set; }
     public decimal TienHang { get; set; }
     public decimal PhiVanChuyen { get; set; }
     public decimal TongTien { get; set; }
@@ -88,6 +107,7 @@ public class DonHangChiTietViewModel
     public string MaDon { get; set; } = string.Empty;
     public int MaCuaHang { get; set; }
     public string TenShop { get; set; } = string.Empty;
+    public ThongTinThanhToanShopVm? ThanhToanShop { get; set; }
     public string TenNguoiNhan { get; set; } = string.Empty;
     public string SoDienThoaiNhan { get; set; } = string.Empty;
     public string DiaChiNhan { get; set; } = string.Empty;

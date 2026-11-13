@@ -47,6 +47,7 @@ for %%F in (
     20_cauhinh_ai.sql
     21_dia_chi_khu_vuc.sql
     22_hinh_thuc_nhan.sql
+    34_password_reset_otp.sql
 ) do (
     echo Running %%F...
     sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "%%F"

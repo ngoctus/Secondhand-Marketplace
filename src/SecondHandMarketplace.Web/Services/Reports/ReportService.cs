@@ -423,7 +423,12 @@ public class ReportService : IReportService
 
         var products = await _db.SanPhams.Where(p => productIds.Contains(p.MaSanPham)).ToDictionaryAsync(p => p.MaSanPham, p => p.Ten);
         var users = await _db.NguoiDungs.Where(u => userIds.Contains(u.MaNguoiDung)).ToDictionaryAsync(u => u.MaNguoiDung, u => u.HoTen);
-        var shops = await _db.CuaHangs.Where(s => shopIds.Contains(s.MaCuaHang)).ToDictionaryAsync(s => s.MaCuaHang, s => s.TenShop);
+        // Chỉ lấy hai cột cần thiết. Tải nguyên entity CuaHang sẽ SELECT cả các cột địa chỉ/ngân hàng
+        // được bổ sung ở script 21 và gây lỗi trên database cũ chưa áp dụng migration đó.
+        var shops = await _db.CuaHangs
+            .Where(s => shopIds.Contains(s.MaCuaHang))
+            .Select(s => new { s.MaCuaHang, s.TenShop })
+            .ToDictionaryAsync(s => s.MaCuaHang, s => s.TenShop);
 
         return list.Select(x =>
         {

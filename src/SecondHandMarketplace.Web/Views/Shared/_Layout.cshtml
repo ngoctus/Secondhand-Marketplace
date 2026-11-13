@@ -168,12 +168,10 @@
             </form>
 
             <div class="rm-mobile-heading">Danh mục</div>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Thời trang">Thời trang</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Điện tử">Điện tử</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Đồ gia dụng">Đồ gia dụng</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Sách">Sách</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Phụ kiện">Phụ kiện</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Nội thất">Nội thất</a>
+            @foreach (var c in menuDanhMuc.Take(6))
+            {
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc">@c.Ten</a>
+            }
 
             <div class="rm-dropdown-divider"></div>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
@@ -219,9 +217,8 @@
                 <div>
                     <h4 class="rm-footer-heading">Về chúng tôi</h4>
                     <ul class="rm-footer-links">
-                        <li><a href="#gioi-thieu">Giới thiệu</a></li>
-                        <li><a href="#lien-he">Liên hệ</a></li>
-                        <li><a href="#tuyen-dung">Tuyển dụng</a></li>
+                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="giao-dich">Giao dịch trên Re:Market</a></li>
+                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="su-co">Cách nhận hỗ trợ</a></li>
                     </ul>
                 </div>
 
@@ -229,8 +226,8 @@
                 <div>
                     <h4 class="rm-footer-heading">Hỗ trợ</h4>
                     <ul class="rm-footer-links">
-                        <li><a href="#faq">FAQ</a></li>
-                        <li><a href="#giao-dich">Hướng dẫn giao dịch an toàn</a></li>
+                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="faq">Câu hỏi thường gặp</a></li>
+                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="giao-dich">Hướng dẫn giao dịch an toàn</a></li>
                         <li><a asp-area="User" asp-controller="Reports" asp-action="Index">Báo cáo vi phạm</a></li>
                     </ul>
                 </div>
@@ -239,9 +236,8 @@
                 <div>
                     <h4 class="rm-footer-heading">Chính sách</h4>
                     <ul class="rm-footer-links">
-                        <li><a href="#dieu-khoan">Điều khoản sử dụng</a></li>
-                        <li><a href="#bao-mat">Chính sách bảo mật</a></li>
-                        <li><a href="#quy-dinh">Quy định cộng đồng</a></li>
+                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="bao-mat">Bảo mật tài khoản</a></li>
+                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="su-co">Quy tắc xử lý sự cố</a></li>
                     </ul>
                 </div>
 

@@ -37,6 +37,20 @@ public class OrderService : IOrderService
             })
             .ToList();
 
+        var shopIds = cartVm.DanhSachNhomShop.Select(g => g.MaCuaHang).Distinct().ToArray();
+        var thanhToanTheoShop = await _db.CuaHangs.AsNoTracking()
+            .Where(c => shopIds.Contains(c.MaCuaHang))
+            .Select(c => new ThongTinThanhToanShopVm
+            {
+                MaCuaHang = c.MaCuaHang,
+                TenShop = c.TenShop,
+                NganHang = c.NganHang,
+                MaNganHang = c.MaNganHang,
+                SoTaiKhoan = c.SoTaiKhoan,
+                TenChuTaiKhoan = c.TenChuTaiKhoan
+            })
+            .ToListAsync();
+
         var tienHang = cartVm.TongTienTamTinh;
 
         return new CheckoutViewModel
@@ -46,6 +60,7 @@ public class OrderService : IOrderService
             DiaChiNhan = user?.DiaChiMacDinh ?? string.Empty,
             KhungGioNhan = string.Empty,
             GioHang = cartVm,
+            ThanhToanTheoShop = thanhToanTheoShop,
             TienHang = tienHang,
             PhiVanChuyen = 0,
             PhuongThucThanhToan = "COD",
@@ -95,6 +110,18 @@ public class OrderService : IOrderService
             KhungGioNhan = string.Empty,
             MaSanPhamMuaNgay = maSanPham,
             SanPhamMuaNgay = itemVm,
+            ThanhToanTheoShop = new List<ThongTinThanhToanShopVm>
+            {
+                new()
+                {
+                    MaCuaHang = sp.CuaHang.MaCuaHang,
+                    TenShop = sp.CuaHang.TenShop,
+                    NganHang = sp.CuaHang.NganHang,
+                    MaNganHang = sp.CuaHang.MaNganHang,
+                    SoTaiKhoan = sp.CuaHang.SoTaiKhoan,
+                    TenChuTaiKhoan = sp.CuaHang.TenChuTaiKhoan
+                }
+            },
             TienHang = itemVm.Gia,
             PhiVanChuyen = 0,
             PhuongThucThanhToan = "COD",
@@ -499,6 +526,7 @@ public class OrderService : IOrderService
             MaDon = d.MaDon,
             MaCuaHang = d.MaCuaHang,
             TenShop = d.CuaHang.TenShop,
+            ThanhToanShop = TaoThongTinThanhToanShop(d.CuaHang),
             TienHang = d.TienHang,
             PhiVanChuyen = d.PhiVanChuyen,
             TongTien = d.TongTien,
@@ -546,6 +574,7 @@ public class OrderService : IOrderService
             MaDon = d.MaDon,
             MaCuaHang = d.MaCuaHang,
             TenShop = d.CuaHang.TenShop,
+            ThanhToanShop = TaoThongTinThanhToanShop(d.CuaHang),
             TenNguoiNhan = d.TenNguoiNhan,
             SoDienThoaiNhan = d.SoDienThoaiNhan,
             DiaChiNhan = d.DiaChiNhan,
@@ -721,6 +750,7 @@ public class OrderService : IOrderService
             MaDon = d.MaDon,
             MaCuaHang = d.MaCuaHang,
             TenShop = d.CuaHang?.TenShop ?? "",
+            ThanhToanShop = d.CuaHang is null ? null : TaoThongTinThanhToanShop(d.CuaHang),
             TienHang = d.TienHang,
             PhiVanChuyen = d.PhiVanChuyen,
             TongTien = d.TongTien,
@@ -739,6 +769,16 @@ public class OrderService : IOrderService
             }).ToList()
         }).ToList();
     }
+
+    private static ThongTinThanhToanShopVm TaoThongTinThanhToanShop(CuaHang shop) => new()
+    {
+        MaCuaHang = shop.MaCuaHang,
+        TenShop = shop.TenShop,
+        NganHang = shop.NganHang,
+        MaNganHang = shop.MaNganHang,
+        SoTaiKhoan = shop.SoTaiKhoan,
+        TenChuTaiKhoan = shop.TenChuTaiKhoan
+    };
 
     public async Task<(bool ThanhCong, string? ThongBao)> XacNhanThanhToanChuyenKhoanAsync(int maNguoiDung, int maDonHang)
     {

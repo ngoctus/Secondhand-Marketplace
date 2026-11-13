@@ -1,7 +1,6 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Orders.CheckoutViewModel
 @{
     ViewData["Title"] = "Xác nhận & Đặt hàng";
-    var defaultMemo = "REMARKET " + (string.IsNullOrEmpty(Model.SoDienThoaiNhan) ? "THANHTOAN" : Model.SoDienThoaiNhan);
 }
 
 <div class="container my-4" style="max-width: 1080px;">
@@ -123,16 +122,29 @@
                         </label>
 
                         <!-- Chuyển khoản VietQR -->
-                        <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 cursor-pointer transition-all @(Model.PhuongThucThanhToan == "BANK_TRANSFER" ? "payment-active" : "")" for="pt_bank">
-                            <input class="form-check-input mt-1" type="radio" asp-for="PhuongThucThanhToan" id="pt_bank" value="BANK_TRANSFER" />
-                            <div class="flex-grow-1">
-                                <div class="fw-bold text-dark d-flex align-items-center justify-content-between">
-                                    <span><i class="bi bi-qr-code-scan text-primary me-2 fs-5"></i>Chuyển khoản ngân hàng (VietQR)</span>
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">Khuyên dùng</span>
+                        @if (Model.CoTheChuyenKhoan)
+                        {
+                            <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 cursor-pointer transition-all @(Model.PhuongThucThanhToan == "BANK_TRANSFER" ? "payment-active" : "")" for="pt_bank">
+                                <input class="form-check-input mt-1" type="radio" asp-for="PhuongThucThanhToan" id="pt_bank" value="BANK_TRANSFER" />
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-dark d-flex align-items-center justify-content-between">
+                                        <span><i class="bi bi-qr-code-scan text-primary me-2 fs-5"></i>Chuyển khoản ngân hàng (VietQR)</span>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">Theo từng cửa hàng</span>
+                                    </div>
+                                    <div class="text-secondary small mt-1">Mỗi cửa hàng có mã QR và nội dung chuyển khoản riêng. Chi tiết hiện sau khi đặt đơn.</div>
                                 </div>
-                                <div class="text-secondary small mt-1">Quét mã VietQR tiện lợi 24/7 từ mọi ứng dụng ngân hàng hoặc ví điện tử.</div>
-                            </div>
-                        </label>
+                            </label>
+                        }
+                        else
+                        {
+                            <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 opacity-50" for="pt_bank_unavailable">
+                                <input class="form-check-input mt-1" type="radio" id="pt_bank_unavailable" disabled />
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-dark">Chuyển khoản ngân hàng (VietQR)</div>
+                                    <div class="text-secondary small mt-1">Chưa khả dụng: ít nhất một cửa hàng chưa cấu hình đủ thông tin nhận tiền. Bạn có thể chọn COD.</div>
+                                </div>
+                            </label>
+                        }
 
                         <!-- Online -->
                         <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 opacity-50" for="pt_online">
@@ -147,16 +159,11 @@
                         </label>
                     </div>
 
-                    <!-- Khung xem trước mã QR VietQR giả định khi chọn BANK_TRANSFER -->
+                    <!-- Hướng dẫn thay cho QR giả: thông tin nhận tiền chỉ xuất hiện sau khi xác định từng đơn/shop. -->
                     <div id="vietqrBox" style="display: @(Model.PhuongThucThanhToan == "BANK_TRANSFER" ? "block" : "none");">
-                        <partial name="_VietQRCard" model='new SecondHandMarketplace.Web.Models.ViewModels.Orders.VietQrViewModel {
-                            SoTien = Model.TongThanhToan,
-                            NoiDung = defaultMemo,
-                            NganHang = "MB Bank (Quân Đội)",
-                            SoTaiKhoan = "0987654321",
-                            ChuTaiKhoan = "SAN THUONG MAI RE:MARKET",
-                            ChoPhepXacNhan = false
-                        }' />
+                        <div class="alert alert-info border rounded-3 mb-0 small">
+                            <strong>Sau khi đặt hàng:</strong> Re:Market tạo đơn riêng cho từng cửa hàng và hiển thị QR theo thông tin shop đã đăng ký. Hãy đối chiếu chủ tài khoản, số tiền và mã đơn. Shop xác nhận thủ công sau khi kiểm tra tiền vào; hệ thống chưa kết nối ngân hàng.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -166,7 +173,7 @@
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-4 rm-sticky-summary">
                     <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between">
                         <span>Món đồ đặt mua</span>
-                        <span class="badge bg-light text-muted border fw-normal" style="font-size: 11px;">Không đổi trả đồ cũ</span>
+                        <span class="badge bg-light text-muted border fw-normal" style="font-size: 11px;">Mỗi món là duy nhất</span>
                     </h5>
 
                     <!-- Danh sách sản phẩm -->
@@ -249,7 +256,7 @@
                     </button>
 
                     <div class="text-center text-muted small mt-3" style="font-size: 11.5px;">
-                        <i class="bi bi-shield-lock-fill text-success me-1"></i> Giao dịch bảo vệ người mua bởi <strong>Re:Market Guarantee</strong>
+                        <i class="bi bi-info-circle-fill text-success me-1"></i> Kiểm tra thông tin đơn và trao đổi với shop ngay trên Re:Market.
                     </div>
                 </div>
             </div>

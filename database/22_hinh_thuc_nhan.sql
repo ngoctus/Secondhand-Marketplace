@@ -135,7 +135,7 @@ BEGIN
         SELECT TOP 1 DuongDan
         FROM AnhSanPham
         WHERE MaSanPham = sp.MaSanPham
-        ORDER BY LaAnhChinh DESC, MaAnh ASC
+        ORDER BY LaAnhChinh DESC, MaAnhSP ASC
     ) a;
 
     -- Đồng bộ tổng tiền bằng hàm dbo.fn_TinhTongTienDonHang theo đúng nguyên tắc Data-first
@@ -444,6 +444,7 @@ LEFT JOIN AnhSanPham a
 GO
 
 PRINT N'Đã hoàn tất cấu hình hình thức nhận hàng (22_hinh_thuc_nhan.sql)!';
+GO
 
 -- 6. Cập nhật Stored Procedure sp_CapNhatTrangThaiDon (Ràng buộc hình thức nhận hàng khi hoàn tất)
 CREATE OR ALTER PROCEDURE sp_CapNhatTrangThaiDon
