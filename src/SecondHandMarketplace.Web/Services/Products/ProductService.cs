@@ -229,6 +229,10 @@ public class ProductService : IProductService
                 AnhDaiDien = p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault()
                                  ?? p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).FirstOrDefault(),
                 SoLuongAnh = p.Anh.Count,
+                LyDoTuChoiGanNhat = _db.LuotKiemDuyets
+                    .Where(l => l.MaSanPham == p.MaSanPham && l.QuyetDinh == "REJECTED")
+                    .OrderByDescending(l => l.ThoiGianQuyetDinh)
+                    .Select(l => l.LyDo).FirstOrDefault(),
                 PhanTichThatBai = _db.LuotKiemDuyets.Any(l => l.MaSanPham == p.MaSanPham
                     && l.QuyetDinh == null && l.PhanTich != null && l.PhanTich.TrangThai == "FAILED")
             })

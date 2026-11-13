@@ -41,6 +41,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAppServices(this IServiceCollection services)
     {
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<IShopService, ShopService>();
         services.AddScoped<IKhuVucService, KhuVucService>();

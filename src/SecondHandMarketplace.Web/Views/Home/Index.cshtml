@@ -72,14 +72,14 @@
 
 <!-- 1. HERO SECTION (Ảnh 2) -->
 <section class="landing-hero">
-    <div>
+    <div data-rm-reveal="left">
         <div class="hero-sublabel">SECONDHAND - TÁI SỬ DỤNG</div>
         <h1 class="hero-heading">Món đồ cũ,<br />giá trị mới.</h1>
         <p class="hero-desc">
             Mua bán đồ đã qua sử dụng an toàn, tiết kiệm và thân thiện với môi trường. Mọi tin đăng đều được kiểm duyệt.
         </p>
         <div class="hero-actions">
-            <a asp-controller="Products" asp-action="Index" class="btn-rm-primary">Khám phá ngay</a>
+            <a asp-controller="Products" asp-action="Index" class="btn-rm-primary rm-cta-pulse">Khám phá ngay</a>
             @if (User.Identity?.IsAuthenticated == true)
             {
                 @if (User.IsInRole("USER"))
@@ -94,20 +94,20 @@
         </div>
         <div class="hero-stats">
             <div class="hero-stat-item">
-                <b>@(tongSanPham > 0 ? tongSanPham.ToString("N0") + "+" : "100+")</b>
+                <b data-rm-count="@(tongSanPham > 0 ? tongSanPham : 100)" data-rm-suffix="+">@(tongSanPham > 0 ? tongSanPham.ToString("N0") + "+" : "100+")</b>
                 <span>Sản phẩm</span>
             </div>
             <div class="hero-stat-item">
-                <b>@(tongNguoiBan > 0 ? tongNguoiBan.ToString("N0") + "+" : "50+")</b>
+                <b data-rm-count="@(tongNguoiBan > 0 ? tongNguoiBan : 50)" data-rm-suffix="+">@(tongNguoiBan > 0 ? tongNguoiBan.ToString("N0") + "+" : "50+")</b>
                 <span>Người bán</span>
             </div>
             <div class="hero-stat-item">
-                <b>100%</b>
+                <b data-rm-count="100" data-rm-suffix="%">100%</b>
                 <span>Kiểm duyệt</span>
             </div>
         </div>
     </div>
-    <div class="hero-image-box">
+    <div class="hero-image-box" data-rm-reveal="pop" data-rm-media>
         <img src="~/images/hero-marketplace.jpg"
              alt="Đồ dùng secondhand được tái sử dụng: laptop, máy ảnh, tai nghe và quần áo"
              class="hero-image"
@@ -170,7 +170,7 @@
 }
 
 <!-- 2. DANH MỤC (Ảnh 2) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="landing-section-header">
         <div>
             <div class="section-label">DANH MỤC</div>
@@ -179,7 +179,7 @@
         <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">Xem tất cả</a>
     </div>
 
-    <div class="category-grid">
+    <div class="category-grid" data-rm-stagger>
         @foreach (var c in danhMuc.Take(6))
         {
             <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" class="category-card">
@@ -191,7 +191,7 @@
 </section>
 
 <!-- 3. SẢN PHẨM NỔI BẬT (Ảnh 2) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="landing-section-header">
         <div>
             <div class="section-label">SẢN PHẨM NỔI BẬT</div>
@@ -204,7 +204,7 @@
         </div>
     </div>
 
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 mb-4">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 mb-4" data-rm-stagger data-rm-featured>
         @foreach (var p in sanPhams.Take(4))
         {
             <div class="col">
@@ -219,11 +219,11 @@
 </section>
 
 <!-- 4. CÁCH THỨC HOẠT ĐỘNG (Ảnh 3) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="section-label">CÁCH THỨC HOẠT ĐỘNG</div>
     <h2 class="section-title">3 bước đơn giản</h2>
 
-    <div class="steps-grid">
+    <div class="steps-grid" data-rm-stagger>
         <div class="step-card">
             <div class="step-num">1</div>
             <h3 class="step-title">Tìm sản phẩm</h3>
@@ -246,9 +246,9 @@
 </section>
 
 <!-- 5. GIÁ TRỊ BỀN VỮNG (Ảnh 3) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="sustainability-row">
-        <div class="sustainability-image-wrap">
+        <div class="sustainability-image-wrap" data-rm-media>
             <img src="~/images/sustainable-shopping.jpg" alt="Lối sống bền vững qua việc tái sử dụng đồ cũ" class="sustainability-image" style="object-fit: cover;" asp-append-version="true" />
         </div>
         <div>
@@ -259,7 +259,7 @@
             <p style="color: var(--color-text-secondary); font-size: 14px; margin-bottom: 20px;">
                 Tái sử dụng giúp tiết kiệm chi phí và giảm rác thải ra môi trường.
             </p>
-            <div class="sustainability-stats">
+            <div class="sustainability-stats" data-rm-stagger>
                 <div class="sust-stat-card">
                     <b>@(tongDonHoanTat > 0 ? (tongDonHoanTat * 2).ToString("N0") + " kg" : "100+ kg")</b>
                     <span>Rác thải giảm</span>
@@ -278,11 +278,11 @@
 </section>
 
 <!-- 6. ĐỘ TIN CẬY (Ảnh 3) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="section-label">ĐỘ TIN CẬY</div>
     <h2 class="section-title">Mua bán an tâm hơn</h2>
 
-    <div class="trust-grid">
+    <div class="trust-grid" data-rm-stagger>
         <div class="trust-card">
             <div class="trust-dot" aria-hidden="true">✓</div>
             <h4>Kiểm duyệt sản phẩm</h4>
@@ -307,7 +307,7 @@
 </section>
 
 <!-- 7. ĐÁNH GIÁ (Ảnh 3) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="section-label">ĐÁNH GIÁ</div>
     <h2 class="section-title">Người dùng nói gì</h2>
     <p style="color: var(--color-text-muted); font-size: 13px; margin: 4px 0 20px;">Chỉ hiển thị đánh giá thật từ giao dịch đã hoàn tất</p>
@@ -318,7 +318,7 @@
     }
     else
     {
-        <div class="reviews-grid">
+        <div class="reviews-grid" data-rm-stagger>
             @foreach (var dg in danhGiaNoiBat)
             {
                 <div class="review-card">

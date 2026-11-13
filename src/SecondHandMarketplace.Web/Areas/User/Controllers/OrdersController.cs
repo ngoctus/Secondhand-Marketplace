@@ -79,6 +79,19 @@ public class OrdersController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
 
+        CheckoutViewModel? checkoutData = null;
+        if (model.PhuongThucThanhToan == "BANK_TRANSFER")
+        {
+            checkoutData = model.MaSanPhamMuaNgay is int productId && productId > 0
+                ? await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, productId)
+                : await _orderService.ChuanBiCheckoutTuGioAsync(userId);
+            if (checkoutData?.CoTheChuyenKhoan != true)
+            {
+                this.ThongBaoLoi("Một hoặc nhiều cửa hàng chưa có đủ thông tin nhận chuyển khoản. Vui lòng chọn COD hoặc liên hệ cửa hàng.");
+                return RedirectToAction(nameof(Checkout), new { maSanPham = model.MaSanPhamMuaNgay });
+            }
+        }
+
         // Khóa phí vận chuyển phía server: Gặp mặt trực tiếp luôn là 0đ;
         // Giao hàng tận nơi áp dụng chính sách Freeship (0đ) toàn sàn, khóa chặt server-side chống client can thiệp qua hidden input
         model.PhiVanChuyen = 0;
@@ -90,11 +103,13 @@ public class OrdersController : UserBaseController
             {
                 var prep = await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, model.MaSanPhamMuaNgay.Value);
                 model.SanPhamMuaNgay = prep?.SanPhamMuaNgay;
+                model.ThanhToanTheoShop = prep?.ThanhToanTheoShop ?? new();
             }
             else
             {
                 var prep = await _orderService.ChuanBiCheckoutTuGioAsync(userId);
                 model.GioHang = prep.GioHang;
+                model.ThanhToanTheoShop = prep.ThanhToanTheoShop;
             }
             return View("Checkout", model);
         }

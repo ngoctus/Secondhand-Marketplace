@@ -35,14 +35,13 @@
         <div class="col-md-5 text-center">
             <div class="vietqr-frame d-inline-block p-2 rounded-3 border bg-light shadow-sm" style="max-width: 240px;">
                 <div class="bg-primary text-white text-center py-1 rounded-2 mb-1 fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">
-                    @Model.NganHang.ToUpper() · VIETQR NAPAS
+                    @Model.NganHang.ToUpperInvariant() · VIETQR NAPAS
                 </div>
                 <!-- Ảnh mã QR sinh offline nội bộ bằng QRCoder (theo bài giảng UTC2) -->
-                <img src="@Model.QrImageSource" 
+                <img src="@Model.QrImageSource"
                      alt="VietQR Mã thanh toán" 
                      class="img-fluid rounded border bg-white" 
-                     style="width: 210px; height: 210px; object-fit: contain;"
-                     onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 200\'><rect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/><rect x=\'20\' y=\'20\' width=\'50\' height=\'50\' fill=\'%23111827\'/><rect x=\'30\' y=\'30\' width=\'30\' height=\'30\' fill=\'%23fff\'/><rect x=\'35\' y=\'35\' width=\'20\' height=\'20\' fill=\'%23111827\'/><rect x=\'130\' y=\'20\' width=\'50\' height=\'50\' fill=\'%23111827\'/><rect x=\'140\' y=\'30\' width=\'30\' height=\'30\' fill=\'%23fff\'/><rect x=\'145\' y=\'35\' width=\'20\' height=\'20\' fill=\'%23111827\'/><rect x=\'20\' y=\'130\' width=\'50\' height=\'50\' fill=\'%23111827\'/><rect x=\'30\' y=\'140\' width=\'30\' height=\'30\' fill=\'%23fff\'/><rect x=\'35\' y=\'145\' width=\'20\' height=\'20\' fill=\'%23111827\'/><circle cx=\'100\' cy=\'100\' r=\'18\' fill=\'%231f5c3d\'/><text x=\'100\' y=\'104\' font-size=\'8\' fill=\'%23fff\' font-weight=\'bold\' text-anchor=\'middle\'>VIETQR</text></svg>';" />
+                     style="width: 210px; height: 210px; object-fit: contain;" />
                 <div class="mt-2 text-muted fw-semibold" style="font-size: 11px;">
                     <i class="bi bi-camera me-1"></i>Mở camera / App ngân hàng để quét
                 </div>
@@ -62,10 +61,10 @@
 
                 <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light border">
                     <div>
-                        <div class="text-muted" style="font-size: 11px;">Số tài khoản (mô phỏng)</div>
+                        <div class="text-muted" style="font-size: 11px;">Số tài khoản cửa hàng</div>
                         <div class="fw-bold text-primary font-monospace fs-6">@Model.SoTaiKhoan</div>
                     </div>
-                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-0 copy-btn" style="font-size: 12px;" onclick="copyVietQrRaw('@Model.SoTaiKhoan', this)">
+                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-0 copy-btn" style="font-size: 12px;" data-copy-value="@Model.SoTaiKhoan" onclick="copyVietQrRaw(this.dataset.copyValue, this)">
                         <i class="bi bi-clipboard me-1"></i>Chép
                     </button>
                 </div>
@@ -75,7 +74,7 @@
                         <div class="text-muted" style="font-size: 11px;">Chủ tài khoản</div>
                         <div class="fw-bold text-dark small">@Model.ChuTaiKhoan</div>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-0 copy-btn" style="font-size: 12px;" onclick="copyVietQrRaw('@Model.ChuTaiKhoan', this)">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-0 copy-btn" style="font-size: 12px;" data-copy-value="@Model.ChuTaiKhoan" onclick="copyVietQrRaw(this.dataset.copyValue, this)">
                         <i class="bi bi-clipboard me-1"></i>Chép
                     </button>
                 </div>
@@ -85,7 +84,7 @@
                         <div class="text-muted" style="font-size: 11px;">Số tiền chính xác</div>
                         <div class="fw-bold text-success fs-5">@Model.SoTien.ToString("N0") ₫</div>
                     </div>
-                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-2 py-0 copy-btn" style="font-size: 12px;" onclick="copyVietQrRaw('@((long)Model.SoTien)', this)">
+                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-2 py-0 copy-btn" style="font-size: 12px;" data-copy-value="@((long)Model.SoTien)" onclick="copyVietQrRaw(this.dataset.copyValue, this)">
                         <i class="bi bi-clipboard me-1"></i>Chép
                     </button>
                 </div>
@@ -95,14 +94,14 @@
                         <div class="text-muted" style="font-size: 11px;">Nội dung chuyển khoản (bắt buộc)</div>
                         <div class="fw-bold text-dark font-monospace">@Model.NoiDung</div>
                     </div>
-                    <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-2 py-0 copy-btn" style="font-size: 12px;" onclick="copyVietQrRaw('@Model.NoiDung', this)">
+                    <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-2 py-0 copy-btn" style="font-size: 12px;" data-copy-value="@Model.NoiDung" onclick="copyVietQrRaw(this.dataset.copyValue, this)">
                         <i class="bi bi-clipboard me-1"></i>Chép
                     </button>
                 </div>
             </div>
 
             <div class="alert alert-info py-2 px-3 small mt-3 mb-0" style="font-size: 12px;">
-                <i class="bi bi-info-circle-fill me-1"></i> <strong>Lưu ý:</strong> Mã và thông tin tài khoản hiện phục vụ bản demo. Hệ thống chưa xác minh giao dịch ngân hàng; khoản chuyển này sẽ không tự đổi trạng thái đơn thành đã thanh toán.
+                <i class="bi bi-info-circle-fill me-1"></i> <strong>Lưu ý:</strong> Re:Market chưa kết nối ngân hàng để tự xác minh giao dịch. Shop chỉ cập nhật đã thanh toán sau khi tự kiểm tra tài khoản thực tế. Hãy kiểm tra kỹ tên shop, chủ tài khoản, số tiền và mã đơn trước khi chuyển.
             </div>
 
             @if (Model.ChoPhepXacNhan && (Model.MaDonHang.HasValue || !string.IsNullOrEmpty(Model.DanhSachMaDonHang)))

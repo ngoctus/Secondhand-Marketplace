@@ -3,8 +3,9 @@
     ViewData["Title"] = "Đặt hàng thành công";
     var danhSachMaDon = ViewBag.DanhSachMaDon as string[] ?? Array.Empty<string>();
     var orders = Model ?? new();
-    var hasBankTransfer = orders.Any(d => d.PhuongThucThanhToan == "BANK_TRANSFER");
-    var unpaidBankOrders = orders.Where(d => d.PhuongThucThanhToan == "BANK_TRANSFER" && d.TrangThaiThanhToan != "PAID" && d.TrangThai != "CANCELLED").ToList();
+    var unpaidBankOrders = orders.Where(d => d.PhuongThucThanhToan == "BANK_TRANSFER" && d.TrangThaiThanhToan is not ("PAID" or "REFUNDED") && d.TrangThai != "CANCELLED").ToList();
+    var paidBankOrders = orders.Where(d => d.PhuongThucThanhToan == "BANK_TRANSFER" && d.TrangThaiThanhToan == "PAID").ToList();
+    var hasBankTransfer = unpaidBankOrders.Count > 0 || paidBankOrders.Count > 0;
     var hasCod = orders.Any(d => d.PhuongThucThanhToan == "COD");
 }
 
@@ -20,7 +21,7 @@
         </div>
         <h2 class="fw-bold text-dark mb-2" style="font-family: 'Playfair Display', serif;">Đặt hàng thành công!</h2>
         <p class="text-secondary small mb-4" style="max-width: 540px; margin: 0 auto;">
-            Cảm ơn bạn đã lựa chọn mua sắm đồ cũ cùng <strong>Re:Market</strong>. Đơn hàng của bạn đã được ghi nhận và người bán sẽ chuẩn bị gửi hàng cho bạn.
+            Cảm ơn bạn đã lựa chọn mua sắm cùng <strong>Re:Market</strong>. @if (unpaidBankOrders.Count > 0) { <text>Đơn hàng đã được ghi nhận; shop sẽ xác nhận thanh toán trước khi chuẩn bị gửi hàng.</text> } else { <text>Đơn hàng đã được ghi nhận và shop sẽ chuẩn bị bước tiếp theo.</text> }
         </p>
 
         @if (danhSachMaDon.Length > 0)
@@ -60,38 +61,50 @@
                     <i class="bi bi-qr-code-scan fs-4 text-primary"></i>
                     <div>
                         <h5 class="fw-bold text-dark mb-0">Thanh toán chuyển khoản VietQR</h5>
-                        <div class="text-muted small">Vui lòng quét mã QR bên dưới để hoàn tất thanh toán cho đơn hàng.</div>
+                        <div class="text-muted small">Mỗi đơn được thanh toán riêng cho cửa hàng tương ứng. Shop cập nhật trạng thái sau khi kiểm tra giao dịch.</div>
                     </div>
                 </div>
 
-                @{
-                    var tongTienCk = unpaidBankOrders.Sum(d => d.TongTien);
-                    var noiDungCk = "REMARKET " + string.Join(" ", unpaidBankOrders.Select(d => d.MaDon));
-                    var dsId = string.Join(",", unpaidBankOrders.Select(d => d.MaDonHang));
-                    var qrModel = new SecondHandMarketplace.Web.Models.ViewModels.Orders.VietQrViewModel
-                    {
-                        SoTien = tongTienCk,
-                        NoiDung = noiDungCk,
-                        NganHang = "MB Bank (Quân Đội)",
-                        SoTaiKhoan = "0987654321",
-                        ChuTaiKhoan = "SAN THUONG MAI RE:MARKET",
-                        DanhSachMaDonHang = dsId,
-                        MaDonHang = unpaidBankOrders.Count == 1 ? unpaidBankOrders[0].MaDonHang : null,
-                        ChoPhepXacNhan = false,
-                        ReturnUrl = Context.Request.Path + Context.Request.QueryString
-                    };
+                @foreach (var don in unpaidBankOrders)
+                {
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+                            <strong>Đơn #@don.MaDon · @don.TenShop</strong>
+                            <strong class="text-success">@don.TongTien.ToString("N0") ₫</strong>
+                        </div>
+                        @if (don.ThanhToanShop?.CoTheChuyenKhoan == true)
+                        {
+                            <partial name="_VietQRCard" model='new SecondHandMarketplace.Web.Models.ViewModels.Orders.VietQrViewModel {
+                                SoTien = don.TongTien,
+                                NoiDung = "REMARKET " + don.MaDon,
+                                NganHang = don.ThanhToanShop.NganHang!,
+                                MaNganHang = don.ThanhToanShop.MaNganHang!,
+                                SoTaiKhoan = don.ThanhToanShop.SoTaiKhoan!,
+                                ChuTaiKhoan = don.ThanhToanShop.TenChuTaiKhoan!,
+                                MaDonHang = don.MaDonHang,
+                                MaDon = don.MaDon,
+                                ChoPhepXacNhan = false
+                            }' />
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning mb-0 small">
+                                Shop chưa cấu hình đủ thông tin ngân hàng. <strong>Không chuyển tiền</strong> cho tới khi bạn xác nhận trực tiếp với shop.
+                                <a asp-area="" asp-controller="Shops" asp-action="Details" asp-route-id="@don.MaCuaHang" class="alert-link">Mở trang shop</a>
+                                hoặc xem <a asp-area="User" asp-controller="Orders" asp-action="ChiTiet" asp-route-id="@don.MaDonHang" class="alert-link">chi tiết đơn</a>.
+                            </div>
+                        }
+                    </div>
                 }
-
-                <partial name="_VietQRCard" model="qrModel" />
             </div>
         }
-        else
+        else if (paidBankOrders.Count > 0)
         {
             <div class="alert alert-success d-flex align-items-center gap-3 rounded-4 p-4 shadow-sm mb-4 border-0">
                 <i class="bi bi-check-circle-fill text-success fs-1"></i>
                 <div>
                     <h6 class="fw-bold mb-1 text-success">Đã xác nhận thanh toán chuyển khoản thành công!</h6>
-                    <div class="small text-secondary">Hệ thống đã ghi nhận thanh toán của bạn. Shop sẽ sớm đóng gói và bàn giao cho đơn vị vận chuyển.</div>
+                    <div class="small text-secondary">Shop đã xác nhận thanh toán. Bạn có thể theo dõi tiến độ trong chi tiết đơn hàng.</div>
                 </div>
             </div>
         }

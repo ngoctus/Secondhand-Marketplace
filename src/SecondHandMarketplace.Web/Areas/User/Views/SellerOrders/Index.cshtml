@@ -29,21 +29,23 @@ else
 {
     <div class="panel table-wrap">
         <table class="table align-middle">
-            <thead><tr><th>ĐƠN HÀNG</th><th>NGƯỜI MUA</th><th>TỔNG TIỀN</th><th>THANH TOÁN</th><th>TRẠNG THÁI</th><th>NGÀY ĐẶT</th><th></th></tr></thead>
+            <thead><tr><th>ĐƠN HÀNG</th><th>NGƯỜI MUA</th><th>TỔNG TIỀN</th><th>THANH TOÁN</th><th>TRẠNG THÁI</th><th>NGÀY ĐẶT</th><th class="text-end">Hành động</th></tr></thead>
             <tbody>
             @foreach (var o in Model.Result.Items)
             {
                 <tr>
-                    <td class="d-flex align-items-center gap-2">
-                        @if (!string.IsNullOrEmpty(o.FirstImage)) { <img class="thumb" src="@o.FirstImage" alt="" data-fallback /> }
-                        <div><b>@o.MaDon</b><div class="small text-muted">@o.FirstItem@(o.ItemCount > 1 ? $" +{o.ItemCount - 1} sản phẩm" : "")</div></div>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrEmpty(o.FirstImage)) { <img class="thumb" src="@o.FirstImage" alt="" data-fallback /> }
+                            <div><b>@o.MaDon</b><div class="small text-muted">@o.FirstItem@(o.ItemCount > 1 ? $" +{o.ItemCount - 1} sản phẩm" : "")</div></div>
+                        </div>
                     </td>
                     <td>@o.BuyerName</td>
                     <td><b>@HienThi.Tien(o.Total)</b></td>
                     <td class="small">@HienThi.PhuongThucThanhToan(o.PaymentMethod)<br />@HienThi.TrangThaiThanhToan(o.PaymentStatus)</td>
                     <td><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td>
                     <td class="small">@HienThi.NgayGio(o.CreatedAt)</td>
-                    <td><a class="smallbtn text-decoration-none" asp-action="Details" asp-route-id="@o.Id">Xử lý</a></td>
+                    <td class="text-end"><a class="smallbtn text-decoration-none" asp-action="Details" asp-route-id="@o.Id">Xử lý</a></td>
                 </tr>
             }
             </tbody>

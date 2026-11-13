@@ -36,6 +36,8 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/animations.css" asp-append-version="true" />
+    <script src="~/js/animations.js" asp-append-version="true"></script>
 </head>
 <body class="rm-body">
     <!-- Header Navbar chuẩn Wireframe (Ảnh 2, 4, 5) -->
@@ -185,12 +187,10 @@
             </form>
 
             <div class="rm-mobile-heading">Danh mục</div>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Thời trang">Thời trang</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Điện tử">Điện tử</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Đồ gia dụng">Đồ gia dụng</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Sách">Sách</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Phụ kiện">Phụ kiện</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="Nội thất">Nội thất</a>
+            @foreach (var c in menuDanhMuc.Take(6))
+            {
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc">@c.Ten</a>
+            }
 
             <div class="rm-dropdown-divider"></div>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
@@ -238,7 +238,7 @@
                     <ul class="rm-footer-links">
                         <li><a asp-area="" asp-controller="Home" asp-action="About">Giới thiệu</a></li>
                         <li><a href="/gioi-thieu#lien-he">Liên hệ</a></li>
-                        <li><a href="/gioi-thieu#tuyen-dung">Tuyển dụng</a></li>
+                        <li><a asp-controller="Help" asp-action="Index">Trung tâm trợ giúp</a></li>
                     </ul>
                 </div>
 
@@ -246,9 +246,9 @@
                 <div>
                     <h4 class="rm-footer-heading">Hỗ trợ</h4>
                     <ul class="rm-footer-links">
-                        <li><a asp-area="" asp-controller="Home" asp-action="Faq">FAQ</a></li>
-                        <li><a href="/huong-dan-giao-dich">Hướng dẫn giao dịch an toàn</a></li>
-                        <li><a href="/faq#bao-cao-vi-pham">Báo cáo vi phạm</a></li>
+                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="faq">Câu hỏi thường gặp</a></li>
+                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="giao-dich">Hướng dẫn giao dịch an toàn</a></li>
+                        <li><a asp-area="User" asp-controller="Reports" asp-action="Index">Báo cáo vi phạm</a></li>
                     </ul>
                 </div>
 
@@ -258,7 +258,7 @@
                     <ul class="rm-footer-links">
                         <li><a asp-area="" asp-controller="Home" asp-action="Terms">Điều khoản sử dụng</a></li>
                         <li><a href="/chinh-sach-bao-mat">Chính sách bảo mật</a></li>
-                        <li><a href="/dieu-khoan#quy-dinh">Quy định cộng đồng</a></li>
+                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="su-co">Quy tắc xử lý sự cố</a></li>
                     </ul>
                 </div>
 

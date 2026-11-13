@@ -14,6 +14,7 @@ public class MyProductVm
     public DateTime NgayCapNhat { get; set; }
     public string? AnhDaiDien { get; set; }
     public int SoLuongAnh { get; set; }
+    public string? LyDoTuChoiGanNhat { get; set; }
 
     /// <summary>Lượt đang mở có PhanTichAI = FAILED (lỗi hệ thống) → cho phép gửi duyệt/phân tích lại.</summary>
     public bool PhanTichThatBai { get; set; }
