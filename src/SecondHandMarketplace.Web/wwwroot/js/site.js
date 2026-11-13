@@ -124,7 +124,22 @@
         document.querySelectorAll(`.rm-card-favorite-btn[data-product-id="${productId}"]`).forEach(btn => {
             btn.classList.toggle('is-favorite', isFavorite);
             btn.setAttribute('aria-label', isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích');
+            btn.setAttribute('aria-pressed', String(isFavorite));
         });
+    };
+
+    const thongBao = (message) => {
+        let status = document.getElementById('rmFavoriteStatus');
+        if (!status) {
+            status = document.createElement('div');
+            status.id = 'rmFavoriteStatus';
+            status.className = 'visually-hidden';
+            status.setAttribute('role', 'status');
+            status.setAttribute('aria-live', 'polite');
+            document.body.appendChild(status);
+        }
+        status.textContent = '';
+        window.setTimeout(() => { status.textContent = message; }, 20);
     };
 
     document.addEventListener('click', async (e) => {
@@ -139,16 +154,37 @@
 
         const productId = btn.dataset.productId;
         const body = new URLSearchParams({ maSanPham: productId, __RequestVerificationToken: csrf });
+        btn.disabled = true;
         try {
             const res = await fetch(toggleUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
                 body
             });
+            if (res.redirected) {
+                window.location.href = res.url;
+                return;
+            }
+            if (!res.ok) {
+                thongBao('Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.');
+                return;
+            }
             const data = await res.json();
-            if (data.success) danhDau(productId, data.isFavorite);
+            if (!data.success) {
+                thongBao('Không thể lưu sản phẩm yêu thích này.');
+                return;
+            }
+            danhDau(productId, data.isFavorite);
+            thongBao(data.isFavorite ? 'Đã thêm vào yêu thích.' : 'Đã bỏ khỏi yêu thích.');
+            if (!data.isFavorite && window.location.pathname.toLowerCase().startsWith('/user/favorites')) {
+                const item = btn.closest('.col') ?? btn.closest('.rm-product-card');
+                item?.remove();
+                if (!document.querySelector('.rm-product-card')) window.location.reload();
+            }
         } catch {
-            // Mạng lỗi: giữ nguyên trạng thái, không đổi tim.
+            thongBao('Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.');
+        } finally {
+            btn.disabled = false;
         }
     });
 

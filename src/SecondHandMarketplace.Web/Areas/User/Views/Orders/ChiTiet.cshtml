@@ -215,17 +215,27 @@
     @if (Model.PhuongThucThanhToan == "BANK_TRANSFER" && Model.TrangThaiThanhToan != "PAID" && Model.TrangThai != "CANCELLED")
     {
         <div id="vietqrSection" class="mb-4">
-            <partial name="_VietQRCard" model='new SecondHandMarketplace.Web.Models.ViewModels.Orders.VietQrViewModel {
-                SoTien = Model.TongTien,
-                NoiDung = "REMARKET " + Model.MaDon,
-                NganHang = "MB Bank (Quân Đội)",
-                SoTaiKhoan = "0987654321",
-                ChuTaiKhoan = "SAN THUONG MAI RE:MARKET",
-                MaDonHang = Model.MaDonHang,
-                MaDon = Model.MaDon,
-                ChoPhepXacNhan = true,
-                ReturnUrl = Context.Request.Path
-            }' />
+            @if (Model.ThanhToanShop?.CoTheChuyenKhoan == true)
+            {
+                <partial name="_VietQRCard" model='new SecondHandMarketplace.Web.Models.ViewModels.Orders.VietQrViewModel {
+                    SoTien = Model.TongTien,
+                    NoiDung = "REMARKET " + Model.MaDon,
+                    NganHang = Model.ThanhToanShop.NganHang!,
+                    MaNganHang = Model.ThanhToanShop.MaNganHang!,
+                    SoTaiKhoan = Model.ThanhToanShop.SoTaiKhoan!,
+                    ChuTaiKhoan = Model.ThanhToanShop.TenChuTaiKhoan!,
+                    MaDonHang = Model.MaDonHang,
+                    MaDon = Model.MaDon,
+                    ChoPhepXacNhan = false
+                }' />
+            }
+            else
+            {
+                <div class="alert alert-warning rounded-4">
+                    <strong>Shop chưa cấu hình đủ thông tin ngân hàng.</strong> Không chuyển tiền cho tới khi bạn xác nhận trực tiếp với shop.
+                    <a asp-area="" asp-controller="Shops" asp-action="Details" asp-route-id="@Model.MaCuaHang" class="alert-link">Mở trang shop</a> để liên hệ.
+                </div>
+            }
         </div>
     }
 
