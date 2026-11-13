@@ -3,10 +3,12 @@
 @using SecondHandMarketplace.Web.Services.Categories
 @using SecondHandMarketplace.Web.Services.Reviews
 @using SecondHandMarketplace.Web.Models.ViewModels.Reviews
+@using Microsoft.EntityFrameworkCore
 @inject IProductService ProductService
 @inject IBannerService BannerService
 @inject ICategoryService CategoryService
 @inject IReviewService Reviews
+@inject SecondHandMarketplace.Web.Data.AppDbContext DbContext
 @{
     ViewData["Title"] = "Trang chủ";
 
@@ -40,6 +42,29 @@
     }
     catch { }
 
+    int tongSanPham = 0;
+    int tongNguoiBan = 0;
+    int tongDonHoanTat = 0;
+    try
+    {
+        tongSanPham = await DbContext.SanPhams.CountAsync(p => p.TrangThai == "ACTIVE");
+        tongNguoiBan = await DbContext.CuaHangs.CountAsync(c => c.TrangThai == "ACTIVE");
+        tongDonHoanTat = await DbContext.DonHangs.CountAsync(d => d.TrangThai == "COMPLETED");
+    }
+    catch { }
+
+    string LayIconDanhMuc(string tenDanhMuc)
+    {
+        var ten = (tenDanhMuc ?? string.Empty).ToLowerInvariant();
+        if (ten.Contains("thời trang") || ten.Contains("áo") || ten.Contains("quần")) return "bi-handbag";
+        if (ten.Contains("điện tử") || ten.Contains("máy tính") || ten.Contains("điện thoại")) return "bi-laptop";
+        if (ten.Contains("gia dụng") || ten.Contains("bếp")) return "bi-house-door";
+        if (ten.Contains("sách") || ten.Contains("truyện")) return "bi-book";
+        if (ten.Contains("phụ kiện") || ten.Contains("đồng hồ")) return "bi-watch";
+        if (ten.Contains("nội thất") || ten.Contains("bàn") || ten.Contains("ghế")) return "bi-lamp";
+        return "bi-box-seam";
+    }
+
     // Thẻ đánh giá theo wireframe chỉ tối đa 3 dòng.
     string TomTacDanhGia(string noiDung)
         => noiDung.Length <= 180 ? noiDung : noiDung.Substring(0, 180).TrimEnd() + "…";
@@ -55,15 +80,25 @@
         </p>
         <div class="hero-actions">
             <a asp-controller="Products" asp-action="Index" class="btn-rm-primary">Khám phá ngay</a>
-            <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn-rm-secondary">Đăng bán sản phẩm</a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @if (User.IsInRole("USER"))
+                {
+                    <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-secondary">Đăng bán sản phẩm</a>
+                }
+            }
+            else
+            {
+                <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-rm-secondary">Đăng bán sản phẩm</a>
+            }
         </div>
         <div class="hero-stats">
             <div class="hero-stat-item">
-                <b>10.000+</b>
+                <b>@(tongSanPham > 0 ? tongSanPham.ToString("N0") + "+" : "100+")</b>
                 <span>Sản phẩm</span>
             </div>
             <div class="hero-stat-item">
-                <b>5.000+</b>
+                <b>@(tongNguoiBan > 0 ? tongNguoiBan.ToString("N0") + "+" : "50+")</b>
                 <span>Người bán</span>
             </div>
             <div class="hero-stat-item">
@@ -148,7 +183,7 @@
         @foreach (var c in danhMuc.Take(6))
         {
             <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" class="category-card">
-                <div class="cat-circle"></div>
+                <div class="cat-circle"><i class="bi @LayIconDanhMuc(c.Ten)"></i></div>
                 <span class="cat-name">@c.Ten</span>
             </a>
         }
@@ -163,9 +198,9 @@
             <h2 class="section-title">Có thể bạn sẽ thích</h2>
         </div>
         <div class="d-flex gap-2 landing-header-actions">
-            <span class="btn-rm-primary" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Mới đăng</span>
+            <a asp-controller="Products" asp-action="Index" asp-route-Sort="newest" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Mới đăng</a>
             <a asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tốt</a>
-            <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Được quan tâm</a>
+            <a asp-controller="Products" asp-action="Index" asp-route-Sort="price_asc" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tiết kiệm</a>
         </div>
     </div>
 
@@ -214,7 +249,7 @@
 <section class="landing-section">
     <div class="sustainability-row">
         <div class="sustainability-image-wrap">
-            <img src="~/images/sustainable-reuse.jpg" alt="Trái đất xanh với biểu tượng tái chế, đại diện cho lối sống bền vững" class="sustainability-image" asp-append-version="true" />
+            <img src="~/images/sustainable-shopping.jpg" alt="Lối sống bền vững qua việc tái sử dụng đồ cũ" class="sustainability-image" style="object-fit: cover;" asp-append-version="true" />
         </div>
         <div>
             <div class="section-label">GIÁ TRỊ BỀN VỮNG</div>
@@ -226,16 +261,16 @@
             </p>
             <div class="sustainability-stats">
                 <div class="sust-stat-card">
-                    <b>00 kg</b>
+                    <b>@(tongDonHoanTat > 0 ? (tongDonHoanTat * 2).ToString("N0") + " kg" : "100+ kg")</b>
                     <span>Rác thải giảm</span>
                 </div>
                 <div class="sust-stat-card">
-                    <b>00 triệu đ</b>
-                    <span>Tiết kiệm</span>
+                    <b>@(tongDonHoanTat > 0 ? tongDonHoanTat.ToString("N0") : "50+")</b>
+                    <span>Món đồ đã tuần hoàn</span>
                 </div>
                 <div class="sust-stat-card">
-                    <b>0.000</b>
-                    <span>Món đồ được dùng lại</span>
+                    <b>@(tongSanPham > 0 ? tongSanPham.ToString("N0") : "100+")</b>
+                    <span>Sản phẩm đang bán</span>
                 </div>
             </div>
         </div>
@@ -322,6 +357,12 @@
     <div class="cta-banner-text">
         <h3>Có món đồ không còn dùng? Đăng bán ngay!</h3>
         <p>Đăng tin miễn phí, được kiểm duyệt trong thời gian ngắn.</p>
-    </div>
-    <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn-cta-white">Đăng bán ngay</a>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-cta-white">Đăng bán ngay</a>
+    }
+    else
+    {
+        <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-cta-white">Đăng bán ngay</a>
+    }
 </div>

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Common.Constants;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Models.DTOs.Products;
@@ -46,7 +47,7 @@ public class ProductsController(
         var productResponses = pagedResult.Items.Select(p => new ProductResponse
         {
             Id = p.Id,
-            ShopId = 0,
+            ShopId = p.ShopId,
             ShopName = p.ShopName,
             CategoryId = null,
             CategoryName = p.CategoryName,
@@ -55,7 +56,7 @@ public class ProductsController(
             Name = p.Name,
             Price = p.Price,
             ThumbnailUrl = p.ImageUrl,
-            Status = "ACTIVE",
+            Status = p.Status,
             CreatedAt = DateTime.UtcNow
         }).ToList();
 
@@ -83,10 +84,10 @@ public class ProductsController(
         var response = new ProductDetailResponse
         {
             Id = product.Id,
-            ShopId = 0,
+            ShopId = product.ShopId,
             ShopName = product.ShopName,
-            ShopLogo = null,
-            CategoryId = null,
+            ShopLogo = product.ShopLogoUrl,
+            CategoryId = product.CategoryId,
             CategoryName = product.CategoryName,
             ConditionId = null,
             ConditionName = product.ConditionName,
@@ -97,11 +98,11 @@ public class ProductsController(
             CreatedAt = product.CreatedAt,
             IsAuction = false,
             AuctionId = null,
-            Images = product.Images.Select(img => new ProductImageDto
+            Images = product.Images.Select((img, idx) => new ProductImageDto
             {
-                Id = 0,
+                Id = idx + 1,
                 Url = img,
-                IsMain = false
+                IsMain = idx == 0
             }).ToList()
         };
 
@@ -155,6 +156,7 @@ public class ProductsController(
         };
 
         var images = (request.ImageUrls ?? new List<string>())
+            .Where(url => UrlAnToan.HopLe(url))
             .Select(url => new ProductImageInput(url, 0))
             .ToList();
 

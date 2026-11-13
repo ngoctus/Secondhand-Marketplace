@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SecondHandMarketplace.Web.Services.Chat;
 
@@ -10,8 +10,8 @@ namespace SecondHandMarketplace.Web.Controllers;
 public sealed class ChatController(IChatService chat) : Controller
 {
     [HttpGet("conversations")]
-    public async Task<IActionResult> Conversations(CancellationToken ct) =>
-        Ok(KetQua.ThanhCong("OK", await chat.GetConversationsAsync(User.LayNguoiDungId()!.Value, ct)));
+    public async Task<IActionResult> Conversations(int skip = 0, int take = 50, CancellationToken ct = default) =>
+        Ok(KetQua.ThanhCong("OK", await chat.GetConversationsAsync(User.LayNguoiDungId()!.Value, skip, take, ct)));
 
     [HttpGet("conversations/{id:int}/messages")]
     public async Task<IActionResult> Messages(int id, long? before, int take = 30, CancellationToken ct = default)

@@ -66,10 +66,11 @@ public class OrdersController(
         if (extraParts.Count > 0)
         {
             var extraStr = $" ({string.Join(" - ", extraParts)})";
-            if (diaChi.Length + extraStr.Length <= 500)
+            if (diaChi.Length + extraStr.Length > 500)
             {
-                diaChi += extraStr;
+                return ServiceResult.Fail(ErrorCodes.ValidationError, "Địa chỉ nhận kèm ghi chú và khung giờ vượt quá độ dài tối đa cho phép (500 ký tự).").ToActionResult(this);
             }
+            diaChi += extraStr;
         }
 
         var model = new CheckoutViewModel
@@ -77,6 +78,7 @@ public class OrdersController(
             TenNguoiNhan = request.ReceiverName,
             SoDienThoaiNhan = request.ReceiverPhone,
             DiaChiNhan = diaChi,
+            KhungGioNhan = request.DeliveryTimeSlot?.Trim(),
             PhuongThucThanhToan = request.PaymentMethod.ToUpperInvariant(),
             HinhThucNhan = (request.DeliveryMethod ?? "GIAO_HANG").ToUpperInvariant()
         };
@@ -139,10 +141,11 @@ public class OrdersController(
         if (extraPartsBuyNow.Count > 0)
         {
             var extraStr = $" ({string.Join(" - ", extraPartsBuyNow)})";
-            if (diaChiBuyNow.Length + extraStr.Length <= 500)
+            if (diaChiBuyNow.Length + extraStr.Length > 500)
             {
-                diaChiBuyNow += extraStr;
+                return ServiceResult.Fail(ErrorCodes.ValidationError, "Địa chỉ nhận kèm ghi chú và khung giờ vượt quá độ dài tối đa cho phép (500 ký tự).").ToActionResult(this);
             }
+            diaChiBuyNow += extraStr;
         }
 
         var model = new CheckoutViewModel
@@ -150,6 +153,7 @@ public class OrdersController(
             TenNguoiNhan = request.ReceiverName,
             SoDienThoaiNhan = request.ReceiverPhone,
             DiaChiNhan = diaChiBuyNow,
+            KhungGioNhan = request.DeliveryTimeSlot?.Trim(),
             PhuongThucThanhToan = request.PaymentMethod.ToUpperInvariant(),
             MaSanPhamMuaNgay = request.ProductId,
             HinhThucNhan = (request.DeliveryMethod ?? "GIAO_HANG").ToUpperInvariant()
@@ -198,6 +202,7 @@ public class OrdersController(
             ReceiverName = o.TenNguoiNhan,
             ReceiverPhone = o.SoDienThoaiNhan,
             ReceiverAddress = o.DiaChiNhan,
+            DeliveryTimeSlot = o.KhungGioNhan,
             CreatedAt = o.NgayTao,
             ItemsCount = o.ChiTiet.Count,
             Items = o.ChiTiet.Select(c => new OrderItemResponse
@@ -232,12 +237,15 @@ public class OrdersController(
             return ServiceResult<OrderDetailResponse>.Fail(ErrorCodes.OrderNotFound, "Không tìm thấy đơn hàng.").ToActionResult(this);
         }
 
-        string? deliveryTimeSlot = null;
+        string? deliveryTimeSlot = !string.IsNullOrWhiteSpace(order.KhungGioNhan) ? order.KhungGioNhan : null;
         string? note = null;
         if (!string.IsNullOrEmpty(order.DiaChiNhan))
         {
-            var mSlot = System.Text.RegularExpressions.Regex.Match(order.DiaChiNhan, @"Khung giờ:\s*([^-\)]+)");
-            if (mSlot.Success) deliveryTimeSlot = mSlot.Groups[1].Value.Trim();
+            if (string.IsNullOrEmpty(deliveryTimeSlot))
+            {
+                var mSlot = System.Text.RegularExpressions.Regex.Match(order.DiaChiNhan, @"Khung giờ:\s*([^-\)]+)");
+                if (mSlot.Success) deliveryTimeSlot = mSlot.Groups[1].Value.Trim();
+            }
 
             var mNote = System.Text.RegularExpressions.Regex.Match(order.DiaChiNhan, @"Ghi chú:\s*([^\)]+)");
             if (mNote.Success) note = mNote.Groups[1].Value.Trim();

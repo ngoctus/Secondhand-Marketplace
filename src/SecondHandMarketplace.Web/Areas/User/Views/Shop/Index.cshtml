@@ -39,6 +39,6 @@
     <div><label asp-for="TenChuTaiKhoan" class="form-label"></label><input asp-for="TenChuTaiKhoan" class="form-control" maxlength="100" placeholder="NGUYEN VAN A"/><span asp-validation-for="TenChuTaiKhoan" class="text-danger"></span></div>
 </fieldset>
 
-@if(Model.MaCuaHang.HasValue){<p>Trạng thái: <strong>@Model.TrangThai</strong></p>}
+@if(Model.MaCuaHang.HasValue){<p>Trạng thái: <strong class="@(Model.TrangThai == "ACTIVE" ? "text-success" : "text-danger")">@(Model.TrangThai == "ACTIVE" ? "Đang hoạt động" : Model.TrangThai == "LOCKED" ? "Đang bị khóa" : Model.TrangThai)</strong></p>}
 <button class="btn btn-primary" type="submit">@(Model.MaCuaHang.HasValue ? "Cập nhật cửa hàng" : "Tạo cửa hàng")</button></form></div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/khu-vuc.js" asp-append-version="true"></script> }

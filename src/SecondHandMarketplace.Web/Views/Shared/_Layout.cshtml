@@ -20,7 +20,9 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Re:Market - Chợ đồ cũ thông minh, kết nối người mua và người bán, bảo vệ môi trường và tối ưu chi phí." />
     <title>@ViewData["Title"] - Re:Market</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
     @if (User.Identity?.IsAuthenticated == true)
     {
         <meta name="rm-csrf" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
@@ -120,9 +122,19 @@
 
                     <div class="rm-dropdown">
                         <button type="button" class="rm-user-trigger" id="userMenuBtn" aria-expanded="false">
-                            <span class="user-avatar" aria-hidden="true">
-                                @(User.Identity?.Name?.Substring(0, 1).ToUpperInvariant() ?? "U")
-                            </span>
+                            @{
+                                var userAvatar = User.FindFirst("avatar")?.Value;
+                                var userInitial = User.Identity?.Name?.Length > 0 ? User.Identity.Name.Substring(0, 1).ToUpperInvariant() : "U";
+                            }
+                            @if (!string.IsNullOrWhiteSpace(userAvatar))
+                            {
+                                <img src="@userAvatar" alt="Avatar" class="user-avatar" style="object-fit: cover;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';" />
+                                <span class="user-avatar" style="display:none;" aria-hidden="true">@userInitial</span>
+                            }
+                            else
+                            {
+                                <span class="user-avatar" aria-hidden="true">@userInitial</span>
+                            }
                             <span style="font-size: 13.5px; font-weight: 500;">@User.Identity?.Name</span>
                             <svg viewBox="0 0 12 8" width="9" height="5" fill="currentColor"><path d="M1.41 0L6 4.58L10.59 0L12 1.41L6 7.41L0 1.41L1.41 0Z"/></svg>
                         </button>
@@ -149,7 +161,14 @@
                         </div>
                     </div>
 
-                    <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+                    @if (User.IsInRole("USER"))
+                    {
+                        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+                    }
+                    else if (User.IsInRole("ADMIN"))
+                    {
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn-rm-primary">Quản trị</a>
+                    }
                 }
                 else
                 {
@@ -217,9 +236,9 @@
                 <div>
                     <h4 class="rm-footer-heading">Về chúng tôi</h4>
                     <ul class="rm-footer-links">
-                        <li><a href="#gioi-thieu">Giới thiệu</a></li>
-                        <li><a href="#lien-he">Liên hệ</a></li>
-                        <li><a href="#tuyen-dung">Tuyển dụng</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="About">Giới thiệu</a></li>
+                        <li><a href="/gioi-thieu#lien-he">Liên hệ</a></li>
+                        <li><a href="/gioi-thieu#tuyen-dung">Tuyển dụng</a></li>
                     </ul>
                 </div>
 
@@ -227,9 +246,9 @@
                 <div>
                     <h4 class="rm-footer-heading">Hỗ trợ</h4>
                     <ul class="rm-footer-links">
-                        <li><a href="#faq">FAQ</a></li>
-                        <li><a href="#giao-dich">Hướng dẫn giao dịch an toàn</a></li>
-                        <li><a asp-area="User" asp-controller="Reports" asp-action="Index">Báo cáo vi phạm</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Faq">FAQ</a></li>
+                        <li><a href="/huong-dan-giao-dich">Hướng dẫn giao dịch an toàn</a></li>
+                        <li><a href="/faq#bao-cao-vi-pham">Báo cáo vi phạm</a></li>
                     </ul>
                 </div>
 
@@ -237,9 +256,9 @@
                 <div>
                     <h4 class="rm-footer-heading">Chính sách</h4>
                     <ul class="rm-footer-links">
-                        <li><a href="#dieu-khoan">Điều khoản sử dụng</a></li>
-                        <li><a href="#bao-mat">Chính sách bảo mật</a></li>
-                        <li><a href="#quy-dinh">Quy định cộng đồng</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Terms">Điều khoản sử dụng</a></li>
+                        <li><a href="/chinh-sach-bao-mat">Chính sách bảo mật</a></li>
+                        <li><a href="/dieu-khoan#quy-dinh">Quy định cộng đồng</a></li>
                     </ul>
                 </div>
 
@@ -247,15 +266,15 @@
                 <div>
                     <h4 class="rm-footer-heading">Mạng xã hội</h4>
                     <div class="rm-social-icons">
-                        <a class="social-circle" href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook">f</a>
-                        <a class="social-circle" href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube">▶</a>
-                        <a class="social-circle" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram">📸</a>
+                        <a class="social-circle" href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a class="social-circle" href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                        <a class="social-circle" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
                     </div>
                 </div>
             </div>
 
             <div class="rm-footer-bottom">
-                © 2026 Re:Market. Bảo lưu mọi quyền.
+                © @DateTime.Now.Year Re:Market. Bảo lưu mọi quyền.
             </div>
         </div>
     </footer>

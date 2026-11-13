@@ -65,6 +65,7 @@ public class DonHangItemViewModel
     public string TenNguoiNhan { get; set; } = string.Empty;
     public string SoDienThoaiNhan { get; set; } = string.Empty;
     public string DiaChiNhan { get; set; } = string.Empty;
+    public string? KhungGioNhan { get; set; }
     public DateTime NgayTao { get; set; }
     public string? NguoiHuy { get; set; }
     public string? LyDoHuy { get; set; }

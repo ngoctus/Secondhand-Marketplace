@@ -1,4 +1,4 @@
-SET ANSI_NULLS ON;
+﻿SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 SET ARITHABORT ON;
 GO
@@ -6,64 +6,66 @@ GO
 USE SecondHandMarketplace;
 GO
 
-DROP TABLE IF EXISTS LuotDatGia;
-DROP TABLE IF EXISTS PhienDauGia;
-GO
+-- Stored procedures mở rộng: đánh giá và đấu giá. Bảng ở 02, view ở 05, trigger ở 06.
 
-CREATE TABLE PhienDauGia (
-    MaPhienDauGia    int           IDENTITY(1,1) NOT NULL,
-    MaSanPham        int           NOT NULL,
-    GiaNiemYet       decimal(18,2) NOT NULL,   -- giá gốc của sản phẩm lúc tạo phiên (để khôi phục)
-    GiaKhoiDiem      decimal(18,2) NOT NULL,
-    BuocGia          decimal(18,2) NOT NULL,
-    GiaHienTai       decimal(18,2) NOT NULL,
-    SoLuotDat        int           NOT NULL CONSTRAINT DF_PhienDauGia_SoLuot DEFAULT (0),
-    MaNguoiDanDau    int           NULL,
-    ThoiGianBatDau   datetime2(3)  NOT NULL,
-    ThoiGianKetThuc  datetime2(3)  NOT NULL,
-    TrangThai        varchar(12)   NOT NULL CONSTRAINT DF_PhienDauGia_TrangThai DEFAULT ('SCHEDULED'),
-    MaNguoiThang     int           NULL,
-    GiaThang         decimal(18,2) NULL,
-    MaDonHang        int           NULL,
-    NguoiHuy         varchar(10)   NULL,
-    LyDoHuy          nvarchar(500) NULL,
-    ThoiGianHuy      datetime2(3)  NULL,
-    NgayTao          datetime2(3)  NOT NULL CONSTRAINT DF_PhienDauGia_NgayTao     DEFAULT (SYSUTCDATETIME()),
-    NgayCapNhat      datetime2(3)  NOT NULL CONSTRAINT DF_PhienDauGia_NgayCapNhat DEFAULT (SYSUTCDATETIME()),
-    CONSTRAINT PK_PhienDauGia PRIMARY KEY CLUSTERED (MaPhienDauGia),
-    CONSTRAINT FK_PhienDauGia_SanPham    FOREIGN KEY (MaSanPham)     REFERENCES SanPham (MaSanPham),
-    CONSTRAINT FK_PhienDauGia_DanDau     FOREIGN KEY (MaNguoiDanDau) REFERENCES NguoiDung (MaNguoiDung),
-    CONSTRAINT FK_PhienDauGia_NguoiThang FOREIGN KEY (MaNguoiThang)  REFERENCES NguoiDung (MaNguoiDung),
-    CONSTRAINT FK_PhienDauGia_DonHang    FOREIGN KEY (MaDonHang)     REFERENCES DonHang (MaDonHang),
-    CONSTRAINT CK_PhienDauGia_TrangThai  CHECK (TrangThai IN ('SCHEDULED','RUNNING','ENDED','CANCELLED')),
-    CONSTRAINT CK_PhienDauGia_Gia        CHECK (GiaKhoiDiem BETWEEN 1000 AND 1000000000 AND BuocGia > 0 AND BuocGia <= 1000000000 AND GiaHienTai >= GiaKhoiDiem),
-    CONSTRAINT CK_PhienDauGia_ThoiGian   CHECK (ThoiGianKetThuc > ThoiGianBatDau),
-    CONSTRAINT CK_PhienDauGia_SoLuot     CHECK (SoLuotDat >= 0),
-    CONSTRAINT CK_PhienDauGia_Huy        CHECK ((TrangThai = 'CANCELLED' AND NguoiHuy IN ('SELLER','ADMIN','SYSTEM') AND LyDoHuy IS NOT NULL AND ThoiGianHuy IS NOT NULL)
-                                             OR (TrangThai <> 'CANCELLED' AND NguoiHuy IS NULL AND LyDoHuy IS NULL AND ThoiGianHuy IS NULL)),
-    CONSTRAINT CK_PhienDauGia_Thang      CHECK ((MaNguoiThang IS NULL AND GiaThang IS NULL AND MaDonHang IS NULL)
-                                             OR (TrangThai = 'ENDED' AND MaNguoiThang IS NOT NULL AND GiaThang IS NOT NULL))
-);
-GO
+-- -----------------------------------------------------------------------------
+-- 3. Stored procedure sp_TaoDanhGia
+--    Trả về một dòng một cột: MaDanhGia vừa tạo.
+-- -----------------------------------------------------------------------------
+CREATE OR ALTER PROCEDURE dbo.sp_TaoDanhGia
+    @MaDonHang  int,
+    @MaNguoiMua int,
+    @SoSao      tinyint,
+    @NoiDung    nvarchar(1000) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
-CREATE TABLE LuotDatGia (
-    MaLuotDatGia   bigint        IDENTITY(1,1) NOT NULL,
-    MaPhienDauGia  int           NOT NULL,
-    MaNguoiDung    int           NOT NULL,
-    SoTien         decimal(18,2) NOT NULL,
-    ThoiGian       datetime2(3)  NOT NULL CONSTRAINT DF_LuotDatGia_ThoiGian DEFAULT (SYSUTCDATETIME()),
-    CONSTRAINT PK_LuotDatGia PRIMARY KEY CLUSTERED (MaLuotDatGia),
-    CONSTRAINT FK_LuotDatGia_Phien     FOREIGN KEY (MaPhienDauGia) REFERENCES PhienDauGia (MaPhienDauGia),
-    CONSTRAINT FK_LuotDatGia_NguoiDung FOREIGN KEY (MaNguoiDung)   REFERENCES NguoiDung (MaNguoiDung),
-    CONSTRAINT CK_LuotDatGia_SoTien    CHECK (SoTien > 0)
-);
-GO
+    DECLARE @MaCuaHang  int;
+    DECLARE @MaNguoiDon int;
+    DECLARE @TrangThai  varchar(15);
+    DECLARE @MaDanhGia  int;
 
--- Mỗi sản phẩm chỉ có tối đa 1 phiên đang mở (chưa bắt đầu hoặc đang chạy)
-CREATE UNIQUE NONCLUSTERED INDEX UX_PhienDauGia_SanPham_DangMo
-    ON PhienDauGia (MaSanPham) WHERE TrangThai IN ('SCHEDULED','RUNNING');
-CREATE NONCLUSTERED INDEX IX_PhienDauGia_TrangThai_KetThuc ON PhienDauGia (TrangThai, ThoiGianKetThuc);
-CREATE NONCLUSTERED INDEX IX_LuotDatGia_Phien_SoTien ON LuotDatGia (MaPhienDauGia, SoTien DESC);
+    IF @SoSao IS NULL OR @SoSao NOT BETWEEN 1 AND 5
+        THROW 50005, N'Số sao phải từ 1 đến 5.', 1;
+
+    -- Chuẩn hóa nội dung: bỏ khoảng trắng đầu cuối, chuỗi rỗng thành NULL.
+    SET @NoiDung = NULLIF(LTRIM(RTRIM(@NoiDung)), N'');
+
+    SELECT @MaCuaHang  = MaCuaHang,
+           @MaNguoiDon = MaNguoiDung,
+           @TrangThai  = TrangThai
+    FROM dbo.DonHang
+    WHERE MaDonHang = @MaDonHang;
+
+    IF @MaNguoiDon IS NULL
+        THROW 50001, N'Đơn hàng không tồn tại.', 1;
+
+    IF @MaNguoiDon <> @MaNguoiMua
+        THROW 50002, N'Bạn không phải người mua của đơn hàng này nên không thể đánh giá.', 1;
+
+    IF @TrangThai <> 'COMPLETED'
+        THROW 50003, N'Chỉ được đánh giá khi đơn hàng đã hoàn tất.', 1;
+
+    IF EXISTS (SELECT 1 FROM dbo.DanhGia WHERE MaDonHang = @MaDonHang)
+        THROW 50004, N'Đơn hàng này đã được đánh giá.', 1;
+
+    BEGIN TRY
+        INSERT INTO dbo.DanhGia (MaDonHang, MaNguoiMua, MaCuaHang, SoSao, NoiDung)
+        VALUES (@MaDonHang, @MaNguoiMua, @MaCuaHang, @SoSao, @NoiDung);
+
+        SET @MaDanhGia = CAST(SCOPE_IDENTITY() AS int);
+    END TRY
+    BEGIN CATCH
+        -- Hai yêu cầu đánh giá cùng lúc: UNIQUE (MaDonHang) chặn bản thứ hai.
+        IF ERROR_NUMBER() IN (2601, 2627)
+            THROW 50004, N'Đơn hàng này đã được đánh giá.', 1;
+        THROW;
+    END CATCH;
+
+    SELECT @MaDanhGia AS MaDanhGia;
+END;
 GO
 
 -- =====================================================================
@@ -494,76 +496,4 @@ BEGIN
         THROW;
     END CATCH;
 END
-GO
-
--- =====================================================================
--- Chặn đưa sản phẩm đang nằm trong phiên đấu giá (SCHEDULED/RUNNING) ra khỏi RESERVED hoặc xóa mềm.
--- Muốn thay đổi thì phải hủy phiên trước (sp_HuyPhienDauGia).
--- =====================================================================
-CREATE OR ALTER TRIGGER trg_SanPham_ChanRutKhoiDauGia ON SanPham AFTER UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-    IF NOT (UPDATE(TrangThai) OR UPDATE(DaXoa)) RETURN;
-
-    IF EXISTS (SELECT 1
-               FROM inserted i
-               JOIN deleted d ON d.MaSanPham = i.MaSanPham
-               JOIN PhienDauGia p ON p.MaSanPham = i.MaSanPham AND p.TrangThai IN ('SCHEDULED','RUNNING')
-               WHERE d.TrangThai = 'RESERVED' AND (i.TrangThai <> 'RESERVED' OR i.DaXoa = 1))
-        THROW 52060, N'Sản phẩm đang nằm trong phiên đấu giá. Hãy hủy phiên đấu giá trước khi thay đổi trạng thái sản phẩm.', 1;
-END
-GO
-
--- =====================================================================
--- Dữ liệu mẫu cho đấu giá (chỉ chạy khi chưa có phiên nào)
--- =====================================================================
-DECLARE @Now datetime2(3) = SYSUTCDATETIME();
-DECLARE @Sp1 int, @Sp2 int, @Phien int, @Chi int, @Dung int;
-
-IF NOT EXISTS (SELECT 1 FROM PhienDauGia)
-BEGIN
-    SELECT @Chi = MaNguoiDung FROM NguoiDung WHERE Email = 'chi.buyer@demo.local';
-    SELECT @Dung = MaNguoiDung FROM NguoiDung WHERE Email = 'dung.buyer@demo.local';
-
-    SELECT @Sp1 = sp.MaSanPham FROM SanPham sp
-    JOIN CuaHang ch ON ch.MaCuaHang = sp.MaCuaHang JOIN NguoiDung nd ON nd.MaNguoiDung = ch.MaNguoiDung
-    WHERE nd.Email = 'an.seller@demo.local' AND sp.Ten = N'Bàn phím cơ Keychron K2' AND sp.TrangThai = 'ACTIVE';
-
-    SELECT @Sp2 = sp.MaSanPham FROM SanPham sp
-    JOIN CuaHang ch ON ch.MaCuaHang = sp.MaCuaHang JOIN NguoiDung nd ON nd.MaNguoiDung = ch.MaNguoiDung
-    WHERE nd.Email = 'an.seller@demo.local' AND sp.Ten = N'Laptop Dell Latitude 7490 i5' AND sp.TrangThai = 'ACTIVE';
-
-    IF @Sp1 IS NOT NULL AND @Chi IS NOT NULL AND @Dung IS NOT NULL
-    BEGIN
-        INSERT PhienDauGia (MaSanPham, GiaNiemYet, GiaKhoiDiem, BuocGia, GiaHienTai, SoLuotDat, MaNguoiDanDau,
-                            ThoiGianBatDau, ThoiGianKetThuc, TrangThai)
-        SELECT @Sp1, Gia, 800000, 50000, 900000, 3, @Chi, DATEADD(DAY, -1, @Now), DATEADD(DAY, 2, @Now), 'RUNNING'
-        FROM SanPham WHERE MaSanPham = @Sp1;
-        SET @Phien = SCOPE_IDENTITY();
-
-        INSERT LuotDatGia (MaPhienDauGia, MaNguoiDung, SoTien, ThoiGian) VALUES
-            (@Phien, @Chi,  800000, DATEADD(HOUR, -20, @Now)),
-            (@Phien, @Dung, 850000, DATEADD(HOUR, -10, @Now)),
-            (@Phien, @Chi,  900000, DATEADD(HOUR, -2,  @Now));
-
-        UPDATE SanPham SET TrangThai = 'RESERVED', NgayCapNhat = @Now WHERE MaSanPham = @Sp1;
-        INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
-        VALUES (@Sp1, 'ACTIVE', 'RESERVED', 'SYSTEM', NULL, N'Dữ liệu mẫu: phiên đấu giá');
-    END
-
-    IF @Sp2 IS NOT NULL
-    BEGIN
-        INSERT PhienDauGia (MaSanPham, GiaNiemYet, GiaKhoiDiem, BuocGia, GiaHienTai, ThoiGianBatDau, ThoiGianKetThuc, TrangThai)
-        SELECT @Sp2, Gia, 5000000, 100000, 5000000, DATEADD(DAY, 1, @Now), DATEADD(DAY, 3, @Now), 'SCHEDULED'
-        FROM SanPham WHERE MaSanPham = @Sp2;
-
-        UPDATE SanPham SET TrangThai = 'RESERVED', NgayCapNhat = @Now WHERE MaSanPham = @Sp2;
-        INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo)
-        VALUES (@Sp2, 'ACTIVE', 'RESERVED', 'SYSTEM', NULL, N'Dữ liệu mẫu: phiên đấu giá');
-    END
-END
-GO
-
-PRINT N'Đã tạo xong bảng và thủ tục đấu giá.';
 GO

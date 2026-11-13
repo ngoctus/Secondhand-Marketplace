@@ -331,7 +331,6 @@ public sealed class AiChatService : IAiChatService
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
         request.Headers.Add("x-goog-api-key", _options.ApiKey);
         request.Content = new StringContent(body.ToJsonString(AiToolExecutor.JsonOptions), Encoding.UTF8, "application/json");
-        request.Content = new StringContent(body.ToJsonString(AiToolExecutor.JsonOptions), Encoding.UTF8, "application/json");
 
         using var response = await _http.SendAsync(request, ct);
         var payload = await response.Content.ReadAsStringAsync(ct);

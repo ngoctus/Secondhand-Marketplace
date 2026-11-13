@@ -4,7 +4,7 @@
     var danhSachMaDon = ViewBag.DanhSachMaDon as string[] ?? Array.Empty<string>();
     var orders = Model ?? new();
     var hasBankTransfer = orders.Any(d => d.PhuongThucThanhToan == "BANK_TRANSFER");
-    var unpaidBankOrders = orders.Where(d => d.PhuongThucThanhToan == "BANK_TRANSFER" && d.TrangThaiThanhToan != "PAID").ToList();
+    var unpaidBankOrders = orders.Where(d => d.PhuongThucThanhToan == "BANK_TRANSFER" && d.TrangThaiThanhToan != "PAID" && d.TrangThai != "CANCELLED").ToList();
     var hasCod = orders.Any(d => d.PhuongThucThanhToan == "COD");
 }
 
@@ -149,7 +149,7 @@
                                         <img src="@(string.IsNullOrEmpty(sp.AnhDaiDien) ? "/uploads/products/placeholder.svg" : sp.AnhDaiDien)" 
                                              class="rounded-2 border bg-white" style="width: 40px; height: 40px; object-fit: cover;" 
                                              alt="@sp.TenSanPham"
-                                             onerror="this.src='/uploads/banners/banner-1.svg';" />
+                                             onerror="this.src='/uploads/products/placeholder.svg';" />
                                         <div class="flex-grow-1 min-w-0 small text-truncate text-dark">
                                             @sp.TenSanPham
                                         </div>

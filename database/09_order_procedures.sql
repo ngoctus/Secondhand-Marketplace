@@ -1,43 +1,48 @@
--- Đảm bảo User-defined Table Type dbo.DanhSachId tồn tại nếu chạy script độc lập
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ARITHABORT ON;
+GO
+
+USE SecondHandMarketplace;
+GO
+
+-- Stored procedures giỏ hàng/đơn hàng; dùng đúng phiên bản cuối từ module 22.
+
+-- Kiểu bảng truyền danh sách Id (dùng cho đặt hàng nhiều sản phẩm)
 IF TYPE_ID(N'dbo.DanhSachId') IS NULL
-    EXEC(N'CREATE TYPE dbo.DanhSachId AS TABLE (Id int NOT NULL PRIMARY KEY);');
+    EXEC(N'CREATE TYPE dbo.DanhSachId AS TABLE (Id int NOT NULL PRIMARY KEY);')
 GO
 
--- =============================================================================
--- database/22_hinh_thuc_nhan.sql
--- Module Giao dịch: Thêm hình thức nhận hàng (Giao hàng tận nơi hoặc Gặp trực tiếp)
--- Phụ trách: Người D · Tuân thủ tài liệu Kế hoạch hoàn thiện Re:Market (Mục 4.3 & 5.4)
--- =============================================================================
-
--- 1. Thêm cột HinhThucNhan vào bảng DonHang (nếu chưa có)
-IF NOT EXISTS (
-    SELECT 1 FROM sys.columns 
-    WHERE object_id = OBJECT_ID('DonHang') AND name = 'HinhThucNhan'
-)
+-- Thêm vào giỏ
+CREATE OR ALTER PROCEDURE sp_ThemVaoGio
+    @MaNguoiDung int,
+    @MaSanPham   int
+AS
 BEGIN
-    ALTER TABLE DonHang 
-    ADD HinhThucNhan varchar(20) NOT NULL 
-        CONSTRAINT DF_DonHang_HinhThucNhan DEFAULT 'GIAO_HANG';
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
-    PRINT N'Đã thêm cột HinhThucNhan vào bảng DonHang.';
-END
-ELSE
-BEGIN
-    PRINT N'Cột HinhThucNhan đã tồn tại trong bảng DonHang.';
-END
-GO
+    DECLARE @ChuShopId int, @TrangThai varchar(20), @TrangThaiShop varchar(10), @TrangThaiChuShop varchar(10);
 
--- Thêm ràng buộc CHECK ở batch riêng để cột đã tồn tại khi biên dịch
-IF NOT EXISTS (
-    SELECT 1 FROM sys.check_constraints 
-    WHERE name = 'CK_DonHang_HinhThucNhan' AND parent_object_id = OBJECT_ID('DonHang')
-)
-BEGIN
-    ALTER TABLE DonHang 
-    ADD CONSTRAINT CK_DonHang_HinhThucNhan 
-        CHECK (HinhThucNhan IN ('GIAO_HANG', 'GAP_TRUC_TIEP'));
+    IF NOT EXISTS (SELECT 1 FROM NguoiDung WHERE MaNguoiDung = @MaNguoiDung AND VaiTro = 'USER' AND TrangThai = 'ACTIVE')
+        THROW 50030, N'Chỉ tài khoản USER đang hoạt động mới có giỏ hàng.', 1;
 
-    PRINT N'Đã thêm ràng buộc CK_DonHang_HinhThucNhan vào bảng DonHang.';
+    SELECT @ChuShopId = ch.MaNguoiDung, @TrangThai = sp.TrangThai, @TrangThaiShop = ch.TrangThai, @TrangThaiChuShop = nd.TrangThai
+    FROM SanPham sp
+    JOIN CuaHang ch ON ch.MaCuaHang = sp.MaCuaHang
+    JOIN NguoiDung nd ON nd.MaNguoiDung = ch.MaNguoiDung
+    WHERE sp.MaSanPham = @MaSanPham AND sp.DaXoa = 0;
+
+    IF @ChuShopId IS NULL OR @TrangThai <> 'ACTIVE' OR @TrangThaiShop <> 'ACTIVE' OR @TrangThaiChuShop <> 'ACTIVE'
+        THROW 50032, N'Sản phẩm không còn bán.', 1;
+    IF @ChuShopId = @MaNguoiDung
+        THROW 50031, N'Không thể thêm sản phẩm của chính mình vào giỏ hàng.', 1;
+
+    IF EXISTS (SELECT 1 FROM GioHang WHERE MaNguoiDung = @MaNguoiDung AND MaSanPham = @MaSanPham)
+        RETURN 0;
+
+    INSERT GioHang (MaNguoiDung, MaSanPham) VALUES (@MaNguoiDung, @MaSanPham);
+    RETURN 0;
 END
 GO
 
@@ -135,7 +140,7 @@ BEGIN
         SELECT TOP 1 DuongDan
         FROM AnhSanPham
         WHERE MaSanPham = sp.MaSanPham
-        ORDER BY LaAnhChinh DESC, MaAnh ASC
+        ORDER BY LaAnhChinh DESC, ThuTu ASC, MaAnhSP ASC
     ) a;
 
     -- Đồng bộ tổng tiền bằng hàm dbo.fn_TinhTongTienDonHang theo đúng nguyên tắc Data-first
@@ -164,6 +169,10 @@ BEGIN
             CONCAT(N'Bạn vừa nhận được đơn hàng ', @MaDon, 
                    CASE WHEN @HinhThucNhan = 'GAP_TRUC_TIEP' THEN N' (Hẹn gặp trực tiếp).' ELSE N'.' END), 
             @MaDonHangMoi);
+
+    DELETE FROM GioHang
+    WHERE MaNguoiDung = @MaNguoiDung
+      AND MaSanPham IN (SELECT Id FROM @DanhSachSanPham);
 
     IF @TuTaoTran = 1
         COMMIT TRANSACTION;
@@ -324,127 +333,6 @@ BEGIN
 END;
 GO
 
-
-
--- 5. Cập nhật vw_DonHangTongQuan bao gồm hình thức nhận hàng (HinhThucNhan)
-CREATE OR ALTER VIEW vw_DonHangTongQuan
-AS
-SELECT
-    dh.MaDonHang AS Id,
-    dh.MaDon,
-    dh.MaNguoiDung AS NguoiMuaId,
-    mua.HoTen AS TenNguoiMua,
-    dh.MaCuaHang,
-    ch.TenShop,
-    ch.MaNguoiDung AS ChuShopId,
-    dh.TrangThai,
-    dh.PhuongThucThanhToan,
-    dh.TrangThaiThanhToan,
-    dh.HinhThucNhan,
-    dh.TongTien,
-    dh.NguoiHuy,
-    dh.LyDoHuy,
-    dh.NgayTao,
-    (
-        SELECT COUNT(*)
-        FROM ChiTietDonHang ct
-        WHERE ct.MaDonHang = dh.MaDonHang
-    ) AS SoSanPham,
-    (
-        SELECT TOP (1) ct.TenSanPham
-        FROM ChiTietDonHang ct
-        WHERE ct.MaDonHang = dh.MaDonHang
-        ORDER BY ct.MaChiTietDonHang
-    ) AS TenSanPhamDau,
-    (
-        SELECT TOP (1) ct.AnhDaiDien
-        FROM ChiTietDonHang ct
-        WHERE ct.MaDonHang = dh.MaDonHang
-        ORDER BY ct.MaChiTietDonHang
-    ) AS AnhDau
-FROM DonHang dh
-JOIN NguoiDung mua
-    ON mua.MaNguoiDung = dh.MaNguoiDung
-JOIN CuaHang ch
-    ON ch.MaCuaHang = dh.MaCuaHang;
-GO
-
--- 6. Cập nhật vw_ChiTietDonHang bao gồm hình thức nhận hàng (HinhThucNhan)
-CREATE OR ALTER VIEW vw_ChiTietDonHang
-AS
-SELECT
-    dh.MaDonHang,
-    dh.MaDon,
-    dh.MaNguoiDung AS MaNguoiMua,
-    mua.HoTen AS TenNguoiMua,
-    ch.MaNguoiDung AS MaNguoiBan,
-    ban.HoTen AS TenNguoiBan,
-    dh.TenNguoiNhan,
-    dh.SoDienThoaiNhan AS SDTNguoiNhan,
-    dh.DiaChiNhan AS DiaChiGiaoHang,
-    dh.TienHang,
-    dh.PhiVanChuyen,
-    dh.TongTien,
-    dh.PhuongThucThanhToan,
-    dh.TrangThaiThanhToan,
-    dh.HinhThucNhan,
-    dh.TrangThai AS TrangThaiDonHang,
-    dh.NgayTao,
-    ct.MaChiTietDonHang,
-    ct.MaSanPham,
-    ct.TenSanPham,
-    ct.Gia AS DonGia
-FROM DonHang dh
-JOIN NguoiDung mua
-    ON mua.MaNguoiDung = dh.MaNguoiDung
-JOIN CuaHang ch
-    ON ch.MaCuaHang = dh.MaCuaHang
-JOIN NguoiDung ban
-    ON ban.MaNguoiDung = ch.MaNguoiDung
-JOIN ChiTietDonHang ct
-    ON ct.MaDonHang = dh.MaDonHang;
-GO
-
--- 7. Cập nhật vw_GioHangChiTiet kiểm tra đầy đủ trạng thái chủ shop và chặn mua shop của chính mình
-CREATE OR ALTER VIEW vw_GioHangChiTiet
-AS
-SELECT
-    gh.MaGioHang AS Id,
-    gh.MaNguoiDung AS NguoiDungId,
-    gh.MaSanPham AS SanPhamId,
-    gh.DaChon,
-    gh.ThoiGianThem,
-    sp.Ten,
-    sp.Gia,
-    sp.TrangThai AS TrangThaiSanPham,
-    sp.MaCuaHang,
-    ch.TenShop,
-    a.DuongDan AS AnhDaiDien,
-    CAST(
-        CASE
-            WHEN sp.TrangThai = 'ACTIVE'
-                AND sp.DaXoa = 0
-                AND ch.TrangThai = 'ACTIVE'
-                AND ch.MaNguoiDung <> gh.MaNguoiDung
-                AND chuShop.TrangThai = 'ACTIVE'
-            THEN 1
-            ELSE 0
-        END AS bit
-    ) AS CoTheMua
-FROM GioHang gh
-JOIN SanPham sp
-    ON sp.MaSanPham = gh.MaSanPham
-JOIN CuaHang ch
-    ON ch.MaCuaHang = sp.MaCuaHang
-JOIN NguoiDung chuShop
-    ON chuShop.MaNguoiDung = ch.MaNguoiDung
-LEFT JOIN AnhSanPham a
-    ON a.MaSanPham = sp.MaSanPham
-    AND a.LaAnhChinh = 1;
-GO
-
-PRINT N'Đã hoàn tất cấu hình hình thức nhận hàng (22_hinh_thuc_nhan.sql)!';
-
 -- 6. Cập nhật Stored Procedure sp_CapNhatTrangThaiDon (Ràng buộc hình thức nhận hàng khi hoàn tất)
 CREATE OR ALTER PROCEDURE sp_CapNhatTrangThaiDon
     @MaDonHang    int,
@@ -560,7 +448,7 @@ BEGIN
         END;
 
         -- Đồng bộ bảng ThanhToan khi hoàn tất hoặc hủy đơn đã thanh toán
-        IF @TrangThaiMoi = 'COMPLETED'
+        IF @TrangThaiMoi = 'COMPLETED' AND EXISTS (SELECT 1 FROM DonHang WHERE MaDonHang = @MaDonHang AND TrangThaiThanhToan = 'PAID')
         BEGIN
             UPDATE ThanhToan
             SET TrangThaiThanhToan = 'SUCCESS',

@@ -57,6 +57,7 @@ public sealed class AuctionService(AppDbContext db, IAuctionRealtime realtime) :
     private async Task<PagedResult<AuctionCardVm>> PageAsync(IQueryable<PhienDauGia> q, int page, int pageSize, CancellationToken ct)
     {
         page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var total = await q.CountAsync(ct);
         var items = await ToCard(q).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
         ChuanHoaTrangThai(items);
@@ -66,7 +67,7 @@ public sealed class AuctionService(AppDbContext db, IAuctionRealtime realtime) :
     public async Task<PagedResult<AuctionCardVm>> SearchPublicAsync(string tab, string? q, int page, int pageSize, CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
-        var query = db.PhienDauGias.AsNoTracking().Where(p => !p.SanPham.DaXoa && p.SanPham.CuaHang.TrangThai == "ACTIVE");
+        var query = db.PhienDauGias.AsNoTracking().Where(p => !p.SanPham.DaXoa && p.SanPham.CuaHang.TrangThai == "ACTIVE" && p.SanPham.CuaHang.NguoiDung.TrangThai == "ACTIVE");
 
         if (!string.IsNullOrWhiteSpace(q))
         {
@@ -149,7 +150,8 @@ public sealed class AuctionService(AppDbContext db, IAuctionRealtime realtime) :
 
     public async Task<AuctionStatusDto?> GetStatusAsync(int id, int? userId, CancellationToken ct = default)
     {
-        var p = await db.PhienDauGias.AsNoTracking().Where(x => x.MaPhienDauGia == id)
+        var p = await db.PhienDauGias.AsNoTracking()
+            .Where(x => x.MaPhienDauGia == id && !x.SanPham.DaXoa && x.SanPham.CuaHang.TrangThai == "ACTIVE" && x.SanPham.CuaHang.NguoiDung.TrangThai == "ACTIVE")
             .Select(x => new { x.TrangThai, x.GiaKhoiDiem, x.BuocGia, x.GiaHienTai, x.SoLuotDat, x.ThoiGianBatDau, x.ThoiGianKetThuc, x.MaNguoiDanDau })
             .FirstOrDefaultAsync(ct);
         if (p is null) return null;

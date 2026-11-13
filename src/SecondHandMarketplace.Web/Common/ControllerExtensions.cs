@@ -13,4 +13,7 @@ public static class ControllerExtensions
 
     public static void ThongBaoLoi(this Controller controller, string noiDung) =>
         controller.TempData["Loi"] = noiDung;
+
+    public static void ThongBaoCanhBao(this Controller controller, string noiDung) =>
+        controller.TempData["CanhBao"] = noiDung;
 }

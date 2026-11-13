@@ -13,13 +13,27 @@ public sealed class AuthService(
     IAuditLogService audit,
     ILogger<AuthService> logger) : IAuthService
 {
+    private const string DummyHash = "$2a$11$0000000000000000000000uL1y6E0j5bVvL9tWj4K6M2EaN.aL0u6";
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int FailedCount, DateTime LockoutEnd)> AccountLockouts = new(StringComparer.OrdinalIgnoreCase);
+    private const int MaxFailedAttempts = 5;
+    private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
+
     public async Task<NguoiDung?> AuthenticateAsync(string email, string password, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = NormalizeEmail(email);
+
+        if (AccountLockouts.TryGetValue(normalizedEmail, out var lockout) && lockout.LockoutEnd > DateTime.UtcNow)
+        {
+            await GhiNhatKyAsync(null, "LOGIN", null, "LOCKED", $"Tài khoản bị khóa tạm đến {lockout.LockoutEnd:HH:mm:ss} UTC do sai mật khẩu {MaxFailedAttempts} lần liên tiếp.");
+            return null;
+        }
+
         var user = await db.NguoiDungs.AsNoTracking()
             .SingleOrDefaultAsync(x => x.Email == normalizedEmail, cancellationToken);
         if (user is null)
         {
+            // Chống timing attack lộ sự tồn tại của email
+            passwordService.KiemTra(password, DummyHash);
             await GhiNhatKyAsync(null, "LOGIN", null, "FAILED", "Email không tồn tại.");
             return null;
         }
@@ -30,10 +44,25 @@ public sealed class AuthService(
         }
         if (!passwordService.KiemTra(password, user.MatKhauBam))
         {
-            await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "FAILED", "Mật khẩu không chính xác.");
+            var attempts = AccountLockouts.AddOrUpdate(
+                normalizedEmail,
+                _ => (1, DateTime.MinValue),
+                (_, current) => (current.FailedCount + 1, current.FailedCount + 1 >= MaxFailedAttempts ? DateTime.UtcNow.Add(LockoutDuration) : DateTime.MinValue)
+            );
+
+            if (attempts.FailedCount >= MaxFailedAttempts)
+            {
+                logger.LogWarning("Tài khoản {Email} bị khóa tạm thời 15 phút do nhập sai mật khẩu 5 lần liên tiếp.", normalizedEmail);
+                await GhiNhatKyAsync(user.MaNguoiDung, "LOCKOUT", user.MaNguoiDung, "LOCKED", "Khóa tạm 15 phút do nhập sai mật khẩu 5 lần liên tiếp.");
+            }
+            else
+            {
+                await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "FAILED", $"Mật khẩu không chính xác ({attempts.FailedCount}/{MaxFailedAttempts}).");
+            }
             return null;
         }
 
+        AccountLockouts.TryRemove(normalizedEmail, out _);
         await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "SUCCESS");
         return user;
     }

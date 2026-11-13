@@ -1,91 +1,68 @@
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ARITHABORT ON;
+GO
+
 USE SecondHandMarketplace;
 GO
+-- Seed core: chạy cho cả DEV/TEST và DEPLOY.
+-- Bao gồm danh mục nền, từ khóa mặc định, dữ liệu địa giới hành chính, banner mặc định và cấu hình AI.
+-- Không chứa tài khoản/sản phẩm/đơn hàng/đánh giá demo.
 
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
+SET ARITHABORT ON;
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 GO
 
--- =============================================================================
--- A1 + A2: Địa chỉ, khu vực, ngân hàng của cửa hàng.
---   - Bảng TinhThanh, PhuongXa (hai cấp: tỉnh/thành -> xã/phường, KHÔNG có quận/huyện).
---   - CuaHang thêm 8 cột (đều cho phép NULL để shop cũ vẫn hợp lệ) + 2 khóa ngoại.
---   - Cuối file: dữ liệu 34 tỉnh/thành và toàn bộ xã/phường (sinh bằng
---     database/tools/gen_dia_chi_insert.ps1, xem docs/a/A2-nguon-du-lieu-hanh-chinh.md).
--- Script chạy lại nhiều lần không lỗi (idempotent). Không sửa 02_create_tables.sql.
--- =============================================================================
-
--- 1. Bảng TinhThanh -----------------------------------------------------------
-IF OBJECT_ID(N'dbo.TinhThanh', N'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.TinhThanh
-    (
-        MaTinhThanh  int           NOT NULL CONSTRAINT PK_TinhThanh PRIMARY KEY,
-        TenTinhThanh nvarchar(100) NOT NULL,
-        MaHanhChinh  varchar(10)   NOT NULL
-    );
-END
+USE SecondHandMarketplace;
 GO
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_TinhThanh_MaHanhChinh' AND object_id = OBJECT_ID(N'dbo.TinhThanh'))
-    CREATE UNIQUE INDEX UX_TinhThanh_MaHanhChinh ON dbo.TinhThanh (MaHanhChinh);
+
+BEGIN TRANSACTION;
+
+INSERT TinhTrangSanPham (Ma, Ten, MoTa, ThuTuHienThi)
+SELECT v.Ma, v.Ten, v.MoTa, v.ThuTu
+FROM (VALUES
+    ('NEW',      N'Mới 100%',  N'Chưa qua sử dụng, còn nguyên tem mác', 1),
+    ('LIKE_NEW', N'Như mới',   N'Đã dùng rất ít, gần như không có dấu hiệu sử dụng', 2),
+    ('GOOD',     N'Tốt',       N'Dùng bình thường, hoạt động tốt, ít trầy xước', 3),
+    ('FAIR',     N'Khá',       N'Có dấu hiệu sử dụng rõ nhưng vẫn dùng ổn', 4),
+    ('WORN',     N'Cũ',        N'Hao mòn nhiều, phù hợp giá rẻ', 5)
+) v (Ma, Ten, MoTa, ThuTu)
+WHERE NOT EXISTS (SELECT 1 FROM TinhTrangSanPham t WHERE t.Ma = v.Ma);
+
+INSERT DanhMuc (Ten, ThuTuHienThi)
+SELECT v.Ten, v.ThuTu
+FROM (VALUES
+    (N'Thời trang', 1), (N'Đồ điện tử', 2), (N'Đồ gia dụng', 3),
+    (N'Sách & văn phòng phẩm', 4), (N'Xe cộ & phụ kiện', 5),
+    (N'Đồ chơi & mẹ bé', 6), (N'Thể thao & dã ngoại', 7),
+    (N'Nội thất', 8), (N'Khác', 99)
+) v (Ten, ThuTu)
+WHERE NOT EXISTS (SELECT 1 FROM DanhMuc d WHERE d.Ten = v.Ten);
+
+INSERT TuKhoaCam (CumTu, CumTuChuanHoa, Nhom, GhiChu)
+SELECT v.CumTu, dbo.fn_ChuanHoaChuoi(v.CumTu), v.Nhom, N'Seed ban đầu'
+FROM (VALUES
+    (N'hàng giả', 'HANG_GIA'), (N'hàng nhái', 'HANG_GIA'), (N'hàng fake', 'HANG_GIA'),
+    (N'super fake', 'HANG_GIA'), (N'replica', 'HANG_GIA'),
+    (N'hàng cấm', 'HANG_CAM'), (N'vũ khí', 'HANG_CAM'), (N'ma túy', 'HANG_CAM'),
+    (N'pháo nổ', 'HANG_CAM'), (N'hàng trộm cắp', 'HANG_CAM'), (N'giấy tờ giả', 'HANG_CAM'),
+    (N'chuyển khoản trước', 'LUA_DAO'), (N'đặt cọc trước', 'LUA_DAO'), (N'trúng thưởng', 'LUA_DAO')
+) v (CumTu, Nhom)
+WHERE NOT EXISTS (SELECT 1 FROM TuKhoaCam k WHERE k.CumTuChuanHoa = dbo.fn_ChuanHoaChuoi(v.CumTu));
+
+COMMIT TRANSACTION;
 GO
 
--- 2. Bảng PhuongXa ------------------------------------------------------------
-IF OBJECT_ID(N'dbo.PhuongXa', N'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.PhuongXa
-    (
-        MaPhuongXa   int           NOT NULL CONSTRAINT PK_PhuongXa PRIMARY KEY,
-        MaTinhThanh  int           NOT NULL,
-        TenPhuongXa  nvarchar(100) NOT NULL,
-        MaHanhChinh  varchar(10)   NOT NULL,
-        CONSTRAINT FK_PhuongXa_TinhThanh FOREIGN KEY (MaTinhThanh) REFERENCES dbo.TinhThanh (MaTinhThanh)
-    );
-END
+SELECT N'DanhMuc' AS Bang, COUNT(*) AS SoDong FROM DanhMuc
+UNION ALL SELECT N'TinhTrangSanPham', COUNT(*) FROM TinhTrangSanPham
+UNION ALL SELECT N'TuKhoaCam', COUNT(*) FROM TuKhoaCam;
 GO
 
--- Lọc xã theo tỉnh (dropdown phụ thuộc) nên cần index trên MaTinhThanh.
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PhuongXa_MaTinhThanh' AND object_id = OBJECT_ID(N'dbo.PhuongXa'))
-    CREATE INDEX IX_PhuongXa_MaTinhThanh ON dbo.PhuongXa (MaTinhThanh) INCLUDE (TenPhuongXa);
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_PhuongXa_MaHanhChinh' AND object_id = OBJECT_ID(N'dbo.PhuongXa'))
-    CREATE UNIQUE INDEX UX_PhuongXa_MaHanhChinh ON dbo.PhuongXa (MaHanhChinh);
-GO
-
--- 3. CuaHang: thêm 8 cột, tất cả cho phép NULL ---------------------------------
-IF COL_LENGTH('dbo.CuaHang', 'MaTinhThanh') IS NULL
-BEGIN
-    ALTER TABLE dbo.CuaHang ADD
-        MaTinhThanh     int            NULL,
-        MaPhuongXa      int            NULL,
-        DiaChiChiTiet   nvarchar(300)  NULL,
-        KhuVucHienThi   nvarchar(100)  NULL,
-        NganHang        nvarchar(100)  NULL,
-        MaNganHang      varchar(10)    NULL,   -- mã BIN VietQR (6 chữ số), D4 dùng để sinh mã QR
-        SoTaiKhoan      varchar(30)    NULL,
-        TenChuTaiKhoan  nvarchar(100)  NULL;
-END
-GO
-
--- 4. Hai khóa ngoại từ CuaHang (đặt ở batch riêng để cột đã tồn tại khi biên dịch) --
-IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_CuaHang_TinhThanh' AND parent_object_id = OBJECT_ID(N'dbo.CuaHang'))
-    ALTER TABLE dbo.CuaHang ADD CONSTRAINT FK_CuaHang_TinhThanh
-        FOREIGN KEY (MaTinhThanh) REFERENCES dbo.TinhThanh (MaTinhThanh);
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_CuaHang_PhuongXa' AND parent_object_id = OBJECT_ID(N'dbo.CuaHang'))
-    ALTER TABLE dbo.CuaHang ADD CONSTRAINT FK_CuaHang_PhuongXa
-        FOREIGN KEY (MaPhuongXa) REFERENCES dbo.PhuongXa (MaPhuongXa);
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_CuaHang_MaTinhThanh' AND object_id = OBJECT_ID(N'dbo.CuaHang'))
-    CREATE INDEX IX_CuaHang_MaTinhThanh ON dbo.CuaHang (MaTinhThanh, MaPhuongXa);
-GO
-
--- 5. Dữ liệu danh mục hành chính ------------------------------------------------
+-- Dữ liệu địa giới hành chính (34 tỉnh/thành, 3.321 phường/xã).
 -- BEGIN GENERATED DATA
 -- Nguồn: provinces.open-api.vn (API v2, cơ cấu hành chính 2 cấp có hiệu lực từ 01/07/2025).
 -- Phạm vi: 34 tỉnh/thành và 3321 xã/phường (đầy đủ cả nước). Không có quận/huyện.
@@ -3502,6 +3479,37 @@ FROM (VALUES
 WHERE NOT EXISTS (SELECT 1 FROM dbo.PhuongXa x WHERE x.MaPhuongXa = v.Ma);
 GO
 -- END GENERATED DATA
+GO
 
-PRINT N'Đã tạo TinhThanh, PhuongXa, thêm cột địa chỉ/ngân hàng cho CuaHang và nạp danh mục hành chính.';
+-- Banner mặc định (giữ hành vi triển khai hiện tại).
+-- Banner mẫu (chỉ chèn khi bảng trống)
+IF NOT EXISTS (SELECT 1 FROM Banner)
+INSERT Banner (TieuDe, MoTa, DuongDanAnh, LienKet, ThuTuHienThi) VALUES
+ (N'Tuần lễ đồ cũ — giá tốt, thêm vui', N'Mua bán đồ đã qua sử dụng, mọi tin đều được kiểm duyệt.', N'/uploads/banners/banner-1.jpg', N'/Products', 1),
+ (N'Chợ đồ cũ cho người Việt', N'Đăng bán trong 2 phút, giao dịch an toàn với xác nhận hai chiều.', N'/uploads/banners/banner-2.jpg', N'/User/Products/Create', 2),
+ (N'Thanh lý cuối tuần', N'Hàng điện tử, sách, gia dụng đã qua sử dụng giá tốt mỗi tuần.', N'/uploads/banners/banner-3.jpg', N'/Products?MaxPrice=300000', 3);
+GO
+
+-- Cấu hình AI mặc định; chỉ cập nhật prompt cũ nếu Admin chưa tùy chỉnh.
+IF NOT EXISTS (SELECT 1 FROM dbo.CauHinhAI WHERE MaCauHinhAI = 1)
+BEGIN
+    INSERT INTO dbo.CauHinhAI (MaCauHinhAI, DangBat, TenModel, SystemPrompt)
+    VALUES (
+        1,
+        1,
+        'gemini-3.1-flash-lite',
+        N'Bạn là trợ lý AI của Re:market - sàn mua bán đồ đã qua sử dụng theo khu vực, với ba giá trị cốt lõi: Gần bạn, Đáng tin cậy và Dễ giao dịch. Hãy trả lời bằng tiếng Việt, thân thiện, ngắn gọn và trung thực. Khi tư vấn đồ cũ, luôn nhắc người mua hỏi kỹ phụ kiện đi kèm, thời gian đã sử dụng và tình trạng xước xát, hư hỏng thực tế; không cam kết thay cho người bán. AN TOÀN VÀ RIÊNG TƯ: Tuyệt đối không tiết lộ, không yêu cầu và không suy đoán số điện thoại, địa chỉ nhà riêng hay số tài khoản ngân hàng của bất kỳ ai. Không khuyên người dùng chuyển tiền trước cho người lạ; với giao dịch trực tiếp, hãy khuyên hẹn ở nơi công cộng đông người và kiểm tra kỹ hàng trước khi thanh toán. QUY TẮC CÔNG CỤ: Bắt buộc gọi search_products khi người dùng muốn tìm đồ; gọi recommend_products khi cần gợi ý hoặc so sánh theo nhu cầu, ngân sách; gọi draft_product_description khi người bán nhờ soạn mô tả đăng bán. Chỉ dùng thông tin thật do công cụ trả về: không tự bịa ra sản phẩm, giá, thông số, tình trạng hay cửa hàng. Nếu không có kết quả, nói rõ là hiện chưa có. Khi giới thiệu sản phẩm, nêu đúng giá VND và kèm liên kết dạng [Tên sản phẩm](/Products/Details/{id}). Chỉ trao đổi các nội dung liên quan đến mua bán trên Re:market.'
+    );
+END
+GO
+
+-- C9: nâng System Prompt mặc định của C3 lên bản chuẩn Re:market (khu vực, an toàn riêng tư, quy tắc công cụ).
+-- Chỉ áp dụng khi dòng cấu hình vẫn giữ NGUYÊN prompt mặc định cũ, tức Admin chưa tùy chỉnh;
+-- nhờ vậy chạy lại script không ghi đè nội dung Admin đã lưu.
+UPDATE dbo.CauHinhAI
+SET SystemPrompt = N'Bạn là trợ lý AI của Re:market - sàn mua bán đồ đã qua sử dụng theo khu vực, với ba giá trị cốt lõi: Gần bạn, Đáng tin cậy và Dễ giao dịch. Hãy trả lời bằng tiếng Việt, thân thiện, ngắn gọn và trung thực. Khi tư vấn đồ cũ, luôn nhắc người mua hỏi kỹ phụ kiện đi kèm, thời gian đã sử dụng và tình trạng xước xát, hư hỏng thực tế; không cam kết thay cho người bán. AN TOÀN VÀ RIÊNG TƯ: Tuyệt đối không tiết lộ, không yêu cầu và không suy đoán số điện thoại, địa chỉ nhà riêng hay số tài khoản ngân hàng của bất kỳ ai. Không khuyên người dùng chuyển tiền trước cho người lạ; với giao dịch trực tiếp, hãy khuyên hẹn ở nơi công cộng đông người và kiểm tra kỹ hàng trước khi thanh toán. QUY TẮC CÔNG CỤ: Bắt buộc gọi search_products khi người dùng muốn tìm đồ; gọi recommend_products khi cần gợi ý hoặc so sánh theo nhu cầu, ngân sách; gọi draft_product_description khi người bán nhờ soạn mô tả đăng bán. Chỉ dùng thông tin thật do công cụ trả về: không tự bịa ra sản phẩm, giá, thông số, tình trạng hay cửa hàng. Nếu không có kết quả, nói rõ là hiện chưa có. Khi giới thiệu sản phẩm, nêu đúng giá VND và kèm liên kết dạng [Tên sản phẩm](/Products/Details/{id}). Chỉ trao đổi các nội dung liên quan đến mua bán trên Re:market.',
+    NgayCapNhat = SYSUTCDATETIME()
+WHERE MaCauHinhAI = 1
+  AND SystemPrompt = N'Bạn là trợ lý của Re:market, sàn mua bán đồ đã qua sử dụng. Hãy trả lời bằng tiếng Việt, ngắn gọn, thân thiện. Bạn giúp người dùng tìm sản phẩm, gợi ý sản phẩm theo nhu cầu và soạn mô tả sản phẩm.';
+GO
 GO

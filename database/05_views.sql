@@ -1,9 +1,12 @@
-SET ANSI_NULLS ON;
+﻿SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
+SET ARITHABORT ON;
 GO
 
 USE SecondHandMarketplace;
 GO
+
+-- Toàn bộ view; ba view đơn hàng/giỏ hàng dùng phiên bản cuối từ module 22.
 
 CREATE OR ALTER VIEW vw_SanPhamCongKhai
 AS
@@ -172,80 +175,6 @@ WHERE l.QuyetDinh IS NULL
     AND sp.DaXoa = 0;
 GO
 
-CREATE OR ALTER VIEW vw_GioHangChiTiet
-AS
-SELECT
-    gh.MaGioHang AS Id,
-    gh.MaNguoiDung AS NguoiDungId,
-    gh.MaSanPham AS SanPhamId,
-    gh.DaChon,
-    gh.ThoiGianThem,
-    sp.Ten,
-    sp.Gia,
-    sp.TrangThai AS TrangThaiSanPham,
-    sp.MaCuaHang,
-    ch.TenShop,
-    a.DuongDan AS AnhDaiDien,
-    CAST(
-        CASE
-            WHEN sp.TrangThai = 'ACTIVE'
-                AND sp.DaXoa = 0
-                AND ch.TrangThai = 'ACTIVE'
-            THEN 1
-            ELSE 0
-        END AS bit
-    ) AS CoTheMua
-FROM GioHang gh
-JOIN SanPham sp
-    ON sp.MaSanPham = gh.MaSanPham
-JOIN CuaHang ch
-    ON ch.MaCuaHang = sp.MaCuaHang
-LEFT JOIN AnhSanPham a
-    ON a.MaSanPham = sp.MaSanPham
-    AND a.LaAnhChinh = 1;
-GO
-
-CREATE OR ALTER VIEW vw_DonHangTongQuan
-AS
-SELECT
-    dh.MaDonHang AS Id,
-    dh.MaDon,
-    dh.MaNguoiDung AS NguoiMuaId,
-    mua.HoTen AS TenNguoiMua,
-    dh.MaCuaHang,
-    ch.TenShop,
-    ch.MaNguoiDung AS ChuShopId,
-    dh.TrangThai,
-    dh.PhuongThucThanhToan,
-    dh.TrangThaiThanhToan,
-    dh.TongTien,
-    dh.NguoiHuy,
-    dh.LyDoHuy,
-    dh.NgayTao,
-    (
-        SELECT COUNT(*)
-        FROM ChiTietDonHang ct
-        WHERE ct.MaDonHang = dh.MaDonHang
-    ) AS SoSanPham,
-    (
-        SELECT TOP (1) ct.TenSanPham
-        FROM ChiTietDonHang ct
-        WHERE ct.MaDonHang = dh.MaDonHang
-        ORDER BY ct.MaChiTietDonHang
-    ) AS TenSanPhamDau,
-    (
-        SELECT TOP (1) ct.AnhDaiDien
-        FROM ChiTietDonHang ct
-        WHERE ct.MaDonHang = dh.MaDonHang
-        ORDER BY ct.MaChiTietDonHang
-    ) AS AnhDau
-FROM DonHang dh
-JOIN NguoiDung mua
-    ON mua.MaNguoiDung = dh.MaNguoiDung
-JOIN CuaHang ch
-    ON ch.MaCuaHang = dh.MaCuaHang;
-GO
-
 CREATE OR ALTER VIEW vw_ThongKeCuaHang
 AS
 SELECT
@@ -329,40 +258,6 @@ SELECT
     ) AS DoanhThu;
 GO
 
-CREATE OR ALTER VIEW vw_ChiTietDonHang
-AS
-SELECT
-    dh.MaDonHang,
-    dh.MaDon,
-    dh.MaNguoiDung AS MaNguoiMua,
-    mua.HoTen AS TenNguoiMua,
-    ch.MaNguoiDung AS MaNguoiBan,
-    ban.HoTen AS TenNguoiBan,
-    dh.TenNguoiNhan,
-    dh.SoDienThoaiNhan AS SDTNguoiNhan,
-    dh.DiaChiNhan AS DiaChiGiaoHang,
-    dh.TienHang,
-    dh.PhiVanChuyen,
-    dh.TongTien,
-    dh.PhuongThucThanhToan,
-    dh.TrangThaiThanhToan,
-    dh.TrangThai AS TrangThaiDonHang,
-    dh.NgayTao,
-    ct.MaChiTietDonHang,
-    ct.MaSanPham,
-    ct.TenSanPham,
-    ct.Gia AS DonGia
-FROM DonHang dh
-JOIN NguoiDung mua
-    ON mua.MaNguoiDung = dh.MaNguoiDung
-JOIN CuaHang ch
-    ON ch.MaCuaHang = dh.MaCuaHang
-JOIN NguoiDung ban
-    ON ban.MaNguoiDung = ch.MaNguoiDung
-JOIN ChiTietDonHang ct
-    ON ct.MaDonHang = dh.MaDonHang;
-GO
-
 CREATE OR ALTER VIEW vw_ThongKeNguoiBan
 AS
 WITH ThongKeSanPham AS
@@ -418,5 +313,155 @@ LEFT JOIN ThongKeDonHang dh
     ON dh.MaCuaHang = ch.MaCuaHang;
 GO
 
-PRINT N'Đã chạy xong file tạo View.';
+-- 5. Cập nhật vw_DonHangTongQuan bao gồm hình thức nhận hàng (HinhThucNhan)
+CREATE OR ALTER VIEW vw_DonHangTongQuan
+AS
+SELECT
+    dh.MaDonHang AS Id,
+    dh.MaDon,
+    dh.MaNguoiDung AS NguoiMuaId,
+    mua.HoTen AS TenNguoiMua,
+    dh.MaCuaHang,
+    ch.TenShop,
+    ch.MaNguoiDung AS ChuShopId,
+    dh.TrangThai,
+    dh.PhuongThucThanhToan,
+    dh.TrangThaiThanhToan,
+    dh.HinhThucNhan,
+    dh.TongTien,
+    dh.NguoiHuy,
+    dh.LyDoHuy,
+    dh.NgayTao,
+    (
+        SELECT COUNT(*)
+        FROM ChiTietDonHang ct
+        WHERE ct.MaDonHang = dh.MaDonHang
+    ) AS SoSanPham,
+    (
+        SELECT TOP (1) ct.TenSanPham
+        FROM ChiTietDonHang ct
+        WHERE ct.MaDonHang = dh.MaDonHang
+        ORDER BY ct.MaChiTietDonHang
+    ) AS TenSanPhamDau,
+    (
+        SELECT TOP (1) ct.AnhDaiDien
+        FROM ChiTietDonHang ct
+        WHERE ct.MaDonHang = dh.MaDonHang
+        ORDER BY ct.MaChiTietDonHang
+    ) AS AnhDau
+FROM DonHang dh
+JOIN NguoiDung mua
+    ON mua.MaNguoiDung = dh.MaNguoiDung
+JOIN CuaHang ch
+    ON ch.MaCuaHang = dh.MaCuaHang;
+GO
+
+-- 6. Cập nhật vw_ChiTietDonHang bao gồm hình thức nhận hàng (HinhThucNhan)
+CREATE OR ALTER VIEW vw_ChiTietDonHang
+AS
+SELECT
+    dh.MaDonHang,
+    dh.MaDon,
+    dh.MaNguoiDung AS MaNguoiMua,
+    mua.HoTen AS TenNguoiMua,
+    ch.MaNguoiDung AS MaNguoiBan,
+    ban.HoTen AS TenNguoiBan,
+    dh.TenNguoiNhan,
+    dh.SoDienThoaiNhan AS SDTNguoiNhan,
+    dh.DiaChiNhan AS DiaChiGiaoHang,
+    dh.TienHang,
+    dh.PhiVanChuyen,
+    dh.TongTien,
+    dh.PhuongThucThanhToan,
+    dh.TrangThaiThanhToan,
+    dh.HinhThucNhan,
+    dh.TrangThai AS TrangThaiDonHang,
+    dh.NgayTao,
+    ct.MaChiTietDonHang,
+    ct.MaSanPham,
+    ct.TenSanPham,
+    ct.Gia AS DonGia
+FROM DonHang dh
+JOIN NguoiDung mua
+    ON mua.MaNguoiDung = dh.MaNguoiDung
+JOIN CuaHang ch
+    ON ch.MaCuaHang = dh.MaCuaHang
+JOIN NguoiDung ban
+    ON ban.MaNguoiDung = ch.MaNguoiDung
+JOIN ChiTietDonHang ct
+    ON ct.MaDonHang = dh.MaDonHang;
+GO
+
+-- 7. Cập nhật vw_GioHangChiTiet kiểm tra đầy đủ trạng thái chủ shop và chặn mua shop của chính mình
+CREATE OR ALTER VIEW vw_GioHangChiTiet
+AS
+SELECT
+    gh.MaGioHang AS Id,
+    gh.MaNguoiDung AS NguoiDungId,
+    gh.MaSanPham AS SanPhamId,
+    gh.DaChon,
+    gh.ThoiGianThem,
+    sp.Ten,
+    sp.Gia,
+    sp.TrangThai AS TrangThaiSanPham,
+    sp.MaCuaHang,
+    ch.TenShop,
+    a.DuongDan AS AnhDaiDien,
+    CAST(
+        CASE
+            WHEN sp.TrangThai = 'ACTIVE'
+                AND sp.DaXoa = 0
+                AND ch.TrangThai = 'ACTIVE'
+                AND ch.MaNguoiDung <> gh.MaNguoiDung
+                AND chuShop.TrangThai = 'ACTIVE'
+            THEN 1
+            ELSE 0
+        END AS bit
+    ) AS CoTheMua
+FROM GioHang gh
+JOIN SanPham sp
+    ON sp.MaSanPham = gh.MaSanPham
+JOIN CuaHang ch
+    ON ch.MaCuaHang = sp.MaCuaHang
+JOIN NguoiDung chuShop
+    ON chuShop.MaNguoiDung = ch.MaNguoiDung
+LEFT JOIN AnhSanPham a
+    ON a.MaSanPham = sp.MaSanPham
+    AND a.LaAnhChinh = 1;
+GO
+
+-- -----------------------------------------------------------------------------
+-- 2. View vw_DiemCuaHang
+--    Mọi nơi hiển thị sao/uy tín shop (thẻ sản phẩm, chi tiết, trang shop,
+--    rà soát shop) phải đọc từ view này, không tự tính lại.
+--    - DiemTrungBinh: trung bình các đánh giá VISIBLE, làm tròn 2 chữ số;
+--                     shop chưa có đánh giá VISIBLE trả về 0 (phân biệt bằng SoDanhGia = 0).
+--    - SoDanhGia:     số đánh giá VISIBLE.
+--    - SoDonThanhCong: số đơn COMPLETED của shop.
+--    Gom riêng từng bảng rồi LEFT JOIN từ CuaHang để không nhân đôi dòng
+--    và vẫn hiện shop mới.
+-- -----------------------------------------------------------------------------
+CREATE OR ALTER VIEW dbo.vw_DiemCuaHang
+AS
+SELECT
+    ch.MaCuaHang,
+    CAST(ISNULL(dg.TongSao * 1.0 / NULLIF(dg.SoDanhGia, 0), 0) AS decimal(3,2)) AS DiemTrungBinh,
+    ISNULL(dg.SoDanhGia, 0)                                                     AS SoDanhGia,
+    ISNULL(dh.SoDonThanhCong, 0)                                                AS SoDonThanhCong
+FROM dbo.CuaHang AS ch
+LEFT JOIN (
+    SELECT MaCuaHang,
+           COUNT(*)                  AS SoDanhGia,
+           SUM(CAST(SoSao AS int))   AS TongSao
+    FROM dbo.DanhGia
+    WHERE TrangThai = 'VISIBLE'
+    GROUP BY MaCuaHang
+) AS dg ON dg.MaCuaHang = ch.MaCuaHang
+LEFT JOIN (
+    SELECT MaCuaHang,
+           COUNT(*) AS SoDonThanhCong
+    FROM dbo.DonHang
+    WHERE TrangThai = 'COMPLETED'
+    GROUP BY MaCuaHang
+) AS dh ON dh.MaCuaHang = ch.MaCuaHang;
 GO

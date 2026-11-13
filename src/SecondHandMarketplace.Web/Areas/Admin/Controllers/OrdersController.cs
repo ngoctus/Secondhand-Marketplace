@@ -32,7 +32,17 @@ public sealed class OrdersController(IOrderManagementService orders) : AdminBase
         var adminId = User.LayNguoiDungId();
         if (adminId is null) return Challenge();
 
-        var (ok, error) = await orders.AdminUpdateStatusAsync(adminId.Value, id, status, reason, ct);
+        var currentOrder = await orders.GetAdminOrderAsync(id, ct);
+        if (currentOrder is null) return NotFound();
+
+        var targetStatus = (status ?? string.Empty).Trim().ToUpperInvariant();
+        if (string.Equals(currentOrder.Status, targetStatus, StringComparison.OrdinalIgnoreCase))
+        {
+            this.ThongBaoCanhBao("Trạng thái đơn hàng không thay đổi (đơn đã ở trạng thái này).");
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var (ok, error) = await orders.AdminUpdateStatusAsync(adminId.Value, id, targetStatus, reason, ct);
         if (ok) this.ThongBaoThanhCong("Đã cập nhật đơn hàng, người mua và người bán đã được thông báo.");
         else this.ThongBaoLoi(error ?? "Không cập nhật được đơn hàng.");
         return RedirectToAction(nameof(Details), new { id });

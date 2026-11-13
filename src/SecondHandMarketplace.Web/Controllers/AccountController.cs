@@ -35,7 +35,7 @@ public sealed class AccountController(IAuthService authService) : Controller
             ModelState.AddModelError(string.Empty, result.Error ?? "Không thể tạo tài khoản.");
             return View(model);
         }
-        await SignInUserAsync(result.User.MaNguoiDung, result.User.Email, result.User.HoTen, result.User.VaiTro, false);
+        await SignInUserAsync(result.User.MaNguoiDung, result.User.Email, result.User.HoTen, result.User.VaiTro, false, result.User.AnhDaiDien, DangNhapHelper.LaySecurityStamp(result.User.MatKhauBam));
         TempData["ThanhCong"] = "Đăng ký tài khoản thành công!";
         return RedirectToAction("Index", "Home");
     }
@@ -60,7 +60,7 @@ public sealed class AccountController(IAuthService authService) : Controller
             ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không chính xác, hoặc tài khoản đã bị khóa.");
             return View(model);
         }
-        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, model.RememberMe);
+        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, model.RememberMe, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl)) return LocalRedirect(model.ReturnUrl);
         return RedirectToAction("Index", "Home");
     }
@@ -92,7 +92,7 @@ public sealed class AccountController(IAuthService authService) : Controller
         if (user is not null)
         {
             var persistent = (await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme)).Properties?.IsPersistent ?? false;
-            await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, persistent);
+            await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, persistent, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
         }
         TempData["ThanhCong"] = "Đã cập nhật hồ sơ.";
         return RedirectToAction(nameof(Profile));
@@ -128,13 +128,21 @@ public sealed class AccountController(IAuthService authService) : Controller
         return RedirectToAction("Index", "Home");
     }
 
-    private async Task SignInUserAsync(int id, string email, string fullName, string role, bool persistent)
+    private async Task SignInUserAsync(int id, string email, string fullName, string role, bool persistent, string? avatar = null, string? securityStamp = null)
     {
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, id.ToString()), new(ClaimTypes.Name, fullName),
             new(ClaimTypes.Email, email), new(ClaimTypes.Role, role)
         };
+        if (!string.IsNullOrWhiteSpace(avatar))
+        {
+            claims.Add(new("avatar", avatar));
+        }
+        if (!string.IsNullOrWhiteSpace(securityStamp))
+        {
+            claims.Add(new("sec_stamp", securityStamp));
+        }
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity),
             new AuthenticationProperties { IsPersistent = persistent, ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7) });

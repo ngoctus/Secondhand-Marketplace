@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Re:Market - Design System & Global Styles
    ÄÆ°á»£c thiáº¿t káº¿ chuáº©n 100% theo Wireframe vĂ  UI kit:
    MĂ u sáº¯c: Primary #68705A, Background #EDE5D5, Surface #F8F5EE, Text Primary #29231D, Text Secondary #79563A
@@ -572,7 +572,18 @@ h1, h2, h3, h4, h5, h6 {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    background-color: #DCD2C0;
+    background-color: #E8E1D5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: var(--color-primary-dark, #1B4332);
+    transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+.category-card:hover .cat-circle {
+    background-color: var(--color-primary, #2D6A4F);
+    color: #FFFFFF;
 }
 
 .cat-name {
@@ -580,7 +591,7 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
 }
 
-/* Section 3 bÆ°á»›c Ä‘Æ¡n giáº£n (áº¢nh 3) */
+/* Section 3 bước đơn giản (Ảnh 3) */
 .steps-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1782,7 +1793,7 @@ a.primary {
         padding: 11px;
         border: 1px solid var(--line);
         border-radius: 7px;
-        font: 12px 'DM Sans';
+        font: 12px var(--font-main, sans-serif);
         min-width: 240px
     }
 
@@ -1913,7 +1924,7 @@ a.kpi:hover {
         border: 0;
         background: #fff;
         padding: 7px 12px;
-        font: 600 11px 'DM Sans';
+        font: 600 11px var(--font-main, sans-serif);
         cursor: pointer;
         color: #657067
     }
@@ -2078,7 +2089,7 @@ a.kpi:hover {
         background: #fff;
         border-radius: 7px;
         padding: 8px;
-        font: 600 11px 'DM Sans';
+        font: 600 11px var(--font-main, sans-serif);
         cursor: pointer
     }
 

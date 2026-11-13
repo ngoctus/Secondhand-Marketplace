@@ -11,6 +11,27 @@ namespace SecondHandMarketplace.Web.Controllers
             return View();
         }
 
+        [HttpGet("/gioi-thieu")]
+        [HttpGet("/ve-chung-toi")]
+        public IActionResult About()
+        {
+            return View();
+        }
+
+        [HttpGet("/faq")]
+        [HttpGet("/huong-dan-giao-dich")]
+        public IActionResult Faq()
+        {
+            return View();
+        }
+
+        [HttpGet("/dieu-khoan")]
+        [HttpGet("/chinh-sach-bao-mat")]
+        public IActionResult Terms()
+        {
+            return View();
+        }
+
         // Lỗi hệ thống bất ngờ (UseExceptionHandler)
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

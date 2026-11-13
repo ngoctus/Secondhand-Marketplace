@@ -558,11 +558,12 @@
 
 
 
-                                                    <option value="REFUND_BUYER">Hoàn tiền cho người mua (Hủy đơn hàng)</option>
+                                                    @if (item.TrangThaiDonHang != "CANCELLED")
+                                                    {
+                                                        <option value="REFUND_BUYER">Hoàn tiền cho người mua (Hủy đơn hàng)</option>
+                                                    }
 
-
-
-                                                    @if (item.TrangThaiDonHang != "COMPLETED")
+                                                    @if (item.TrangThaiDonHang != "COMPLETED" && item.TrangThaiDonHang != "CANCELLED")
                                                     {
                                                         <option value="RELEASE_SELLER">Thanh toán cho người bán (Hoàn tất đơn hàng)</option>
                                                     }

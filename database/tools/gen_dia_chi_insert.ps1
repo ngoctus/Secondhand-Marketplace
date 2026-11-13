@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    A2 - Chuyển danh mục hành chính (JSON nguồn) thành câu INSERT và ghi vào database/21_dia_chi_khu_vuc.sql.
+    A2 - Chuyển danh mục hành chính (JSON nguồn) thành câu INSERT và ghi vào database/12_seed_core.sql.
 
 .DESCRIPTION
     Nguồn: database/data/provinces_v2_depth2.json (34 tỉnh/thành, 3.321 xã/phường theo cơ cấu hành chính 2 cấp).
@@ -18,7 +18,7 @@
 #>
 param(
     [string]$Source = (Join-Path $PSScriptRoot '..\data\provinces_v2_depth2.json'),
-    [string]$Target = (Join-Path $PSScriptRoot '..\21_dia_chi_khu_vuc.sql'),
+    [string]$Target = (Join-Path $PSScriptRoot '..\12_seed_core.sql'),
     [int]$BatchSize = 500
 )
 
