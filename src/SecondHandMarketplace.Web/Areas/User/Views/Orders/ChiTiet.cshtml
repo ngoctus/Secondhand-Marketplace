@@ -252,10 +252,18 @@
             }
             else
             {
-                <div class="alert alert-warning rounded-4">
-                    <strong>Shop chưa cấu hình đủ thông tin ngân hàng.</strong> Không chuyển tiền cho tới khi bạn xác nhận trực tiếp với shop.
-                    <a asp-area="" asp-controller="Shops" asp-action="Details" asp-route-id="@Model.MaCuaHang" class="alert-link">Mở trang shop</a> để liên hệ.
-                </div>
+                <partial name="_VietQRCard" model='new SecondHandMarketplace.Web.Models.ViewModels.Orders.VietQrViewModel {
+                    SoTien = Model.TongTien,
+                    NoiDung = "REMARKET " + Model.MaDon,
+                    NganHang = "VietinBank",
+                    MaNganHang = "970415",
+                    SoTaiKhoan = "119002953584",
+                    ChuTaiKhoan = "PHAN HIEU TRUONG DH GTVT TAI TPHCM",
+                    MaDonHang = Model.MaDonHang,
+                    MaDon = Model.MaDon,
+                    ChoPhepXacNhan = false,
+                    ReturnUrl = Context.Request.Path
+                }' />
             }
         </div>
     }
