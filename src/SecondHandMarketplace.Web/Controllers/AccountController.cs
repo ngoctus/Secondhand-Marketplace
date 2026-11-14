@@ -33,16 +33,24 @@ public sealed class AccountController(
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
         if (!ModelState.IsValid) return View(model);
 
-        var (success, error, token) = await registrationOtpService.StartRegistrationAsync(model, cancellationToken);
-        if (!success || string.IsNullOrWhiteSpace(token))
+        try
         {
-            ModelState.AddModelError(string.Empty, error ?? "Không thể tiến hành đăng ký. Vui lòng thử lại.");
+            var (success, error, token) = await registrationOtpService.StartRegistrationAsync(model, cancellationToken);
+            if (!success || string.IsNullOrWhiteSpace(token))
+            {
+                ModelState.AddModelError(string.Empty, error ?? "Không thể tiến hành đăng ký. Vui lòng thử lại.");
+                return View(model);
+            }
+
+            TempData["ThongBao"] = $"Mã xác nhận OTP 6 chữ số đã được gửi tới email {model.Email.Trim()}. Vui lòng nhập mã để hoàn tất đăng ký.";
+            TempData["OtpSent"] = TempData["ThongBao"];
+            return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email.Trim().ToLowerInvariant(), token });
+        }
+        catch (OperationCanceledException)
+        {
+            ModelState.AddModelError(string.Empty, "Yêu cầu đăng ký bị quá thời gian chờ xử lý. Vui lòng thử lại.");
             return View(model);
         }
-
-        TempData["ThongBao"] = $"Mã xác nhận OTP 6 chữ số đã được gửi tới email {model.Email.Trim()}. Vui lòng nhập mã để hoàn tất đăng ký.";
-        TempData["OtpSent"] = TempData["ThongBao"];
-        return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email.Trim().ToLowerInvariant(), token });
     }
 
     [HttpGet]
@@ -60,20 +68,28 @@ public sealed class AccountController(
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
         if (!ModelState.IsValid) return View(model);
 
-        var (success, error, user, newToken) = await registrationOtpService.VerifyOtpAsync(model.Token, model.Code, cancellationToken);
-        if (!success || user is null)
+        try
         {
-            if (!string.IsNullOrWhiteSpace(newToken))
+            var (success, error, user, newToken) = await registrationOtpService.VerifyOtpAsync(model.Token, model.Code, cancellationToken);
+            if (!success || user is null)
             {
-                model.Token = newToken;
+                if (!string.IsNullOrWhiteSpace(newToken))
+                {
+                    model.Token = newToken;
+                }
+                ModelState.AddModelError(string.Empty, error ?? "Mã OTP không hợp lệ.");
+                return View(model);
             }
-            ModelState.AddModelError(string.Empty, error ?? "Mã OTP không hợp lệ.");
+
+            await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, false, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
+            TempData["ThanhCong"] = "Đăng ký tài khoản và xác thực email thành công! Chào mừng bạn đến với Re:Market.";
+            return RedirectToAction("Index", "Home");
+        }
+        catch (OperationCanceledException)
+        {
+            ModelState.AddModelError(string.Empty, "Yêu cầu xác thực OTP bị quá thời gian chờ xử lý. Vui lòng thử lại.");
             return View(model);
         }
-
-        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, false, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
-        TempData["ThanhCong"] = "Đăng ký tài khoản và xác thực email thành công! Chào mừng bạn đến với Re:Market.";
-        return RedirectToAction("Index", "Home");
     }
 
     [HttpPost]
@@ -81,17 +97,25 @@ public sealed class AccountController(
     public async Task<IActionResult> ResendRegisterCode(RegisterVerifyVm model, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(model.Token)) return RedirectToAction(nameof(Register));
-        var (success, error, newToken) = await registrationOtpService.ResendCodeAsync(model.Token, cancellationToken);
-        if (success)
+        try
         {
-            TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email của bạn. Vui lòng kiểm tra hộp thư.";
-            TempData["OtpSent"] = TempData["ThongBao"];
+            var (success, error, newToken) = await registrationOtpService.ResendCodeAsync(model.Token, cancellationToken);
+            if (success)
+            {
+                TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email của bạn. Vui lòng kiểm tra hộp thư.";
+                TempData["OtpSent"] = TempData["ThongBao"];
+            }
+            else
+            {
+                TempData["Loi"] = error ?? "Chưa thể gửi lại mã xác nhận. Vui lòng thử lại sau.";
+            }
+            return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email?.Trim().ToLowerInvariant(), token = newToken ?? model.Token });
         }
-        else
+        catch (OperationCanceledException)
         {
-            TempData["Loi"] = error ?? "Chưa thể gửi lại mã xác nhận. Vui lòng thử lại sau.";
+            TempData["Loi"] = "Yêu cầu gửi lại mã bị quá thời gian chờ. Vui lòng thử lại.";
+            return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email?.Trim().ToLowerInvariant(), token = model.Token });
         }
-        return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email?.Trim().ToLowerInvariant(), token = newToken ?? model.Token });
     }
 
     [HttpGet]
@@ -115,15 +139,23 @@ public sealed class AccountController(
     public async Task<IActionResult> ForgotPassword(ForgotPasswordVm model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return View(model);
-        var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
-        if (!sent)
+        try
         {
-            ModelState.AddModelError(string.Empty, "Chưa gửi được email xác nhận. Vui lòng thử lại sau.");
+            var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
+            if (!sent)
+            {
+                ModelState.AddModelError(string.Empty, "Chưa gửi được email xác nhận. Vui lòng thử lại sau.");
+                return View(model);
+            }
+            TempData["ThongBao"] = "Mã xác nhận OTP 6 chữ số đã được gửi tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư (kể cả mục Spam).";
+            TempData["OtpSent"] = TempData["ThongBao"];
+            return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
+        }
+        catch (OperationCanceledException)
+        {
+            ModelState.AddModelError(string.Empty, "Yêu cầu gửi mã xác nhận bị quá thời gian chờ. Vui lòng thử lại.");
             return View(model);
         }
-        TempData["ThongBao"] = "Mã xác nhận OTP 6 chữ số đã được gửi tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư (kể cả mục Spam).";
-        TempData["OtpSent"] = TempData["ThongBao"];
-        return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
     }
 
     [AllowAnonymous]
@@ -136,14 +168,22 @@ public sealed class AccountController(
     public async Task<IActionResult> ResetPassword(ResetPasswordOtpVm model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return View(model);
-        var result = await passwordResetService.ResetPasswordAsync(model.Email, model.Code, model.NewPassword, cancellationToken);
-        if (!result.Success)
+        try
         {
-            ModelState.AddModelError(string.Empty, result.Error ?? "Không thể đặt lại mật khẩu.");
+            var result = await passwordResetService.ResetPasswordAsync(model.Email, model.Code, model.NewPassword, cancellationToken);
+            if (!result.Success)
+            {
+                ModelState.AddModelError(string.Empty, result.Error ?? "Không thể đặt lại mật khẩu.");
+                return View(model);
+            }
+            TempData["ThanhCong"] = "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.";
+            return RedirectToAction(nameof(Login));
+        }
+        catch (OperationCanceledException)
+        {
+            ModelState.AddModelError(string.Empty, "Yêu cầu đặt lại mật khẩu bị quá thời gian chờ. Vui lòng thử lại.");
             return View(model);
         }
-        TempData["ThanhCong"] = "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.";
-        return RedirectToAction(nameof(Login));
     }
 
     [AllowAnonymous]
@@ -152,15 +192,22 @@ public sealed class AccountController(
     public async Task<IActionResult> ResendResetCode(ForgotPasswordVm model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return RedirectToAction(nameof(ForgotPassword));
-        var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
-        if (sent)
+        try
         {
-            TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư.";
-            TempData["OtpSent"] = TempData["ThongBao"];
+            var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
+            if (sent)
+            {
+                TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư.";
+                TempData["OtpSent"] = TempData["ThongBao"];
+            }
+            else
+            {
+                TempData["Loi"] = "Chưa gửi được email xác nhận. Vui lòng thử lại sau.";
+            }
         }
-        else
+        catch (OperationCanceledException)
         {
-            TempData["Loi"] = "Chưa gửi được email xác nhận. Vui lòng thử lại sau.";
+            TempData["Loi"] = "Yêu cầu gửi lại mã bị quá thời gian chờ. Vui lòng thử lại.";
         }
         return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
     }

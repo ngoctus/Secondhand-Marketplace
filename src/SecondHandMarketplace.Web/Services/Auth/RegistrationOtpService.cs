@@ -75,7 +75,12 @@ public sealed class RegistrationOtpService(
                 $"<p style='color:#94a3b8;font-size:12px;margin-bottom:0'>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>" +
                 $"</div>", cancellationToken);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (OperationCanceledException oce)
+        {
+            logger.LogWarning(oce, "Thao tác gửi OTP đăng ký tới {Email} bị quá thời gian chờ hoặc kết nối bị gián đoạn.", normalizedEmail);
+            return (false, "Yêu cầu gửi mã xác nhận bị quá thời gian chờ hoặc kết nối bị gián đoạn. Vui lòng thử lại.", null);
+        }
+        catch (Exception ex)
         {
             logger.LogError(ex, "Không thể gửi email OTP đăng ký tới {Email}.", normalizedEmail);
             return (false, "Chưa gửi được email xác nhận tới hộp thư của bạn. Vui lòng kiểm tra lại địa chỉ email hoặc thử lại sau.", null);
@@ -186,7 +191,12 @@ public sealed class RegistrationOtpService(
                 $"<p style='color:#64748b;font-size:14px'>Mã OTP này có hiệu lực trong vòng <strong>10 phút</strong>.</p>" +
                 $"</div>", cancellationToken);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (OperationCanceledException oce)
+        {
+            logger.LogWarning(oce, "Thao tác gửi lại email OTP tới {Email} bị quá thời gian chờ hoặc kết nối bị gián đoạn.", payload.Email);
+            return (false, "Yêu cầu gửi lại mã xác nhận bị quá thời gian chờ. Vui lòng thử lại sau.", token);
+        }
+        catch (Exception ex)
         {
             logger.LogError(ex, "Không thể gửi lại email OTP tới {Email}.", payload.Email);
             return (false, "Chưa gửi được email xác nhận mới. Vui lòng thử lại sau.", token);

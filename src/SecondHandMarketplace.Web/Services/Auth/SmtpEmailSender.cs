@@ -51,15 +51,24 @@ public sealed class SmtpEmailSender(
             Timeout = 15000 // 15 giây tránh treo request nếu kết nối bị firewall chặn
         };
 
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        linkedCts.CancelAfter(TimeSpan.FromSeconds(10));
+
         try
         {
-            await client.SendMailAsync(message, cancellationToken);
+            await client.SendMailAsync(message, linkedCts.Token);
             logger.LogInformation("Đã gửi email thành công qua Gmail SMTP tới {To}", to);
         }
         catch (Exception ex)
         {
+            if (env.IsDevelopment())
+            {
+                logger.LogWarning(ex, "[DEV-FALLBACK] Không thể kết nối tới Gmail SMTP ({Host}:{Port}) hoặc thao tác gửi email tới {To} bị gián đoạn/quá thời gian chờ. Trong môi trường phát triển (Development), hệ thống cho phép tiếp tục luồng và mã OTP đã được ghi lại trong Console log.", host, port, to);
+                return;
+            }
+
             logger.LogError(ex, "Lỗi khi gửi email qua Gmail SMTP ({Host}:{Port}) tới {To}", host, port, to);
-            throw;
+            throw new InvalidOperationException("Không thể gửi email qua máy chủ Gmail SMTP. Vui lòng kiểm tra cấu hình kết nối mạng hoặc thử lại sau.", ex);
         }
     }
 }

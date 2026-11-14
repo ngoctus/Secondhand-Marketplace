@@ -196,4 +196,38 @@ public class RegistrationOtpTests
         Assert.NotNull(newToken);
         Assert.Empty(authService.Users);
     }
+
+    [Fact]
+    public async Task StartRegistrationAsync_WhenOperationCanceled_ReturnsFriendlyErrorWithoutCrashing()
+    {
+        using var db = GetDb(nameof(StartRegistrationAsync_WhenOperationCanceled_ReturnsFriendlyErrorWithoutCrashing));
+        var emailSender = new ThrowingEmailSender(new OperationCanceledException());
+        var dataProtection = new EphemeralDataProtectionProvider();
+        var authService = new FakeAuthService();
+        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, NullLogger<RegistrationOtpService>.Instance);
+
+        var vm = new RegisterVm
+        {
+            FullName = "Nguyễn Văn D",
+            Email = "nguyenvand@example.com",
+            Phone = "0945678901",
+            Password = "Password@123",
+            ConfirmPassword = "Password@123"
+        };
+
+        var (success, error, token) = await service.StartRegistrationAsync(vm);
+
+        Assert.False(success);
+        Assert.NotNull(error);
+        Assert.Contains("quá thời gian chờ", error);
+        Assert.Null(token);
+    }
+}
+
+public class ThrowingEmailSender(Exception exceptionToThrow) : IEmailSender
+{
+    public Task SendAsync(string to, string subject, string htmlBody, CancellationToken cancellationToken = default)
+    {
+        throw exceptionToThrow;
+    }
 }
