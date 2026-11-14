@@ -35,7 +35,7 @@
 <!-- Layout 2 cột: Bộ lọc + Danh sách sản phẩm (Ảnh 4) -->
 <div class="search-page-layout">
     <!-- CỘT BỘ LỌC (Sidebar) -->
-    <aside class="filter-sidebar">
+    <aside class="filter-sidebar" data-rm-reveal="left">
         <div class="filter-header">
             <h3>Bộ lọc</h3>
             <div class="d-flex align-items-center gap-2">
@@ -176,7 +176,7 @@
         else
         {
             <!-- Lưới 3 cột chuẩn Ảnh 4 -->
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4" data-rm-stagger>
                 @foreach (var p in ketQua.Items)
                 {
                     <div class="col">

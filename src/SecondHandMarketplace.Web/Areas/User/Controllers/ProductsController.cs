@@ -181,7 +181,9 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.GuiDuyetAsync(userId, maSanPham);
         if (!ok)
         {
-            this.ThongBaoLoi(loi ?? "Không gửi duyệt được.");
+            // Tránh lách kiểm duyệt: nếu gửi duyệt thất bại, ẩn sản phẩm để nội dung chưa duyệt không còn hiển thị công khai.
+            await _products.HideAsync(userId, maSanPham);
+            this.ThongBaoLoi((loi ?? "Không gửi duyệt được.") + " Sản phẩm đã được chuyển về trạng thái ẩn để bảo vệ hệ thống.");
             return RedirectToAction(nameof(Edit), new { id = maSanPham });
         }
 

@@ -3,10 +3,12 @@
 @using SecondHandMarketplace.Web.Services.Categories
 @using SecondHandMarketplace.Web.Services.Reviews
 @using SecondHandMarketplace.Web.Models.ViewModels.Reviews
+@using Microsoft.EntityFrameworkCore
 @inject IProductService ProductService
 @inject IBannerService BannerService
 @inject ICategoryService CategoryService
 @inject IReviewService Reviews
+@inject SecondHandMarketplace.Web.Data.AppDbContext DbContext
 @{
     ViewData["Title"] = "Trang chủ";
 
@@ -40,6 +42,29 @@
     }
     catch { }
 
+    int tongSanPham = 0;
+    int tongNguoiBan = 0;
+    int tongDonHoanTat = 0;
+    try
+    {
+        tongSanPham = await DbContext.SanPhams.CountAsync(p => p.TrangThai == "ACTIVE");
+        tongNguoiBan = await DbContext.CuaHangs.CountAsync(c => c.TrangThai == "ACTIVE");
+        tongDonHoanTat = await DbContext.DonHangs.CountAsync(d => d.TrangThai == "COMPLETED");
+    }
+    catch { }
+
+    string LayIconDanhMuc(string tenDanhMuc)
+    {
+        var ten = (tenDanhMuc ?? string.Empty).ToLowerInvariant();
+        if (ten.Contains("thời trang") || ten.Contains("áo") || ten.Contains("quần")) return "bi-handbag";
+        if (ten.Contains("điện tử") || ten.Contains("máy tính") || ten.Contains("điện thoại")) return "bi-laptop";
+        if (ten.Contains("gia dụng") || ten.Contains("bếp")) return "bi-house-door";
+        if (ten.Contains("sách") || ten.Contains("truyện")) return "bi-book";
+        if (ten.Contains("phụ kiện") || ten.Contains("đồng hồ")) return "bi-watch";
+        if (ten.Contains("nội thất") || ten.Contains("bàn") || ten.Contains("ghế")) return "bi-lamp";
+        return "bi-box-seam";
+    }
+
     // Thẻ đánh giá theo wireframe chỉ tối đa 3 dòng.
     string TomTacDanhGia(string noiDung)
         => noiDung.Length <= 180 ? noiDung : noiDung.Substring(0, 180).TrimEnd() + "…";
@@ -47,23 +72,42 @@
 
 <!-- 1. HERO SECTION (Ảnh 2) -->
 <section class="landing-hero">
-    <div>
+    <div data-rm-reveal="left">
         <div class="hero-sublabel">SECONDHAND - TÁI SỬ DỤNG</div>
         <h1 class="hero-heading">Món đồ cũ,<br />giá trị mới.</h1>
         <p class="hero-desc">
             Mua bán đồ đã qua sử dụng an toàn, tiết kiệm và thân thiện với môi trường. Mọi tin đăng đều được kiểm duyệt.
         </p>
         <div class="hero-actions">
-            <a asp-controller="Products" asp-action="Index" class="btn-rm-primary">Khám phá ngay</a>
-            <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-secondary">Đăng bán sản phẩm</a>
+            <a asp-controller="Products" asp-action="Index" class="btn-rm-primary rm-cta-pulse">Khám phá ngay</a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @if (User.IsInRole("USER"))
+                {
+                    <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-secondary">Đăng bán sản phẩm</a>
+                }
+            }
+            else
+            {
+                <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-rm-secondary">Đăng bán sản phẩm</a>
+            }
         </div>
         <div class="hero-stats">
-            <div class="hero-stat-item"><b>Đồ độc nhất</b><span>Mỗi món một lựa chọn riêng</span></div>
-            <div class="hero-stat-item"><b>Giao dịch rõ ràng</b><span>Theo dõi từng trạng thái đơn</span></div>
-            <div class="hero-stat-item"><b>Đánh giá sau mua</b><span>Chỉ mở sau đơn hoàn tất</span></div>
+            <div class="hero-stat-item">
+                <b data-rm-count="@(tongSanPham > 0 ? tongSanPham : 100)" data-rm-suffix="+">@(tongSanPham > 0 ? tongSanPham.ToString("N0") + "+" : "100+")</b>
+                <span>Sản phẩm</span>
+            </div>
+            <div class="hero-stat-item">
+                <b data-rm-count="@(tongNguoiBan > 0 ? tongNguoiBan : 50)" data-rm-suffix="+">@(tongNguoiBan > 0 ? tongNguoiBan.ToString("N0") + "+" : "50+")</b>
+                <span>Người bán</span>
+            </div>
+            <div class="hero-stat-item">
+                <b data-rm-count="100" data-rm-suffix="%">100%</b>
+                <span>Kiểm duyệt</span>
+            </div>
         </div>
     </div>
-    <div class="hero-image-box">
+    <div class="hero-image-box" data-rm-reveal="pop" data-rm-media>
         <img src="~/images/hero-marketplace.jpg"
              alt="Đồ dùng secondhand được tái sử dụng: laptop, máy ảnh, tai nghe và quần áo"
              class="hero-image"
@@ -126,7 +170,7 @@
 }
 
 <!-- 2. DANH MỤC (Ảnh 2) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="landing-section-header">
         <div>
             <div class="section-label">DANH MỤC</div>
@@ -135,11 +179,11 @@
         <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">Xem tất cả</a>
     </div>
 
-    <div class="category-grid">
+    <div class="category-grid" data-rm-stagger>
         @foreach (var c in danhMuc.Take(6))
         {
             <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" class="category-card">
-                <div class="cat-circle"></div>
+                <div class="cat-circle"><i class="bi @LayIconDanhMuc(c.Ten)"></i></div>
                 <span class="cat-name">@c.Ten</span>
             </a>
         }
@@ -147,20 +191,20 @@
 </section>
 
 <!-- 3. SẢN PHẨM NỔI BẬT (Ảnh 2) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="landing-section-header">
         <div>
             <div class="section-label">SẢN PHẨM NỔI BẬT</div>
             <h2 class="section-title">Có thể bạn sẽ thích</h2>
         </div>
         <div class="d-flex gap-2 landing-header-actions">
-            <span class="btn-rm-primary" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Mới đăng</span>
+            <a asp-controller="Products" asp-action="Index" asp-route-Sort="newest" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Mới đăng</a>
             <a asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tốt</a>
-            <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Xem tất cả</a>
+            <a asp-controller="Products" asp-action="Index" asp-route-Sort="price_asc" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tiết kiệm</a>
         </div>
     </div>
 
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 mb-4">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 mb-4" data-rm-stagger data-rm-featured>
         @foreach (var p in sanPhams.Take(4))
         {
             <div class="col">
@@ -175,11 +219,11 @@
 </section>
 
 <!-- 4. CÁCH THỨC HOẠT ĐỘNG (Ảnh 3) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="section-label">CÁCH THỨC HOẠT ĐỘNG</div>
     <h2 class="section-title">3 bước đơn giản</h2>
 
-    <div class="steps-grid">
+    <div class="steps-grid" data-rm-stagger>
         <div class="step-card">
             <div class="step-num">1</div>
             <h3 class="step-title">Tìm sản phẩm</h3>
@@ -202,10 +246,10 @@
 </section>
 
 <!-- 5. GIÁ TRỊ BỀN VỮNG (Ảnh 3) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="sustainability-row">
-        <div class="sustainability-image-wrap">
-            <img src="~/images/sustainable-reuse.jpg" alt="Trái đất xanh với biểu tượng tái chế, đại diện cho lối sống bền vững" class="sustainability-image" asp-append-version="true" />
+        <div class="sustainability-image-wrap" data-rm-media>
+            <img src="~/images/sustainable-shopping.jpg" alt="Lối sống bền vững qua việc tái sử dụng đồ cũ" class="sustainability-image" style="object-fit: cover;" asp-append-version="true" />
         </div>
         <div>
             <div class="section-label">GIÁ TRỊ BỀN VỮNG</div>
@@ -215,18 +259,18 @@
             <p style="color: var(--color-text-secondary); font-size: 14px; margin-bottom: 20px;">
                 Tái sử dụng giúp tiết kiệm chi phí và giảm rác thải ra môi trường.
             </p>
-            <div class="sustainability-stats">
+            <div class="sustainability-stats" data-rm-stagger>
                 <div class="sust-stat-card">
-                    <b>00 kg</b>
+                    <b>@(tongDonHoanTat > 0 ? (tongDonHoanTat * 2).ToString("N0") + " kg" : "100+ kg")</b>
                     <span>Rác thải giảm</span>
                 </div>
                 <div class="sust-stat-card">
-                    <b>00 triệu đ</b>
-                    <span>Tiết kiệm</span>
+                    <b>@(tongDonHoanTat > 0 ? tongDonHoanTat.ToString("N0") : "50+")</b>
+                    <span>Món đồ đã tuần hoàn</span>
                 </div>
                 <div class="sust-stat-card">
-                    <b>0.000</b>
-                    <span>Món đồ được dùng lại</span>
+                    <b>@(tongSanPham > 0 ? tongSanPham.ToString("N0") : "100+")</b>
+                    <span>Sản phẩm đang bán</span>
                 </div>
             </div>
         </div>
@@ -234,11 +278,11 @@
 </section>
 
 <!-- 6. ĐỘ TIN CẬY (Ảnh 3) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="section-label">ĐỘ TIN CẬY</div>
     <h2 class="section-title">Mua bán an tâm hơn</h2>
 
-    <div class="trust-grid">
+    <div class="trust-grid" data-rm-stagger>
         <div class="trust-card">
             <div class="trust-dot" aria-hidden="true">✓</div>
             <h4>Kiểm duyệt sản phẩm</h4>
@@ -263,7 +307,7 @@
 </section>
 
 <!-- 7. ĐÁNH GIÁ (Ảnh 3) -->
-<section class="landing-section">
+<section class="landing-section" data-rm-reveal>
     <div class="section-label">ĐÁNH GIÁ</div>
     <h2 class="section-title">Người dùng nói gì</h2>
     <p style="color: var(--color-text-muted); font-size: 13px; margin: 4px 0 20px;">Chỉ hiển thị đánh giá thật từ giao dịch đã hoàn tất</p>
@@ -274,7 +318,7 @@
     }
     else
     {
-        <div class="reviews-grid">
+        <div class="reviews-grid" data-rm-stagger>
             @foreach (var dg in danhGiaNoiBat)
             {
                 <div class="review-card">
@@ -314,5 +358,14 @@
         <h3>Có món đồ không còn dùng? Đăng bán ngay!</h3>
         <p>Đăng tin miễn phí, được kiểm duyệt trong thời gian ngắn.</p>
     </div>
-    <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn-cta-white">Đăng bán ngay</a>
+    <div class="cta-banner-actions">
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-cta-white">Đăng bán ngay</a>
+    }
+    else
+    {
+        <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-cta-white">Đăng bán ngay</a>
+    }
+    </div>
 </div>

@@ -86,7 +86,7 @@
                         </div>
 
                         <div class="text-muted small" style="font-size: 11px;">
-                            <i class="bi bi-check2-circle text-success me-1"></i>Đã mua hàng • @review.NgayTao.ToLocalTime().ToString("dd/MM/yyyy")
+                            <i class="bi bi-check2-circle text-success me-1"></i>Đã mua hàng • @HienThi.Ngay(review.NgayTao)
                         </div>
                     </div>
 
@@ -104,6 +104,8 @@
 
         @if (Model != null && Model.TotalPages > 1)
         {
+            var prodPage = Context.Request.Query["page"].ToString();
+            var pagePrefix = !string.IsNullOrWhiteSpace(prodPage) ? $"page={prodPage}&" : "";
             <div class="d-flex justify-content-center mt-3">
                 <nav aria-label="Phân trang đánh giá shop">
                     <ul class="pagination pagination-sm mb-0">
@@ -112,7 +114,7 @@
                             var isActive = p == Model.Page;
                             <li class="page-item @(isActive ? "active" : "")">
                                 <a class="page-link rounded-pill px-3 mx-1 @(isActive ? "bg-success border-success text-white" : "text-dark bg-white border")"
-                                   href="?reviewPage=@p#shop-reviews"
+                                   href="?@(pagePrefix)reviewPage=@p#shop-reviews"
                                    data-review-page="@p">
                                     @p
                                 </a>

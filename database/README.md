@@ -1,48 +1,122 @@
-# Database – SecondHand Marketplace
+﻿# Database – Re:Market (bộ bootstrap SQL đã chuẩn hóa)
 
-## Yêu cầu
+Bộ SQL được tổ chức lại theo nguyên tắc đã thống nhất:
+
+> **Chỉ thay đổi cách tổ chức và thứ tự triển khai SQL. Không tự ý thay đổi nghiệp vụ, tên bảng, tên cột, tên procedure hoặc logic mà C# đang sử dụng.**
+
+Các migration bổ sung trước đây đã được hợp nhất vào schema cuối cùng để cài đặt database mới bằng một thứ tự thống nhất. Các định nghĩa nghiệp vụ được giữ nguyên; riêng những đối tượng có nhiều phiên bản thì chỉ giữ phiên bản cuối đã có trong bộ nguồn.
+
+## 0. Yêu cầu môi trường
 
 - SQL Server Developer hoặc Express.
-- `sqlcmd` có trong PATH.
+- `sqlcmd` có trong `PATH`.
 - Mặc định dùng `localhost` và Windows Authentication.
+- SQL Server Express: đặt `SQL_SERVER=.\SQLEXPRESS`; SQL Authentication có thể cấu hình qua `SQL_AUTH` như hướng dẫn trong `run-db.bat`.
 
-## Tạo lại database
+## 1. Thứ tự chạy
 
-Chạy `run-db.bat` trên database mới để tạo database `SecondHandMarketplace`. `DB_MODE=dev` hoặc `test` nạp dữ liệu demo; `DB_MODE=deploy` chỉ nạp schema và seed hệ thống. Nếu dùng SQL Server Express, đặt biến môi trường `SQL_SERVER=.\SQLEXPRESS`. Nếu dùng SQL Authentication, đặt `SQL_AUTH` theo hướng dẫn trong `run-db.bat`.
+| File | Nội dung |
+|---|---|
+| `01_create_database.sql` | Tạo database `SecondHandMarketplace` |
+| `02_create_tables.sql` | Tạo đầy đủ 31 bảng với các cột ở trạng thái cuối |
+| `03_constraints_indexes.sql` | PK, FK, UNIQUE, CHECK và toàn bộ index |
+| `04_functions.sql` | 6 function |
+| `05_views.sql` | Toàn bộ view, gồm các view đơn hàng/giỏ hàng phiên bản cuối |
+| `06_triggers.sql` | 6 trigger |
+| `07_account_shop_procedures.sql` | `sp_GhiNhatKy`, `sp_TaoCuaHang` |
+| `08_product_procedures.sql` | Procedure nghiệp vụ sản phẩm |
+| `09_order_procedures.sql` | Procedure giỏ hàng/đơn hàng và kiểu bảng `dbo.DanhSachId` |
+| `10_moderation_admin_procedures.sql` | Procedure kiểm duyệt và quản trị |
+| `11_extensions.sql` | Procedure đánh giá và đấu giá |
+| `12_seed_core.sql` | Seed hệ thống, chạy cả DEV/TEST và DEPLOY |
+| `13_seed_demo.sql` | Seed tài khoản/sản phẩm/địa chỉ shop/đơn hàng/tranh chấp/báo cáo/đánh giá demo, chỉ DEV/TEST |
 
-`reset-db.bat` sẽ xóa database và toàn bộ dữ liệu hiện có trước khi chạy lại các script. Phải đặt `DB_MODE=dev` hoặc `DB_MODE=test`; script từ chối khi chưa đặt chế độ hoặc khi là `deploy`. Chỉ dùng khi thực sự muốn tạo mới database dev/test.
+Các đối tượng được phân tách theo loại để dễ tra cứu. Dependencies được giữ theo thứ tự: schema → constraints/indexes → functions → views → triggers → procedures → seed.
 
-## Các script
+## 2. Danh sách 31 bảng
 
-- `01`–`09`: schema và dữ liệu lõi của project.
-- `10_banner_yeuthich.sql`: phần Banner và Yêu thích (người B phụ trách).
-- `11_danhgia.sql`: phần Đánh giá (người C phụ trách).
-- `12_tranhchap_baocao.sql`: phần Tranh chấp và Báo cáo (người D phụ trách).
-- `13_daugia.sql`: phần Đấu giá (người E phụ trách).
-- `14_donhang_admin.sql`: thủ tục Admin can thiệp đơn hàng `sp_AdminCapNhatTrangThaiDon` (người E phụ trách).
-- `34_password_reset_otp.sql`: bảng lưu OTP đặt lại mật khẩu.
-- `22_checkout_delivery_window.sql`: bổ sung khung giờ nhận hàng cho đơn; chạy khi nâng cấp database đã có dữ liệu.
+**Bảng lõi (17):**
 
-Bốn file `10`–`13` được tạo sẵn chỉ có `USE SecondHandMarketplace; GO`; file `14` do người E bổ sung thêm. Thành viên phụ trách bổ sung SQL vào đúng file của mình, không sửa `02_create_tables.sql` hoặc `09_seed_data.sql`.
+`NguoiDung`, `CuaHang`, `DanhMuc`, `TinhTrangSanPham`, `SanPham`, `AnhSanPham`, `GioHang`, `DonHang`, `ChiTietDonHang`, `LichSuTrangThaiDonHang`, `ThanhToan`, `LichSuTrangThaiSanPham`, `LuotKiemDuyet`, `PhanTichAI`, `TuKhoaCam`, `ThongBao`, `NhatKyHeThong`.
 
-## Thứ tự thực thi
+**Bảng mở rộng (14):**
 
-`run-db.bat` chỉ khởi tạo database mới và chọn seed bằng `DB_MODE=dev`, `test` hoặc `deploy` (mặc định `dev`). Cả ba chế độ chạy schema và seed hệ thống; `dev` và `test` chạy thêm seed demo `29` đến `33`, còn `deploy` không tạo tài khoản demo. Script từ chối chạy nếu database đã tồn tại vì `02_create_tables.sql` tạo lại bảng. `29_seed_demo_goc.sql` chỉ được chạy một lần trên database dev/test trống; reset trước khi chạy lại. Script kiểm tra điều kiện dữ liệu là `tests/seed_consistency.sql`.
+`YeuThich`, `Banner`, `DanhGia`, `TranhChap`, `BaoCao`, `PhienDauGia`, `LuotDatGia`, `LichSuViPham`, `HoiThoai`, `TinNhan`, `CauHinhAI`, `TinhThanh`, `PhuongXa`, `PasswordResetOtp`.
 
-Khởi tạo Production theo hướng dẫn trong `docs/deployment-runbook.md`; tài khoản admin production dùng `24_seed_admin_deploy.template.sql` với BCrypt hash cung cấp ngoài repo.
+Các cột trước đây được thêm qua migration đã được đưa vào định nghĩa `CREATE TABLE`:
+- `CuaHang`: `MaTinhThanh`, `MaPhuongXa`, `DiaChiChiTiet`, `KhuVucHienThi`, `NganHang`, `MaNganHang`, `SoTaiKhoan`, `TenChuTaiKhoan`.
+- `DonHang`: `HinhThucNhan`, `KhungGioNhan`.
+- `TuKhoaCam`: `MucDo`.
+- `PhanTichAI`: `MucDoTuKhoa`.
+- `LuotKiemDuyet`: `QuyetDinhTuDong`.
 
-Nếu database hiện có báo thiếu cột khu vực/ngân hàng của `CuaHang` (ví dụ `DiaChiChiTiet`, `MaPhuongXa`, `MaTinhThanh`), chạy lại `21_dia_chi_khu_vuc.sql` trong SQL Server Management Studio. Script có kiểm tra tồn tại từng cột và không xóa dữ liệu; không dùng `reset-db.bat` cho database cần giữ lại.
+## 3. Các phiên bản đã được ưu tiên
 
-`07_functions.sql` phải chạy trước `06_procedures.sql` vì stored procedure sử dụng các hàm đã định nghĩa. Các thay đổi schema chạy trước thủ tục tương ứng.
+- `vw_GioHangChiTiet`, `vw_DonHangTongQuan`, `vw_ChiTietDonHang`: giữ bản cuối từ module `22_hinh_thuc_nhan.sql`.
+- `sp_TaoDonHangTheoShop`, `sp_TaoDonHang`, `sp_DatHangTuGio`, `sp_CapNhatTrangThaiDon`: giữ bản cuối từ module `22_hinh_thuc_nhan.sql`.
+- `fn_KiemTraRuleSanPham`: giữ bản cuối từ `17_bo_chan_tu_cam_khi_gui_duyet.sql`.
+- Giữ logic `TU_CAM` theo phiên bản cuối; không khôi phục bản function cũ.
+- `QuyetDinhTuDong`, các cột mức độ từ khóa và các cột địa chỉ/nhận hàng được đưa vào schema cuối; constraint tương ứng nằm trong file `03`.
 
-`23_checkout_delivery_window.sql` thêm cột khung giờ nhận theo kiểu migration và được chạy sau khi tạo các bảng, trước khi tạo thủ tục đặt hàng.
+## 4. Chạy database
 
-Khi nâng cấp database đã có dữ liệu, chạy riêng `34_password_reset_otp.sql` một lần. Cấu hình SMTP qua `Email:Smtp` trong User Secrets hoặc biến môi trường (`Email__Smtp__Host`, `Email__Smtp__Port`, `Email__Smtp__From`, `Email__Smtp__Username`, `Email__Smtp__Password`). Không commit mật khẩu SMTP thật.
+Mở Command Prompt tại thư mục `database`:
 
-## Tài khoản dữ liệu mẫu
+```bat
+rem Development (có seed demo)
+set DB_MODE=dev
+run-db.bat
 
-- Admin: `admin@secondhand.local`
+rem Test (có seed demo)
+set DB_MODE=test
+run-db.bat
+
+rem Deploy (chỉ schema và seed core, không có dữ liệu demo)
+set DB_MODE=deploy
+run-db.bat
+```
+
+Có thể cấu hình `SQL_SERVER` và `SQL_AUTH` trước khi chạy. Ví dụ SQL Server Express:
+
+```bat
+set SQL_SERVER=.\SQLEXPRESS
+set DB_MODE=dev
+run-db.bat
+```
+
+`run-db.bat` kiểm tra database chưa tồn tại trước khi bootstrap. `02_create_tables.sql` có lệnh drop/recreate bảng, do đó **không chạy trực tiếp bộ bootstrap trên database đang có dữ liệu cần giữ**.
+
+`reset-db.bat` chỉ cho phép `DB_MODE=dev` hoặc `DB_MODE=test`; thao tác này xóa toàn bộ database và dữ liệu.
+
+## 5. Seed
+
+- `12_seed_core.sql`: danh mục, tình trạng sản phẩm, từ khóa mặc định, dữ liệu địa giới hành chính, banner mặc định và cấu hình AI.
+- `13_seed_demo.sql`: hợp nhất theo đúng thứ tự seed gốc → địa chỉ shop → đơn hàng → đánh giá. Chỉ được gọi khi `DB_MODE=dev` hoặc `test`.
+- `templates/seed_admin_deploy.template.sql`: mẫu seed Admin riêng cho triển khai; không tự chạy trong bootstrap.
+
+Dữ liệu địa giới hành chính được sinh từ `data/provinces_v2_depth2.json`. Chạy `tools/gen_dia_chi_insert.ps1` để cập nhật phần giữa hai marker `BEGIN GENERATED DATA` và `END GENERATED DATA` trong `12_seed_core.sql`.
+
+## 6. Kiểm thử
+
+Các file trong `tests/` được giữ nguyên:
+- `c2_smoke_test.sql`
+- `c6_smoke_test.sql`
+- `c8_smoke_test.sql`
+- `d_smoke_test.sql`
+- `seed_consistency.sql`
+
+Nên chạy smoke test sau khi bootstrap trên một SQL Server thực tế. Bộ file đã được rà soát tĩnh và sắp xếp dependency; môi trường hiện tại không có SQL Server để thực thi toàn bộ T-SQL, vì vậy không tuyên bố đã chạy integration test thành công.
+
+## 7. Lưu ý về database đã tồn tại
+
+Bộ 13 file này là **bộ cài mới (fresh bootstrap)**, không phải bộ migration nâng cấp database đang hoạt động. Nếu cần cập nhật database hiện hữu, phải tạo migration riêng, kiểm tra dữ liệu thực tế và backup trước khi áp dụng.
+
+## 8. Tài khoản dữ liệu demo
+
+- Admin local: `admin@secondhand.local`
 - USER mẫu: `an.seller@demo.local`, `binh.seller@demo.local`, `chi.buyer@demo.local`, `dung.buyer@demo.local`
-- Mật khẩu dùng chung cho các tài khoản seed ở môi trường local: `Admin@12345`
+- Mật khẩu dùng chung cho tài khoản seed local: `Admin@12345`.
 
-Đổi mật khẩu ngay nếu dùng dữ liệu này ngoài môi trường phát triển. Mật khẩu được lưu dưới dạng BCrypt hash, không lưu dạng rõ trong database.
+Chỉ dùng các tài khoản này ở DEV/TEST. Đổi thông tin xác thực nếu dữ liệu được dùng ngoài môi trường phát triển. Mật khẩu trong database được lưu dưới dạng BCrypt hash.
+
+Mẫu tạo Admin production được giữ riêng tại `templates/seed_admin_deploy.template.sql`; không tự động chạy trong bootstrap.

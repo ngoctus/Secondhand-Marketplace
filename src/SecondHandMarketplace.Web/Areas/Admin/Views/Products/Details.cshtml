@@ -29,7 +29,7 @@
                 <tr><th>Shop</th><td>@Model.TenShop <span class="text-muted">(@Model.TrangThaiShop)</span></td></tr>
                 <tr><th>Người bán</th><td>@Model.TenNguoiBan · @Model.EmailNguoiBan <span class="badge @(Model.TrangThaiNguoiBan == "ACTIVE" ? "bg-success" : "bg-secondary")">@Model.TrangThaiNguoiBan</span></td></tr>
                 <tr><th>Vi phạm của người bán</th><td><strong>@Model.SoViPhamNguoiBan / @Model.NguongKhoa</strong> · <a asp-controller="Violations" asp-action="Index" asp-route-sellerId="@Model.MaNguoiBan">xem lịch sử</a></td></tr>
-                <tr><th>Ngày tạo / cập nhật</th><td>@Model.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm") / @Model.NgayCapNhat.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
+                <tr><th>Ngày tạo / cập nhật</th><td>@HienThi.NgayGio(Model.NgayTao) / @HienThi.NgayGio(Model.NgayCapNhat)</td></tr>
                 @if (!string.IsNullOrWhiteSpace(Model.LyDoGo)) { <tr><th>Lý do gỡ</th><td>@Model.LyDoGo</td></tr> }
             </table>
             <div style="white-space:pre-wrap">@Model.MoTa</div>
@@ -99,9 +99,9 @@
                 var b = ReviewDisplay.Describe(t.AnalysisStatus, t.Level);
                 <tr>
                     <td>#@t.MaLuotKiemDuyet</td>
-                    <td>@t.ThoiGianGui.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@HienThi.NgayGio(t.ThoiGianGui)</td>
                     <td><span class="badge @b.BadgeClass">@b.Text</span>@if (t.Matches.Count > 0) { <div class="small text-muted">@string.Join(", ", t.Matches.Select(m => $"{m.Phrase} ({m.Level})"))</div> }</td>
-                    <td>@(t.QuyetDinh ?? "Đang chờ") @if (t.ThoiGianQuyetDinh is not null) { <div class="small text-muted">@t.ThoiGianQuyetDinh.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div> }</td>
+                    <td>@(t.QuyetDinh ?? "Đang chờ") @if (t.ThoiGianQuyetDinh is not null) { <div class="small text-muted">@HienThi.NgayGio(t.ThoiGianQuyetDinh.Value)</div> }</td>
                     <td>@if (t.QuyetDinhTuDong) { <span class="badge bg-info text-dark">Hệ thống (tự động)</span> } else { @t.TenQuanTriVien }</td>
                     <td>@t.LyDo</td>
                     <td>@(t.ViolationRecorded ? "Có (+1)" : "")</td>
@@ -120,7 +120,7 @@
             @foreach (var h in Model.StatusHistory)
             {
                 <tr>
-                    <td>@h.ThoiGian.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@HienThi.NgayGio(h.ThoiGian)</td>
                     <td>@ReviewDisplay.StatusText(h.TrangThaiCu)</td>
                     <td>@ReviewDisplay.StatusText(h.TrangThaiMoi)</td>
                     <td>@(h.LoaiNguoiThucHien == "SYSTEM" ? "Hệ thống" : h.TenNguoiThucHien ?? h.LoaiNguoiThucHien)</td>

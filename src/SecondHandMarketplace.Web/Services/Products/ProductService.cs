@@ -30,7 +30,7 @@ public class ProductService : IProductService
     {
         f.GiaiPhanGia();
         var query = TaoTruyVanTimKiem(f);
-        var page = Math.Max(1, f.Page);
+        var page = Math.Clamp(f.Page, 1, 10000);
         var pageSize = Math.Clamp(f.PageSize, 1, 100);
         var total = await query.CountAsync();
 
@@ -147,6 +147,7 @@ public class ProductService : IProductService
             {
                 p.MaSanPham,
                 p.MaCuaHang,
+                SellerUserId = p.CuaHang.MaNguoiDung,
                 p.MaDanhMuc,
                 p.Ten,
                 p.MoTa,
@@ -183,6 +184,7 @@ public class ProductService : IProductService
             CreatedAt = duLieuTho.NgayTao,
             Images = duLieuTho.ImageUrls,
             ShopId = duLieuTho.MaCuaHang,
+            SellerUserId = duLieuTho.SellerUserId,
             ShopName = duLieuTho.ShopName,
             ShopDescription = duLieuTho.ShopDescription,
             ShopLogoUrl = duLieuTho.ShopLogo,
@@ -205,7 +207,7 @@ public class ProductService : IProductService
         var shop = await TimShopCuaToiAsync(maNguoiDung, cancellationToken);
         if (shop is null) return new PagedResult<MyProductVm>();
 
-        page = Math.Max(1, page);
+        page = Math.Clamp(page, 1, 10000);
         const int pageSize = 12;
 
         var query = _db.SanPhams
@@ -444,8 +446,11 @@ public class ProductService : IProductService
         if (!_db.Database.IsRelational())
         {
             // Fallback In-Memory (chỉ phục vụ test): mô phỏng đúng kết quả của sp_GuiDuyetSanPham.
-            var sp = await _db.SanPhams.FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && !x.DaXoa, cancellationToken);
+            var sp = await _db.SanPhams
+                .Include(x => x.CuaHang)
+                .FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && !x.DaXoa, cancellationToken);
             if (sp is null) return (false, "Sản phẩm không tồn tại.");
+            if (sp.CuaHang?.MaNguoiDung != maNguoiDung) return (false, "Bạn không có quyền thao tác trên sản phẩm này.");
             sp.TrangThai = "PENDING_REVIEW";
             sp.NgayCapNhat = DateTime.UtcNow;
             await _db.SaveChangesAsync(cancellationToken);

@@ -398,3 +398,17 @@ appsettings.Local.json
 
 # Cấu hình máy cá nhân (copy từ appsettings.Example.json, không commit)
 appsettings.Development.json
+
+# Sơ đồ và script tạo sơ đồ (không đưa vào source code)
+*.drawio
+*.drawio.xml
+*.drawio.bkp
+*Architecture_Diagrams.xml
+DFD_Secondhand_Marketplace.xml
+docs/diagrams/
+generate_all_diagrams.py
+generate_dfd_drawio.py
+
+# Archive files
+*.zip
+database.zip

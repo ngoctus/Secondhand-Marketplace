@@ -537,6 +537,7 @@ public class OrderService : IOrderService
             TenNguoiNhan = d.TenNguoiNhan,
             SoDienThoaiNhan = d.SoDienThoaiNhan,
             DiaChiNhan = d.DiaChiNhan,
+            KhungGioNhan = d.KhungGioNhan,
             NgayTao = d.NgayTao,
             NguoiHuy = d.NguoiHuy,
             LyDoHuy = d.LyDoHuy,

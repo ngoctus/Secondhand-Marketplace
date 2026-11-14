@@ -45,7 +45,7 @@ public class AuthController(
         }
 
         var shop = await shopService.GetByOwnerAsync(user.MaNguoiDung, cancellationToken);
-        var token = tokenService.CreateToken(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro);
+        var token = tokenService.CreateToken(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
 
         var response = new AuthResponse
         {
@@ -91,7 +91,12 @@ public class AuthController(
 
         if (!success || user is null)
         {
-            var code = (error ?? string.Empty).Contains("Email") ? ErrorCodes.EmailExists : ErrorCodes.PhoneExists;
+            var errStr = error ?? string.Empty;
+            var code = errStr.Contains("Email", StringComparison.OrdinalIgnoreCase) && !errStr.Contains("điện thoại", StringComparison.OrdinalIgnoreCase)
+                ? ErrorCodes.EmailExists
+                : errStr.Contains("điện thoại", StringComparison.OrdinalIgnoreCase) && !errStr.Contains("Email", StringComparison.OrdinalIgnoreCase)
+                    ? ErrorCodes.PhoneExists
+                    : ErrorCodes.BadRequest;
             return ServiceResult<UserDto>.Fail(code, error ?? "Đăng ký không thành công.").ToActionResult(this);
         }
 

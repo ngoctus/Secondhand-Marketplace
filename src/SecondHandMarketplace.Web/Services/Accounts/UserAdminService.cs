@@ -26,6 +26,7 @@ public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog)
         {
             s.TrangThai = "LOCKED";
             s.LyDoKhoa = reason;
+            s.ThoiGianKhoa = DateTime.UtcNow;
             s.NgayCapNhat = DateTime.UtcNow;
         }
 
@@ -50,6 +51,7 @@ public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog)
         {
             s.TrangThai = "ACTIVE";
             s.LyDoKhoa = null;
+            s.ThoiGianKhoa = null;
             s.NgayCapNhat = DateTime.UtcNow;
         }
 

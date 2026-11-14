@@ -70,6 +70,9 @@ public sealed class OrderDetailVm
     public List<OrderItemVm> Items { get; set; } = new();
     public List<OrderHistoryVm> History { get; set; } = new();
     public List<OrderPaymentVm> Payments { get; set; } = new();
+    public int? ActiveDisputeId { get; set; }
+    public string? ActiveDisputeReason { get; set; }
+    public string? ActiveDisputeStatus { get; set; }
 }
 
 public sealed record ShopOptionVm(int Id, string Name);

@@ -20,7 +20,9 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Re:Market - Chợ đồ cũ thông minh, kết nối người mua và người bán, bảo vệ môi trường và tối ưu chi phí." />
     <title>@ViewData["Title"] - Re:Market</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
     @if (User.Identity?.IsAuthenticated == true)
     {
         <meta name="rm-csrf" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
@@ -34,6 +36,8 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/animations.css" asp-append-version="true" />
+    <script src="~/js/animations.js" asp-append-version="true"></script>
 </head>
 <body class="rm-body">
     <!-- Header Navbar chuẩn Wireframe (Ảnh 2, 4, 5) -->
@@ -120,9 +124,19 @@
 
                     <div class="rm-dropdown">
                         <button type="button" class="rm-user-trigger" id="userMenuBtn" aria-expanded="false">
-                            <span class="user-avatar" aria-hidden="true">
-                                @(User.Identity?.Name?.Substring(0, 1).ToUpperInvariant() ?? "U")
-                            </span>
+                            @{
+                                var userAvatar = User.FindFirst("avatar")?.Value;
+                                var userInitial = User.Identity?.Name?.Length > 0 ? User.Identity.Name.Substring(0, 1).ToUpperInvariant() : "U";
+                            }
+                            @if (!string.IsNullOrWhiteSpace(userAvatar))
+                            {
+                                <img src="@userAvatar" alt="Avatar" class="user-avatar" style="object-fit: cover;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';" />
+                                <span class="user-avatar" style="display:none;" aria-hidden="true">@userInitial</span>
+                            }
+                            else
+                            {
+                                <span class="user-avatar" aria-hidden="true">@userInitial</span>
+                            }
                             <span style="font-size: 13.5px; font-weight: 500;">@User.Identity?.Name</span>
                             <svg viewBox="0 0 12 8" width="9" height="5" fill="currentColor"><path d="M1.41 0L6 4.58L10.59 0L12 1.41L6 7.41L0 1.41L1.41 0Z"/></svg>
                         </button>
@@ -152,6 +166,10 @@
                     @if (User.IsInRole("USER"))
                     {
                         <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+                    }
+                    else if (User.IsInRole("ADMIN"))
+                    {
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn-rm-primary">Quản trị</a>
                     }
                 }
                 else
@@ -238,8 +256,9 @@
                 <div>
                     <h4 class="rm-footer-heading">Về chúng tôi</h4>
                     <ul class="rm-footer-links">
-                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="giao-dich">Giao dịch trên Re:Market</a></li>
-                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="su-co">Cách nhận hỗ trợ</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="About">Giới thiệu</a></li>
+                        <li><a href="/gioi-thieu#lien-he">Liên hệ</a></li>
+                        <li><a asp-controller="Help" asp-action="Index">Trung tâm trợ giúp</a></li>
                     </ul>
                 </div>
 
@@ -257,22 +276,19 @@
                 <div>
                     <h4 class="rm-footer-heading">Chính sách</h4>
                     <ul class="rm-footer-links">
-                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="bao-mat">Bảo mật tài khoản</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Terms">Điều khoản sử dụng</a></li>
+                        <li><a href="/chinh-sach-bao-mat">Chính sách bảo mật</a></li>
                         <li><a asp-controller="Help" asp-action="Index" asp-fragment="su-co">Quy tắc xử lý sự cố</a></li>
                     </ul>
                 </div>
 
                 <!-- Cột 5: Liên hệ và hỗ trợ -->
                 <div>
-                    <h4 class="rm-footer-heading">Liên hệ &amp; hỗ trợ</h4>
-                    <div class="rm-footer-contact">
-                        <a href="mailto:amin@local.com"><i class="bi bi-envelope" aria-hidden="true"></i><span>amin@local.com</span></a>
-                        <a href="tel:19001314"><i class="bi bi-telephone" aria-hidden="true"></i><span>1900 1314</span></a>
-                        <div class="rm-footer-address"><i class="bi bi-geo-alt" aria-hidden="true"></i><span>Lê Văn Việt, phường Tăng Nhơn Phú, Thủ Đức, TP.HCM</span></div>
-                        <a asp-controller="Help" asp-action="Index" asp-fragment="faq"><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Trung tâm hướng dẫn</span></a>
-                        <a asp-controller="Help" asp-action="Index" asp-fragment="su-co"><i class="bi bi-tools" aria-hidden="true"></i><span>Xử lý sự cố giao dịch</span></a>
-                        <a asp-area="User" asp-controller="Disputes" asp-action="Index"><i class="bi bi-chat-square-text" aria-hidden="true"></i><span>Khiếu nại &amp; tranh chấp</span></a>
-                        <a asp-area="User" asp-controller="Reports" asp-action="Index"><i class="bi bi-flag" aria-hidden="true"></i><span>Lịch sử báo cáo</span></a>
+                    <h4 class="rm-footer-heading">Mạng xã hội</h4>
+                    <div class="rm-social-icons">
+                        <a class="social-circle" href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a class="social-circle" href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                        <a class="social-circle" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
                     </div>
                     <p class="rm-footer-contact-note">Với vấn đề về đơn hàng, vui lòng chuẩn bị mã đơn để được hỗ trợ nhanh hơn.</p>
                 </div>

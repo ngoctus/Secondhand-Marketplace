@@ -89,7 +89,24 @@
             @(string.IsNullOrWhiteSpace(Model.Description) ? "Người bán chưa viết mô tả cho tin đăng này." : Model.Description)
         </div>
 
-        @if (Model.CanBuy)
+        @{
+            var currentUserId = User.LayNguoiDungId();
+            var isOwner = currentUserId.HasValue && currentUserId.Value == Model.SellerUserId;
+            var currentUrl = Context.Request.Path + Context.Request.QueryString;
+        }
+
+        @if (isOwner)
+        {
+            <div class="detail-actions-row mb-3">
+                <a asp-area="User" asp-controller="Products" asp-action="Edit" asp-route-id="@Model.Id" class="btn-main text-decoration-none text-center" style="padding: 10px 24px; font-weight: 600;">
+                    <i class="bi bi-pencil-square me-1"></i> Quản lý tin đăng
+                </a>
+                <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn-rm-outline text-decoration-none text-center" style="padding: 10px 20px; font-weight: 600;">
+                    Danh sách sản phẩm của tôi
+                </a>
+            </div>
+        }
+        else if (Model.CanBuy)
         {
             <div class="detail-actions-row">
                 @if (User.IsInRole("USER"))
@@ -97,6 +114,7 @@
                     <form asp-area="User" asp-controller="Cart" asp-action="Them" method="post" style="display: inline-block;">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="maSanPham" value="@Model.Id" />
+                        <input type="hidden" name="returnUrl" value="@currentUrl" />
                         <button type="submit" class="btn-rm-outline" style="padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="9" cy="21" r="1"></circle>
@@ -112,8 +130,16 @@
                 }
                 else if (User.Identity?.IsAuthenticated != true)
                 {
-                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)" class="btn-main text-decoration-none text-center" style="padding: 10px 24px; font-weight: 600;">
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@currentUrl" class="btn-rm-outline text-decoration-none" style="padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
                         Đăng nhập để mua
+                    </a>
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Url.Action("Checkout", "Orders", new { area = "User", maSanPham = Model.Id })" class="btn-main text-decoration-none text-center" style="padding: 10px 24px; font-weight: 600;">
+                        Mua ngay
                     </a>
                 }
                 else

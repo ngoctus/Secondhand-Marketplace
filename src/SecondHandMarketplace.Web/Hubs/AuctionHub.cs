@@ -9,12 +9,20 @@ public class AuctionHub : Hub
     private static readonly ConcurrentDictionary<int, ConcurrentDictionary<string, byte>> Viewers = new();
     private static string Group(int id) => $"auction-{id}";
 
+    private const int MaxRooms = 2000;
+    private const int MaxViewersPerRoom = 1000;
+
     public async Task JoinAuction(int auctionId)
     {
-        if (auctionId <= 0) return;
+        if (auctionId <= 0 || auctionId > 10_000_000) return;
+        if (Viewers.Count >= MaxRooms && !Viewers.ContainsKey(auctionId)) return;
+
         await Groups.AddToGroupAsync(Context.ConnectionId, Group(auctionId));
         var set = Viewers.GetOrAdd(auctionId, _ => new());
-        set.TryAdd(Context.ConnectionId, 0);
+        if (set.Count < MaxViewersPerRoom)
+        {
+            set.TryAdd(Context.ConnectionId, 0);
+        }
         await Clients.Group(Group(auctionId)).SendAsync("ViewerCount", set.Count);
     }
 

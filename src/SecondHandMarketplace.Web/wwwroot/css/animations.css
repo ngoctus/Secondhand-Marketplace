@@ -1,0 +1,208 @@
+/* Hiệu ứng động cho trang chủ + lưới sản phẩm.
+   Mọi quy tắc nằm sau class html.rm-motion do animations.js thêm vào khi máy dùng
+   không tắt prefers-reduced-motion: JS lỗi hoặc tắt JS thì trang vẫn hiển thị bình thường. */
+
+/* ---------- 1. HIỆN DẦN KHI CUỘN ---------- */
+html.rm-motion [data-rm-reveal] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition-delay: var(--rm-delay, 0ms);
+}
+
+html.rm-motion [data-rm-reveal="left"] {
+    transform: translateX(-20px);
+}
+
+html.rm-motion [data-rm-reveal="pop"] {
+    transform: translateY(14px) scale(0.975);
+}
+
+html.rm-motion [data-rm-reveal].rm-reveal-in {
+    opacity: 1;
+    transform: none;
+}
+
+/* ---------- 2. THẺ SẢN PHẨM: NÂNG KHI HOVER + ZOOM ẢNH ---------- */
+html.rm-motion .rm-product-card .rm-card-media,
+html.rm-motion .rm-product-card .rm-card-image {
+    transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.4s ease;
+}
+
+html.rm-motion .rm-product-card:hover .rm-card-media,
+html.rm-motion .rm-product-card:focus-within .rm-card-media {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+html.rm-motion .rm-product-card:hover .rm-card-image,
+html.rm-motion .rm-product-card:focus-within .rm-card-image {
+    transform: scale(1.045);
+}
+
+html.rm-motion .rm-product-card:hover .rm-card-title a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Thẻ đánh giá, độ tin cậy, danh mục, bước hướng dẫn cũng nâng theo cho thống nhất */
+html.rm-motion .review-card,
+html.rm-motion .trust-card,
+html.rm-motion .category-card,
+html.rm-motion .step-card,
+html.rm-motion .sust-stat-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+html.rm-motion .review-card:hover,
+html.rm-motion .trust-card:hover,
+html.rm-motion .category-card:hover,
+html.rm-motion .step-card:hover,
+html.rm-motion .sust-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Mạch đập nhẹ ở nút CTA chính: chạy 3 lần rồi dừng để không gây khó chịu */
+@keyframes rmPulseRing {
+    0% { box-shadow: 0 0 0 0 rgba(104, 112, 90, 0.32); }
+    70% { box-shadow: 0 0 0 14px rgba(104, 112, 90, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(104, 112, 90, 0); }
+}
+
+html.rm-motion .rm-cta-pulse {
+    animation: rmPulseRing 2.4s ease-out 0.8s 3;
+}
+
+/* Ảnh hero trôi nhẹ */
+@keyframes rmFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-9px); }
+}
+
+html.rm-motion .hero-image-box.rm-reveal-in {
+    animation: rmFloat 7.5s ease-in-out 1.2s infinite;
+}
+
+/* ---------- 3. SKELETON + ẢNH NÉT DẦN ---------- */
+@keyframes rmShimmer {
+    from { background-position: 180% 0; }
+    to { background-position: -80% 0; }
+}
+
+.rm-skeleton {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(100deg, #E7DECD 28%, #F6F2E8 48%, #E7DECD 68%);
+    background-size: 220% 100%;
+    animation: rmShimmer 1.3s ease-in-out infinite;
+}
+
+/* Khung ảnh phải là tổ hợp vị trí để skeleton phủ đúng */
+[data-rm-media] {
+    position: relative;
+}
+
+html.rm-motion img.rm-img-loading {
+    opacity: 0.35;
+    filter: blur(9px);
+    transform: scale(1.03);
+}
+
+@keyframes rmBlurUp {
+    from { opacity: 0.35; filter: blur(9px); transform: scale(1.03); }
+    to { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+
+html.rm-motion img.rm-img-loaded {
+    animation: rmBlurUp 0.5s ease forwards;
+}
+
+/* ---------- 4. ÁNH SANG CHẠY TRÊN TIN NỔI BẬT ---------- */
+@keyframes rmSweep {
+    0% { transform: translateX(-130%); }
+    60%, 100% { transform: translateX(230%); }
+}
+
+html.rm-motion [data-rm-featured] .rm-card-badge {
+    overflow: hidden;
+}
+
+html.rm-motion [data-rm-featured] .rm-card-badge::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.9) 50%, transparent 68%);
+    transform: translateX(-130%);
+    animation: rmSweep 3.4s ease-in-out 1.4s infinite;
+}
+
+/* Gạch dưới nhiều màu chạy chậm dưới nhãn mỗi section */
+@keyframes rmGradientSlide {
+    to { background-position: -200% 0; }
+}
+
+html.rm-motion .section-label {
+    display: inline-block;
+}
+
+html.rm-motion .section-label::after {
+    content: "";
+    display: block;
+    width: 46px;
+    height: 2px;
+    margin-top: 6px;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(90deg, var(--color-primary), var(--color-star), var(--color-primary));
+    background-size: 200% 100%;
+    animation: rmGradientSlide 5s linear infinite;
+}
+
+/* ---------- 5. MƯỢT KHI SANG TRANG (Chrome/Edge hỗ trợ, trình duyệt khác bỏ qua) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition {
+        navigation: auto;
+    }
+}
+
+::view-transition-old(root) {
+    animation: rmVtOut 0.18s ease both;
+}
+
+::view-transition-new(root) {
+    animation: rmVtIn 0.3s ease both;
+}
+
+@keyframes rmVtOut {
+    to { opacity: 0; }
+}
+
+@keyframes rmVtIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ---------- 6. NẾU NGƯỜI DÙNG TẮT HIỆU ỨNG Ở HỆ ĐIỀU HÀNH ---------- */
+@media (prefers-reduced-motion: reduce) {
+    html.rm-motion *,
+    html.rm-motion *::before,
+    html.rm-motion *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+
+    html.rm-motion [data-rm-reveal] {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .rm-skeleton,
+    html.rm-motion img.rm-img-loading {
+        display: none;
+        opacity: 1;
+        filter: none;
+    }
+}

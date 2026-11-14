@@ -21,6 +21,8 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IS
         var phone = input.Phone.Trim();
         var description = Clean(input.Description);
         var logo = Clean(input.Logo);
+        if (!string.IsNullOrWhiteSpace(logo) && !UrlAnToan.HopLe(logo))
+            return (false, "Ảnh logo phải là URL http/https hoặc đường dẫn hợp lệ.");
         var addressDetail = Clean(input.DiaChiChiTiet);
         var areaLabel = Clean(input.KhuVucHienThi);
 
@@ -83,7 +85,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IS
 
     public async Task<ShopPublicVm?> GetPublicShopAsync(int id, int page = 1, int pageSize = 12, CancellationToken cancellationToken = default)
     {
-        page = Math.Max(1, page);
+        page = Math.Clamp(page, 1, 10000);
         pageSize = Math.Clamp(pageSize, 1, 48);
 
         // Chỉ chọn đúng các cột công khai: SĐT, địa chỉ chi tiết, ngân hàng không bao giờ được nạp lên.

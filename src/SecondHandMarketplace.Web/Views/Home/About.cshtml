@@ -1,0 +1,104 @@
+@{
+    ViewData["Title"] = "Giới thiệu - Re:Market";
+}
+
+<div class="container py-5" style="max-width: 960px;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="font-size: 14px;">
+            <li class="breadcrumb-item"><a asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Giới thiệu</li>
+        </ol>
+    </nav>
+
+    <!-- Section: Giới thiệu -->
+    <section id="gioi-thieu" class="mb-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="rm-brand-badge" style="width: 20px; height: 20px;" aria-hidden="true"></span>
+                <h1 class="h2 mb-0 fw-bold" style="color: var(--color-primary-dark, #1B4332);">Về Re:Market</h1>
+            </div>
+            <p class="lead text-muted">
+                Nền tảng thương mại điện tử chuyên đồ cũ chất lượng cao, giúp mỗi món đồ có thêm một vòng đời mới, lan tỏa lối sống bền vững và tiết kiệm.
+            </p>
+            <div class="row g-4 mt-2">
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 bg-light h-100">
+                        <div class="fs-2 mb-2 text-success"><i class="bi bi-recycle"></i></div>
+                        <h5 class="fw-bold">Bền vững & Xanh</h5>
+                        <p class="text-secondary small mb-0">Giảm thiểu rác thải tiêu dùng bằng cách tái sử dụng và tuần hoàn các sản phẩm còn giá trị.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 bg-light h-100">
+                        <div class="fs-2 mb-2 text-primary"><i class="bi bi-shield-check"></i></div>
+                        <h5 class="fw-bold">Giao dịch an toàn</h5>
+                        <p class="text-secondary small mb-0">Cơ chế kiểm duyệt tin đăng, giải quyết tranh chấp công bằng và giữ tiền ký quỹ bảo vệ người mua.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 bg-light h-100">
+                        <div class="fs-2 mb-2 text-warning"><i class="bi bi-people-fill"></i></div>
+                        <h5 class="fw-bold">Cộng đồng tin cậy</h5>
+                        <p class="text-secondary small mb-0">Hệ thống đánh giá chân thực từ những người dùng đã thực hiện giao dịch thực tế.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section: Tuyển dụng -->
+    <section id="tuyen-dung" class="mb-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <h2 class="h3 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">Cơ hội nghề nghiệp & Tuyển dụng</h2>
+            <p class="text-muted">Chúng tôi luôn chào đón các tài năng nhiệt huyết cùng chung tay xây dựng cộng đồng mua sắm đồ cũ văn minh và hiện đại.</p>
+            <div class="alert alert-light border rounded-3 d-flex align-items-center justify-content-between p-3 mt-3">
+                <div>
+                    <strong>Chuyên viên Kiểm duyệt Sản phẩm & Nội dung</strong>
+                    <div class="small text-muted">Toàn thời gian · TP. Hồ Chí Minh / Hybrid</div>
+                </div>
+                <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Đang tuyển</span>
+            </div>
+            <div class="alert alert-light border rounded-3 d-flex align-items-center justify-content-between p-3 mt-2">
+                <div>
+                    <strong>Kỹ sư Phần mềm Fullstack (.NET / C#)</strong>
+                    <div class="small text-muted">Toàn thời gian · TP. Hồ Chí Minh</div>
+                </div>
+                <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Đang tuyển</span>
+            </div>
+            <p class="small text-muted mt-3 mb-0">Gửi CV ứng tuyển về địa chỉ: <a href="mailto:careers@remarket.vn" class="fw-semibold text-decoration-none">careers@remarket.vn</a></p>
+        </div>
+    </section>
+
+    <!-- Section: Liên hệ -->
+    <section id="lien-he">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <h2 class="h3 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">Liên hệ với chúng tôi</h2>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                        <li class="d-flex align-items-center gap-3">
+                            <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+                            <div><strong>Địa chỉ:</strong> Khu Công nghệ cao, TP. Thủ Đức, TP. Hồ Chí Minh</div>
+                        </li>
+                        <li class="d-flex align-items-center gap-3">
+                            <i class="bi bi-envelope-fill text-primary fs-5"></i>
+                            <div><strong>Email:</strong> <a href="mailto:hotro@remarket.vn" class="text-decoration-none">hotro@remarket.vn</a></div>
+                        </li>
+                        <li class="d-flex align-items-center gap-3">
+                            <i class="bi bi-telephone-fill text-success fs-5"></i>
+                            <div><strong>Hotline hỗ trợ:</strong> 1900 6868 (8:00 - 21:00)</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <h6 class="fw-bold mb-2">Giờ làm việc tổng đài</h6>
+                        <p class="small text-muted mb-1">Thứ Hai - Thứ Bảy: 08:00 - 21:00</p>
+                        <p class="small text-muted mb-0">Chủ Nhật & Ngày lễ: 09:00 - 18:00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

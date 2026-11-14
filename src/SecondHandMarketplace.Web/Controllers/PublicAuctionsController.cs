@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Services.Auctions;
@@ -28,7 +28,7 @@ public sealed class PublicAuctionsController(IAuctionService auctions) : Control
     public async Task<IActionResult> Status(int id, CancellationToken ct)
     {
         var dto = await auctions.GetStatusAsync(id, User.LayNguoiDungId(), ct);
-        return dto is null ? NotFound() : Json(dto);
+        return dto is null ? NotFound(new { error = "not_found", message = "Phiên đấu giá không tồn tại." }) : Json(dto);
     }
 
     [Authorize]
