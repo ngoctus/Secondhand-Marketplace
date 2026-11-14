@@ -1,4 +1,4 @@
-﻿SET ANSI_NULLS ON;
+SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 SET ARITHABORT ON;
 GO
@@ -45,8 +45,9 @@ WHERE NOT EXISTS (SELECT 1 FROM NguoiDung n WHERE n.Email = v.Email);
 
 SET @AdminId = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'admin@secondhand.local');
 
-INSERT CuaHang (MaNguoiDung, TenShop, SoDienThoaiLienHe, MoTa)
-SELECT nd.MaNguoiDung, v.TenShop, v.SoDienThoai, v.MoTa
+INSERT CuaHang (MaNguoiDung, TenShop, SoDienThoaiLienHe, MoTa, NganHang, MaNganHang, SoTaiKhoan, TenChuTaiKhoan)
+SELECT nd.MaNguoiDung, v.TenShop, v.SoDienThoai, v.MoTa,
+       N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'
 FROM (VALUES
     ('an.seller@demo.local',   N'An Store - Đồ cũ chất lượng', '0901000001', N'Chuyên đồ điện tử, thời trang và xe đạp đã qua sử dụng, kiểm tra kỹ trước khi bán.'),
     ('binh.seller@demo.local', N'Bình Vintage',                '0901000002', N'Đồ gia dụng, nội thất và đồ dùng gia đình giá mềm.')
@@ -93,13 +94,45 @@ WHERE NOT EXISTS (SELECT 1 FROM SanPham s WHERE s.MaCuaHang = ch.MaCuaHang AND s
 
 INSERT AnhSanPham (MaSanPham, DuongDan, ThuTu, LaAnhChinh, DungLuong)
 SELECT sp.MaSanPham,
-       N'/uploads/seed/sp' + RIGHT('000' + CAST(sp.MaSanPham AS varchar(10)), 3) + N'-' + CAST(n.ThuTu AS varchar(2)) + N'.jpg',
+       N'/uploads/seed/' + m.SeedImg + N'-' + CAST(n.ThuTu AS varchar(2)) + N'.jpg',
        n.ThuTu,
        CASE WHEN n.ThuTu = 1 THEN 1 ELSE 0 END,
-       200000 + sp.MaSanPham * 1000 + n.ThuTu * 100
+       200000 + (sp.MaSanPham % 27) * 1000 + n.ThuTu * 100
 FROM SanPham sp
 JOIN CuaHang ch   ON ch.MaCuaHang = sp.MaCuaHang
 JOIN NguoiDung nd ON nd.MaNguoiDung = ch.MaNguoiDung
+CROSS APPLY (
+    SELECT CASE
+        WHEN sp.Ten LIKE N'%Tủ%' THEN 'sp023'
+        WHEN sp.Ten LIKE N'%Kệ%' OR sp.Ten LIKE N'%Giá sách%' THEN 'sp015'
+        WHEN sp.Ten LIKE N'%Bàn học%' OR sp.Ten LIKE N'%Bàn ăn%' OR sp.Ten LIKE N'%Bàn trà%' OR sp.Ten LIKE N'%Sofa%' OR sp.Ten LIKE N'%bàn ghế%' OR sp.Ten LIKE N'%Ghế%' THEN 'sp017'
+        WHEN sp.Ten LIKE N'%Gối%' OR sp.Ten LIKE N'%Chăn%' OR sp.Ten LIKE N'%Giường%' OR sp.Ten LIKE N'%Nệm%' THEN 'sp016'
+        WHEN sp.Ten LIKE N'%Đèn%' THEN 'sp018'
+        WHEN sp.Ten LIKE N'%iPhone%' OR sp.Ten LIKE N'%Galaxy%' OR sp.Ten LIKE N'%iPad%' OR sp.Ten LIKE N'%Điện thoại%' OR sp.Ten LIKE N'%Sạc dự phòng%' OR sp.Ten LIKE N'%điện thoại%' THEN 'sp003'
+        WHEN sp.Ten LIKE N'%Laptop%' OR sp.Ten LIKE N'%máy tính bàn%' OR sp.Ten LIKE N'%Màn hình%' OR sp.Ten LIKE N'%VivoBook%' OR sp.Ten LIKE N'%Latitude%' THEN 'sp004'
+        WHEN sp.Ten LIKE N'%Bàn phím%' OR sp.Ten LIKE N'%Chuột%' OR sp.Ten LIKE N'%Keychron%' OR sp.Ten LIKE N'%DareU%' OR sp.Ten LIKE N'%Máy in%' THEN 'sp005'
+        WHEN sp.Ten LIKE N'%Tai nghe%' THEN 'sp009'
+        WHEN sp.Ten LIKE N'%Máy ảnh%' OR sp.Ten LIKE N'%Ống kính%' OR sp.Ten LIKE N'%chống rung%' OR sp.Ten LIKE N'%Máy quay%' OR sp.Ten LIKE N'%flash studio%' THEN 'sp010'
+        WHEN sp.Ten LIKE N'%Loa%' THEN 'sp013'
+        WHEN sp.Ten LIKE N'%Đồng hồ%' OR sp.Ten LIKE N'%nhịp tim%' THEN 'sp012'
+        WHEN sp.Ten LIKE N'%Xe đạp%' OR sp.Ten LIKE N'%Xe máy%' OR sp.Ten LIKE N'%Wave%' OR sp.Ten LIKE N'%Bơm lốp%' OR sp.Ten LIKE N'%Khóa dây%' OR sp.Ten LIKE N'%Mũ bảo hiểm%' OR sp.Ten LIKE N'%Ván chèo%' OR sp.Ten LIKE N'%xe số%' THEN 'sp008'
+        WHEN sp.Ten LIKE N'%Balo%' OR sp.Ten LIKE N'%Túi xách%' OR sp.Ten LIKE N'%Túi chống nước%' OR sp.Ten LIKE N'%Lều du lịch%' THEN 'sp014'
+        WHEN sp.Ten LIKE N'%Nồi chiên%' OR sp.Ten LIKE N'%Nồi cơm%' THEN 'sp006'
+        WHEN sp.Ten LIKE N'%nồi%' OR sp.Ten LIKE N'%Bếp từ%' OR sp.Ten LIKE N'%Ấm%' OR sp.Ten LIKE N'%thủy tinh%' OR sp.Ten LIKE N'%dao và thớt%' OR sp.Ten LIKE N'%bình trà%' OR sp.Ten LIKE N'%ly đồng%' THEN 'sp019'
+        WHEN sp.Ten LIKE N'%xay sinh tố%' THEN 'sp024'
+        WHEN sp.Ten LIKE N'%Bàn ủi%' THEN 'sp025'
+        WHEN sp.Ten LIKE N'%Quạt%' OR sp.Ten LIKE N'%lọc không khí%' OR sp.Ten LIKE N'%hút bụi%' OR sp.Ten LIKE N'%Máy giặt%' THEN 'sp026'
+        WHEN sp.Ten LIKE N'%Xe đẩy%' OR sp.Ten LIKE N'%Xe tập đi%' OR sp.Ten LIKE N'%ăn dặm%' OR sp.Ten LIKE N'%Nôi điện%' THEN 'sp022'
+        WHEN sp.Ten LIKE N'%Lego%' OR sp.Ten LIKE N'%Xếp hình%' OR sp.Ten LIKE N'%Đồ chơi gỗ%' OR sp.Ten LIKE N'%Lắp ráp%' OR sp.Ten LIKE N'%Bập bênh%' THEN 'sp027'
+        WHEN sp.Ten LIKE N'%Giày%' OR sp.Ten LIKE N'%sneaker%' OR sp.Ten LIKE N'%Dép%' THEN 'sp002'
+        WHEN sp.Ten LIKE N'%Áo%' OR sp.Ten LIKE N'%Quần%' OR sp.Ten LIKE N'%Váy%' OR sp.Ten LIKE N'%denim%' OR sp.Ten LIKE N'%Khăn%' OR sp.Ten LIKE N'%Set năm bộ đồ%' OR sp.Ten LIKE N'%Nón cói%' OR sp.Ten LIKE N'%Đồ bơi%' THEN 'sp001'
+        WHEN sp.Ten LIKE N'%cờ vua%' OR sp.Ten LIKE N'%Tượng gốm%' OR sp.Ten LIKE N'%Hộp nhạc%' OR sp.Ten LIKE N'%men rạn%' OR sp.Ten LIKE N'%sơn mài%' OR sp.Ten LIKE N'%thư pháp%' OR sp.Ten LIKE N'%Bình hoa%' OR sp.Ten LIKE N'%Bình gốm%' THEN 'sp011'
+        WHEN sp.Ten LIKE N'%Vợt%' OR sp.Ten LIKE N'%chạy bộ%' OR sp.Ten LIKE N'%yoga%' OR sp.Ten LIKE N'%tạ tay%' OR sp.Ten LIKE N'%Gậy golf%' OR sp.Ten LIKE N'%Kính lặn%' OR sp.Ten LIKE N'%Kính bơi%' OR sp.Ten LIKE N'%padel%' THEN 'sp021'
+        WHEN sp.Ten LIKE N'%Truyện%' OR sp.Ten LIKE N'%Conan%' OR sp.Ten LIKE N'%Doraemon%' OR sp.Ten LIKE N'%Sherlock%' THEN 'sp020'
+        WHEN sp.Ten LIKE N'%Giải tích%' OR sp.Ten LIKE N'%Cấu trúc dữ liệu%' OR sp.Ten LIKE N'%Giáo trình%' OR sp.Ten LIKE N'%Kinh tế học%' OR sp.Ten LIKE N'%Tư duy phản biện%' OR sp.Ten LIKE N'%vở kẻ ngang%' OR sp.Ten LIKE N'%Bút máy%' OR sp.Ten LIKE N'%Casio fx%' OR sp.Ten LIKE N'%IELTS%' OR sp.Ten LIKE N'%Sách%' THEN 'sp007'
+        ELSE 'sp007'
+    END AS SeedImg
+) m
 CROSS JOIN (VALUES (1), (2)) n (ThuTu)
 WHERE nd.Email LIKE '%@demo.local' AND sp.TrangThai <> 'DRAFT'
   AND NOT EXISTS (SELECT 1 FROM AnhSanPham a WHERE a.MaSanPham = sp.MaSanPham AND a.ThuTu = n.ThuTu);
@@ -347,29 +380,29 @@ SELECT nd.MaNguoiDung, v.TenShop, v.SoDienThoai, v.MoTa, tt.MaTinhThanh, px.MaPh
        v.NganHang, v.MaNganHang, v.SoTaiKhoan, v.ChuTaiKhoan
 FROM (VALUES
     ('nguoiban01@demo.local', N'Long Tech Cũ',        '0902000001', N'Điện thoại, laptop và phụ kiện công nghệ đã qua sử dụng, bảo hành 7 ngày.',
-        N'Thành phố Hồ Chí Minh', N'Phường Sài Gòn',    N'15 Đồng Khởi',          N'Trung tâm Quận 1 cũ', N'Vietcombank', '970436', '9704360001', N'NGUYEN HOANG LONG'),
+        N'Thành phố Hồ Chí Minh', N'Phường Sài Gòn',    N'15 Đồng Khởi',          N'Trung tâm Quận 1 cũ', N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban02@demo.local', N'Hà Vintage Closet',   '0902000002', N'Quần áo, túi xách vintage tuyển chọn, còn đẹp.',
-        N'Thành phố Hồ Chí Minh', N'Phường Bến Thành',  N'42 Lê Thánh Tôn',       N'Gần chợ Bến Thành',   N'MBBank',      '970422', '9704220002', N'TRAN THU HA'),
+        N'Thành phố Hồ Chí Minh', N'Phường Bến Thành',  N'42 Lê Thánh Tôn',       N'Gần chợ Bến Thành',   N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban03@demo.local', N'Huy Gia Dụng',        '0902000003', N'Đồ gia dụng, nồi chảo, máy xay còn dùng tốt.',
-        N'Thành phố Hồ Chí Minh', N'Phường Thủ Đức',    N'88 Võ Văn Ngân',        N'Khu Thủ Đức',         N'VietinBank',  '970415', '9704150003', N'LE QUANG HUY'),
+        N'Thành phố Hồ Chí Minh', N'Phường Thủ Đức',    N'88 Võ Văn Ngân',        N'Khu Thủ Đức',         N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban04@demo.local', N'Mai Books',           '0902000004', N'Sách cũ, truyện, văn phòng phẩm giá mềm.',
-        N'Thành phố Hồ Chí Minh', N'Phường Gò Vấp',     N'210 Quang Trung',       NULL,                   N'BIDV',        '970418', '9704180004', N'PHAM NGOC MAI'),
+        N'Thành phố Hồ Chí Minh', N'Phường Gò Vấp',     N'210 Quang Trung',       NULL,                   N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban05@demo.local', N'Khôi Sport',          '0902000005', N'Dụng cụ thể thao, xe đạp, đồ dã ngoại.',
-        N'Thành phố Hồ Chí Minh', N'Phường Bình Thạnh', N'33 Điện Biên Phủ',      NULL,                   NULL,           NULL,     NULL,         NULL),
+        N'Thành phố Hồ Chí Minh', N'Phường Bình Thạnh', N'33 Điện Biên Phủ',      NULL,                   N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban06@demo.local', N'Lan Mẹ và Bé',        '0902000006', N'Đồ chơi, quần áo, xe đẩy trẻ em còn mới.',
-        N'Thành phố Hồ Chí Minh', N'Phường Tân Bình',   N'7 Hoàng Văn Thụ',       N'Gần sân bay',         N'Techcombank', '970407', '9704070006', N'DANG THI LAN'),
+        N'Thành phố Hồ Chí Minh', N'Phường Tân Bình',   N'7 Hoàng Văn Thụ',       N'Gần sân bay',         N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban07@demo.local', N'Tuấn Nội Thất',       '0902000007', N'Bàn ghế, tủ kệ, đèn trang trí đã qua sử dụng.',
-        N'Thành phố Hồ Chí Minh', N'Phường Phú Nhuận',  N'56 Nguyễn Văn Trỗi',    NULL,                   N'ACB',         '970416', '9704160007', N'BUI ANH TUAN'),
+        N'Thành phố Hồ Chí Minh', N'Phường Phú Nhuận',  N'56 Nguyễn Văn Trỗi',    NULL,                   N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban08@demo.local', N'Tâm Camera Hà Nội',   '0902000008', N'Máy ảnh, ống kính, thiết bị quay phim cũ.',
-        N'Thành phố Hà Nội',      N'Phường Cầu Giấy',   N'19 Trần Thái Tông',     N'Khu Cầu Giấy',        N'VPBank',      '970432', '9704320008', N'HOANG THANH TAM'),
+        N'Thành phố Hà Nội',      N'Phường Cầu Giấy',   N'19 Trần Thái Tông',     N'Khu Cầu Giấy',        N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban09@demo.local', N'Châu Đồ Cổ',          '0902000009', N'Đồ sưu tầm, đồ gốm, đồng hồ cổ.',
-        N'Thành phố Hà Nội',      N'Phường Đống Đa',    N'101 Tây Sơn',           N'Gần Văn Miếu',        N'TPBank',      '970423', '9704230009', N'NGO BAO CHAU'),
+        N'Thành phố Hà Nội',      N'Phường Đống Đa',    N'101 Tây Sơn',           N'Gần Văn Miếu',        N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban10@demo.local', N'Hân Biển Xanh',       '0902000010', N'Đồ lướt sóng, quần áo mùa hè, phụ kiện du lịch.',
-        N'Thành phố Đà Nẵng',     N'Phường Hải Châu',   N'64 Bạch Đằng',          N'Ven sông Hàn',        N'Sacombank',   '970403', '9704030010', N'DUONG GIA HAN'),
+        N'Thành phố Đà Nẵng',     N'Phường Hải Châu',   N'64 Bạch Đằng',          N'Ven sông Hàn',        N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban11@demo.local', N'Kiệt Miền Tây',       '0902000011', N'Xe máy, xe đạp điện, đồ điện gia dụng.',
-        N'Thành phố Cần Thơ',     N'Phường Ninh Kiều',  N'25 Hòa Bình',           N'Bến Ninh Kiều',       N'VIB',         '970441', '9704410011', N'LY TUAN KIET'),
+        N'Thành phố Cần Thơ',     N'Phường Ninh Kiều',  N'25 Hòa Bình',           N'Bến Ninh Kiều',       N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM'),
     ('nguoiban12@demo.local', N'Thảo Shop Mới Mở',    '0902000012', N'Cửa hàng mới, chưa đăng sản phẩm nào.',
-        N'Tỉnh Đồng Nai',         N'Phường Biên Hòa',   N'12 Nguyễn Ái Quốc',     NULL,                   N'OCB',         '970448', '9704480012', N'MAI PHUONG THAO')
+        N'Tỉnh Đồng Nai',         N'Phường Biên Hòa',   N'12 Nguyễn Ái Quốc',     NULL,                   N'VietinBank', '970415', '119002953584', N'PHAN HIEU TRUONG DH GTVT TAI TPHCM')
 ) v (Email, TenShop, SoDienThoai, MoTa, Tinh, Xa, DiaChi, KhuVuc, NganHang, MaNganHang, SoTaiKhoan, ChuTaiKhoan)
 JOIN NguoiDung nd ON nd.Email = v.Email
 JOIN dbo.TinhThanh tt ON tt.TenTinhThanh = v.Tinh
@@ -402,463 +435,6 @@ GO
 
 GO
 
-
--- =============================================================================
--- B8: Seed kho sản phẩm demo cho trang tìm kiếm và trang chi tiết.
---   - 80 tin đăng, rải đều cả 9 danh mục hệ thống (09_seed_data.sql), mỗi danh mục >= 6 tin.
---   - Giá phủ đủ 6 phân khúc của bộ lọc (60.000đ đến 14.500.000đ).
---   - Đủ 5 tình trạng NEW/LIKE_NEW/GOOD/FAIR/WORN và đủ trạng thái:
---     PENDING_REVIEW (chờ duyệt), ACTIVE (đang bán), RESERVED (đã giữ), SOLD (đã bán).
---   - Gắn vào 13 shop: 2 shop của 29_seed_demo_goc.sql + 11 shop của 30_seed_dia_chi_shop.sql.
---     Shop nguoiban12 cố ý để trống để test trang shop chưa có sản phẩm.
---   - Ảnh dùng lại 54 file có sẵn trong wwwroot/uploads/seed (mỗi tin 2 ảnh, ảnh 1 là ảnh chính).
---   - Chạy sau 29 và 30. Chạy lại không nhân đôi (đối chiếu theo MaCuaHang + Ten).
--- =============================================================================
-
-IF NOT EXISTS (SELECT 1 FROM CuaHang c JOIN NguoiDung n ON n.MaNguoiDung = c.MaNguoiDung
-               WHERE n.Email = 'nguoiban01@demo.local')
-    THROW 51092, N'Chưa có shop của 30_seed_dia_chi_shop.sql. Chạy 29 rồi 30 trước khi chạy file này.', 1;
-GO
-
-DECLARE @Now datetime2(3) = SYSUTCDATETIME();
-DECLARE @AdminId int = (SELECT TOP 1 MaNguoiDung FROM NguoiDung WHERE VaiTro = 'ADMIN' ORDER BY MaNguoiDung);
-
-BEGIN TRANSACTION;
-
--- 1. Bảng tạm mô tả 80 tin đăng -------------------------------------------------
-IF OBJECT_ID('tempdb..#SeedSp') IS NOT NULL DROP TABLE #SeedSp;
-CREATE TABLE #SeedSp (
-    Stt           int            NOT NULL PRIMARY KEY,
-    EmailChuShop  varchar(100)   NOT NULL,
-    TenDanhMuc    nvarchar(100)  NOT NULL,
-    CodeTinhTrang varchar(20)    NOT NULL,
-    Ten           nvarchar(200)  NOT NULL,
-    MoTa          nvarchar(2000) NOT NULL,
-    Gia           decimal(18,2)  NOT NULL,
-    TrangThai     varchar(20)    NOT NULL,
-    GioTruoc      int            NOT NULL
-);
-
-INSERT #SeedSp (Stt, EmailChuShop, TenDanhMuc, CodeTinhTrang, Ten, MoTa, Gia, TrangThai, GioTruoc) VALUES
--- Long Tech Cũ (nguoiban01) - đồ điện tử
- (1,  'nguoiban01@demo.local', N'Đồ điện tử',             'GOOD',     N'Điện thoại Samsung Galaxy A54 128GB',                 N'Máy còn đẹp, pin còn 88%, đã thay kính lưng vì nứt nhẹ. Kèm sạc nhanh, cáp và ốp lưng.', 4900000, 'ACTIVE',         210),
- (2,  'nguoiban01@demo.local', N'Đồ điện tử',             'LIKE_NEW', N'Laptop Asus VivoBook 14 Ryzen 5 RAM 8GB',              N'Mua đầu năm 2025, mới dùng ba tháng cho học tập, bàn phím chưa bóng. Còn hộp, sạc và túi chống sốc.', 9500000, 'ACTIVE',         190),
- (3,  'nguoiban01@demo.local', N'Đồ điện tử',             'FAIR',     N'iPad Gen 9 64GB WiFi viền bạc',                        N'Mặt kính có một vết trầy mảnh, cảm ứng và loa vẫn ổn. Bán kèm bút cảm ứng cổng sạc và kính cường lực.', 4200000, 'PENDING_REVIEW', 12),
- (4,  'nguoiban01@demo.local', N'Đồ điện tử',             'GOOD',     N'Màn hình Dell 24 inch Full HD 75Hz',                   N'Không điểm chết, chân xoay đã tháo rời, còn dây nguồn và dây HDMI. Phù hợp làm việc văn phòng.', 1800000, 'ACTIVE',         160),
- (5,  'nguoiban01@demo.local', N'Đồ điện tử',             'WORN',     N'Cây máy tính bàn i5 thế hệ 8 RAM 8GB SSD 240GB',        N'Vỏ máy ố vàng, quạt kêu to nhưng khởi động và chạy ổn định. Đã bán cho bạn sinh viên tháng trước.', 3500000, 'SOLD',           700),
- (6,  'nguoiban01@demo.local', N'Đồ điện tử',             'NEW',      N'Sạc dự phòng Anker 20000mAh chưa bóc seal',             N'Mua dư khi đi công tác nên chưa dùng lần nào, tem seal còn nguyên. Kèm cáp và túi vải.', 350000, 'RESERVED',       95),
- (7,  'nguoiban01@demo.local', N'Khác',                   'GOOD',     N'Đèn để bàn cảm ứng ba mức sáng',                       N'Đèn sáng đều, mạch cảm ứng nhạy, kèm adapter đúng chuẩn. Bán vì chuyển sang đèn kẹp bàn.', 220000, 'ACTIVE',         120),
--- Hà Vintage Closet (nguoiban02) - thời trang
- (8,  'nguoiban02@demo.local', N'Thời trang',             'LIKE_NEW', N'Váy denim chữ A cạp cao size S',                       N'May từ vải denim dày, mới mặc hai buổi đi tiệc, không phai màu. Có khóa kéo sau và túi trong.', 320000, 'ACTIVE',         140),
- (9,  'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Áo blazer nữ công sở màu be size M',                    N'Form đứng, lớp lót còn tốt, một cúc ở tay bị lỏng nhẹ. Phù hợp mặc đi làm cả tuần.', 280000, 'ACTIVE',         260),
- (10, 'nguoiban02@demo.local', N'Thời trang',             'FAIR',     N'Túi xách da thật màu nâu quai đeo chéo',                 N'Da có vân xước tự nhiên, góc đáy hơi mòn, khóa và ngăn trong còn nguyên. Không còn hộp.', 450000, 'ACTIVE',         300),
- (11, 'nguoiban02@demo.local', N'Thời trang',             'LIKE_NEW', N'Giày cao gót mũi nhọn 5cm size 37',                     N'Đi được hai buổi, đế chưa mòn, gót có tiếng kêu rất nhỏ. Kèm hộp và túi bụi.', 250000, 'RESERVED',       180),
- (12, 'nguoiban02@demo.local', N'Thời trang',             'WORN',     N'Áo len cashmere cổ tim màu xám nhạt',                    N'Sợi len đã xù ở khuỷu tay nhưng chưa thủng lỗ, giặt tay nước lạnh. Bán vì không còn mặc vừa.', 180000, 'PENDING_REVIEW', 20),
- (13, 'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Quần kaki nam ống suông lưng chun size 32',               N'Vải kaki mỏng, ít nhăn, đã cắt lai theo chiều cao 1m68. Khách đã nhận hàng và xác nhận đơn.', 200000, 'SOLD',           640),
- (14, 'nguoiban02@demo.local', N'Thời trang',             'NEW',      N'Khăn lụa vuông họa tiết hoa sen 70cm',                   N'Quà tặng chưa sử dụng, còn nhãn, kích thước 70x70cm, chạm mát, không xù sợi.', 120000, 'ACTIVE',         70),
--- Huy Gia Dụng (nguoiban03) - đồ gia dụng
- (15, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Máy lọc không khí phòng dưới 40m2',                     N'Tấm lọc còn dùng tốt, cảm biến bụi hoạt động, vỏ có vệt xước nhẹ. Kèm một tấm lọc dự phòng.', 1600000, 'ACTIVE',         230),
- (16, 'nguoiban03@demo.local', N'Đồ gia dụng',            'FAIR',     N'Bếp từ đôi bảng điều khiển rời',                        N'Mặt kính nhiễm màu ở vùng nấu bên phải, hai bên đều sôi bình thường. Khách đã nhận hàng, hỗ trợ đổi lỗi trong 7 ngày.', 1300000, 'ACTIVE',       280),
- (17, 'nguoiban03@demo.local', N'Đồ gia dụng',            'LIKE_NEW', N'Ấm đun nước siêu tốc 1.7L tự ngắt',                     N'Sôi khoảng bốn phút, tự ngắt khi cạn, lòng ấm còn sáng. Dùng ở phòng trọ một năm, còn lưới lọc cặn.', 250000, 'PENDING_REVIEW', 16),
- (18, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bộ sáu hộp thủy tinh chịu nhiệt có nắp',                 N'Thủy tinh dày, không sứt mẻ, hai nắp hơi trầy. Dùng đựng thực phẩm nóng và đông lạnh đều ổn.', 190000, 'ACTIVE',         150),
- (19, 'nguoiban03@demo.local', N'Đồ gia dụng',            'WORN',     N'Máy hút bụi dạng đứng công suất lớn',                    N'Ống hút nứt một đoạn đã băng tạm, lực hút còn mạnh, túi bụi đã vệ sinh. Đã bán, khách tự sửa tiếp.', 600000, 'SOLD',           720),
- (20, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bàn ủi khô đế chống dây nhiệt ổn',                       N'Đế còn phẳng, không cháy vải, dây nguồn chuẩn. Bán vì chuyển sang dùng bàn ủi hơi nước.', 230000, 'ACTIVE',         190),
--- Mai Books (nguoiban04) - sách và văn phòng phẩm
- (21, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Bộ giáo trình Kinh tế học vĩ mô hai tập',                N'Gáy sách còn chắc, có ghi chú bút chì ở một số trang, không thiếu chương nào.', 150000, 'ACTIVE',         320),
- (22, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'LIKE_NEW', N'Sách Tư duy phản biện bản in 2024',                     N'Mới đọc một lượt, trang sạch, bìa không gấp mép. Bán vì đã giữ bản mềm để mang đi.', 65000, 'ACTIVE',         110),
- (23, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'FAIR',     N'Truyện Sherlock Holmes trọn bộ bốn tập',                 N'Giấy hơi ngả vàng theo thời gian, đủ bốn tập, góc bìa mềm bị cong nhẹ. Đọc không sao.', 120000, 'ACTIVE',         400),
- (24, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Combo năm vở kẻ ngang bìa cứng 200 trang',               N'Chưa viết chữ nào, mua dư khi chuẩn bị năm học mới, giấy mịn không thấm mực.', 60000, 'ACTIVE',         80),
- (25, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'LIKE_NEW', N'Bút máy nắp bấm ngòi M kèm lọ mực',                      N'Viết trơn, ngòi không xẻ, đã vệ sinh sạch. Kèm một lọ mực xanh và hộp giấy.', 280000, 'RESERVED',       170),
- (26, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'FAIR',     N'Giá sách gỗ thông để bàn ba tầng',                        N'Sơn bề mặt tróc ở một thanh ngang, kết cấu còn vững, kích thước 40x20x50cm.', 175000, 'ACTIVE',         240),
- (27, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Bộ tài liệu luyện thi IELTS 18 kèm mã file nghe',         N'Sách mới khoảng 95%, mã nghe chưa kích hoạt, bìa không quăn mép. Khách đã nhận hàng.', 210000, 'SOLD',           610),
--- Khôi Sport (nguoiban05) - thể thao và dã ngoại
- (28, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Máy chạy bộ điện trong nhà gập được',                    N'Chạy êm, bảng mạch còn tốt, băng tải có vết mòn nhẹ ở giữa. Người mua tự thuê xe chở trong nội thành.', 6500000, 'ACTIVE',        350),
- (29, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'LIKE_NEW', N'Thảm tập yoga 6mm kèm dây kháng lực',                    N'Dùng vài buổi ở nhà, không rách, cuộn lại vẫn gọn. Kèm hai dây kháng lực và túi đựng.', 150000, 'ACTIVE',         90),
- (30, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'FAIR',     N'Bộ ba tạ tay bọc gang mỗi bên năm ký',                    N'Lớp cao su bọc trầy nhiều chỗ nhưng chưa nứt, trọng lượng vẫn chuẩn. Bán vì chuyển nhà.', 320000, 'ACTIVE',         200),
- (31, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Gậy golf sắt số 7 đã thay grip mới',                      N'Lưng gậy còn nét, grip vừa thay, cán không cong vênh. Phù hợp người mới tập đánh.', 1800000, 'PENDING_REVIEW', 22),
- (32, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Lều du lịch hai người chống mưa',                         N'Khung nhôm không gãy, vải có một mối chỉ sờn đã vá lại, xếp gọn vào túi tròn.', 750000, 'ACTIVE',         260),
- (33, 'nguoiban05@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Xe đạp gấp bánh 20 inch đã bảo dưỡng',                    N'Đã thay xích và bố thắng, líp có tiếng lách cách khi lên số. Khách đến lấy xe trực tiếp tại cửa hàng.', 1500000, 'SOLD',          520),
--- Lan Mẹ và Bé (nguoiban06) - đồ chơi và mẹ bé
- (34, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'LIKE_NEW', N'Đồ chơi gỗ xếp hình 100 chi tiết',                       N'Đủ mảnh theo danh sách, sơn không bong, đã lau bằng khăn ẩm. Có túi vải đựng kèm.', 95000, 'ACTIVE',         100),
- (35, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'GOOD',     N'Ghế ăn dặm nhựa nguyên khối có khay rời',                 N'Khay còn chắc, chân không nứt, vệ sinh sạch sẽ. Bé nhà dùng khoảng một năm.', 210000, 'ACTIVE',         220),
- (36, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'FAIR',     N'Xe tập đi trẻ em có vòng nhạc phía trước',                 N'Bánh xoay còn mượt, khung gấp chắc, vòng nhạc có một nốt kêu nhỏ. Bán vì bé đã biết đi.', 300000, 'PENDING_REVIEW', 18),
- (37, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'GOOD',     N'Lắp ráp kiểu 500 mảnh mô hình lâu đài có hộp',            N'Đủ mảnh, khớp nối còn chắc, hộp giấy bị móp một góc. Đã phân loại theo túi zip.', 380000, 'ACTIVE',         280),
- (38, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'LIKE_NEW', N'Nôi điện tự đưa kèm màn chống muỗi',                      N'Dộng cơ chạy êm, nệm sạch không xẹp, màn không thủng. Bé đã ra nôi nên thanh lý.', 1200000, 'RESERVED',       130),
- (39, 'nguoiban06@demo.local', N'Thời trang',             'GOOD',     N'Set năm bộ đồ thu đông cho bé size 6',                    N'Vải cotton không xù, một bộ nhạt màu ở cổ, bốn bộ còn lại đều đẹp. Khách đã nhận hàng.', 160000, 'SOLD',           480),
--- Tuấn Nội Thất (nguoiban07) - nội thất
- (40, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Sofa văng ba chỗ bọc nỉ màu xám',                        N'Đệm không xẹp, vải có một vết ố nhỏ ở tay tựa, khung gỗ còn chắc. Người mua tự thuê xe vận chuyển.', 3500000, 'ACTIVE',        300),
- (41, 'nguoiban07@demo.local', N'Nội thất',               'FAIR',     N'Bàn ăn mặt đá bốn ghế chân sắt',                         N'Mặt đá có vệt nhiệt tròn, chân ghế xước sơn, đế nhựa còn đủ bốn cái. Bán vì chuyển căn hộ nhỏ hơn.', 2800000, 'ACTIVE',       420),
- (42, 'nguoiban07@demo.local', N'Nội thất',               'LIKE_NEW', N'Tủ quần áo bốn cánh gỗ công nghiệp chống ẩm',              N'Lắp ráp một tháng rồi tháo vì không vừa phòng, ray trượt và bản lề đều còn mới. Có đầy đủ ốc vít.', 2400000, 'PENDING_REVIEW', 26),
- (43, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Đèn thả trần gỗ thông ba bóng',                           N'Chóa gỗ không nứt, dây điện và đui còn tốt, chưa kèm bóng. Phù hợp bàn ăn nhỏ.', 450000, 'ACTIVE',         210),
- (44, 'nguoiban07@demo.local', N'Nội thất',               'WORN',     N'Kệ tivi gỗ xoan đào dài một mét sáu',                     N'Mặt kệ bạc màu ở giữa, ngăn kéo vẫn trượt, một tay nắm đã thay tạm. Khách đã nhận và lắp đặt.', 1100000, 'SOLD',         690),
- (45, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Giường tầng sắt có lưới bảo vệ tầng trên',                  N'Không kêu cót két, sơn tĩnh điện còn khoảng 90%, lưới không rách. Nệm bán riêng.', 1750000, 'ACTIVE',         250),
- (46, 'nguoiban07@demo.local', N'Nội thất',               'LIKE_NEW', N'Ghế công thái học lưng lưới có tựa đầu',                   N'Piston nâng hạ bình thường, bánh xe không mòn, tay ghế còn bọc nỉ. Bán vì công ty đã trang bị ghế.', 1450000, 'RESERVED',     160),
--- Tâm Camera Hà Nội (nguoiban08) - thiết bị ảnh
- (47, 'nguoiban08@demo.local', N'Đồ điện tử',             'GOOD',     N'Máy ảnh Sony A6000 kèm ống kính 16-50mm',                 N'Cảm biến sạch, màn hình không ố, số ảnh đã chụp khoảng 12 nghìn. Kèm hai pin và sạc đôi.', 8900000, 'ACTIVE',        330),
- (48, 'nguoiban08@demo.local', N'Đồ điện tử',             'FAIR',     N'Ống kính 50mm f/1.8 lấy nét tự động',                     N'Khung xước sơn ở viền, vòng tiêu cự và lấy nét vẫn mượt, không mốc. Có nắp trước và nắp sau.', 2200000, 'ACTIVE',        270),
- (49, 'nguoiban08@demo.local', N'Đồ điện tử',             'LIKE_NEW', N'Tay chống rung máy ảnh không gương lật',                    N'Các trục cân bằng tốt, pin theo máy còn khỏe, tay cầm không lỏng. Mua để quay một dự án đã xong.', 4100000, 'PENDING_REVIEW', 30),
- (50, 'nguoiban08@demo.local', N'Đồ điện tử',             'GOOD',     N'Máy quay tay cầm độ phân giải Full HD',                    N'Zoom cơ không bị đứng, vỏ có dấu hiệu sử dụng, pin và dây HDMI đi kèm. Khách đã nhận máy.', 3000000, 'SOLD',          560),
- (51, 'nguoiban08@demo.local', N'Đồ điện tử',             'WORN',     N'Đèn flash studio kèm dù tán 80cm',                         N'Bóng flash đã thay một lần, nhiệt màu vẫn ổn, dù tán còn nguyên. Bán vì nâng cấp sang đèn LED.', 550000, 'ACTIVE',        380),
- (52, 'nguoiban08@demo.local', N'Khác',                   'GOOD',     N'Balo máy ảnh chống nước có áo mưa phủ',                     N'Ngăn mút xốp không lún, khóa kéo trơn, áo mưa phủ còn đủ. Đựng vừa hai ống kính và một máy.', 400000, 'ACTIVE',         140),
--- Châu Đồ Cổ (nguoiban09) - hàng sưu tầm
- (53, 'nguoiban09@demo.local', N'Khác',                   'FAIR',     N'Đồng hồ bàn cơ lên dây cót kiểu cổ',                       N'Chạy đúng giờ sau khi vệ sinh bộ lò xo, mặt số ố nhẹ, chân gỗ không nứt. Không còn hộp gốc.', 1200000, 'ACTIVE',        500),
- (54, 'nguoiban09@demo.local', N'Khác',                   'WORN',     N'Bình gốm men rạn cao 40cm',                               N'Men có đường rạn tự nhiên theo phong cách, miệng bình sứt một điểm nhỏ. Phù hợp trưng bày.', 650000, 'ACTIVE',         460),
- (55, 'nguoiban09@demo.local', N'Khác',                   'GOOD',     N'Tranh sơn mài phong cảnh phố cổ 60x80cm',                  N'Màu sơn còn bóng, khung gỗ không mối mọt, mặt kính phía trước nguyên vẹn. Treo được ngay.', 2500000, 'PENDING_REVIEW', 34),
- (56, 'nguoiban09@demo.local', N'Nội thất',               'FAIR',     N'Bàn trà gỗ hương kèm hai đôn nhỏ',                         N'Mặt bàn có vết nhiệt tròn, gỗ không cong vênh, hai đôn còn chắc. Bán kèm khăn phủ.', 1900000, 'ACTIVE',         520),
- (57, 'nguoiban09@demo.local', N'Khác',                   'GOOD',     N'Bộ tranh chữ thư pháp Phúc Lộc Thọ Khang',                  N'Viết tay trên giấy dó, đã phủ bóng, một khung hơi lỏng ở góc. Khách đã nhận và treo phòng khách.', 300000, 'SOLD',         600),
--- Hân Biển Xanh (nguoiban10) - đồ biển và du lịch
- (58, 'nguoiban10@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Vợt padel mặt sợi carbon đã dùng mười trận',               N'Mặt vợt chưa phồng, quai cán còn dính, kèm bao đựng. Bán vì chuyển sang thuê vợt theo giờ.', 1800000, 'PENDING_REVIEW', 40),
- (59, 'nguoiban10@demo.local', N'Thời trang',             'LIKE_NEW', N'Áo khoác chống nước nữ có lót lưới',                      N'Khóa chống nước còn mượt, vải không thủng, mới mặc hai chuyến đi biển. Size M.', 260000, 'ACTIVE',         130),
- (60, 'nguoiban10@demo.local', N'Thời trang',             'GOOD',     N'Đồ bơi nữ hai mảnh size M còn đàn hồi',                    N'Vải không bai, đường may nguyên, đã giặt nước ngọt sau mỗi lần dùng. Không kèm hộp.', 150000, 'ACTIVE',         90),
- (61, 'nguoiban10@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Ván chèo hơi kèm bơm tay và dây an toàn',                  N'Van hơi không xì sau khi thử giữ 24 giờ, mặt ván trầy nhẹ. Khách đã nhận ván tại kho.', 4200000, 'SOLD',          540),
- (62, 'nguoiban10@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Kính bơi kèm cặp mũi silicone',                           N'Mắt kính không mờ, dây đàn hồi tốt, đã thay cặp mũi mới. Vệ sinh bằng nước ấm sau khi dùng.', 90000, 'ACTIVE',         75),
--- Kiệt Miền Tây (nguoiban11) - xe và đồ dùng miền Tây
- (63, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'GOOD',     N'Xe máy số 110cc chính chủ một đời sử dụng',                N'Động cơ êm, nước sơn còn khoảng 85%, đã thay nhớt và lốp trước. Giấy tờ đầy đủ, công chứng tại quận.', 14500000, 'ACTIVE',       430),
- (64, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Xe đạp điện đi được khoảng 45km mỗi lần sạc',              N'Pin còn khoảng 70% dung lượng gốc, tay ga mượt, yên có vết nứt nhỏ. Cần người tự chở về.', 6800000, 'PENDING_REVIEW', 48),
- (65, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'LIKE_NEW', N'Mũ bảo hiểm ba phần tư có kính chắn gió size L',           N'Vỏ không bị va chạm, mút bên trong còn đàn hồi, quai và khóa chắc. Mới dùng một mùa mưa.', 350000, 'ACTIVE',         110),
- (66, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'WORN',     N'Giá đỡ điện thoại gắn xe máy có cổng USB',                  N'Kẹp tay vẫn chặt, một ngàm nhựa đã hàn lại, dây nguồn đấu thẳng vào bình. Khách đã nhận hàng.', 120000, 'SOLD',         500),
- (67, 'nguoiban11@demo.local', N'Đồ gia dụng',            'GOOD',     N'Quạt trần ba cánh có điều khiển từ xa',                     N'Quay êm ở cả ba số, cánh không cong, remote còn pin. Tháo ra từ phòng khách cũ.', 1250000, 'ACTIVE',         300),
- (68, 'nguoiban11@demo.local', N'Khác',                   'GOOD',     N'Bơm lốp xe mini chạy điện 12V có đồng hồ',                   N'Đồng hồ chỉ gần đúng khi so với bơm trạm, dây nguồn theo thuốc lá xe còn tốt, vỏ trầy nhẹ.', 300000, 'PENDING_REVIEW', 28),
--- An Store (an.seller) - nhiều nhóm hàng
- (69, 'an.seller@demo.local',  N'Thời trang',             'GOOD',     N'Quần tây nam ống đứng lưng cao size 30',                    N'Vải kaki không bóng, đã cắt lai, một túi trượt vẫn kéo được. Mặc đi làm hai năm.', 180000, 'ACTIVE',         120),
- (70, 'an.seller@demo.local',  N'Thời trang',             'LIKE_NEW', N'Giày tây da bò cổ cao size 41 đã đánh xi',                  N'Da không nứt, đế cao su chưa mòn nhiều, dây còn nguyên. Kèm hộp và một hộp xi.', 400000, 'RESERVED',       150),
- (71, 'an.seller@demo.local',  N'Đồ điện tử',             'GOOD',     N'Đồng hồ thông minh viền nhôm dây thể thao',                  N'Màn hình không sọc, pin dùng khoảng một ngày, đã thay dây của hãng khác. Không còn hộp.', 3200000, 'ACTIVE',        240),
- (72, 'an.seller@demo.local',  N'Đồ điện tử',             'FAIR',     N'Loa Bluetooth cỡ lớn pin khoảng sáu tiếng',                  N'Vỏ loa có vết xước, màng loa không rách, nút nguồn hơi cứng. Âm trầm vẫn chắc.', 1400000, 'PENDING_REVIEW', 24),
- (73, 'an.seller@demo.local',  N'Xe cộ & phụ kiện',        'GOOD',     N'Xe đạp thể thao khung nhôm bánh 26 inch',                    N'Đã bảo dưỡng lốp và thắng, bộ sang số mượt, yên có vết ngồi. Bán vì chuyển sang chung cư.', 2100000, 'ACTIVE',        360),
- (74, 'an.seller@demo.local',  N'Đồ chơi & mẹ bé',        'GOOD',     N'Bập bênh gỗ trẻ em có tay vịn',                            N'Ghế gỗ không vênh, thanh trượt còn trơn, sơn không bong. Nhà có bé dùng một mùa rồi thôi.', 350000, 'ACTIVE',         170),
- (75, 'an.seller@demo.local',  N'Nội thất',               'GOOD',     N'Tủ giày nhựa ba cánh kiểu gấp hai tầng',                     N'Khung nhựa chắc, một cánh trượt nhẹ, bề mặt đã lau sạch. Khách nhận hàng và xác nhận dùng tốt.', 280000, 'SOLD',         620),
--- Bình Vintage (binh.seller) - gia dụng và nội thất nhỏ
- (76, 'binh.seller@demo.local', N'Đồ gia dụng',           'GOOD',     N'Máy giặt mini ba kg cho đồ trẻ em',                        N'Giặt êm, không rò nước, lồng inox còn sáng. Trước đây dùng riêng cho quần áo em bé.', 900000, 'ACTIVE',         200),
- (77, 'binh.seller@demo.local', N'Đồ gia dụng',           'LIKE_NEW', N'Bộ dao và thớt inox cho bếp gia đình',                      N'Lưỡi dao còn sắc, thớt chưa sâu rãnh, mua dư so với nhu cầu nên chưa dùng hết bộ.', 180000, 'PENDING_REVIEW', 32),
- (78, 'binh.seller@demo.local', N'Nội thất',              'FAIR',     N'Bộ bàn ghế nhựa xếp dùng cho ban công',                     N'Nhựa hơi phai màu do nắng, khớp xếp còn chắc, mặt bàn không nứt. Phù hợp hai người.', 300000, 'ACTIVE',         260),
- (79, 'binh.seller@demo.local', N'Sách & văn phòng phẩm', 'GOOD',     N'Máy in phun bốn màu bình mực liên tục',                     N'In đều không sọc ngang, đầu phun đã vệ sinh, còn hai bình mực. Bán vì chuyển sang máy in laser.', 1300000, 'ACTIVE',       340),
- (80, 'binh.seller@demo.local', N'Thể thao & dã ngoại',   'GOOD',     N'Đồng hồ đo nhịp tim chạy bộ kèm dây đeo ngực',               N'Bắt mạch nhanh, pin dây đeo còn tốt, màn hình không xước. Kèm cáp sạc micro.', 750000, 'SOLD',           580);
-
--- 2. Insert sản phẩm (đối chiếu theo shop + tên nên chạy lại không nhân đôi) ------
-INSERT SanPham (MaCuaHang, MaDanhMuc, MaTinhTrang, Ten, ChuoiTimKiem, MoTa, Gia, TrangThai, NgayTao, NgayCapNhat)
-SELECT ch.MaCuaHang, dm.MaDanhMuc, tt.MaTinhTrang, s.Ten, dbo.fn_ChuanHoaChuoi(s.Ten), s.MoTa, s.Gia, s.TrangThai,
-       DATEADD(HOUR, -s.GioTruoc, @Now), DATEADD(HOUR, -s.GioTruoc, @Now)
-FROM #SeedSp s
-JOIN NguoiDung nd        ON nd.Email = s.EmailChuShop
-JOIN CuaHang ch          ON ch.MaNguoiDung = nd.MaNguoiDung
-JOIN DanhMuc dm          ON dm.Ten = s.TenDanhMuc
-JOIN TinhTrangSanPham tt ON tt.Ma = s.CodeTinhTrang
-WHERE NOT EXISTS (SELECT 1 FROM SanPham x WHERE x.MaCuaHang = ch.MaCuaHang AND x.Ten = s.Ten);
-
--- Lấy MaSanPham của 80 tin theo đúng thứ tự Stt để quay vòng file ảnh.
-IF OBJECT_ID('tempdb..#SpB8') IS NOT NULL DROP TABLE #SpB8;
-CREATE TABLE #SpB8 (Stt int NOT NULL PRIMARY KEY, MaSanPham int NOT NULL UNIQUE);
-INSERT #SpB8 (Stt, MaSanPham)
-SELECT s.Stt, sp.MaSanPham
-FROM #SeedSp s
-JOIN NguoiDung nd ON nd.Email = s.EmailChuShop
-JOIN CuaHang ch   ON ch.MaNguoiDung = nd.MaNguoiDung
-JOIN SanPham sp   ON sp.MaCuaHang = ch.MaCuaHang AND sp.Ten = s.Ten;
-
-IF (SELECT COUNT(*) FROM #SpB8) <> (SELECT COUNT(*) FROM #SeedSp)
-BEGIN
-    ROLLBACK TRANSACTION;
-    THROW 51093, N'Seed B8: khong insert du 80 san pham, kiem tra ten danh muc, tinh trang hoac shop.', 1;
-END;
-
--- 3. Ảnh: dùng lại 54 file jpg có sẵn trong wwwroot/uploads/seed (sp001..sp027) ---
-INSERT AnhSanPham (MaSanPham, DuongDan, ThuTu, LaAnhChinh, DungLuong)
-SELECT x.MaSanPham,
-       N'/uploads/seed/sp' + RIGHT('000' + CAST(x.Stt AS varchar(3)), 3)
-           + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
-       n.ThuTu,
-       CASE WHEN n.ThuTu = 1 THEN 1 ELSE 0 END,
-       200000 + (x.Stt % 27) * 1000 + n.ThuTu * 100
-FROM #SpB8 x
-CROSS JOIN (VALUES (1), (2)) n (ThuTu)
-WHERE NOT EXISTS (SELECT 1 FROM AnhSanPham a WHERE a.MaSanPham = x.MaSanPham AND a.ThuTu = n.ThuTu);
-
--- 4. Lịch sử trạng thái để trang kiểm duyệt và lịch sử tin đăng có dữ liệu --------
-INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
-SELECT sp.MaSanPham, NULL, sp.TrangThai, 'SYSTEM', NULL, N'Dữ liệu mẫu B8', sp.NgayTao
-FROM #SpB8 x
-JOIN SanPham sp ON sp.MaSanPham = x.MaSanPham
-WHERE NOT EXISTS (SELECT 1 FROM LichSuTrangThaiSanPham h WHERE h.MaSanPham = sp.MaSanPham);
-
--- 5. Lượt kiểm duyệt: tin đã duyệt thì ghi APPROVED, tin chờ duyệt để trống quyết định
-INSERT LuotKiemDuyet (MaSanPham, ThoiGianGui, KetQuaRule, QuyetDinh, LyDo, MaQuanTriVien, ThoiGianQuyetDinh)
-SELECT sp.MaSanPham, sp.NgayTao, N'{"passed":true,"errors":[]}',
-       CASE WHEN sp.TrangThai = 'PENDING_REVIEW' THEN NULL ELSE 'APPROVED' END,
-       NULL,
-       CASE WHEN sp.TrangThai = 'PENDING_REVIEW' THEN NULL ELSE @AdminId END,
-       CASE WHEN sp.TrangThai = 'PENDING_REVIEW' THEN NULL ELSE DATEADD(HOUR, 2, sp.NgayTao) END
-FROM #SpB8 x
-JOIN SanPham sp ON sp.MaSanPham = x.MaSanPham
-WHERE NOT EXISTS (SELECT 1 FROM LuotKiemDuyet l WHERE l.MaSanPham = sp.MaSanPham);
-
-COMMIT TRANSACTION;
-GO
-
--- 6. Thống kê nhanh -------------------------------------------------------------
-SELECT dm.Ten AS DanhMuc, COUNT(*) AS SoTin, MIN(sp.Gia) AS GiaThapNhat, MAX(sp.Gia) AS GiaCaoNhat
-FROM SanPham sp
-JOIN DanhMuc dm ON dm.MaDanhMuc = sp.MaDanhMuc
-WHERE EXISTS (SELECT 1 FROM #SeedSp s WHERE s.Ten = sp.Ten)
-GROUP BY dm.Ten
-ORDER BY COUNT(*) DESC, dm.Ten;
-
-SELECT sp.TrangThai, COUNT(*) AS SoTin
-FROM SanPham sp
-WHERE EXISTS (SELECT 1 FROM #SeedSp s WHERE s.Ten = sp.Ten)
-GROUP BY sp.TrangThai
-ORDER BY SoTin DESC;
-
-SELECT tt.Ten AS TinhTrang, COUNT(*) AS SoTin
-FROM SanPham sp
-JOIN TinhTrangSanPham tt ON tt.MaTinhTrang = sp.MaTinhTrang
-WHERE EXISTS (SELECT 1 FROM #SeedSp s WHERE s.Ten = sp.Ten)
-GROUP BY tt.Ten, tt.ThuTuHienThi
-ORDER BY tt.ThuTuHienThi;
-
-SELECT CASE
-           WHEN (SELECT COUNT(*) FROM SanPham sp WHERE EXISTS (SELECT 1 FROM #SeedSp s WHERE s.Ten = sp.Ten)) = 80
-                AND (SELECT COUNT(DISTINCT sp.MaSanPham)
-                     FROM SanPham sp
-                     JOIN #SpB8 x ON x.MaSanPham = sp.MaSanPham
-                     JOIN AnhSanPham a ON a.MaSanPham = sp.MaSanPham AND a.LaAnhChinh = 1) = 80
-                AND (SELECT COUNT(DISTINCT sp.TrangThai) FROM SanPham sp
-                     WHERE EXISTS (SELECT 1 FROM #SeedSp s WHERE s.Ten = sp.Ten)
-                       AND sp.TrangThai IN ('PENDING_REVIEW','ACTIVE','RESERVED','SOLD')) = 4
-           THEN N'ĐẠT: 80 tin B8, mỗi tin có ảnh chính, đủ 4 trạng thái duyệt'
-           ELSE N'KIỂM TRA LẠI: thiếu tin, thiếu ảnh chính hoặc thiếu trạng thái'
-       END AS KiemTra;
-GO
-
--- -----------------------------------------------------------------------------
--- BỔ SUNG: Cập nhật Avatar người dùng & Logo cửa hàng
--- -----------------------------------------------------------------------------
-UPDATE n
-SET n.AnhDaiDien = v.Avatar
-FROM dbo.NguoiDung n
-JOIN (VALUES
-    ('admin@secondhand.local',   '/uploads/avatars/avatar-admin.svg'),
-    ('an.seller@demo.local',     '/uploads/avatars/avatar-an.svg'),
-    ('binh.seller@demo.local',   '/uploads/avatars/avatar-binh.svg'),
-    ('chi.buyer@demo.local',     '/uploads/avatars/avatar-chi.svg'),
-    ('dung.buyer@demo.local',    '/uploads/avatars/avatar-dung.svg'),
-    ('noshop@demo.local',        '/uploads/avatars/avatar-noshop.svg'),
-    ('nguoiban01@demo.local',    '/uploads/avatars/avatar-seller01.svg'),
-    ('nguoiban02@demo.local',    '/uploads/avatars/avatar-seller02.svg'),
-    ('nguoiban03@demo.local',    '/uploads/avatars/avatar-seller03.svg'),
-    ('nguoiban04@demo.local',    '/uploads/avatars/avatar-seller04.svg'),
-    ('nguoiban05@demo.local',    '/uploads/avatars/avatar-seller05.svg'),
-    ('nguoiban06@demo.local',    '/uploads/avatars/avatar-seller06.svg'),
-    ('nguoiban07@demo.local',    '/uploads/avatars/avatar-seller07.svg'),
-    ('nguoiban08@demo.local',    '/uploads/avatars/avatar-seller08.svg'),
-    ('nguoiban09@demo.local',    '/uploads/avatars/avatar-seller09.svg'),
-    ('nguoiban10@demo.local',    '/uploads/avatars/avatar-seller10.svg'),
-    ('nguoiban11@demo.local',    '/uploads/avatars/avatar-seller11.svg'),
-    ('nguoiban12@demo.local',    '/uploads/avatars/avatar-seller12.svg'),
-    ('nguoimua01@demo.local',    '/uploads/avatars/avatar-buyer01.svg'),
-    ('nguoimua02@demo.local',    '/uploads/avatars/avatar-buyer02.svg'),
-    ('nguoimua03@demo.local',    '/uploads/avatars/avatar-buyer03.svg'),
-    ('nguoimua04@demo.local',    '/uploads/avatars/avatar-buyer04.svg'),
-    ('nguoimua05@demo.local',    '/uploads/avatars/avatar-buyer05.svg'),
-    ('nguoimua06@demo.local',    '/uploads/avatars/avatar-buyer06.svg'),
-    ('nguoimua07@demo.local',    '/uploads/avatars/avatar-buyer07.svg'),
-    ('nguoimua08@demo.local',    '/uploads/avatars/avatar-buyer08.svg'),
-    ('nguoimua09@demo.local',    '/uploads/avatars/avatar-buyer09.svg'),
-    ('nguoimua10@demo.local',    '/uploads/avatars/avatar-buyer10.svg'),
-    ('nguoimua11@demo.local',    '/uploads/avatars/avatar-buyer11.svg'),
-    ('nguoimua12@demo.local',    '/uploads/avatars/avatar-buyer12.svg'),
-    ('nguoimua13@demo.local',    '/uploads/avatars/avatar-buyer13.svg'),
-    ('nguoimua14@demo.local',    '/uploads/avatars/avatar-buyer14.svg'),
-    ('nguoimua15@demo.local',    '/uploads/avatars/avatar-buyer15.svg'),
-    ('nguoimua16@demo.local',    '/uploads/avatars/avatar-buyer16.svg'),
-    ('nguoimua17@demo.local',    '/uploads/avatars/avatar-buyer17.svg'),
-    ('nguoimua18@demo.local',    '/uploads/avatars/avatar-buyer18.svg'),
-    ('nguoimua19@demo.local',    '/uploads/avatars/avatar-buyer19.svg'),
-    ('nguoimua20@demo.local',    '/uploads/avatars/avatar-buyer20.svg'),
-    ('nguoimua21@demo.local',    '/uploads/avatars/avatar-buyer21.svg'),
-    ('nguoimua22@demo.local',    '/uploads/avatars/avatar-buyer22.svg'),
-    ('nguoimua23@demo.local',    '/uploads/avatars/avatar-buyer23.svg'),
-    ('nguoimua24@demo.local',    '/uploads/avatars/avatar-buyer24.svg'),
-    ('nguoimua25@demo.local',    '/uploads/avatars/avatar-buyer25.svg')
-) v (Email, Avatar) ON n.Email = v.Email;
-
-UPDATE c
-SET c.Logo = v.Logo
-FROM dbo.CuaHang c
-JOIN dbo.NguoiDung n ON n.MaNguoiDung = c.MaNguoiDung
-JOIN (VALUES
-    ('an.seller@demo.local',   '/uploads/shops/logo-anstore.svg'),
-    ('binh.seller@demo.local', '/uploads/shops/logo-binhvintage.svg'),
-    ('nguoiban01@demo.local',  '/uploads/shops/logo-longtech.svg'),
-    ('nguoiban02@demo.local',  '/uploads/shops/logo-havintage.svg'),
-    ('nguoiban03@demo.local',  '/uploads/shops/logo-minhmobile.svg'),
-    ('nguoiban04@demo.local',  '/uploads/shops/logo-lanbook.svg'),
-    ('nguoiban05@demo.local',  '/uploads/shops/logo-hoangcamera.svg'),
-    ('nguoiban06@demo.local',  '/uploads/shops/logo-huongdecor.svg'),
-    ('nguoiban07@demo.local',  '/uploads/shops/logo-ducbike.svg'),
-    ('nguoiban08@demo.local',  '/uploads/shops/logo-tamgadget.svg'),
-    ('nguoiban09@demo.local',  '/uploads/shops/logo-ngocfashion.svg'),
-    ('nguoiban10@demo.local',  '/uploads/shops/logo-khoiaudio.svg'),
-    ('nguoiban11@demo.local',  '/uploads/shops/logo-thanhwatch.svg'),
-    ('nguoiban12@demo.local',  '/uploads/shops/logo-thaoshop.svg')
-) v (Email, Logo) ON n.Email = v.Email;
-GO
-
-
--- -----------------------------------------------------------------------------
--- BỔ SUNG: Phiên đấu giá mẫu & Lượt đặt giá (PhienDauGia, LuotDatGia)
--- -----------------------------------------------------------------------------
-DECLARE @Now datetime2(3) = SYSUTCDATETIME();
-DECLARE @ChiUid int  = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'chi.buyer@demo.local');
-DECLARE @DungUid int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'dung.buyer@demo.local');
-DECLARE @Mua1Uid int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoimua01@demo.local');
-DECLARE @Mua2Uid int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoimua02@demo.local');
-DECLARE @Mua3Uid int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoimua03@demo.local');
-DECLARE @Mua5Uid int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoimua05@demo.local');
-
-DECLARE @SpDauGia1 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Máy ảnh Canon EOS 700D kèm lens kit');
-DECLARE @SpDauGia2 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Đồng hồ Casio vintage');
-DECLARE @SpDauGia3 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Bập bênh gỗ trẻ em có tay vịn');
-DECLARE @SpDauGia4 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Xe đạp địa hình Giant ATX');
-
--- Phiên 1: RUNNING (Máy ảnh Canon EOS 700D)
-IF @SpDauGia1 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM PhienDauGia WHERE MaSanPham = @SpDauGia1)
-BEGIN
-    UPDATE SanPham SET TrangThai = 'RESERVED' WHERE MaSanPham = @SpDauGia1;
-    INSERT INTO PhienDauGia (MaSanPham, GiaNiemYet, GiaKhoiDiem, BuocGia, GiaHienTai, SoLuotDat, MaNguoiDanDau, ThoiGianBatDau, ThoiGianKetThuc, TrangThai)
-    VALUES (@SpDauGia1, 5200000, 3000000, 100000, 3400000, 4, @ChiUid, DATEADD(HOUR, -12, @Now), DATEADD(HOUR, 36, @Now), 'RUNNING');
-    DECLARE @Pdg1 int = SCOPE_IDENTITY();
-
-    INSERT INTO LuotDatGia (MaPhienDauGia, MaNguoiDung, SoTien, ThoiGian) VALUES
-    (@Pdg1, @DungUid, 3100000, DATEADD(HOUR, -10, @Now)),
-    (@Pdg1, @Mua1Uid, 3200000, DATEADD(HOUR, -8, @Now)),
-    (@Pdg1, @DungUid, 3300000, DATEADD(HOUR, -5, @Now)),
-    (@Pdg1, @ChiUid,  3400000, DATEADD(HOUR, -2, @Now));
-END;
-
--- Phiên 2: RUNNING (Đồng hồ Casio)
-IF @SpDauGia2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM PhienDauGia WHERE MaSanPham = @SpDauGia2)
-BEGIN
-    UPDATE SanPham SET TrangThai = 'RESERVED' WHERE MaSanPham = @SpDauGia2;
-    INSERT INTO PhienDauGia (MaSanPham, GiaNiemYet, GiaKhoiDiem, BuocGia, GiaHienTai, SoLuotDat, MaNguoiDanDau, ThoiGianBatDau, ThoiGianKetThuc, TrangThai)
-    VALUES (@SpDauGia2, 600000, 200000, 50000, 350000, 3, @DungUid, DATEADD(HOUR, -6, @Now), DATEADD(HOUR, 18, @Now), 'RUNNING');
-    DECLARE @Pdg2 int = SCOPE_IDENTITY();
-
-    INSERT INTO LuotDatGia (MaPhienDauGia, MaNguoiDung, SoTien, ThoiGian) VALUES
-    (@Pdg2, @Mua2Uid, 250000, DATEADD(HOUR, -5, @Now)),
-    (@Pdg2, @Mua3Uid, 300000, DATEADD(HOUR, -3, @Now)),
-    (@Pdg2, @DungUid, 350000, DATEADD(HOUR, -1, @Now));
-END;
-
--- Phiên 3: SCHEDULED (Bập bênh gỗ)
-IF @SpDauGia3 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM PhienDauGia WHERE MaSanPham = @SpDauGia3)
-BEGIN
-    UPDATE SanPham SET TrangThai = 'RESERVED' WHERE MaSanPham = @SpDauGia3;
-    INSERT INTO PhienDauGia (MaSanPham, GiaNiemYet, GiaKhoiDiem, BuocGia, GiaHienTai, SoLuotDat, MaNguoiDanDau, ThoiGianBatDau, ThoiGianKetThuc, TrangThai)
-    VALUES (@SpDauGia3, 350000, 150000, 20000, 150000, 0, NULL, DATEADD(HOUR, 12, @Now), DATEADD(HOUR, 60, @Now), 'SCHEDULED');
-END;
-
--- Phiên 4: ENDED (Xe đạp Giant)
-IF @SpDauGia4 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM PhienDauGia WHERE MaSanPham = @SpDauGia4)
-BEGIN
-    INSERT INTO PhienDauGia (MaSanPham, GiaNiemYet, GiaKhoiDiem, BuocGia, GiaHienTai, SoLuotDat, MaNguoiDanDau, ThoiGianBatDau, ThoiGianKetThuc, TrangThai, MaNguoiThang, GiaThang)
-    VALUES (@SpDauGia4, 3200000, 2000000, 100000, 2800000, 4, @Mua5Uid, DATEADD(DAY, -6, @Now), DATEADD(DAY, -2, @Now), 'ENDED', @Mua5Uid, 2800000);
-    DECLARE @Pdg4 int = SCOPE_IDENTITY();
-
-    INSERT INTO LuotDatGia (MaPhienDauGia, MaNguoiDung, SoTien, ThoiGian) VALUES
-    (@Pdg4, @ChiUid,  2200000, DATEADD(DAY, -5, @Now)),
-    (@Pdg4, @DungUid, 2400000, DATEADD(DAY, -4, @Now)),
-    (@Pdg4, @Mua1Uid, 2600000, DATEADD(DAY, -3, @Now)),
-    (@Pdg4, @Mua5Uid, 2800000, DATEADD(DAY, -2, @Now));
-END;
-GO
-
--- -----------------------------------------------------------------------------
--- BỔ SUNG: Hội thoại & Tin nhắn chat mẫu (HoiThoai, TinNhan)
--- -----------------------------------------------------------------------------
-DECLARE @Now datetime2(3) = SYSUTCDATETIME();
-DECLARE @ChiUid int   = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'chi.buyer@demo.local');
-DECLARE @DungUid int  = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'dung.buyer@demo.local');
-DECLARE @Mua1Uid int  = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoimua01@demo.local');
-DECLARE @Mua8Uid int  = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoimua08@demo.local');
-DECLARE @AnUid int    = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'an.seller@demo.local');
-DECLARE @BinhUid int  = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'binh.seller@demo.local');
-DECLARE @LongUid int  = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoiban01@demo.local');
-DECLARE @HaUid int    = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoiban02@demo.local');
-DECLARE @TamUid int   = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoiban08@demo.local');
-
-DECLARE @Pairs TABLE (U1 int, U2 int, BuyerId int, SellerId int, LastMsg nvarchar(200), LastTime datetime2(3));
-INSERT INTO @Pairs (U1, U2, BuyerId, SellerId, LastMsg, LastTime)
-SELECT
-    CASE WHEN b.Id < s.Id THEN b.Id ELSE s.Id END,
-    CASE WHEN b.Id < s.Id THEN s.Id ELSE b.Id END,
-    b.Id, s.Id, v.LastMsg, DATEADD(MINUTE, -v.MinAgo, @Now)
-FROM (VALUES
-    ('chi.buyer@demo.local',  'an.seller@demo.local',   N'Vừa in luôn bạn nhé, bạn có thể ghé shop thử hoặc đặt giao hàng nhé.', 30),
-    ('dung.buyer@demo.local', 'nguoiban01@demo.local', N'Qua lấy trực tiếp mình bớt 100k tiền xăng xe vui vẻ nha bạn!', 65),
-    ('nguoimua01@demo.local', 'nguoiban02@demo.local', N'Dạ có ship COD toàn quốc hoặc hẹn gặp trực tiếp nha bạn ơi.', 180),
-    ('nguoimua08@demo.local', 'nguoiban08@demo.local', N'Kính trong veo, không mốc rễ tre, bảo quản hộp chống ẩm suốt em nhé.', 240),
-    ('chi.buyer@demo.local',  'binh.seller@demo.local', N'Đáy từ 3 lớp bắt từ siêu nhạy bạn nha, bao dùng mọi loại bếp.', 360)
-) v (BuyerEmail, SellerEmail, LastMsg, MinAgo)
-JOIN (SELECT Email, MaNguoiDung AS Id FROM NguoiDung) b ON b.Email = v.BuyerEmail
-JOIN (SELECT Email, MaNguoiDung AS Id FROM NguoiDung) s ON s.Email = v.SellerEmail;
-
-INSERT INTO HoiThoai (MaNguoiDung1, MaNguoiDung2, NoiDungCuoi, NgayTinCuoi, NgayTao)
-SELECT p.U1, p.U2, p.LastMsg, p.LastTime, DATEADD(DAY, -2, p.LastTime)
-FROM @Pairs p
-WHERE NOT EXISTS (SELECT 1 FROM HoiThoai h WHERE h.MaNguoiDung1 = p.U1 AND h.MaNguoiDung2 = p.U2);
-
-DECLARE @U1_An int = CASE WHEN @ChiUid < @AnUid THEN @ChiUid ELSE @AnUid END;
-DECLARE @U2_An int = CASE WHEN @ChiUid < @AnUid THEN @AnUid ELSE @ChiUid END;
-DECLARE @Ht1 int = (SELECT MaHoiThoai FROM HoiThoai WHERE MaNguoiDung1 = @U1_An AND MaNguoiDung2 = @U2_An);
-IF @Ht1 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM TinNhan WHERE MaHoiThoai = @Ht1)
-BEGIN
-    INSERT INTO TinNhan (MaHoiThoai, MaNguoiGui, NoiDung, DaDoc, NgayGui) VALUES
-    (@Ht1, @ChiUid, N'Chào shop, áo khoác denim nam size L còn không ạ?', 1, DATEADD(MINUTE, -60, @Now)),
-    (@Ht1, @AnUid,  N'Chào bạn, áo vẫn còn bạn nhé. Áo form chuẩn, vải dày dặn lắm.', 1, DATEADD(MINUTE, -50, @Now)),
-    (@Ht1, @ChiUid, N'Mình cao 1m72 nặng 68kg mặc vừa không shop?', 1, DATEADD(MINUTE, -40, @Now)),
-    (@Ht1, @AnUid,  N'Vừa in luôn bạn nhé, bạn có thể ghé shop thử hoặc đặt giao hàng nhé.', 1, DATEADD(MINUTE, -30, @Now));
-END;
-
-DECLARE @U1_Long int = CASE WHEN @DungUid < @LongUid THEN @DungUid ELSE @LongUid END;
-DECLARE @U2_Long int = CASE WHEN @DungUid < @LongUid THEN @LongUid ELSE @DungUid END;
-DECLARE @Ht2 int = (SELECT MaHoiThoai FROM HoiThoai WHERE MaNguoiDung1 = @U1_Long AND MaNguoiDung2 = @U2_Long);
-IF @Ht2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM TinNhan WHERE MaHoiThoai = @Ht2)
-BEGIN
-    INSERT INTO TinNhan (MaHoiThoai, MaNguoiGui, NoiDung, DaDoc, NgayGui) VALUES
-    (@Ht2, @DungUid, N'Shop ơi, laptop Asus VivoBook pin dùng thực tế được mấy tiếng?', 1, DATEADD(MINUTE, -120, @Now)),
-    (@Ht2, @LongUid, N'Pin lướt web văn phòng tầm 3-4 tiếng nha bạn, máy nguyên zin sạc theo máy.', 1, DATEADD(MINUTE, -100, @Now)),
-    (@Ht2, @DungUid, N'Có bớt chút tiền xăng nếu mình qua lấy trực tiếp không ạ?', 1, DATEADD(MINUTE, -85, @Now)),
-    (@Ht2, @LongUid, N'Qua lấy trực tiếp mình bớt 100k tiền xăng xe vui vẻ nha bạn!', 1, DATEADD(MINUTE, -65, @Now));
-END;
-GO
-
--- -----------------------------------------------------------------------------
--- BỔ SUNG: Sản phẩm Yêu thích mẫu (YeuThich)
--- -----------------------------------------------------------------------------
-DECLARE @Now datetime2(3) = SYSUTCDATETIME();
-INSERT INTO YeuThich (MaNguoiDung, MaSanPham, NgayTao)
-SELECT u.MaNguoiDung, s.MaSanPham, DATEADD(HOUR, -v.GioTruoc, @Now)
-FROM (VALUES
-    ('chi.buyer@demo.local',  N'Áo khoác denim nam size L', 48),
-    ('chi.buyer@demo.local',  N'Giày sneaker trắng size 42', 36),
-    ('chi.buyer@demo.local',  N'Balo laptop chống nước', 24),
-    ('chi.buyer@demo.local',  N'Váy denim chữ A cạp cao size S', 18),
-    ('dung.buyer@demo.local', N'iPhone 11 64GB màu đen', 50),
-    ('dung.buyer@demo.local', N'Laptop Dell Latitude 7490 i5', 40),
-    ('dung.buyer@demo.local', N'Bàn phím cơ Keychron K2', 30),
-    ('dung.buyer@demo.local', N'Điện thoại Samsung Galaxy A54 128GB', 20),
-    ('nguoimua01@demo.local', N'Màn hình Dell 24 inch Full HD 75Hz', 60),
-    ('nguoimua01@demo.local', N'Nồi chiên không dầu Lock&Lock 5.2L điện tử', 35),
-    ('nguoimua02@demo.local', N'Máy lọc không khí phòng dưới 40m2', 45),
-    ('nguoimua02@demo.local', N'Túi xách da thật màu nâu quai đeo chéo', 25),
-    ('nguoimua03@demo.local', N'Xe đạp thể thao khung nhôm bánh 26 inch', 70),
-    ('nguoimua04@demo.local', N'Bộ truyện tranh Thám tử lừng danh Conan 1-80', 30),
-    ('nguoimua05@demo.local', N'Máy ảnh Canon EOS 700D kèm lens kit', 15)
-) v (Email, TenSp, GioTruoc)
-JOIN NguoiDung u ON u.Email = v.Email
-JOIN SanPham s ON s.Ten = v.TenSp
-WHERE NOT EXISTS (SELECT 1 FROM YeuThich y WHERE y.MaNguoiDung = u.MaNguoiDung AND y.MaSanPham = s.MaSanPham);
-GO
 
 
 -- =============================================================================
@@ -1019,15 +595,47 @@ BEGIN
     THROW 51093, N'Seed B8: khong insert du 80 san pham, kiem tra ten danh muc, tinh trang hoac shop.', 1;
 END;
 
--- 3. Ảnh: dùng lại 54 file jpg có sẵn trong wwwroot/uploads/seed (sp001..sp027) ---
+-- 3. Ảnh: khớp ảnh thực tế theo tên & danh mục (dùng 27 bộ ảnh thực tế sp001..sp027) ---
 INSERT AnhSanPham (MaSanPham, DuongDan, ThuTu, LaAnhChinh, DungLuong)
 SELECT x.MaSanPham,
-       N'/uploads/seed/sp' + RIGHT('000' + CAST(x.Stt AS varchar(3)), 3)
-           + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
+       N'/uploads/seed/' + m.SeedImg + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
        n.ThuTu,
        CASE WHEN n.ThuTu = 1 THEN 1 ELSE 0 END,
        200000 + (x.Stt % 27) * 1000 + n.ThuTu * 100
 FROM #SpB8 x
+JOIN #SeedSp s ON s.Stt = x.Stt
+CROSS APPLY (
+    SELECT CASE
+        WHEN s.Ten LIKE N'%Tủ%' THEN 'sp023'
+        WHEN s.Ten LIKE N'%Kệ%' OR s.Ten LIKE N'%Giá sách%' THEN 'sp015'
+        WHEN s.Ten LIKE N'%Bàn học%' OR s.Ten LIKE N'%Bàn ăn%' OR s.Ten LIKE N'%Bàn trà%' OR s.Ten LIKE N'%Sofa%' OR s.Ten LIKE N'%bàn ghế%' OR s.Ten LIKE N'%Ghế%' THEN 'sp017'
+        WHEN s.Ten LIKE N'%Gối%' OR s.Ten LIKE N'%Chăn%' OR s.Ten LIKE N'%Giường%' OR s.Ten LIKE N'%Nệm%' THEN 'sp016'
+        WHEN s.Ten LIKE N'%Đèn%' THEN 'sp018'
+        WHEN s.Ten LIKE N'%iPhone%' OR s.Ten LIKE N'%Galaxy%' OR s.Ten LIKE N'%iPad%' OR s.Ten LIKE N'%Điện thoại%' OR s.Ten LIKE N'%Sạc dự phòng%' OR s.Ten LIKE N'%điện thoại%' THEN 'sp003'
+        WHEN s.Ten LIKE N'%Laptop%' OR s.Ten LIKE N'%máy tính bàn%' OR s.Ten LIKE N'%Màn hình%' OR s.Ten LIKE N'%VivoBook%' OR s.Ten LIKE N'%Latitude%' THEN 'sp004'
+        WHEN s.Ten LIKE N'%Bàn phím%' OR s.Ten LIKE N'%Chuột%' OR s.Ten LIKE N'%Keychron%' OR s.Ten LIKE N'%DareU%' OR s.Ten LIKE N'%Máy in%' THEN 'sp005'
+        WHEN s.Ten LIKE N'%Tai nghe%' THEN 'sp009'
+        WHEN s.Ten LIKE N'%Máy ảnh%' OR s.Ten LIKE N'%Ống kính%' OR s.Ten LIKE N'%chống rung%' OR s.Ten LIKE N'%Máy quay%' OR s.Ten LIKE N'%flash studio%' THEN 'sp010'
+        WHEN s.Ten LIKE N'%Loa%' THEN 'sp013'
+        WHEN s.Ten LIKE N'%Đồng hồ%' OR s.Ten LIKE N'%nhịp tim%' THEN 'sp012'
+        WHEN s.Ten LIKE N'%Xe đạp%' OR s.Ten LIKE N'%Xe máy%' OR s.Ten LIKE N'%Wave%' OR s.Ten LIKE N'%Bơm lốp%' OR s.Ten LIKE N'%Khóa dây%' OR s.Ten LIKE N'%Mũ bảo hiểm%' OR s.Ten LIKE N'%Ván chèo%' OR s.Ten LIKE N'%xe số%' THEN 'sp008'
+        WHEN s.Ten LIKE N'%Balo%' OR s.Ten LIKE N'%Túi xách%' OR s.Ten LIKE N'%Túi chống nước%' OR s.Ten LIKE N'%Lều du lịch%' THEN 'sp014'
+        WHEN s.Ten LIKE N'%Nồi chiên%' OR s.Ten LIKE N'%Nồi cơm%' THEN 'sp006'
+        WHEN s.Ten LIKE N'%nồi%' OR s.Ten LIKE N'%Bếp từ%' OR s.Ten LIKE N'%Ấm%' OR s.Ten LIKE N'%thủy tinh%' OR s.Ten LIKE N'%dao và thớt%' OR s.Ten LIKE N'%bình trà%' OR s.Ten LIKE N'%ly đồng%' THEN 'sp019'
+        WHEN s.Ten LIKE N'%xay sinh tố%' THEN 'sp024'
+        WHEN s.Ten LIKE N'%Bàn ủi%' THEN 'sp025'
+        WHEN s.Ten LIKE N'%Quạt%' OR s.Ten LIKE N'%lọc không khí%' OR s.Ten LIKE N'%hút bụi%' OR s.Ten LIKE N'%Máy giặt%' THEN 'sp026'
+        WHEN s.Ten LIKE N'%Xe đẩy%' OR s.Ten LIKE N'%Xe tập đi%' OR s.Ten LIKE N'%ăn dặm%' OR s.Ten LIKE N'%Nôi điện%' THEN 'sp022'
+        WHEN s.Ten LIKE N'%Lego%' OR s.Ten LIKE N'%Xếp hình%' OR s.Ten LIKE N'%Đồ chơi gỗ%' OR s.Ten LIKE N'%Lắp ráp%' OR s.Ten LIKE N'%Bập bênh%' THEN 'sp027'
+        WHEN s.Ten LIKE N'%Giày%' OR s.Ten LIKE N'%sneaker%' OR s.Ten LIKE N'%Dép%' THEN 'sp002'
+        WHEN s.Ten LIKE N'%Áo%' OR s.Ten LIKE N'%Quần%' OR s.Ten LIKE N'%Váy%' OR s.Ten LIKE N'%denim%' OR s.Ten LIKE N'%Khăn%' OR s.Ten LIKE N'%Set năm bộ đồ%' OR s.Ten LIKE N'%Nón cói%' OR s.Ten LIKE N'%Đồ bơi%' THEN 'sp001'
+        WHEN s.Ten LIKE N'%cờ vua%' OR s.Ten LIKE N'%Tượng gốm%' OR s.Ten LIKE N'%Hộp nhạc%' OR s.Ten LIKE N'%men rạn%' OR s.Ten LIKE N'%sơn mài%' OR s.Ten LIKE N'%thư pháp%' OR s.Ten LIKE N'%Bình hoa%' OR s.Ten LIKE N'%Bình gốm%' THEN 'sp011'
+        WHEN s.Ten LIKE N'%Vợt%' OR s.Ten LIKE N'%chạy bộ%' OR s.Ten LIKE N'%yoga%' OR s.Ten LIKE N'%tạ tay%' OR s.Ten LIKE N'%Gậy golf%' OR s.Ten LIKE N'%Kính lặn%' OR s.Ten LIKE N'%Kính bơi%' OR s.Ten LIKE N'%padel%' THEN 'sp021'
+        WHEN s.Ten LIKE N'%Truyện%' OR s.Ten LIKE N'%Conan%' OR s.Ten LIKE N'%Doraemon%' OR s.Ten LIKE N'%Sherlock%' THEN 'sp020'
+        WHEN s.Ten LIKE N'%Giải tích%' OR s.Ten LIKE N'%Cấu trúc dữ liệu%' OR s.Ten LIKE N'%Giáo trình%' OR s.Ten LIKE N'%Kinh tế học%' OR s.Ten LIKE N'%Tư duy phản biện%' OR s.Ten LIKE N'%vở kẻ ngang%' OR s.Ten LIKE N'%Bút máy%' OR s.Ten LIKE N'%Casio fx%' OR s.Ten LIKE N'%IELTS%' OR s.Ten LIKE N'%Sách%' THEN 'sp007'
+        ELSE 'sp007'
+    END AS SeedImg
+) m
 CROSS JOIN (VALUES (1), (2)) n (ThuTu)
 WHERE NOT EXISTS (SELECT 1 FROM AnhSanPham a WHERE a.MaSanPham = x.MaSanPham AND a.ThuTu = n.ThuTu);
 
@@ -1475,6 +1083,55 @@ WHERE NOT EXISTS (
     SELECT 1 FROM SanPham sp WHERE sp.MaCuaHang = ch.MaCuaHang AND sp.Ten = so.TenSanPham
 );
 
+-- 3b. Tạo ảnh sản phẩm thực tế cho các sản phẩm đơn hàng mẫu (sp001..sp027)
+INSERT AnhSanPham (MaSanPham, DuongDan, ThuTu, LaAnhChinh, DungLuong)
+SELECT sp.MaSanPham,
+       N'/uploads/seed/' + m.SeedImg + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
+       n.ThuTu,
+       CASE WHEN n.ThuTu = 1 THEN 1 ELSE 0 END,
+       215000 + n.ThuTu * 100
+FROM (
+    SELECT DISTINCT ch.MaCuaHang, so.TenSanPham
+    FROM @SeedOrders so
+    JOIN NguoiDung ndSeller ON ndSeller.Email = so.SellerEmail
+    JOIN CuaHang ch ON ch.MaNguoiDung = ndSeller.MaNguoiDung
+) ordSp
+JOIN SanPham sp ON sp.MaCuaHang = ordSp.MaCuaHang AND sp.Ten = ordSp.TenSanPham
+CROSS APPLY (
+    SELECT CASE
+        WHEN sp.Ten LIKE N'%Tủ%' THEN 'sp023'
+        WHEN sp.Ten LIKE N'%Kệ%' OR sp.Ten LIKE N'%Giá sách%' THEN 'sp015'
+        WHEN sp.Ten LIKE N'%Bàn học%' OR sp.Ten LIKE N'%Bàn ăn%' OR sp.Ten LIKE N'%Bàn trà%' OR sp.Ten LIKE N'%Sofa%' OR sp.Ten LIKE N'%bàn ghế%' OR sp.Ten LIKE N'%Ghế%' THEN 'sp017'
+        WHEN sp.Ten LIKE N'%Gối%' OR sp.Ten LIKE N'%Chăn%' OR sp.Ten LIKE N'%Giường%' OR sp.Ten LIKE N'%Nệm%' THEN 'sp016'
+        WHEN sp.Ten LIKE N'%Đèn%' THEN 'sp018'
+        WHEN sp.Ten LIKE N'%iPhone%' OR sp.Ten LIKE N'%Galaxy%' OR sp.Ten LIKE N'%iPad%' OR sp.Ten LIKE N'%Điện thoại%' OR sp.Ten LIKE N'%Sạc dự phòng%' OR sp.Ten LIKE N'%điện thoại%' THEN 'sp003'
+        WHEN sp.Ten LIKE N'%Laptop%' OR sp.Ten LIKE N'%máy tính bàn%' OR sp.Ten LIKE N'%Màn hình%' OR sp.Ten LIKE N'%VivoBook%' OR sp.Ten LIKE N'%Latitude%' THEN 'sp004'
+        WHEN sp.Ten LIKE N'%Bàn phím%' OR sp.Ten LIKE N'%Chuột%' OR sp.Ten LIKE N'%Keychron%' OR sp.Ten LIKE N'%DareU%' OR sp.Ten LIKE N'%Máy in%' THEN 'sp005'
+        WHEN sp.Ten LIKE N'%Tai nghe%' THEN 'sp009'
+        WHEN sp.Ten LIKE N'%Máy ảnh%' OR sp.Ten LIKE N'%Ống kính%' OR sp.Ten LIKE N'%chống rung%' OR sp.Ten LIKE N'%Máy quay%' OR sp.Ten LIKE N'%flash studio%' THEN 'sp010'
+        WHEN sp.Ten LIKE N'%Loa%' THEN 'sp013'
+        WHEN sp.Ten LIKE N'%Đồng hồ%' OR sp.Ten LIKE N'%nhịp tim%' THEN 'sp012'
+        WHEN sp.Ten LIKE N'%Xe đạp%' OR sp.Ten LIKE N'%Xe máy%' OR sp.Ten LIKE N'%Wave%' OR sp.Ten LIKE N'%Bơm lốp%' OR sp.Ten LIKE N'%Khóa dây%' OR sp.Ten LIKE N'%Mũ bảo hiểm%' OR sp.Ten LIKE N'%Ván chèo%' OR sp.Ten LIKE N'%xe số%' THEN 'sp008'
+        WHEN sp.Ten LIKE N'%Balo%' OR sp.Ten LIKE N'%Túi xách%' OR sp.Ten LIKE N'%Túi chống nước%' OR sp.Ten LIKE N'%Lều du lịch%' THEN 'sp014'
+        WHEN sp.Ten LIKE N'%Nồi chiên%' OR sp.Ten LIKE N'%Nồi cơm%' THEN 'sp006'
+        WHEN sp.Ten LIKE N'%nồi%' OR sp.Ten LIKE N'%Bếp từ%' OR sp.Ten LIKE N'%Ấm%' OR sp.Ten LIKE N'%thủy tinh%' OR sp.Ten LIKE N'%dao và thớt%' OR sp.Ten LIKE N'%bình trà%' OR sp.Ten LIKE N'%ly đồng%' THEN 'sp019'
+        WHEN sp.Ten LIKE N'%xay sinh tố%' THEN 'sp024'
+        WHEN sp.Ten LIKE N'%Bàn ủi%' THEN 'sp025'
+        WHEN sp.Ten LIKE N'%Quạt%' OR sp.Ten LIKE N'%lọc không khí%' OR sp.Ten LIKE N'%hút bụi%' OR sp.Ten LIKE N'%Máy giặt%' THEN 'sp026'
+        WHEN sp.Ten LIKE N'%Xe đẩy%' OR sp.Ten LIKE N'%Xe tập đi%' OR sp.Ten LIKE N'%ăn dặm%' OR sp.Ten LIKE N'%Nôi điện%' THEN 'sp022'
+        WHEN sp.Ten LIKE N'%Lego%' OR sp.Ten LIKE N'%Xếp hình%' OR sp.Ten LIKE N'%Đồ chơi gỗ%' OR sp.Ten LIKE N'%Lắp ráp%' OR sp.Ten LIKE N'%Bập bênh%' THEN 'sp027'
+        WHEN sp.Ten LIKE N'%Giày%' OR sp.Ten LIKE N'%sneaker%' OR sp.Ten LIKE N'%Dép%' THEN 'sp002'
+        WHEN sp.Ten LIKE N'%Áo%' OR sp.Ten LIKE N'%Quần%' OR sp.Ten LIKE N'%Váy%' OR sp.Ten LIKE N'%denim%' OR sp.Ten LIKE N'%Khăn%' OR sp.Ten LIKE N'%Set năm bộ đồ%' OR sp.Ten LIKE N'%Nón cói%' OR sp.Ten LIKE N'%Đồ bơi%' THEN 'sp001'
+        WHEN sp.Ten LIKE N'%cờ vua%' OR sp.Ten LIKE N'%Tượng gốm%' OR sp.Ten LIKE N'%Hộp nhạc%' OR sp.Ten LIKE N'%men rạn%' OR sp.Ten LIKE N'%sơn mài%' OR sp.Ten LIKE N'%thư pháp%' OR sp.Ten LIKE N'%Bình hoa%' OR sp.Ten LIKE N'%Bình gốm%' THEN 'sp011'
+        WHEN sp.Ten LIKE N'%Vợt%' OR sp.Ten LIKE N'%chạy bộ%' OR sp.Ten LIKE N'%yoga%' OR sp.Ten LIKE N'%tạ tay%' OR sp.Ten LIKE N'%Gậy golf%' OR sp.Ten LIKE N'%Kính lặn%' OR sp.Ten LIKE N'%Kính bơi%' OR sp.Ten LIKE N'%padel%' THEN 'sp021'
+        WHEN sp.Ten LIKE N'%Truyện%' OR sp.Ten LIKE N'%Conan%' OR sp.Ten LIKE N'%Doraemon%' OR sp.Ten LIKE N'%Sherlock%' THEN 'sp020'
+        WHEN sp.Ten LIKE N'%Giải tích%' OR sp.Ten LIKE N'%Cấu trúc dữ liệu%' OR sp.Ten LIKE N'%Giáo trình%' OR sp.Ten LIKE N'%Kinh tế học%' OR sp.Ten LIKE N'%Tư duy phản biện%' OR sp.Ten LIKE N'%vở kẻ ngang%' OR sp.Ten LIKE N'%Bút máy%' OR sp.Ten LIKE N'%Casio fx%' OR sp.Ten LIKE N'%IELTS%' OR sp.Ten LIKE N'%Sách%' THEN 'sp007'
+        ELSE 'sp007'
+    END AS SeedImg
+) m
+CROSS JOIN (VALUES (1), (2)) n (ThuTu)
+WHERE NOT EXISTS (SELECT 1 FROM AnhSanPham a WHERE a.MaSanPham = sp.MaSanPham AND a.ThuTu = n.ThuTu);
+
 -- 4. Tạo Đơn hàng (DonHang)
 INSERT DonHang (
     MaDon, MaNguoiDung, MaCuaHang, TenNguoiNhan, SoDienThoaiNhan, DiaChiNhan,
@@ -1531,7 +1188,10 @@ SELECT
     dh.MaDonHang,
     sp.MaSanPham,
     sp.Ten,
-    '/uploads/products/placeholder.svg',
+    COALESCE(
+        (SELECT TOP 1 a.DuongDan FROM AnhSanPham a WHERE a.MaSanPham = sp.MaSanPham AND a.LaAnhChinh = 1),
+        '/uploads/seed/sp007-1.jpg'
+    ),
     sp.Gia,
     CASE WHEN dh.TrangThai IN ('COMPLETED', 'CANCELLED') THEN 0 ELSE 1 END
 FROM DonHang dh
