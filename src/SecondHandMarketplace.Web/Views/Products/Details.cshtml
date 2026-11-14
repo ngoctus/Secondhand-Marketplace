@@ -111,7 +111,7 @@
             <div class="detail-actions-row">
                 @if (User.IsInRole("USER"))
                 {
-                    <form asp-area="User" asp-controller="Cart" asp-action="Them" method="post" style="display: inline-block;">
+                    <form asp-area="User" asp-controller="Cart" asp-action="Them" method="post" class="rm-add-to-cart-form" style="display: inline-block;" data-product-id="@Model.Id" data-product-name="@Model.Name" data-product-price="@Model.Price.ToString("N0") ₫" data-product-image="@(Model.Images.FirstOrDefault() ?? "")">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="maSanPham" value="@Model.Id" />
                         <input type="hidden" name="returnUrl" value="@currentUrl" />

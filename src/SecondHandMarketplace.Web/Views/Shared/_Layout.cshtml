@@ -74,15 +74,15 @@
                     <div class="rm-dropdown-menu" id="catDropdownMenu" aria-labelledby="catMenuBtn" hidden>
                         @foreach (var c in menuDanhMuc)
                         {
-                            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc">@c.Ten</a>
+                            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" asp-route-Keyword="@(Context.Request.Query["Keyword"])">@c.Ten</a>
                         }
                         <div class="rm-dropdown-divider"></div>
-                        <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Xem tất cả</a>
+                        <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Xem tất cả</a>
                     </div>
                 </div>
 
-                <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
-                <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1">Giá tốt</a>
+                <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Sort="newest" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Mới đăng</a>
+                <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Giá tốt</a>
 
                 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
                 {
@@ -109,12 +109,13 @@
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
                         </a>
-                        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="rm-nav-link" title="Giỏ hàng">
+                        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="rm-nav-link" title="Giỏ hàng" style="position: relative;">
                             <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8">
                                 <circle cx="9" cy="21" r="1"></circle>
                                 <circle cx="20" cy="21" r="1"></circle>
                                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                             </svg>
+                            <span class="rm-cart-badge count" id="rmCartBadge" style="display:none; position:absolute; top:-3px; right:-3px; background:var(--color-primary); color:#FFFFFF; font-size:10px; font-weight:700; border-radius:999px; min-width:18px; height:18px; line-height:18px; text-align:center; padding:0 4px;">0</span>
                         </a>
                     }
 
@@ -189,12 +190,12 @@
             <div class="rm-mobile-heading">Danh mục</div>
             @foreach (var c in menuDanhMuc.Take(6))
             {
-                <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc">@c.Ten</a>
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" asp-route-Keyword="@(Context.Request.Query["Keyword"])">@c.Ten</a>
             }
 
             <div class="rm-dropdown-divider"></div>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1">Giá tốt</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Sort="newest" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Mới đăng</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Giá tốt</a>
 
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
             {
@@ -311,6 +312,33 @@
         <script src="~/js/realtime.js" asp-append-version="true" data-hub="@Url.Content("~/hubs/notification")"></script>
     }
     @await RenderSectionAsync("Scripts", required: false)
+    <!-- Add to Cart Confirmation Box / Modal -->
+    <div class="rm-cart-backdrop" id="rmCartModal" role="dialog" aria-modal="true" aria-labelledby="rmCartModalTitle">
+        <div class="rm-cart-box">
+            <button type="button" class="rm-cart-box-x" id="rmCartModalCloseX" aria-label="Đóng">&times;</button>
+            <div class="rm-cart-box-header">
+                <div class="rm-cart-box-icon">
+                    <i class="bi bi-check2"></i>
+                </div>
+                <div>
+                    <h4 class="rm-cart-box-title" id="rmCartModalTitle">Đã thêm vào giỏ hàng!</h4>
+                    <div class="text-muted small">Sản phẩm đã sẵn sàng trong giỏ của bạn.</div>
+                </div>
+            </div>
+            <div class="rm-cart-box-item">
+                <img id="rmCartModalImg" class="rm-cart-box-img" src="" alt="Ảnh sản phẩm" />
+                <div class="rm-cart-box-info">
+                    <div class="rm-cart-box-name" id="rmCartModalName"></div>
+                    <div class="rm-cart-box-price" id="rmCartModalPrice"></div>
+                </div>
+            </div>
+            <div class="rm-cart-box-actions">
+                <button type="button" class="rm-cart-box-btn-close" id="rmCartModalCloseBtn">Tiếp tục mua sắm</button>
+                <a asp-area="User" asp-controller="Cart" asp-action="Index" class="rm-cart-box-btn-view">Xem giỏ hàng</a>
+            </div>
+        </div>
+    </div>
+
     <partial name="_ChatWidget" />
     <partial name="_AiChatWidget" />
 </body>
