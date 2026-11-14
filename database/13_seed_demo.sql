@@ -125,7 +125,7 @@ CROSS APPLY (
         WHEN sp.Ten LIKE N'%Xe đẩy%' OR sp.Ten LIKE N'%Xe tập đi%' OR sp.Ten LIKE N'%ăn dặm%' OR sp.Ten LIKE N'%Nôi điện%' THEN 'sp022'
         WHEN sp.Ten LIKE N'%Lego%' OR sp.Ten LIKE N'%Xếp hình%' OR sp.Ten LIKE N'%Đồ chơi gỗ%' OR sp.Ten LIKE N'%Lắp ráp%' OR sp.Ten LIKE N'%Bập bênh%' THEN 'sp027'
         WHEN sp.Ten LIKE N'%Giày%' OR sp.Ten LIKE N'%sneaker%' OR sp.Ten LIKE N'%Dép%' THEN 'sp002'
-        WHEN sp.Ten LIKE N'%Áo%' OR sp.Ten LIKE N'%Quần%' OR sp.Ten LIKE N'%Váy%' OR sp.Ten LIKE N'%denim%' OR sp.Ten LIKE N'%Khăn%' OR sp.Ten LIKE N'%Set năm bộ đồ%' OR sp.Ten LIKE N'%Nón cói%' OR sp.Ten LIKE N'%Đồ bơi%' THEN 'sp001'
+        WHEN sp.Ten LIKE N'%Áo%' OR sp.Ten LIKE N'%Quần%' OR sp.Ten LIKE N'%Váy%' OR sp.Ten LIKE N'%denim%' OR sp.Ten LIKE N'%Khăn%' OR sp.Ten LIKE N'%Set năm bộ đồ%' OR sp.Ten LIKE N'%Nón cói%' THEN 'sp001'
         WHEN sp.Ten LIKE N'%cờ vua%' OR sp.Ten LIKE N'%Tượng gốm%' OR sp.Ten LIKE N'%Hộp nhạc%' OR sp.Ten LIKE N'%men rạn%' OR sp.Ten LIKE N'%sơn mài%' OR sp.Ten LIKE N'%thư pháp%' OR sp.Ten LIKE N'%Bình hoa%' OR sp.Ten LIKE N'%Bình gốm%' THEN 'sp011'
         WHEN sp.Ten LIKE N'%Vợt%' OR sp.Ten LIKE N'%chạy bộ%' OR sp.Ten LIKE N'%yoga%' OR sp.Ten LIKE N'%tạ tay%' OR sp.Ten LIKE N'%Gậy golf%' OR sp.Ten LIKE N'%Kính lặn%' OR sp.Ten LIKE N'%Kính bơi%' OR sp.Ten LIKE N'%padel%' THEN 'sp021'
         WHEN sp.Ten LIKE N'%Truyện%' OR sp.Ten LIKE N'%Conan%' OR sp.Ten LIKE N'%Doraemon%' OR sp.Ten LIKE N'%Sherlock%' THEN 'sp020'
@@ -543,7 +543,7 @@ INSERT #SeedSp (Stt, EmailChuShop, TenDanhMuc, CodeTinhTrang, Ten, MoTa, Gia, Tr
 -- Hân Biển Xanh (nguoiban10) - đồ biển và du lịch
  (58, 'nguoiban10@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Vợt padel mặt sợi carbon đã dùng mười trận',               N'Mặt vợt chưa phồng, quai cán còn dính, kèm bao đựng. Bán vì chuyển sang thuê vợt theo giờ.', 1800000, 'PENDING_REVIEW', 40),
  (59, 'nguoiban10@demo.local', N'Thời trang',             'LIKE_NEW', N'Áo khoác chống nước nữ có lót lưới',                      N'Khóa chống nước còn mượt, vải không thủng, mới mặc hai chuyến đi biển. Size M.', 260000, 'ACTIVE',         130),
- (60, 'nguoiban10@demo.local', N'Thời trang',             'GOOD',     N'Đồ bơi nữ hai mảnh size M còn đàn hồi',                    N'Vải không bai, đường may nguyên, đã giặt nước ngọt sau mỗi lần dùng. Không kèm hộp.', 150000, 'ACTIVE',         90),
+ (60, 'nguoiban10@demo.local', N'Thời trang',             'LIKE_NEW', N'Kính mát phân cực chống tia UV đi biển',        N'Kính râm mắt phân cực chống lóa cực tốt khi đi biển hay lái xe, gọng dẻo nhẹ, đầy đủ bao da và khăn lau. Mới đeo một chuyến du lịch.', 180000, 'ACTIVE',         90),
  (61, 'nguoiban10@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Ván chèo hơi kèm bơm tay và dây an toàn',                  N'Van hơi không xì sau khi thử giữ 24 giờ, mặt ván trầy nhẹ. Khách đã nhận ván tại kho.', 4200000, 'SOLD',          540),
  (62, 'nguoiban10@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Kính bơi kèm cặp mũi silicone',                           N'Mắt kính không mờ, dây đàn hồi tốt, đã thay cặp mũi mới. Vệ sinh bằng nước ấm sau khi dùng.', 90000, 'ACTIVE',         75),
 -- Kiệt Miền Tây (nguoiban11) - xe và đồ dùng miền Tây
@@ -595,47 +595,14 @@ BEGIN
     THROW 51093, N'Seed B8: khong insert du 80 san pham, kiem tra ten danh muc, tinh trang hoac shop.', 1;
 END;
 
--- 3. Ảnh: khớp ảnh thực tế theo tên & danh mục (dùng 27 bộ ảnh thực tế sp001..sp027) ---
+-- 3. Ảnh: khớp ảnh thực tế chính xác từng sản phẩm (sp001..sp080) ----------------
 INSERT AnhSanPham (MaSanPham, DuongDan, ThuTu, LaAnhChinh, DungLuong)
 SELECT x.MaSanPham,
-       N'/uploads/seed/' + m.SeedImg + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
+       N'/uploads/seed/sp' + RIGHT('00' + CAST(x.Stt AS varchar(3)), 3) + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
        n.ThuTu,
        CASE WHEN n.ThuTu = 1 THEN 1 ELSE 0 END,
-       200000 + (x.Stt % 27) * 1000 + n.ThuTu * 100
+       200000 + x.Stt * 1000 + n.ThuTu * 100
 FROM #SpB8 x
-JOIN #SeedSp s ON s.Stt = x.Stt
-CROSS APPLY (
-    SELECT CASE
-        WHEN s.Ten LIKE N'%Tủ%' THEN 'sp023'
-        WHEN s.Ten LIKE N'%Kệ%' OR s.Ten LIKE N'%Giá sách%' THEN 'sp015'
-        WHEN s.Ten LIKE N'%Bàn học%' OR s.Ten LIKE N'%Bàn ăn%' OR s.Ten LIKE N'%Bàn trà%' OR s.Ten LIKE N'%Sofa%' OR s.Ten LIKE N'%bàn ghế%' OR s.Ten LIKE N'%Ghế%' THEN 'sp017'
-        WHEN s.Ten LIKE N'%Gối%' OR s.Ten LIKE N'%Chăn%' OR s.Ten LIKE N'%Giường%' OR s.Ten LIKE N'%Nệm%' THEN 'sp016'
-        WHEN s.Ten LIKE N'%Đèn%' THEN 'sp018'
-        WHEN s.Ten LIKE N'%iPhone%' OR s.Ten LIKE N'%Galaxy%' OR s.Ten LIKE N'%iPad%' OR s.Ten LIKE N'%Điện thoại%' OR s.Ten LIKE N'%Sạc dự phòng%' OR s.Ten LIKE N'%điện thoại%' THEN 'sp003'
-        WHEN s.Ten LIKE N'%Laptop%' OR s.Ten LIKE N'%máy tính bàn%' OR s.Ten LIKE N'%Màn hình%' OR s.Ten LIKE N'%VivoBook%' OR s.Ten LIKE N'%Latitude%' THEN 'sp004'
-        WHEN s.Ten LIKE N'%Bàn phím%' OR s.Ten LIKE N'%Chuột%' OR s.Ten LIKE N'%Keychron%' OR s.Ten LIKE N'%DareU%' OR s.Ten LIKE N'%Máy in%' THEN 'sp005'
-        WHEN s.Ten LIKE N'%Tai nghe%' THEN 'sp009'
-        WHEN s.Ten LIKE N'%Máy ảnh%' OR s.Ten LIKE N'%Ống kính%' OR s.Ten LIKE N'%chống rung%' OR s.Ten LIKE N'%Máy quay%' OR s.Ten LIKE N'%flash studio%' THEN 'sp010'
-        WHEN s.Ten LIKE N'%Loa%' THEN 'sp013'
-        WHEN s.Ten LIKE N'%Đồng hồ%' OR s.Ten LIKE N'%nhịp tim%' THEN 'sp012'
-        WHEN s.Ten LIKE N'%Xe đạp%' OR s.Ten LIKE N'%Xe máy%' OR s.Ten LIKE N'%Wave%' OR s.Ten LIKE N'%Bơm lốp%' OR s.Ten LIKE N'%Khóa dây%' OR s.Ten LIKE N'%Mũ bảo hiểm%' OR s.Ten LIKE N'%Ván chèo%' OR s.Ten LIKE N'%xe số%' THEN 'sp008'
-        WHEN s.Ten LIKE N'%Balo%' OR s.Ten LIKE N'%Túi xách%' OR s.Ten LIKE N'%Túi chống nước%' OR s.Ten LIKE N'%Lều du lịch%' THEN 'sp014'
-        WHEN s.Ten LIKE N'%Nồi chiên%' OR s.Ten LIKE N'%Nồi cơm%' THEN 'sp006'
-        WHEN s.Ten LIKE N'%nồi%' OR s.Ten LIKE N'%Bếp từ%' OR s.Ten LIKE N'%Ấm%' OR s.Ten LIKE N'%thủy tinh%' OR s.Ten LIKE N'%dao và thớt%' OR s.Ten LIKE N'%bình trà%' OR s.Ten LIKE N'%ly đồng%' THEN 'sp019'
-        WHEN s.Ten LIKE N'%xay sinh tố%' THEN 'sp024'
-        WHEN s.Ten LIKE N'%Bàn ủi%' THEN 'sp025'
-        WHEN s.Ten LIKE N'%Quạt%' OR s.Ten LIKE N'%lọc không khí%' OR s.Ten LIKE N'%hút bụi%' OR s.Ten LIKE N'%Máy giặt%' THEN 'sp026'
-        WHEN s.Ten LIKE N'%Xe đẩy%' OR s.Ten LIKE N'%Xe tập đi%' OR s.Ten LIKE N'%ăn dặm%' OR s.Ten LIKE N'%Nôi điện%' THEN 'sp022'
-        WHEN s.Ten LIKE N'%Lego%' OR s.Ten LIKE N'%Xếp hình%' OR s.Ten LIKE N'%Đồ chơi gỗ%' OR s.Ten LIKE N'%Lắp ráp%' OR s.Ten LIKE N'%Bập bênh%' THEN 'sp027'
-        WHEN s.Ten LIKE N'%Giày%' OR s.Ten LIKE N'%sneaker%' OR s.Ten LIKE N'%Dép%' THEN 'sp002'
-        WHEN s.Ten LIKE N'%Áo%' OR s.Ten LIKE N'%Quần%' OR s.Ten LIKE N'%Váy%' OR s.Ten LIKE N'%denim%' OR s.Ten LIKE N'%Khăn%' OR s.Ten LIKE N'%Set năm bộ đồ%' OR s.Ten LIKE N'%Nón cói%' OR s.Ten LIKE N'%Đồ bơi%' THEN 'sp001'
-        WHEN s.Ten LIKE N'%cờ vua%' OR s.Ten LIKE N'%Tượng gốm%' OR s.Ten LIKE N'%Hộp nhạc%' OR s.Ten LIKE N'%men rạn%' OR s.Ten LIKE N'%sơn mài%' OR s.Ten LIKE N'%thư pháp%' OR s.Ten LIKE N'%Bình hoa%' OR s.Ten LIKE N'%Bình gốm%' THEN 'sp011'
-        WHEN s.Ten LIKE N'%Vợt%' OR s.Ten LIKE N'%chạy bộ%' OR s.Ten LIKE N'%yoga%' OR s.Ten LIKE N'%tạ tay%' OR s.Ten LIKE N'%Gậy golf%' OR s.Ten LIKE N'%Kính lặn%' OR s.Ten LIKE N'%Kính bơi%' OR s.Ten LIKE N'%padel%' THEN 'sp021'
-        WHEN s.Ten LIKE N'%Truyện%' OR s.Ten LIKE N'%Conan%' OR s.Ten LIKE N'%Doraemon%' OR s.Ten LIKE N'%Sherlock%' THEN 'sp020'
-        WHEN s.Ten LIKE N'%Giải tích%' OR s.Ten LIKE N'%Cấu trúc dữ liệu%' OR s.Ten LIKE N'%Giáo trình%' OR s.Ten LIKE N'%Kinh tế học%' OR s.Ten LIKE N'%Tư duy phản biện%' OR s.Ten LIKE N'%vở kẻ ngang%' OR s.Ten LIKE N'%Bút máy%' OR s.Ten LIKE N'%Casio fx%' OR s.Ten LIKE N'%IELTS%' OR s.Ten LIKE N'%Sách%' THEN 'sp007'
-        ELSE 'sp007'
-    END AS SeedImg
-) m
 CROSS JOIN (VALUES (1), (2)) n (ThuTu)
 WHERE NOT EXISTS (SELECT 1 FROM AnhSanPham a WHERE a.MaSanPham = x.MaSanPham AND a.ThuTu = n.ThuTu);
 
@@ -1121,7 +1088,7 @@ CROSS APPLY (
         WHEN sp.Ten LIKE N'%Xe đẩy%' OR sp.Ten LIKE N'%Xe tập đi%' OR sp.Ten LIKE N'%ăn dặm%' OR sp.Ten LIKE N'%Nôi điện%' THEN 'sp022'
         WHEN sp.Ten LIKE N'%Lego%' OR sp.Ten LIKE N'%Xếp hình%' OR sp.Ten LIKE N'%Đồ chơi gỗ%' OR sp.Ten LIKE N'%Lắp ráp%' OR sp.Ten LIKE N'%Bập bênh%' THEN 'sp027'
         WHEN sp.Ten LIKE N'%Giày%' OR sp.Ten LIKE N'%sneaker%' OR sp.Ten LIKE N'%Dép%' THEN 'sp002'
-        WHEN sp.Ten LIKE N'%Áo%' OR sp.Ten LIKE N'%Quần%' OR sp.Ten LIKE N'%Váy%' OR sp.Ten LIKE N'%denim%' OR sp.Ten LIKE N'%Khăn%' OR sp.Ten LIKE N'%Set năm bộ đồ%' OR sp.Ten LIKE N'%Nón cói%' OR sp.Ten LIKE N'%Đồ bơi%' THEN 'sp001'
+        WHEN sp.Ten LIKE N'%Áo%' OR sp.Ten LIKE N'%Quần%' OR sp.Ten LIKE N'%Váy%' OR sp.Ten LIKE N'%denim%' OR sp.Ten LIKE N'%Khăn%' OR sp.Ten LIKE N'%Set năm bộ đồ%' OR sp.Ten LIKE N'%Nón cói%' THEN 'sp001'
         WHEN sp.Ten LIKE N'%cờ vua%' OR sp.Ten LIKE N'%Tượng gốm%' OR sp.Ten LIKE N'%Hộp nhạc%' OR sp.Ten LIKE N'%men rạn%' OR sp.Ten LIKE N'%sơn mài%' OR sp.Ten LIKE N'%thư pháp%' OR sp.Ten LIKE N'%Bình hoa%' OR sp.Ten LIKE N'%Bình gốm%' THEN 'sp011'
         WHEN sp.Ten LIKE N'%Vợt%' OR sp.Ten LIKE N'%chạy bộ%' OR sp.Ten LIKE N'%yoga%' OR sp.Ten LIKE N'%tạ tay%' OR sp.Ten LIKE N'%Gậy golf%' OR sp.Ten LIKE N'%Kính lặn%' OR sp.Ten LIKE N'%Kính bơi%' OR sp.Ten LIKE N'%padel%' THEN 'sp021'
         WHEN sp.Ten LIKE N'%Truyện%' OR sp.Ten LIKE N'%Conan%' OR sp.Ten LIKE N'%Doraemon%' OR sp.Ten LIKE N'%Sherlock%' THEN 'sp020'
