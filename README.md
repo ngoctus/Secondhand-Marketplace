@@ -53,6 +53,19 @@ copy appsettings.Example.json appsettings.Development.json
 
 Sửa `ConnectionStrings:DefaultConnection` trong `appsettings.Development.json` cho đúng instance SQL Server của bạn. Đặt `Jwt:Key` thành secret ngẫu nhiên tối thiểu 32 byte trong cấu hình Development/User Secrets hoặc biến môi trường; không commit secret thật.
 
+### Gửi OTP đặt lại mật khẩu bằng Gmail
+
+Ứng dụng gửi OTP qua Gmail SMTP (`smtp.gmail.com:587`, TLS). Cấu hình thông tin đăng nhập bằng User Secrets trong thư mục `src\SecondHandMarketplace.Web`:
+
+```bat
+dotnet user-secrets set "Email:Smtp:Username" "địa_chỉ_gmail_của_bạn@gmail.com"
+dotnet user-secrets set "Email:Smtp:Password" "mật_khẩu_ứng_dụng_16_ký_tự"
+```
+
+`Password` phải là **Mật khẩu ứng dụng Google**, không phải mật khẩu đăng nhập Gmail. Google yêu cầu bật Xác minh 2 bước trước khi tạo mật khẩu ứng dụng. Tạo tại [Google Account App Passwords](https://myaccount.google.com/apppasswords). Sau khi đặt secrets, khởi động lại website, vào **Quên mật khẩu**, nhập Gmail thuộc tài khoản đã đăng ký và gửi mã. OTP có hiệu lực 10 phút; giới hạn 5 lần nhập sai. Google có thể thu hồi mật khẩu ứng dụng khi mật khẩu tài khoản Google thay đổi.
+
+Không đưa `Email:Smtp:Password` vào `appsettings.json`, Git hoặc ảnh chụp màn hình. User Secrets chỉ dùng cho máy phát triển; khi triển khai, cấu hình cùng khóa bằng secret manager/biến môi trường.
+
 Chạy ứng dụng:
 
 ```bat

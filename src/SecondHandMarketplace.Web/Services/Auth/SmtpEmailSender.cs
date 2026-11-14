@@ -13,10 +13,12 @@ public sealed class SmtpEmailSender(IConfiguration configuration) : IEmailSender
     public async Task SendAsync(string to, string subject, string htmlBody, CancellationToken cancellationToken = default)
     {
         var section = configuration.GetSection("Email:Smtp");
-        var host = section["Host"];
-        var from = section["From"];
-        if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(from))
-            throw new InvalidOperationException("Email:Smtp:Host và Email:Smtp:From chưa được cấu hình.");
+        var host = section["Host"] ?? "smtp.gmail.com";
+        var username = section["Username"];
+        var from = section["From"] ?? username;
+        var password = section["Password"];
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(from))
+            throw new InvalidOperationException("Thiếu cấu hình Email:Smtp:Username hoặc Email:Smtp:Password. Hãy dùng địa chỉ Gmail và Mật khẩu ứng dụng, không dùng mật khẩu đăng nhập Gmail.");
 
         using var message = new MailMessage
         {
@@ -31,9 +33,7 @@ public sealed class SmtpEmailSender(IConfiguration configuration) : IEmailSender
             EnableSsl = bool.TryParse(section["EnableSsl"], out var ssl) ? ssl : true,
             DeliveryMethod = SmtpDeliveryMethod.Network
         };
-        var username = section["Username"];
-        var password = section["Password"];
-        if (!string.IsNullOrWhiteSpace(username)) client.Credentials = new NetworkCredential(username, password);
+        client.Credentials = new NetworkCredential(username, password);
         await client.SendMailAsync(message, cancellationToken);
     }
 }
