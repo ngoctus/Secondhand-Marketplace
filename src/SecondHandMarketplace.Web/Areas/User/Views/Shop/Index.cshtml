@@ -6,7 +6,10 @@
 <div class="container py-4" style="max-width:760px"><h2>Cửa hàng của tôi</h2><p class="text-muted">Mỗi tài khoản USER được tạo tối đa một cửa hàng.</p>
 @if (thieuDiaChi)
 {
-    <div class="alert alert-warning">Cửa hàng của bạn chưa có địa chỉ. Vui lòng chọn tỉnh/thành, phường/xã và nhập địa chỉ chi tiết rồi bấm lưu.</div>
+    <div class="alert alert-warning d-flex align-items-center gap-3">
+        <i class="bi bi-exclamation-triangle-fill fs-4 text-warning flex-shrink-0"></i>
+        <div>Cửa hàng của bạn chưa có địa chỉ. Vui lòng chọn tỉnh/thành, phường/xã và nhập địa chỉ chi tiết rồi bấm lưu.</div>
+    </div>
 }
 <form asp-action="Index" method="post" class="card card-body gap-3"><div asp-validation-summary="ModelOnly" class="text-danger"></div>
 <div><label asp-for="TenShop" class="form-label"></label><input asp-for="TenShop" class="form-control"/><span asp-validation-for="TenShop" class="text-danger"></span></div>

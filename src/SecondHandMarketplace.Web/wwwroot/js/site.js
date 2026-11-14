@@ -128,18 +128,16 @@
         });
     };
 
-    const thongBao = (message) => {
-        let status = document.getElementById('rmFavoriteStatus');
-        if (!status) {
-            status = document.createElement('div');
-            status.id = 'rmFavoriteStatus';
-            status.className = 'visually-hidden';
-            status.setAttribute('role', 'status');
-            status.setAttribute('aria-live', 'polite');
-            document.body.appendChild(status);
+    const thongBao = (message, type = 'info', title = null) => {
+        if (window.showNotifyBox) {
+            window.showNotifyBox({
+                title: title || (type === 'success' ? 'Đã lưu yêu thích' : type === 'error' ? 'Lỗi' : 'Thông báo'),
+                message: message,
+                type: type
+            });
+        } else if (window.alertBox) {
+            window.alertBox(message, type);
         }
-        status.textContent = '';
-        window.setTimeout(() => { status.textContent = message; }, 20);
     };
 
     document.addEventListener('click', async (e) => {
@@ -166,23 +164,27 @@
                 return;
             }
             if (!res.ok) {
-                thongBao('Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.');
+                thongBao('Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.', 'warning', 'Cần lưu ý');
                 return;
             }
             const data = await res.json();
             if (!data.success) {
-                thongBao('Không thể lưu sản phẩm yêu thích này.');
+                thongBao(data.message || 'Không thể lưu sản phẩm yêu thích này.', 'error', 'Không thành công');
                 return;
             }
             danhDau(productId, data.isFavorite);
-            thongBao(data.isFavorite ? 'Đã thêm vào yêu thích.' : 'Đã bỏ khỏi yêu thích.');
+            thongBao(
+                data.isFavorite ? 'Sản phẩm đã được thêm vào danh sách yêu thích của bạn!' : 'Đã bỏ sản phẩm khỏi danh sách yêu thích.',
+                data.isFavorite ? 'success' : 'info',
+                data.isFavorite ? 'Yêu thích' : 'Đã bỏ yêu thích'
+            );
             if (!data.isFavorite && window.location.pathname.toLowerCase().startsWith('/user/favorites')) {
                 const item = btn.closest('.col') ?? btn.closest('.rm-product-card');
                 item?.remove();
                 if (!document.querySelector('.rm-product-card')) window.location.reload();
             }
         } catch {
-            thongBao('Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.');
+            thongBao('Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.', 'error', 'Lỗi kết nối');
         } finally {
             btn.disabled = false;
         }
@@ -495,44 +497,144 @@
         }
     });
 
-    // Helper hiển thị alert box nổi
-    window.alertBox = (message, type = 'success') => {
-        let container = document.querySelector('.rm-alerts-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'rm-alerts-container';
-            container.setAttribute('aria-live', 'polite');
-            document.body.appendChild(container);
+    // =========================================================================
+    // HỘP THÔNG BÁO TOÀN DIỆN (Universal Notification Box Modal) chống chìm web
+    // =========================================================================
+    let notifyAutoTimer = null;
+
+    window.closeNotifyBox = () => {
+        const modal = document.getElementById('rmNotifyModal');
+        if (!modal) return;
+        if (notifyAutoTimer) {
+            clearTimeout(notifyAutoTimer);
+            notifyAutoTimer = null;
         }
-
-        const alertEl = document.createElement('div');
-        alertEl.className = `rm-alert rm-alert-${type}`;
-        alertEl.setAttribute('role', type === 'error' ? 'alert' : 'status');
-
-        let iconSvg = '';
-        if (type === 'success') {
-            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>';
-        } else if (type === 'error') {
-            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>';
-        } else {
-            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>';
-        }
-
-        alertEl.innerHTML = `
-            <div class="rm-alert-icon" aria-hidden="true">${iconSvg}</div>
-            <div class="rm-alert-content"><span class="rm-alert-message">${message}</span></div>
-            <button type="button" class="rm-alert-close" aria-label="Đóng">&times;</button>
-        `;
-
-        alertEl.querySelector('.rm-alert-close').addEventListener('click', () => alertEl.remove());
-        container.appendChild(alertEl);
-
+        modal.classList.remove('is-active');
+        document.body.classList.remove('rm-modal-open');
         setTimeout(() => {
-            alertEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            alertEl.style.opacity = '0';
-            alertEl.style.transform = 'translateY(-10px)';
-            setTimeout(() => alertEl.remove(), 300);
-        }, 4000);
+            if (!modal.classList.contains('is-active')) {
+                modal.style.display = 'none';
+            }
+        }, 260);
+    };
+
+    window.showNotifyBox = (opts) => {
+        if (typeof opts === 'string') {
+            opts = { message: opts, type: arguments[1] || 'success', title: arguments[2] || null };
+        }
+        let modal = document.getElementById('rmNotifyModal');
+        if (!modal) {
+            // Tự tạo modal nếu trang chưa có sẵn
+            modal = document.createElement('div');
+            modal.id = 'rmNotifyModal';
+            modal.className = 'rm-notify-backdrop';
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            modal.innerHTML = `
+                <div class="rm-notify-box rm-notify-box-success">
+                    <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="Đóng">&times;</button>
+                    <div class="rm-notify-icon-wrap">
+                        <div class="rm-notify-icon rm-notify-icon-success" id="rmNotifyIcon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                    </div>
+                    <div class="rm-notify-content">
+                        <h4 class="rm-notify-title" id="rmNotifyTitle">Thành công!</h4>
+                        <div class="rm-notify-message" id="rmNotifyDesc"></div>
+                    </div>
+                    <div class="rm-notify-actions">
+                        <button type="button" class="rm-notify-btn rm-notify-btn-success" id="rmNotifyBtn">Đồng ý</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            initNotifyModalEvents(modal);
+        }
+
+        const type = opts.type || 'success';
+        const title = opts.title || (type === 'success' ? 'Thành công!' : type === 'error' ? 'Đã xảy ra lỗi' : type === 'warning' ? 'Cần lưu ý' : 'Thông báo');
+        const message = opts.message || '';
+        const btnText = opts.buttonText || 'Đồng ý';
+
+        const boxEl = modal.querySelector('.rm-notify-box');
+        if (boxEl) {
+            boxEl.className = `rm-notify-box rm-notify-box-${type}`;
+        }
+
+        const iconEl = document.getElementById('rmNotifyIcon');
+        if (iconEl) {
+            iconEl.className = `rm-notify-icon rm-notify-icon-${type}`;
+            let iconHtml = '<i class="bi bi-check-circle-fill"></i>';
+            if (type === 'error') iconHtml = '<i class="bi bi-x-circle-fill"></i>';
+            else if (type === 'warning') iconHtml = '<i class="bi bi-exclamation-triangle-fill"></i>';
+            else if (type === 'info') iconHtml = '<i class="bi bi-info-circle-fill"></i>';
+            iconEl.innerHTML = iconHtml;
+        }
+
+        const titleEl = document.getElementById('rmNotifyTitle');
+        if (titleEl) titleEl.textContent = title;
+
+        const descEl = document.getElementById('rmNotifyDesc');
+        if (descEl) descEl.textContent = message;
+
+        const btnEl = document.getElementById('rmNotifyBtn');
+        if (btnEl) {
+            btnEl.textContent = btnText;
+            btnEl.className = `rm-notify-btn rm-notify-btn-${type}`;
+        }
+
+        modal.style.display = 'flex';
+        void modal.offsetWidth; // force reflow
+        modal.classList.add('is-active');
+        document.body.classList.add('rm-modal-open');
+
+        if (notifyAutoTimer) clearTimeout(notifyAutoTimer);
+        // Tự động đóng sau 4.5s với loại thông báo success/info
+        if (opts.autoCloseMs || (type === 'success' || type === 'info')) {
+            const ms = opts.autoCloseMs || 4500;
+            notifyAutoTimer = setTimeout(window.closeNotifyBox, ms);
+        }
+    };
+
+    const initNotifyModalEvents = (modal) => {
+        if (!modal || modal.dataset.initEvents) return;
+        modal.dataset.initEvents = 'true';
+
+        const closeBtn = modal.querySelector('#rmNotifyBtn');
+        const closeX = modal.querySelector('#rmNotifyCloseX');
+
+        if (closeBtn) closeBtn.addEventListener('click', window.closeNotifyBox);
+        if (closeX) closeX.addEventListener('click', window.closeNotifyBox);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                window.closeNotifyBox();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) {
+                window.closeNotifyBox();
+            }
+        });
+    };
+
+    // Khởi tạo sự kiện cho modal đã render từ Razor server TempData
+    const serverNotifyModal = document.getElementById('rmNotifyModal');
+    if (serverNotifyModal) {
+        initNotifyModalEvents(serverNotifyModal);
+        if (serverNotifyModal.classList.contains('is-active')) {
+            document.body.classList.add('rm-modal-open');
+            const isErrorOrWarn = serverNotifyModal.querySelector('.rm-notify-box-error, .rm-notify-box-warning');
+            if (!isErrorOrWarn) {
+                notifyAutoTimer = setTimeout(window.closeNotifyBox, 4500);
+            }
+        }
+    }
+
+    // Tương thích ngược: alertBox chuyển thành hiển thị Hộp thông báo Box nổi bật
+    window.alertBox = (message, type = 'success', title = null) => {
+        window.showNotifyBox({ message, type, title });
     };
 })();
 

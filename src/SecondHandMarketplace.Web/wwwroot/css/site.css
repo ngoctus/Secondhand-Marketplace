@@ -3663,3 +3663,256 @@ a.smallbtn:hover {
 .rm-cart-box-x:hover {
     color: var(--color-text-primary);
 }
+
+/* ==========================================================================
+   UNIVERSAL NOTIFICATION MODAL BOX (Hộp thoại thông báo nổi bật chống chìm web)
+   ========================================================================== */
+.rm-notify-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10070;
+    background: rgba(41, 35, 29, 0.52);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rm-notify-backdrop.is-active {
+    display: flex !important;
+    opacity: 1;
+}
+
+.rm-notify-box {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    background: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 24px 64px rgba(41, 35, 29, 0.28), 0 6px 18px rgba(41, 35, 29, 0.1);
+    border: 1px solid rgba(41, 35, 29, 0.1);
+    padding: 34px 28px 26px;
+    text-align: center;
+    transform: scale(0.92) translateY(14px);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rm-notify-backdrop.is-active .rm-notify-box {
+    transform: scale(1) translateY(0);
+}
+
+.rm-notify-close-x {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--color-text-muted, #79563A);
+    cursor: pointer;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.rm-notify-close-x:hover {
+    color: var(--color-text-primary, #29231D);
+    background: var(--color-surface, #F8F5EE);
+}
+
+.rm-notify-icon-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+.rm-notify-icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    flex-shrink: 0;
+}
+
+.rm-notify-icon-success {
+    background: #EAF4EC;
+    color: #2E7D32;
+    box-shadow: 0 0 0 8px rgba(46, 125, 50, 0.12);
+}
+
+.rm-notify-icon-error {
+    background: #FDF0F0;
+    color: #C0392B;
+    box-shadow: 0 0 0 8px rgba(192, 57, 43, 0.12);
+}
+
+.rm-notify-icon-warning {
+    background: #FFF8E6;
+    color: #D97706;
+    box-shadow: 0 0 0 8px rgba(217, 119, 6, 0.12);
+}
+
+.rm-notify-icon-info {
+    background: #EEF4F8;
+    color: #20638F;
+    box-shadow: 0 0 0 8px rgba(32, 99, 143, 0.12);
+}
+
+.rm-notify-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-text-primary, #29231D);
+    margin-bottom: 8px;
+    font-family: var(--font-heading, 'Playfair Display', serif);
+}
+
+.rm-notify-message {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--color-text-secondary, #5C5549);
+    margin-bottom: 24px;
+    padding: 0 8px;
+    word-break: break-word;
+}
+
+.rm-notify-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.rm-notify-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    box-shadow: 0 4px 12px rgba(41, 35, 29, 0.12);
+}
+
+.rm-notify-btn-success {
+    background: var(--color-primary, #68705A);
+    color: #FFFFFF !important;
+}
+
+.rm-notify-btn-success:hover {
+    background: var(--color-primary-hover, #555C49);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(104, 112, 90, 0.28);
+}
+
+.rm-notify-btn-error {
+    background: #C0392B;
+    color: #FFFFFF !important;
+}
+
+.rm-notify-btn-error:hover {
+    background: #A93226;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(192, 57, 43, 0.28);
+}
+
+.rm-notify-btn-warning {
+    background: #D97706;
+    color: #FFFFFF !important;
+}
+
+.rm-notify-btn-warning:hover {
+    background: #B45309;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(217, 119, 6, 0.28);
+}
+
+.rm-notify-btn-info {
+    background: #20638F;
+    color: #FFFFFF !important;
+}
+
+.rm-notify-btn-info:hover {
+    background: #174C6F;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(32, 99, 143, 0.28);
+}
+
+/* ==========================================================================
+   IN-PAGE ALERT BOXES & VALIDATION (Định dạng Hộp chống chìm toàn diện)
+   ========================================================================== */
+.alert {
+    position: relative;
+    padding: 16px 20px !important;
+    margin-bottom: 20px !important;
+    border: 1px solid rgba(41, 35, 29, 0.12) !important;
+    border-radius: 14px !important;
+    background-color: #FFFFFF !important;
+    box-shadow: 0 8px 24px rgba(41, 35, 29, 0.08), 0 2px 6px rgba(41, 35, 29, 0.04) !important;
+    color: var(--color-text-primary, #29231D) !important;
+    font-size: 14.5px !important;
+    line-height: 1.5 !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.alert:hover {
+    box-shadow: 0 10px 28px rgba(41, 35, 29, 0.12), 0 3px 8px rgba(41, 35, 29, 0.06) !important;
+}
+
+.alert-success {
+    border-left: 6px solid #2E7D32 !important;
+    background: linear-gradient(to right, #F1F8F4, #FFFFFF 45%) !important;
+}
+
+.alert-danger {
+    border-left: 6px solid #C0392B !important;
+    background: linear-gradient(to right, #FDF2F2, #FFFFFF 45%) !important;
+}
+
+.alert-warning {
+    border-left: 6px solid #D97706 !important;
+    background: linear-gradient(to right, #FFFBEB, #FFFFFF 45%) !important;
+}
+
+.alert-info {
+    border-left: 6px solid #20638F !important;
+    background: linear-gradient(to right, #EFF6FF, #FFFFFF 45%) !important;
+}
+
+.alert-light, .alert-secondary {
+    border-left: 6px solid var(--color-primary, #68705A) !important;
+    background: #FFFFFF !important;
+}
+
+/* Form validation error box */
+.validation-summary-errors {
+    padding: 14px 18px !important;
+    margin-bottom: 20px !important;
+    border-radius: 12px !important;
+    background: #FFF5F5 !important;
+    border: 1px solid #FED7D7 !important;
+    border-left: 6px solid #C0392B !important;
+    box-shadow: 0 6px 18px rgba(192, 57, 43, 0.12) !important;
+    color: #9B1C1C !important;
+    font-size: 14px !important;
+}
+
+.validation-summary-errors ul {
+    margin: 0 !important;
+    padding-left: 20px !important;
+}
+
