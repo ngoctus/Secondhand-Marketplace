@@ -569,10 +569,32 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .cat-circle {
-    width: 54px;
-    height: 54px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background-color: #DCD2C0;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 26px;
+    color: var(--color-primary, #68705A);
+    line-height: 1;
+    margin: 0 auto;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.cat-circle i {
+    font-size: 26px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.category-card:hover .cat-circle {
+    transform: scale(1.08);
+    background-color: var(--color-primary, #68705A);
+    color: #FFFFFF;
 }
 
 .cat-name {

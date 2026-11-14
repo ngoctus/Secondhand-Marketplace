@@ -19,8 +19,8 @@ public class ProductSearchVm
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = DefaultPageSize;
 
-    /// <summary>Mức phân trang dùng khi caller (API, AI tool, trang chủ) không tự chỉ định.</summary>
-    public const int DefaultPageSize = 24;
+    /// <summary>Mức phân trang dùng khi caller (API, AI tool, trang chủ) không tự chỉ định (3 hàng x 3 cột = 9 sản phẩm/trang).</summary>
+    public const int DefaultPageSize = 9;
 
     public static readonly PriceRangeOption[] KhoPhanGia =
     [

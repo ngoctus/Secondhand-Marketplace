@@ -176,7 +176,7 @@
         @foreach (var c in danhMuc.Take(6))
         {
             <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" class="category-card">
-                <div class="cat-circle"><i class="bi @LayIconDanhMuc(c.Ten)"></i></div>
+                <div class="cat-circle cat-icon"><i class="bi @LayIconDanhMuc(c.Ten)"></i></div>
                 <span class="cat-name">@c.Ten</span>
             </a>
         }

@@ -36,7 +36,7 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
             return View(model);
         }
         await SignInUserAsync(result.User.MaNguoiDung, result.User.Email, result.User.HoTen, result.User.VaiTro, false, result.User.AnhDaiDien, DangNhapHelper.LaySecurityStamp(result.User.MatKhauBam));
-        TempData["ThanhCong"] = "Đăng ký tài khoản thành công!";
+        TempData["ThanhCong"] = "Đăng ký tài khoản thành công! Chào mừng bạn đến với Re:Market.";
         return RedirectToAction("Index", "Home");
     }
 
@@ -67,7 +67,8 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
             ModelState.AddModelError(string.Empty, "Chưa gửi được email xác nhận. Vui lòng thử lại sau.");
             return View(model);
         }
-        TempData["OtpSent"] = "Nếu email thuộc một tài khoản đang hoạt động, mã xác nhận sẽ được gửi tới hộp thư đó.";
+        TempData["ThongBao"] = "Mã xác nhận OTP 6 chữ số đã được gửi tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư (kể cả mục Spam).";
+        TempData["OtpSent"] = TempData["ThongBao"];
         return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
     }
 
@@ -87,7 +88,7 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
             ModelState.AddModelError(string.Empty, result.Error ?? "Không thể đặt lại mật khẩu.");
             return View(model);
         }
-        TempData["ThanhCong"] = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.";
+        TempData["ThanhCong"] = "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.";
         return RedirectToAction(nameof(Login));
     }
 
@@ -98,9 +99,15 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
     {
         if (!ModelState.IsValid) return RedirectToAction(nameof(ForgotPassword));
         var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
-        TempData[sent ? "OtpSent" : "Loi"] = sent
-            ? "Nếu email thuộc một tài khoản đang hoạt động và đã qua thời gian chờ, mã xác nhận sẽ được gửi tới hộp thư đó."
-            : "Chưa gửi được email xác nhận. Vui lòng thử lại sau.";
+        if (sent)
+        {
+            TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư.";
+            TempData["OtpSent"] = TempData["ThongBao"];
+        }
+        else
+        {
+            TempData["Loi"] = "Chưa gửi được email xác nhận. Vui lòng thử lại sau.";
+        }
         return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
     }
 
