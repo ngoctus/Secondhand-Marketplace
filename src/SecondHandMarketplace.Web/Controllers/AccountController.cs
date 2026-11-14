@@ -10,7 +10,10 @@ using SecondHandMarketplace.Web.Services.Auth;
 
 namespace SecondHandMarketplace.Web.Controllers;
 
-public sealed class AccountController(IAuthService authService, IPasswordResetService passwordResetService) : Controller
+public sealed class AccountController(
+    IAuthService authService,
+    IPasswordResetService passwordResetService,
+    IRegistrationOtpService registrationOtpService) : Controller
 {
     [AllowAnonymous]
     [HttpGet]
@@ -29,15 +32,66 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
         if (!ModelState.IsValid) return View(model);
-        var result = await authService.RegisterAsync(model.FullName, model.Email, model.Phone, model.Password, cancellationToken);
-        if (!result.Success || result.User is null)
+
+        var (success, error, token) = await registrationOtpService.StartRegistrationAsync(model, cancellationToken);
+        if (!success || string.IsNullOrWhiteSpace(token))
         {
-            ModelState.AddModelError(string.Empty, result.Error ?? "Không thể tạo tài khoản.");
+            ModelState.AddModelError(string.Empty, error ?? "Không thể tiến hành đăng ký. Vui lòng thử lại.");
             return View(model);
         }
-        await SignInUserAsync(result.User.MaNguoiDung, result.User.Email, result.User.HoTen, result.User.VaiTro, false, result.User.AnhDaiDien, DangNhapHelper.LaySecurityStamp(result.User.MatKhauBam));
-        TempData["ThanhCong"] = "Đăng ký tài khoản thành công! Chào mừng bạn đến với Re:Market.";
+
+        TempData["ThongBao"] = $"Mã xác nhận OTP 6 chữ số đã được gửi tới email {model.Email.Trim()}. Vui lòng nhập mã để hoàn tất đăng ký.";
+        TempData["OtpSent"] = TempData["ThongBao"];
+        return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email.Trim().ToLowerInvariant(), token });
+    }
+
+    [HttpGet]
+    public IActionResult VerifyRegistration(string email, string token)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+        if (string.IsNullOrWhiteSpace(token)) return RedirectToAction(nameof(Register));
+        return View(new RegisterVerifyVm { Email = email ?? string.Empty, Token = token });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> VerifyRegistration(RegisterVerifyVm model, CancellationToken cancellationToken)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+        if (!ModelState.IsValid) return View(model);
+
+        var (success, error, user, newToken) = await registrationOtpService.VerifyOtpAsync(model.Token, model.Code, cancellationToken);
+        if (!success || user is null)
+        {
+            if (!string.IsNullOrWhiteSpace(newToken))
+            {
+                model.Token = newToken;
+            }
+            ModelState.AddModelError(string.Empty, error ?? "Mã OTP không hợp lệ.");
+            return View(model);
+        }
+
+        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, false, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
+        TempData["ThanhCong"] = "Đăng ký tài khoản và xác thực email thành công! Chào mừng bạn đến với Re:Market.";
         return RedirectToAction("Index", "Home");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendRegisterCode(RegisterVerifyVm model, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(model.Token)) return RedirectToAction(nameof(Register));
+        var (success, error, newToken) = await registrationOtpService.ResendCodeAsync(model.Token, cancellationToken);
+        if (success)
+        {
+            TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email của bạn. Vui lòng kiểm tra hộp thư.";
+            TempData["OtpSent"] = TempData["ThongBao"];
+        }
+        else
+        {
+            TempData["Loi"] = error ?? "Chưa thể gửi lại mã xác nhận. Vui lòng thử lại sau.";
+        }
+        return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email?.Trim().ToLowerInvariant(), token = newToken ?? model.Token });
     }
 
     [HttpGet]

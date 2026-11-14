@@ -54,6 +54,33 @@
 
             <!-- Search Bar pill theo Wireframe -->
             <form class="rm-header-search" asp-area="" asp-controller="Products" asp-action="Index" method="get" role="search" aria-label="Tìm sản phẩm">
+                @if (Context.Request.RouteValues["controller"]?.ToString()?.Equals("Products", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    @if (Context.Request.Query.ContainsKey("CategoryId"))
+                    {
+                        <input type="hidden" name="CategoryId" value="@Context.Request.Query["CategoryId"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("PriceRange"))
+                    {
+                        <input type="hidden" name="PriceRange" value="@Context.Request.Query["PriceRange"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("ConditionId"))
+                    {
+                        <input type="hidden" name="ConditionId" value="@Context.Request.Query["ConditionId"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("MaTinhThanh"))
+                    {
+                        <input type="hidden" name="MaTinhThanh" value="@Context.Request.Query["MaTinhThanh"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("MaPhuongXa"))
+                    {
+                        <input type="hidden" name="MaPhuongXa" value="@Context.Request.Query["MaPhuongXa"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("Sort"))
+                    {
+                        <input type="hidden" name="Sort" value="@Context.Request.Query["Sort"]" />
+                    }
+                }
                 <span class="search-icon" aria-hidden="true">
                     <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="9" cy="9" r="6"></circle>
