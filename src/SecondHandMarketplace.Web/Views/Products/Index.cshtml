@@ -16,13 +16,31 @@
         return Context.Request.Path + QueryString.Create(pairs);
     }
 
-    var chips = new List<string>();
+    var filterChips = new List<(string Label, string RemoveUrl)>();
     if (f.CategoryId is int maDanhMuc)
-        chips.Add(Model.DanhSachDanhMuc.FirstOrDefault(c => c.MaDanhMuc == maDanhMuc)?.Ten ?? "Danh mục");
-    if (!string.IsNullOrWhiteSpace(f.TenPhanGia)) chips.Add(f.TenPhanGia);
+    {
+        var catName = Model.DanhSachDanhMuc.FirstOrDefault(c => c.MaDanhMuc == maDanhMuc)?.Ten ?? "Danh mục";
+        filterChips.Add((catName, LocUrl("CategoryId", null)));
+    }
+    if (!string.IsNullOrWhiteSpace(f.TenPhanGia))
+    {
+        filterChips.Add((f.TenPhanGia, LocUrl("PriceRange", null)));
+    }
     if (f.ConditionId is int maTinhTrang)
-        chips.Add(Model.DanhSachTinhTrang.FirstOrDefault(t => t.MaTinhTrang == maTinhTrang)?.Ten ?? "Tình trạng");
-    if (!string.IsNullOrWhiteSpace(Model.KhuVucDaChon)) chips.Add(Model.KhuVucDaChon);
+    {
+        var condName = Model.DanhSachTinhTrang.FirstOrDefault(t => t.MaTinhTrang == maTinhTrang)?.Ten ?? "Tình trạng";
+        filterChips.Add((condName, LocUrl("ConditionId", null)));
+    }
+    if (!string.IsNullOrWhiteSpace(Model.KhuVucDaChon))
+    {
+        var pairsNoKhuVuc = Context.Request.Query
+            .Where(k => !k.Key.Equals("MaTinhThanh", StringComparison.OrdinalIgnoreCase) && !k.Key.Equals("MaPhuongXa", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(k => k.Value, (k, v) => new KeyValuePair<string, string?>(k.Key, v))
+            .ToList();
+        var urlNoKhuVuc = Context.Request.Path + QueryString.Create(pairsNoKhuVuc);
+        filterChips.Add((Model.KhuVucDaChon, urlNoKhuVuc));
+    }
+    var chips = filterChips.Select(c => c.Label).ToList();
 }
 
 <!-- Breadcrumb (Ảnh 4) -->
@@ -57,6 +75,10 @@
             @if (f.MaPhuongXa.HasValue)
             {
                 <input type="hidden" name="MaPhuongXa" value="@f.MaPhuongXa" />
+            }
+            @if (!string.IsNullOrEmpty(f.Sort))
+            {
+                <input type="hidden" name="Sort" value="@f.Sort" />
             }
 
             <!-- Tìm trong kết quả: trên điện thoại ô search của header có thể bị thu gọn -->
@@ -145,14 +167,17 @@
             </div>
         </div>
 
-        @if (chips.Count > 0)
+        @if (filterChips.Count > 0)
         {
             <div class="rm-active-filters">
-                @foreach (var chip in chips)
+                @foreach (var chip in filterChips)
                 {
-                    <span class="rm-filter-chip">@chip</span>
+                    <span class="rm-filter-chip">
+                        <span>@chip.Label</span>
+                        <a href="@chip.RemoveUrl" class="rm-chip-remove" title="Bỏ lọc @chip.Label">&times;</a>
+                    </span>
                 }
-                <a asp-action="Index" asp-route-Keyword="@keyword" class="rm-filter-clear">Xóa bộ lọc</a>
+                <a asp-action="Index" asp-route-Keyword="@keyword" class="rm-filter-clear">Xóa tất cả bộ lọc</a>
             </div>
         }
 
@@ -195,4 +220,11 @@
 
 @section Scripts {
     <script src="~/js/khu-vuc.js" asp-append-version="true"></script>
+    <script>
+        document.querySelectorAll('#filterPanel input[type="radio"]').forEach(function(r) {
+            r.addEventListener('change', function() {
+                document.getElementById('filterPanel').submit();
+            });
+        });
+    </script>
 }

@@ -88,9 +88,30 @@ public class ProductService : IProductService
         {
             var tuKhoa = f.Keyword.Trim();
             var tuKhoaChuanHoa = TextHelper.ChuanHoa(tuKhoa);
-            query = query.Where(p => p.ChuoiTimKiem.Contains(tuKhoaChuanHoa)
-                                     || p.CuaHang.TenShop.Contains(tuKhoa)
-                                     || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
+            var tokens = tuKhoaChuanHoa.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            if (tokens.Length <= 1)
+            {
+                query = query.Where(p => p.ChuoiTimKiem.Contains(tuKhoaChuanHoa)
+                                         || p.Ten.Contains(tuKhoa)
+                                         || (p.MoTa != null && p.MoTa.Contains(tuKhoa))
+                                         || p.CuaHang.TenShop.Contains(tuKhoa)
+                                         || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
+            }
+            else
+            {
+                // Tìm kiếm đa từ: mỗi từ khóa phải có mặt trong sản phẩm (ChuoiTimKiem, Ten, MoTa, Shop, DanhMuc)
+                // Cho phép tìm "dell i5" ra "Laptop Dell Latitude 7490 i5", "xe đạp giant" ra "Xe đạp địa hình Giant ATX", v.v.
+                foreach (var t in tokens)
+                {
+                    var token = t;
+                    query = query.Where(p => p.ChuoiTimKiem.Contains(token)
+                                             || p.Ten.Contains(token)
+                                             || (p.MoTa != null && p.MoTa.Contains(token))
+                                             || p.CuaHang.TenShop.Contains(token)
+                                             || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(token)));
+                }
+            }
         }
 
         if (f.CategoryId != null)

@@ -373,3 +373,166 @@
 
     targets.forEach(target => observer.observe(target));
 })();
+
+// Quản lý Modal Box "Thêm vào giỏ hàng" & Thông báo Box
+(() => {
+    const modal = document.getElementById('rmCartModal');
+    const closeBtn = document.getElementById('rmCartModalCloseBtn');
+    const closeX = document.getElementById('rmCartModalCloseX');
+    const modalName = document.getElementById('rmCartModalName');
+    const modalPrice = document.getElementById('rmCartModalPrice');
+    const modalImg = document.getElementById('rmCartModalImg');
+    const cartBadge = document.getElementById('rmCartBadge');
+
+    let autoCloseTimer = null;
+
+    const closeModal = () => {
+        if (!modal) return;
+        modal.classList.remove('is-active');
+        if (autoCloseTimer) clearTimeout(autoCloseTimer);
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (closeX) closeX.addEventListener('click', closeModal);
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) closeModal();
+        });
+    }
+
+    const updateCartCount = async () => {
+        try {
+            const res = await fetch('/User/Cart/DemSoLuong');
+            if (res.ok) {
+                const data = await res.json();
+                if (cartBadge) {
+                    if (data.count > 0) {
+                        cartBadge.textContent = data.count > 99 ? '99+' : data.count;
+                        cartBadge.style.display = 'inline-block';
+                    } else {
+                        cartBadge.style.display = 'none';
+                    }
+                }
+            }
+        } catch { }
+    };
+
+    // Tự động load số lượng giỏ hàng khi có đăng nhập
+    if (document.querySelector('meta[name="rm-csrf"]')) {
+        updateCartCount();
+    }
+
+    // Bắt sự kiện submit form Thêm vào giỏ
+    document.addEventListener('submit', async (e) => {
+        const form = e.target.closest('form[action*="/Cart/Them"], form.rm-add-to-cart-form');
+        if (!form) return;
+
+        const csrf = form.querySelector('input[name="__RequestVerificationToken"]')?.value || document.querySelector('meta[name="rm-csrf"]')?.content;
+        if (!csrf) return; // Khách chưa đăng nhập: để form submit chuẩn để chuyển hướng sang trang Login
+
+        e.preventDefault();
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" style="width:14px;height:14px;"></span> Đang thêm...';
+        }
+
+        try {
+            const formData = new FormData(form);
+            const res = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams(formData)
+            });
+
+            if (res.redirected) {
+                window.location.href = res.url;
+                return;
+            }
+
+            const data = await res.json();
+
+            if (data.success) {
+                const prodName = form.dataset.productName || document.querySelector('.detail-title, .product-title')?.textContent?.trim() || 'Sản phẩm';
+                const prodPrice = form.dataset.productPrice || document.querySelector('.main-price, .detail-pricing-row .main-price')?.textContent?.trim() || '';
+                const prodImg = form.dataset.productImage || document.querySelector('.detail-main-img img, .rm-card-image')?.src || '';
+
+                if (modalName) modalName.textContent = prodName;
+                if (modalPrice) modalPrice.textContent = prodPrice;
+                if (modalImg) {
+                    if (prodImg) {
+                        modalImg.src = prodImg;
+                        modalImg.style.display = 'block';
+                    } else {
+                        modalImg.style.display = 'none';
+                    }
+                }
+
+                if (modal) {
+                    modal.classList.add('is-active');
+                    if (autoCloseTimer) clearTimeout(autoCloseTimer);
+                    autoCloseTimer = setTimeout(closeModal, 6000);
+                }
+
+                updateCartCount();
+            } else {
+                alertBox(data.message || 'Không thể thêm sản phẩm vào giỏ hàng.', 'warning');
+            }
+        } catch {
+            alertBox('Không thể kết nối máy chủ. Vui lòng thử lại sau.', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = origBtnHtml;
+            }
+        }
+    });
+
+    // Helper hiển thị alert box nổi
+    window.alertBox = (message, type = 'success') => {
+        let container = document.querySelector('.rm-alerts-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'rm-alerts-container';
+            container.setAttribute('aria-live', 'polite');
+            document.body.appendChild(container);
+        }
+
+        const alertEl = document.createElement('div');
+        alertEl.className = `rm-alert rm-alert-${type}`;
+        alertEl.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+        let iconSvg = '';
+        if (type === 'success') {
+            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>';
+        } else if (type === 'error') {
+            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>';
+        } else {
+            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>';
+        }
+
+        alertEl.innerHTML = `
+            <div class="rm-alert-icon" aria-hidden="true">${iconSvg}</div>
+            <div class="rm-alert-content"><span class="rm-alert-message">${message}</span></div>
+            <button type="button" class="rm-alert-close" aria-label="Đóng">&times;</button>
+        `;
+
+        alertEl.querySelector('.rm-alert-close').addEventListener('click', () => alertEl.remove());
+        container.appendChild(alertEl);
+
+        setTimeout(() => {
+            alertEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            alertEl.style.opacity = '0';
+            alertEl.style.transform = 'translateY(-10px)';
+            setTimeout(() => alertEl.remove(), 300);
+        }, 4000);
+    };
+})();
+
