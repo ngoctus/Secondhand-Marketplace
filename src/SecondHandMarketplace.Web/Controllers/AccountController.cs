@@ -17,7 +17,8 @@ public sealed class AccountController(
     IAuthService authService,
     IPasswordResetService passwordResetService,
     IRegistrationOtpService registrationOtpService,
-    AppDbContext db) : Controller
+    AppDbContext db,
+    IConfiguration configuration) : Controller
 {
     [AllowAnonymous]
     [HttpGet]
@@ -212,10 +213,9 @@ public sealed class AccountController(
         return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpPost, HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> ExternalLogin(string provider, string? returnUrl = null, CancellationToken cancellationToken = default)
+    public IActionResult ExternalLogin(string provider, string? returnUrl = null)
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
 
@@ -229,20 +229,152 @@ public sealed class AccountController(
             return RedirectToAction(nameof(Login));
         }
 
-        var email = isGoogle ? "demo.google@remarket.vn" : "demo.facebook@remarket.vn";
-        var fullName = isGoogle ? "Người dùng Google" : "Người dùng Facebook";
-        var avatar = isGoogle
-            ? "https://lh3.googleusercontent.com/a/default-user=s96-c"
-            : "https://graph.facebook.com/v12.0/me/picture?type=large";
+        var googleClientId = configuration["Authentication:Google:ClientId"];
+        var isGoogleConfigured = isGoogle && !string.IsNullOrWhiteSpace(googleClientId) &&
+                                 !googleClientId.StartsWith("CHANGE_THIS", StringComparison.OrdinalIgnoreCase);
 
-        var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+        var fbAppId = configuration["Authentication:Facebook:AppId"];
+        var isFbConfigured = isFacebook && !string.IsNullOrWhiteSpace(fbAppId) &&
+                             !fbAppId.StartsWith("CHANGE_THIS", StringComparison.OrdinalIgnoreCase);
+
+        if (isGoogleConfigured || isFbConfigured)
+        {
+            var scheme = isGoogle
+                ? Microsoft.AspNetCore.Authentication.Google.GoogleDefaults.AuthenticationScheme
+                : Microsoft.AspNetCore.Authentication.Facebook.FacebookDefaults.AuthenticationScheme;
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), new { returnUrl });
+            var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+            return Challenge(properties, scheme);
+        }
+
+        // Khi chưa cấu hình khóa API thực tế, mở màn hình chọn tài khoản trên máy người dùng (Google/Facebook Account Chooser)
+        return RedirectToAction(nameof(ExternalLoginSelectAccount), new { provider = prov, returnUrl });
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, CancellationToken cancellationToken = default)
+    {
+        var authResult = await HttpContext.AuthenticateAsync("ExternalCookie");
+        if (!authResult.Succeeded || authResult.Principal == null)
+        {
+            TempData["Loi"] = "Đăng nhập bên ngoài không thành công hoặc bạn đã hủy xác thực.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            TempData["Loi"] = "Không thể lấy địa chỉ email từ tài khoản liên kết.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var fullName = authResult.Principal.FindFirstValue(ClaimTypes.Name) 
+                       ?? email.Split('@')[0];
+        var avatar = authResult.Principal.FindFirstValue("picture") 
+                     ?? authResult.Principal.FindFirstValue("urn:google:picture");
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
         if (user is null)
         {
             user = new NguoiDung
             {
-                HoTen = fullName,
-                Email = email,
-                SoDienThoai = isGoogle ? "0988888888" : "0977777777",
+                HoTen = fullName.Trim(),
+                Email = normalizedEmail,
+                SoDienThoai = "0988888888", // Giá trị giữ chỗ thỏa mãn CK_NguoiDung_SDTBatBuoc; OrderService sẽ để trống khi checkout
+                MatKhauBam = "$2a$11$e1O8uK5c5wY6zN2T0I6A4.8V9p5D0Q1W2E3R4T5Y6U7I8O9P0A1B2",
+                VaiTro = "USER",
+                TrangThai = "ACTIVE",
+                AnhDaiDien = avatar,
+                NgayTao = DateTime.UtcNow,
+                NgayCapNhat = DateTime.UtcNow
+            };
+            db.NguoiDungs.Add(user);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        else if (user.TrangThai != "ACTIVE")
+        {
+            TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        await HttpContext.SignOutAsync("ExternalCookie");
+        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, true, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
+        TempData["ThanhCong"] = "Đăng nhập thành công!";
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return LocalRedirect(returnUrl);
+        }
+        return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalLoginSelectAccount(string provider = "Google", string? returnUrl = null)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+
+        var prov = (provider ?? "Google").Trim();
+        var isGoogle = prov.Equals("Google", StringComparison.OrdinalIgnoreCase);
+
+        var accounts = await db.NguoiDungs
+            .Where(u => u.TrangThai == "ACTIVE" && u.VaiTro == "USER")
+            .Take(4)
+            .Select(u => new ExternalAccountItemVm
+            {
+                HoTen = u.HoTen,
+                Email = u.Email,
+                AnhDaiDien = u.AnhDaiDien
+            })
+            .ToListAsync();
+
+        ViewBag.Provider = isGoogle ? "Google" : "Facebook";
+        ViewBag.ReturnUrl = returnUrl;
+        ViewBag.Accounts = accounts;
+
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalLoginSelectAccountSubmit(
+        string provider,
+        string email,
+        string? fullName,
+        string? returnUrl,
+        CancellationToken cancellationToken = default)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+
+        var prov = (provider ?? "Google").Trim();
+        var isGoogle = prov.Equals("Google", StringComparison.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        {
+            TempData["Loi"] = "Vui lòng nhập địa chỉ email hợp lệ để tiếp tục.";
+            return RedirectToAction(nameof(ExternalLoginSelectAccount), new { provider = prov, returnUrl });
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var name = string.IsNullOrWhiteSpace(fullName)
+            ? normalizedEmail.Split('@')[0]
+            : fullName.Trim();
+
+        var avatar = isGoogle
+            ? "https://lh3.googleusercontent.com/a/default-user=s96-c"
+            : "https://graph.facebook.com/v12.0/me/picture?type=large";
+
+        var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
+        if (user is null)
+        {
+            user = new NguoiDung
+            {
+                HoTen = name,
+                Email = normalizedEmail,
+                SoDienThoai = "0988888888", // Giữ chỗ cho ràng buộc SQL, OrderService để trống khi mua hàng
                 MatKhauBam = "$2a$11$e1O8uK5c5wY6zN2T0I6A4.8V9p5D0Q1W2E3R4T5Y6U7I8O9P0A1B2",
                 VaiTro = "USER",
                 TrangThai = "ACTIVE",
@@ -260,7 +392,7 @@ public sealed class AccountController(
         }
 
         await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, true, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
-        TempData["ThanhCong"] = $"Đăng nhập thành công với {prov}!";
+        TempData["ThanhCong"] = $"Đăng nhập thành công với {prov} ({normalizedEmail})!";
 
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
         {

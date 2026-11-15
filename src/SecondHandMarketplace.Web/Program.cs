@@ -2,6 +2,8 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Facebook;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
@@ -97,7 +99,7 @@ public class Program
             throw new InvalidOperationException("Phải đặt Jwt:Key thật (biến môi trường Jwt__Key) khi chạy ngoài Development.");
 
         // Cấu hình Authentication: Dùng PolicyScheme để tự động chọn JWT khi có header Bearer hoặc request tới /api, ngược lại dùng Cookie cho MVC.
-        builder.Services.AddAuthentication(options =>
+        var authBuilder = builder.Services.AddAuthentication(options =>
         {
             options.DefaultScheme = "SmartScheme";
             options.DefaultChallengeScheme = "SmartScheme";
@@ -192,6 +194,46 @@ public class Program
                 }
             };
         });
+
+        authBuilder.AddCookie("ExternalCookie", options =>
+        {
+            options.Cookie.Name = "SecondHand.External";
+            options.ExpireTimeSpan = TimeSpan.FromMinutes(15);
+        });
+
+        var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        var isGoogleOAuthActive = !string.IsNullOrWhiteSpace(googleClientId) &&
+                                  !googleClientId.StartsWith("CHANGE_THIS", StringComparison.OrdinalIgnoreCase);
+        if (isGoogleOAuthActive)
+        {
+            authBuilder.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            {
+                options.SignInScheme = "ExternalCookie";
+                options.ClientId = googleClientId!;
+                options.ClientSecret = googleClientSecret ?? "";
+                options.SaveTokens = true;
+                options.Events.OnRedirectToAuthorizationEndpoint = context =>
+                {
+                    context.Response.Redirect(context.RedirectUri + "&prompt=select_account");
+                    return Task.CompletedTask;
+                };
+            });
+        }
+
+        var fbAppId = builder.Configuration["Authentication:Facebook:AppId"];
+        var fbAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+        var isFbOAuthActive = !string.IsNullOrWhiteSpace(fbAppId) &&
+                              !fbAppId.StartsWith("CHANGE_THIS", StringComparison.OrdinalIgnoreCase);
+        if (isFbOAuthActive)
+        {
+            authBuilder.AddFacebook(FacebookDefaults.AuthenticationScheme, options =>
+            {
+                options.SignInScheme = "ExternalCookie";
+                options.AppId = fbAppId!;
+                options.AppSecret = fbAppSecret ?? "";
+            });
+        }
 
         var app = builder.Build();
         var forwardedHeaders = new ForwardedHeadersOptions
