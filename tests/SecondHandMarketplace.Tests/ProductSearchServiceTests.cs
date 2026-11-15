@@ -260,4 +260,25 @@ public class ProductSearchServiceTests
             Assert.Empty(ketQuaLechGia.Items);
         }
     }
+
+    [Fact]
+    public async Task SearchAsync_TuKhoaNganKhongKhopVaoTuKhac()
+    {
+        using var db = NewDb();
+        db.NguoiDungs.Add(User(1));
+        db.CuaHangs.Add(Shop(1, 1));
+        db.SanPhams.AddRange(
+            Product(201, 1, 100_000m, "Áo khoác chống nước nữ"),
+            Product(202, 1, 200_000m, "Mũ bảo hiểm có kính"),
+            Product(203, 1, 300_000m, "Quần tây lưng cao"),
+            Product(204, 1, 400_000m, "Bộ dao và thớt inox")
+        );
+        await db.SaveChangesAsync();
+
+        var service = new ProductService(db, new ReviewService(db));
+        var ketQua = await service.SearchAsync(new ProductSearchVm { Keyword = "áo" });
+
+        Assert.Single(ketQua.Items);
+        Assert.Equal(201, ketQua.Items[0].Id);
+    }
 }

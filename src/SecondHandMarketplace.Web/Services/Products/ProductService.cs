@@ -92,24 +92,50 @@ public class ProductService : IProductService
 
             if (tokens.Length <= 1)
             {
-                query = query.Where(p => p.ChuoiTimKiem.Contains(tuKhoaChuanHoa)
-                                         || p.Ten.Contains(tuKhoa)
-                                         || (p.MoTa != null && p.MoTa.Contains(tuKhoa))
-                                         || p.CuaHang.TenShop.Contains(tuKhoa)
-                                         || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
+                var token = tokens.Length == 1 ? tokens[0] : tuKhoaChuanHoa;
+                if (token.Length <= 3)
+                {
+                    // Đối với từ ngắn (<= 3 ký tự: "ao", "xe", "mu", "tu", "ban"...):
+                    // Bắt buộc khớp ranh giới từ (whole-word boundary) trong ChuoiTimKiem:
+                    // để "áo" (ao) KHÔNG bị khớp nhầm vào "mũ bảo hiểm" (bao), "lưng cao" (cao), "thể thao" (thao), "giáo trình" (giao)...
+                    var boundaryToken = " " + token + " ";
+                    query = query.Where(p => (" " + p.ChuoiTimKiem + " ").Contains(boundaryToken)
+                                             || (" " + p.Ten + " ").Contains(" " + tuKhoa + " ")
+                                             || (p.MoTa != null && (" " + p.MoTa + " ").Contains(" " + tuKhoa + " "))
+                                             || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
+                }
+                else
+                {
+                    query = query.Where(p => p.ChuoiTimKiem.Contains(token)
+                                             || p.Ten.Contains(tuKhoa)
+                                             || (p.MoTa != null && p.MoTa.Contains(tuKhoa))
+                                             || p.CuaHang.TenShop.Contains(tuKhoa)
+                                             || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
+                }
             }
             else
             {
-                // Tìm kiếm đa từ: mỗi từ khóa phải có mặt trong sản phẩm (ChuoiTimKiem, Ten, MoTa, Shop, DanhMuc)
-                // Cho phép tìm "dell i5" ra "Laptop Dell Latitude 7490 i5", "xe đạp giant" ra "Xe đạp địa hình Giant ATX", v.v.
+                // Tìm kiếm đa từ: mỗi từ khóa phải có mặt trong sản phẩm
                 foreach (var t in tokens)
                 {
                     var token = t;
-                    query = query.Where(p => p.ChuoiTimKiem.Contains(token)
-                                             || p.Ten.Contains(token)
-                                             || (p.MoTa != null && p.MoTa.Contains(token))
-                                             || p.CuaHang.TenShop.Contains(token)
-                                             || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(token)));
+                    if (token.Length <= 3)
+                    {
+                        var boundaryToken = " " + token + " ";
+                        query = query.Where(p => (" " + p.ChuoiTimKiem + " ").Contains(boundaryToken)
+                                                 || (" " + p.Ten + " ").Contains(" " + token + " ")
+                                                 || (p.MoTa != null && (" " + p.MoTa + " ").Contains(" " + token + " "))
+                                                 || p.CuaHang.TenShop.Contains(token)
+                                                 || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(token)));
+                    }
+                    else
+                    {
+                        query = query.Where(p => p.ChuoiTimKiem.Contains(token)
+                                                 || p.Ten.Contains(token)
+                                                 || (p.MoTa != null && p.MoTa.Contains(token))
+                                                 || p.CuaHang.TenShop.Contains(token)
+                                                 || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(token)));
+                    }
                 }
             }
         }

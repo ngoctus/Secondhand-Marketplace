@@ -67,15 +67,6 @@
         </div>
 
         <form method="get" asp-action="Index" id="filterPanel" class="filter-panel collapse d-lg-block">
-            @* Khu vực đã chọn phải đi theo mọi link sắp xếp/phân trang của trang này. *@
-            @if (f.MaTinhThanh.HasValue)
-            {
-                <input type="hidden" name="MaTinhThanh" value="@f.MaTinhThanh" />
-            }
-            @if (f.MaPhuongXa.HasValue)
-            {
-                <input type="hidden" name="MaPhuongXa" value="@f.MaPhuongXa" />
-            }
             @if (!string.IsNullOrEmpty(f.Sort))
             {
                 <input type="hidden" name="Sort" value="@f.Sort" />
@@ -225,6 +216,12 @@
             r.addEventListener('change', function() {
                 document.getElementById('filterPanel').submit();
             });
+        });
+        document.querySelector('#filterPanel #kv-MaTinhThanh')?.addEventListener('change', function() {
+            document.getElementById('filterPanel').submit();
+        });
+        document.querySelector('#filterPanel #kv-MaPhuongXa')?.addEventListener('change', function() {
+            document.getElementById('filterPanel').submit();
         });
     </script>
 }

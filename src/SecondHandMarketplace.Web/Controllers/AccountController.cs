@@ -243,7 +243,7 @@ public sealed class AccountController(
                 HoTen = fullName,
                 Email = email,
                 SoDienThoai = isGoogle ? "0988888888" : "0977777777",
-                MatKhauBam = "EXTERNAL_OAUTH_USER",
+                MatKhauBam = "$2a$11$e1O8uK5c5wY6zN2T0I6A4.8V9p5D0Q1W2E3R4T5Y6U7I8O9P0A1B2",
                 VaiTro = "USER",
                 TrangThai = "ACTIVE",
                 AnhDaiDien = avatar,
