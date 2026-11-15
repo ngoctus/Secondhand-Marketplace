@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Account;
@@ -14,6 +15,7 @@ public sealed class RegistrationOtpService(
     IEmailSender emailSender,
     IDataProtectionProvider protectionProvider,
     IAuthService authService,
+    IMemoryCache cache,
     ILogger<RegistrationOtpService> logger) : IRegistrationOtpService
 {
     private readonly IDataProtector _protector = protectionProvider.CreateProtector("ReMarket.RegistrationOtp.v1");
@@ -43,6 +45,13 @@ public sealed class RegistrationOtpService(
         if (await db.NguoiDungs.AnyAsync(x => x.SoDienThoai == normalizedPhone, cancellationToken))
         {
             return (false, "Số điện thoại này đã được sử dụng. Vui lòng kiểm tra lại.", null);
+        }
+
+        var cacheKey = $"reg_otp_cooldown_{normalizedEmail}";
+        if (cache.TryGetValue(cacheKey, out string? cachedToken) && !string.IsNullOrWhiteSpace(cachedToken))
+        {
+            logger.LogInformation("[OTP-REGISTER] Đang có mã OTP còn hiệu lực cho {Email}, sử dụng lại token hiện tại tránh gửi trùng.", normalizedEmail);
+            return (true, null, cachedToken);
         }
 
         var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
@@ -88,6 +97,7 @@ public sealed class RegistrationOtpService(
 
         var json = JsonSerializer.Serialize(payload);
         var token = _protector.Protect(json);
+        cache.Set(cacheKey, token, TimeSpan.FromSeconds(60));
         return (true, null, token);
     }
 
@@ -143,6 +153,7 @@ public sealed class RegistrationOtpService(
             return (false, regResult.Error ?? "Không thể hoàn tất đăng ký tài khoản.", null, null);
         }
 
+        cache.Remove($"reg_otp_cooldown_{payload.Email}");
         logger.LogInformation("Người dùng {Email} đã xác thực OTP thành công và tạo tài khoản #{UserId}", payload.Email, regResult.User.MaNguoiDung);
         return (true, null, regResult.User, null);
     }
@@ -203,6 +214,7 @@ public sealed class RegistrationOtpService(
         }
 
         var newToken = _protector.Protect(JsonSerializer.Serialize(payload));
+        cache.Set($"reg_otp_cooldown_{payload.Email}", newToken, TimeSpan.FromSeconds(60));
         return (true, null, newToken);
     }
 }

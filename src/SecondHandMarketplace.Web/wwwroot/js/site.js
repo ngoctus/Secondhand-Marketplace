@@ -378,34 +378,42 @@
 
 // Quản lý Modal Box "Thêm vào giỏ hàng" & Thông báo Box
 (() => {
-    const modal = document.getElementById('rmCartModal');
-    const closeBtn = document.getElementById('rmCartModalCloseBtn');
-    const closeX = document.getElementById('rmCartModalCloseX');
-    const modalName = document.getElementById('rmCartModalName');
-    const modalPrice = document.getElementById('rmCartModalPrice');
-    const modalImg = document.getElementById('rmCartModalImg');
-    const cartBadge = document.getElementById('rmCartBadge');
-
     let autoCloseTimer = null;
 
     const closeModal = () => {
+        const modal = document.getElementById('rmCartModal');
         if (!modal) return;
         modal.classList.remove('is-active');
-        if (autoCloseTimer) clearTimeout(autoCloseTimer);
+        document.body.classList.remove('rm-modal-open');
+        if (autoCloseTimer) {
+            clearTimeout(autoCloseTimer);
+            autoCloseTimer = null;
+        }
     };
 
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (closeX) closeX.addEventListener('click', closeModal);
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('is-active')) closeModal();
-        });
-    }
+    // Đăng ký sự kiện đóng modal
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#rmCartModalCloseBtn') || e.target.closest('#rmCartModalCloseX')) {
+            closeModal();
+            return;
+        }
+        const modal = document.getElementById('rmCartModal');
+        if (modal && e.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('rmCartModal');
+            if (modal && modal.classList.contains('is-active')) {
+                closeModal();
+            }
+        }
+    });
 
     const updateCartCount = async () => {
+        const cartBadge = document.getElementById('rmCartBadge');
         try {
             const res = await fetch('/User/Cart/DemSoLuong');
             if (res.ok) {
@@ -466,29 +474,51 @@
                 const prodPrice = form.dataset.productPrice || document.querySelector('.main-price, .detail-pricing-row .main-price')?.textContent?.trim() || '';
                 const prodImg = form.dataset.productImage || document.querySelector('.detail-main-img img, .rm-card-image')?.src || '';
 
-                if (modalName) modalName.textContent = prodName;
-                if (modalPrice) modalPrice.textContent = prodPrice;
-                if (modalImg) {
-                    if (prodImg) {
-                        modalImg.src = prodImg;
-                        modalImg.style.display = 'block';
-                    } else {
-                        modalImg.style.display = 'none';
-                    }
-                }
+                const modal = document.getElementById('rmCartModal');
+                const modalName = document.getElementById('rmCartModalName');
+                const modalPrice = document.getElementById('rmCartModalPrice');
+                const modalImg = document.getElementById('rmCartModalImg');
 
                 if (modal) {
+                    if (modalName) modalName.textContent = prodName;
+                    if (modalPrice) modalPrice.textContent = prodPrice;
+                    if (modalImg) {
+                        if (prodImg) {
+                            modalImg.src = prodImg;
+                            modalImg.style.display = 'block';
+                        } else {
+                            modalImg.style.display = 'none';
+                        }
+                    }
                     modal.classList.add('is-active');
+                    document.body.classList.add('rm-modal-open');
                     if (autoCloseTimer) clearTimeout(autoCloseTimer);
                     autoCloseTimer = setTimeout(closeModal, 6000);
+                } else {
+                    window.showNotifyBox({
+                        title: 'Đã thêm vào giỏ hàng!',
+                        message: `Đã thêm "${prodName}" vào giỏ hàng thành công.`,
+                        type: 'success',
+                        buttonText: 'Đồng ý'
+                    });
                 }
 
                 updateCartCount();
             } else {
-                alertBox(data.message || 'Không thể thêm sản phẩm vào giỏ hàng.', 'warning');
+                window.showNotifyBox({
+                    title: 'Thông báo giỏ hàng',
+                    message: data.message || 'Không thể thêm sản phẩm vào giỏ hàng.',
+                    type: 'warning',
+                    buttonText: 'Đã hiểu'
+                });
             }
         } catch {
-            alertBox('Không thể kết nối máy chủ. Vui lòng thử lại sau.', 'error');
+            window.showNotifyBox({
+                title: 'Lỗi kết nối',
+                message: 'Không thể kết nối máy chủ. Vui lòng thử lại sau.',
+                type: 'error',
+                buttonText: 'Đóng'
+            });
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;

@@ -608,6 +608,12 @@ JOIN #SeedSp s ON s.Stt = x.Stt
 CROSS JOIN (VALUES (1), (2)) n (ThuTu)
 WHERE NOT EXISTS (SELECT 1 FROM AnhSanPham a WHERE a.MaSanPham = x.MaSanPham AND a.ThuTu = n.ThuTu);
 
+UPDATE a
+SET a.DuongDan = N'/uploads/seed/' + s.SeedImg + N'-' + CAST(a.ThuTu AS varchar(1)) + N'.jpg'
+FROM AnhSanPham a
+JOIN #SpB8 x ON x.MaSanPham = a.MaSanPham
+JOIN #SeedSp s ON s.Stt = x.Stt;
+
 -- 4. Lịch sử trạng thái để trang kiểm duyệt và lịch sử tin đăng có dữ liệu --------
 INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
 SELECT sp.MaSanPham, NULL, sp.TrangThai, 'SYSTEM', NULL, N'Dữ liệu mẫu B8', sp.NgayTao

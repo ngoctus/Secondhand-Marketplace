@@ -17,14 +17,6 @@
                         <p class="fw-semibold text-primary mb-3">@Model.Email</p>
                     </div>
 
-                    @if (TempData["OtpSent"] is string sent)
-                    {
-                        <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="status">
-                            <i class="bi bi-info-circle-fill fs-5 flex-shrink-0 text-primary"></i>
-                            <div class="small">@sent</div>
-                        </div>
-                    }
-
                     @if (TempData["Loi"] is string error)
                     {
                         <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
@@ -33,7 +25,7 @@
                         </div>
                     }
 
-                    <form asp-action="VerifyRegistration" method="post">
+                    <form asp-action="VerifyRegistration" method="post" id="verifyForm">
                         <input asp-for="Email" type="hidden" />
                         <input asp-for="Token" type="hidden" />
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -59,7 +51,7 @@
                         </button>
                     </form>
 
-                    <form asp-action="ResendRegisterCode" method="post" class="text-center mt-3">
+                    <form asp-action="ResendRegisterCode" method="post" class="text-center mt-3" id="resendForm">
                         <input type="hidden" name="Email" value="@Model.Email" />
                         <input type="hidden" name="Token" value="@Model.Token" />
                         <button type="submit" class="btn btn-link text-decoration-none small text-muted">
@@ -80,4 +72,10 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        $('form').on('submit', function () {
+            const btn = $(this).find('button[type="submit"]');
+            btn.prop('disabled', true);
+        });
+    </script>
 }

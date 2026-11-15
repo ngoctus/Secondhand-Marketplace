@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -64,6 +65,8 @@ public class RegistrationOtpTests
     private static AppDbContext GetDb(string name) =>
         new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(name).Options);
 
+    private static IMemoryCache CreateCache() => new MemoryCache(new MemoryCacheOptions());
+
     [Fact]
     public async Task StartRegistrationAsync_ValidModel_ReturnsTokenAndSendsEmail()
     {
@@ -71,7 +74,7 @@ public class RegistrationOtpTests
         var emailSender = new FakeEmailSender();
         var dataProtection = new EphemeralDataProtectionProvider();
         var authService = new FakeAuthService();
-        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, NullLogger<RegistrationOtpService>.Instance);
+        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, CreateCache(), NullLogger<RegistrationOtpService>.Instance);
 
         var vm = new RegisterVm
         {
@@ -111,7 +114,7 @@ public class RegistrationOtpTests
         var emailSender = new FakeEmailSender();
         var dataProtection = new EphemeralDataProtectionProvider();
         var authService = new FakeAuthService();
-        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, NullLogger<RegistrationOtpService>.Instance);
+        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, CreateCache(), NullLogger<RegistrationOtpService>.Instance);
 
         var vm = new RegisterVm
         {
@@ -137,7 +140,7 @@ public class RegistrationOtpTests
         var emailSender = new FakeEmailSender();
         var dataProtection = new EphemeralDataProtectionProvider();
         var authService = new FakeAuthService();
-        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, NullLogger<RegistrationOtpService>.Instance);
+        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, CreateCache(), NullLogger<RegistrationOtpService>.Instance);
 
         var vm = new RegisterVm
         {
@@ -173,7 +176,7 @@ public class RegistrationOtpTests
         var emailSender = new FakeEmailSender();
         var dataProtection = new EphemeralDataProtectionProvider();
         var authService = new FakeAuthService();
-        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, NullLogger<RegistrationOtpService>.Instance);
+        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, CreateCache(), NullLogger<RegistrationOtpService>.Instance);
 
         var vm = new RegisterVm
         {
@@ -204,7 +207,7 @@ public class RegistrationOtpTests
         var emailSender = new ThrowingEmailSender(new OperationCanceledException());
         var dataProtection = new EphemeralDataProtectionProvider();
         var authService = new FakeAuthService();
-        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, NullLogger<RegistrationOtpService>.Instance);
+        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, CreateCache(), NullLogger<RegistrationOtpService>.Instance);
 
         var vm = new RegisterVm
         {
@@ -221,6 +224,34 @@ public class RegistrationOtpTests
         Assert.NotNull(error);
         Assert.Contains("quá thời gian chờ", error);
         Assert.Null(token);
+    }
+
+    [Fact]
+    public async Task StartRegistrationAsync_RapidSuccessiveCalls_ReusesTokenAndPreventsDuplicateEmail()
+    {
+        using var db = GetDb(nameof(StartRegistrationAsync_RapidSuccessiveCalls_ReusesTokenAndPreventsDuplicateEmail));
+        var emailSender = new FakeEmailSender();
+        var dataProtection = new EphemeralDataProtectionProvider();
+        var authService = new FakeAuthService();
+        var cache = CreateCache();
+        var service = new RegistrationOtpService(db, emailSender, dataProtection, authService, cache, NullLogger<RegistrationOtpService>.Instance);
+
+        var vm = new RegisterVm
+        {
+            FullName = "Nguyễn Văn Đúp",
+            Email = "dup@example.com",
+            Phone = "0987654321",
+            Password = "Password@123",
+            ConfirmPassword = "Password@123"
+        };
+
+        var firstCall = await service.StartRegistrationAsync(vm);
+        var secondCall = await service.StartRegistrationAsync(vm);
+
+        Assert.True(firstCall.Success);
+        Assert.True(secondCall.Success);
+        Assert.Equal(firstCall.Token, secondCall.Token);
+        Assert.Single(emailSender.SentEmails); // Chỉ gửi 1 email, không bị 2 mã OTP
     }
 }
 

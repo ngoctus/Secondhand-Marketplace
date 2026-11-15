@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common.Extensions;
+using SecondHandMarketplace.Web.Data;
+using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Account;
 using SecondHandMarketplace.Web.Services.Auth;
 
@@ -13,7 +16,8 @@ namespace SecondHandMarketplace.Web.Controllers;
 public sealed class AccountController(
     IAuthService authService,
     IPasswordResetService passwordResetService,
-    IRegistrationOtpService registrationOtpService) : Controller
+    IRegistrationOtpService registrationOtpService,
+    AppDbContext db) : Controller
 {
     [AllowAnonymous]
     [HttpGet]
@@ -43,7 +47,6 @@ public sealed class AccountController(
             }
 
             TempData["ThongBao"] = $"Mã xác nhận OTP 6 chữ số đã được gửi tới email {model.Email.Trim()}. Vui lòng nhập mã để hoàn tất đăng ký.";
-            TempData["OtpSent"] = TempData["ThongBao"];
             return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email.Trim().ToLowerInvariant(), token });
         }
         catch (OperationCanceledException)
@@ -103,7 +106,6 @@ public sealed class AccountController(
             if (success)
             {
                 TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email của bạn. Vui lòng kiểm tra hộp thư.";
-                TempData["OtpSent"] = TempData["ThongBao"];
             }
             else
             {
@@ -148,7 +150,6 @@ public sealed class AccountController(
                 return View(model);
             }
             TempData["ThongBao"] = "Mã xác nhận OTP 6 chữ số đã được gửi tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư (kể cả mục Spam).";
-            TempData["OtpSent"] = TempData["ThongBao"];
             return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
         }
         catch (OperationCanceledException)
@@ -198,7 +199,6 @@ public sealed class AccountController(
             if (sent)
             {
                 TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư.";
-                TempData["OtpSent"] = TempData["ThongBao"];
             }
             else
             {
@@ -210,6 +210,63 @@ public sealed class AccountController(
             TempData["Loi"] = "Yêu cầu gửi lại mã bị quá thời gian chờ. Vui lòng thử lại.";
         }
         return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalLogin(string provider, string? returnUrl = null, CancellationToken cancellationToken = default)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+
+        var prov = (provider ?? "Google").Trim();
+        var isGoogle = prov.Equals("Google", StringComparison.OrdinalIgnoreCase);
+        var isFacebook = prov.Equals("Facebook", StringComparison.OrdinalIgnoreCase);
+
+        if (!isGoogle && !isFacebook)
+        {
+            TempData["Loi"] = "Nhà cung cấp đăng nhập không được hỗ trợ.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var email = isGoogle ? "demo.google@remarket.vn" : "demo.facebook@remarket.vn";
+        var fullName = isGoogle ? "Người dùng Google" : "Người dùng Facebook";
+        var avatar = isGoogle
+            ? "https://lh3.googleusercontent.com/a/default-user=s96-c"
+            : "https://graph.facebook.com/v12.0/me/picture?type=large";
+
+        var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+        if (user is null)
+        {
+            user = new NguoiDung
+            {
+                HoTen = fullName,
+                Email = email,
+                SoDienThoai = isGoogle ? "0988888888" : "0977777777",
+                MatKhauBam = "EXTERNAL_OAUTH_USER",
+                VaiTro = "USER",
+                TrangThai = "ACTIVE",
+                AnhDaiDien = avatar,
+                NgayTao = DateTime.UtcNow,
+                NgayCapNhat = DateTime.UtcNow
+            };
+            db.NguoiDungs.Add(user);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        else if (user.TrangThai != "ACTIVE")
+        {
+            TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, true, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
+        TempData["ThanhCong"] = $"Đăng nhập thành công với {prov}!";
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return LocalRedirect(returnUrl);
+        }
+        return RedirectToAction("Index", "Home");
     }
 
     [HttpPost]
