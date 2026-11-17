@@ -2962,34 +2962,278 @@ body.rm-modal-open {
 .live-dot[data-state="connecting"] { color: var(--color-warning); }
 .live-dot[data-state="off"] { color: var(--color-error); }
 
+/* =========================================================================
+   BADGE GIỎ HÀNG: Nền tròn đỏ, chữ trắng, nằm góc trên bên phải icon xe đẩy
+   ========================================================================= */
+.rm-cart-link {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.rm-cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    background-color: #dc2626;
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1;
+    min-width: 17px;
+    height: 17px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 5px rgba(220, 38, 38, 0.4);
+    pointer-events: none;
+    user-select: none;
+    animation: rmBadgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes rmBadgePop {
+    0% { transform: scale(0.3); opacity: 0; }
+    60% { transform: scale(1.25); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.rm-cart-badge-mobile {
+    background-color: #dc2626;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 8px;
+    border-radius: 9999px;
+}
+
+/* =========================================================================
+   HỆ THỐNG THÔNG BÁO TOAST & MODAL DIALOG TRUNG TÂM (Task C-01)
+   Phân tách rõ ràng:
+   - Toast trôi nổi góc phải cho thao tác nhẹ (thêm giỏ, lưu yêu thích, copy QR...)
+   - Modal Dialog trung tâm cho cảnh báo nghiêm trọng và xác nhận xóa/hủy
+   ========================================================================= */
+
 .rm-toasts {
     position: fixed;
-    top: 76px;
-    right: 16px;
-    z-index: 1080;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    width: min(340px, calc(100vw - 32px));
+    gap: 10px;
+    width: min(380px, calc(100vw - 32px));
+    pointer-events: none;
 }
 
 .rm-toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #ffffff;
+    color: var(--color-text-primary, #1c1917);
+    text-decoration: none;
+    border-radius: 12px;
+    border: 1px solid var(--color-border-subtle, #e6e8df);
+    border-left: 4px solid var(--color-primary, #285b43);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+    font-size: 13.5px;
+    line-height: 1.45;
+    animation: rmToastSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.rm-toast b {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.rm-toast-success {
+    border-left: 4px solid var(--color-primary, #285b43);
+}
+
+.rm-toast-success .rm-toast-icon {
+    color: var(--color-primary, #285b43);
+}
+
+.rm-toast-info {
+    border-left: 4px solid #2563eb;
+}
+
+.rm-toast-info .rm-toast-icon {
+    color: #2563eb;
+}
+
+.rm-toast-warning {
+    border-left: 4px solid #d97706;
+}
+
+.rm-toast-warning .rm-toast-icon {
+    color: #d97706;
+}
+
+.rm-toast-error {
+    border-left: 4px solid #dc2626;
+}
+
+.rm-toast-error .rm-toast-icon {
+    color: #dc2626;
+}
+
+.rm-toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+}
+
+.rm-toast-body {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 10px 14px;
-    background: #fff;
-    color: inherit;
-    text-decoration: none;
-    border: 1px solid var(--color-border-subtle);
-    border-left: 4px solid var(--color-primary);
-    border-radius: 10px;
-    box-shadow: var(--shadow-md);
-    font-size: 13px;
-    animation: rmFadeIn .25s ease;
+    word-break: break-word;
 }
 
-.rm-toast b { font-size: 13.5px; }
+.rm-toast-msg {
+    font-size: 13.5px;
+    color: var(--color-text-primary, #1c1917);
+}
+
+.rm-toast-close {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0 4px;
+    margin-left: 2px;
+    border-radius: 4px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.rm-toast-close:hover {
+    color: #374151;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.rm-toast-hiding {
+    opacity: 0 !important;
+    transform: translateX(30px) !important;
+}
+
+@keyframes rmToastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(35px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Modal Dialog trung tâm (Cảnh báo nghiêm trọng & Xác nhận xóa/hủy) */
+.rm-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background-color: rgba(18, 16, 14, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: rmFadeIn 0.2s ease;
+}
+
+.rm-modal-card {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: rmModalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes rmModalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.rm-modal-header {
+    padding: 22px 24px 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rm-modal-icon-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.rm-modal-icon-badge.danger {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.rm-modal-icon-badge.warning {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.rm-modal-icon-badge.info {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.rm-modal-title {
+    margin: 0;
+    font-size: 16.5px;
+    font-weight: 700;
+    color: var(--color-text-primary, #1c1917);
+}
+
+.rm-modal-body {
+    padding: 8px 24px 20px;
+    font-size: 14px;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+.rm-modal-footer {
+    padding: 14px 24px;
+    background: #f9fafb;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
 
 /* Panels & Buttons */
 .panel {

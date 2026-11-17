@@ -144,28 +144,21 @@ function copyTextToClipboard(text, btn) {
         const orig = btn.innerHTML;
         btn.innerHTML = '<i class="bi bi-check2"></i> Đã chép!';
         btn.classList.add('btn-success');
-        if (window.showNotifyBox) {
-            window.showNotifyBox({
-                title: 'Đã sao chép!',
-                message: 'Đã sao chép nội dung: "' + text + '" vào bộ nhớ tạm.',
-                type: 'success',
-                autoCloseMs: 2500
-            });
+        if (typeof window.showToast === 'function') {
+            window.showToast('Đã sao chép: ' + text, 'info', 2500);
         }
         setTimeout(() => {
             btn.innerHTML = orig;
             btn.classList.remove('btn-success');
         }, 1800);
     }).catch(err => {
-        if (window.showNotifyBox) {
-            window.showNotifyBox({
-                title: 'Không thể tự sao chép',
-                message: 'Vui lòng chọn và sao chép thủ công: ' + text,
-                type: 'warning'
-            });
+        if (typeof window.showToast === 'function') {
+            window.showToast('Không thể sao chép tự động: ' + text, 'warning', 3500);
         } else {
-            prompt('Vui lòng sao chép thủ công:', text);
+            prompt('Sao chép nội dung bên dưới:', text);
         }
+    });
+}
     });
 }
 </script>

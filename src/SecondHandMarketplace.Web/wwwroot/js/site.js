@@ -99,18 +99,264 @@
     });
 })();
 
-// Tự động ẩn thông báo thành công sau 4 giây
+// =========================================================================
+// HỆ THỐNG THÔNG BÁO TOAST & MODAL DIALOG TRUNG TÂM (Task C-01)
+// =========================================================================
 (() => {
-    window.addEventListener('DOMContentLoaded', () => {
-        const successAlerts = document.querySelectorAll('.rm-alert-success');
-        successAlerts.forEach(alert => {
-            setTimeout(() => {
-                alert.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-                alert.style.opacity = '0';
-                alert.style.transform = 'translateY(-8px)';
-                setTimeout(() => alert.remove(), 400);
-            }, 4000);
+    const escapeHtml = (str) => {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    };
+
+    /**
+     * Hiển thị Toast thông báo trôi nổi góc trên bên phải màn hình
+     * @param {string} message Nội dung thông báo
+     * @param {'success'|'info'|'warning'|'error'} type Loại thông báo
+     * @param {number} duration Thời gian hiển thị (ms), mặc định 3500ms
+     */
+    window.showToast = (message, type = 'success', duration = 3500) => {
+        if (!message) return;
+        let box = document.querySelector('.rm-toasts');
+        if (!box) {
+            box = document.createElement('div');
+            box.className = 'rm-toasts';
+            box.setAttribute('aria-live', 'polite');
+            document.body.appendChild(box);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `rm-toast rm-toast-${type}`;
+        toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+        let iconSvg = '';
+        if (type === 'success') {
+            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>';
+        } else if (type === 'error') {
+            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>';
+        } else if (type === 'warning') {
+            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>';
+        } else {
+            iconSvg = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>';
+        }
+
+        toast.innerHTML = `
+            <div class="rm-toast-icon" aria-hidden="true">${iconSvg}</div>
+            <div class="rm-toast-body">
+                <span class="rm-toast-msg">${escapeHtml(message)}</span>
+            </div>
+            <button type="button" class="rm-toast-close" aria-label="Đóng">&times;</button>
+        `;
+
+        const dismiss = () => {
+            if (toast.dataset.dismissing) return;
+            toast.dataset.dismissing = 'true';
+            toast.classList.add('rm-toast-hiding');
+            setTimeout(() => toast.remove(), 250);
+        };
+
+        toast.querySelector('.rm-toast-close').addEventListener('click', dismiss);
+        box.appendChild(toast);
+
+        if (duration > 0) {
+            setTimeout(dismiss, duration);
+        }
+    };
+
+    /**
+     * Hiển thị Modal Dialog trung tâm cho các lỗi nghiêm trọng
+     */
+    window.showErrorModal = (title, message) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'rm-modal-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.innerHTML = `
+            <div class="rm-modal-card">
+                <div class="rm-modal-header">
+                    <div class="rm-modal-icon-badge danger" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <h5 class="rm-modal-title">${escapeHtml(title || 'Cảnh báo nghiêm trọng')}</h5>
+                </div>
+                <div class="rm-modal-body">
+                    <p class="mb-0">${escapeHtml(message)}</p>
+                </div>
+                <div class="rm-modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 py-1 btn-modal-close" style="font-size:13.5px;">Đã hiểu</button>
+                </div>
+            </div>
+        `;
+
+        const close = () => {
+            overlay.remove();
+            document.body.classList.remove('rm-modal-open');
+        };
+
+        overlay.querySelector('.btn-modal-close').addEventListener('click', close);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
         });
+
+        document.body.appendChild(overlay);
+        document.body.classList.add('rm-modal-open');
+    };
+
+    /**
+     * Hiển thị Modal Dialog xác nhận xóa / hủy thay thế confirm() mặc định của trình duyệt
+     * @returns {Promise<boolean>}
+     */
+    window.rmConfirm = (message, options = {}) => {
+        return new Promise((resolve) => {
+            const title = options.title || 'Xác nhận thao tác';
+            const confirmText = options.confirmText || 'Xác nhận';
+            const cancelText = options.cancelText || 'Hủy bỏ';
+            const isDanger = options.danger !== false;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'rm-modal-overlay';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.innerHTML = `
+                <div class="rm-modal-card">
+                    <div class="rm-modal-header">
+                        <div class="rm-modal-icon-badge ${isDanger ? 'danger' : 'warning'}" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                                ${isDanger
+                                    ? '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'
+                                    : '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>'}
+                            </svg>
+                        </div>
+                        <h5 class="rm-modal-title">${escapeHtml(title)}</h5>
+                    </div>
+                    <div class="rm-modal-body">
+                        <p class="mb-0">${escapeHtml(message)}</p>
+                    </div>
+                    <div class="rm-modal-footer">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 btn-modal-cancel" style="font-size:13.5px;">${escapeHtml(cancelText)}</button>
+                        <button type="button" class="btn ${isDanger ? 'btn-danger' : 'btn-primary'} rounded-pill px-4 py-1 btn-modal-confirm" style="font-size:13.5px;">${escapeHtml(confirmText)}</button>
+                    </div>
+                </div>
+            `;
+
+            const close = (result) => {
+                overlay.remove();
+                document.body.classList.remove('rm-modal-open');
+                resolve(result);
+            };
+
+            overlay.querySelector('.btn-modal-cancel').addEventListener('click', () => close(false));
+            overlay.querySelector('.btn-modal-confirm').addEventListener('click', () => close(true));
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) close(false);
+            });
+
+            document.body.appendChild(overlay);
+            document.body.classList.add('rm-modal-open');
+        });
+    };
+
+    // Tự động gán sự kiện tắt và timeout cho các Toast được render sẵn từ Razor Server-side (_ThongBao.cshtml)
+    window.addEventListener('DOMContentLoaded', () => {
+        const toasts = document.querySelectorAll('.rm-toasts .rm-toast');
+        toasts.forEach(toast => {
+            const dismiss = () => {
+                if (toast.dataset.dismissing) return;
+                toast.dataset.dismissing = 'true';
+                toast.classList.add('rm-toast-hiding');
+                setTimeout(() => toast.remove(), 250);
+            };
+
+            const closeBtn = toast.querySelector('.rm-toast-close');
+            if (closeBtn) closeBtn.addEventListener('click', dismiss);
+
+            // Toast thành công / cảnh báo tự ẩn sau 4 giây
+            if (toast.classList.contains('rm-toast-success') || toast.classList.contains('rm-toast-warning')) {
+                setTimeout(dismiss, 4000);
+            } else if (toast.classList.contains('rm-toast-error')) {
+                setTimeout(dismiss, 6000);
+            }
+        });
+    });
+
+    // Bắt sự kiện submit form có attribute data-confirm
+    document.addEventListener('submit', async (e) => {
+        const form = e.target;
+        const msg = form.getAttribute('data-confirm');
+        if (!msg) return;
+
+        e.preventDefault();
+        const ok = await window.rmConfirm(msg, {
+            title: form.getAttribute('data-confirm-title') || 'Xác nhận thao tác',
+            confirmText: form.getAttribute('data-confirm-btn') || 'Xác nhận',
+            danger: form.getAttribute('data-confirm-danger') !== 'false'
+        });
+
+        if (ok) {
+            form.removeAttribute('data-confirm');
+            form.submit();
+        }
+    });
+
+    // Thêm vào giỏ hàng qua AJAX: mượt mà, không giật trang, hiển thị Toast ngay lập tức
+    document.addEventListener('submit', async (e) => {
+        const form = e.target;
+        if (!form.matches || !form.matches('form[action*="/User/Cart/Them"], form[action*="/Cart/Them"]')) return;
+
+        const btn = form.querySelector('button[type="submit"]');
+        if (!btn) return;
+
+        e.preventDefault();
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang thêm...';
+
+        try {
+            const formData = new FormData(form);
+            const res = await fetch(form.action, {
+                method: 'POST',
+                body: new URLSearchParams(formData),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (res.redirected) {
+                window.location.href = res.url;
+                return;
+            }
+
+            const data = await res.json();
+            if (data.success) {
+                window.showToast(data.message || 'Đã thêm vào giỏ hàng!', 'success');
+                // Cập nhật số lượng giỏ hàng trên thanh điều hướng (header desktop + mobile)
+                const badges = document.querySelectorAll('.rm-cart-badge, #rmCartBadge, .rm-cart-badge-mobile');
+                badges.forEach(cartBadge => {
+                    let newCount = (typeof data.cartCount === 'number' && data.cartCount > 0)
+                        ? data.cartCount
+                        : (parseInt(cartBadge.textContent, 10) || 0) + 1;
+                    cartBadge.textContent = newCount > 99 ? '99+' : newCount;
+                    cartBadge.style.display = cartBadge.classList.contains('rm-cart-badge-mobile') ? 'inline-block' : 'inline-flex';
+                    cartBadge.hidden = false;
+                    cartBadge.style.animation = 'none';
+                    cartBadge.offsetHeight; /* trigger reflow */
+                    cartBadge.style.animation = 'rmBadgePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                });
+            } else {
+                window.showToast(data.message || 'Không thể thêm vào giỏ hàng.', 'error');
+            }
+        } catch {
+            // Nếu có sự cố fetch thì submit bình thường theo luồng mặc định
+            form.submit();
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
     });
 })();
 
@@ -164,19 +410,19 @@
                 return;
             }
             if (!res.ok) {
-                thongBao('Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.', 'warning', 'Cần lưu ý');
+            if (!res.ok) {
+                thongBao('Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.', 'warning');
                 return;
             }
             const data = await res.json();
             if (!data.success) {
-                thongBao(data.message || 'Không thể lưu sản phẩm yêu thích này.', 'error', 'Không thành công');
+                thongBao(data.message || 'Không thể lưu sản phẩm yêu thích này.', 'error');
                 return;
             }
             danhDau(productId, data.isFavorite);
             thongBao(
-                data.isFavorite ? 'Sản phẩm đã được thêm vào danh sách yêu thích của bạn!' : 'Đã bỏ sản phẩm khỏi danh sách yêu thích.',
-                data.isFavorite ? 'success' : 'info',
-                data.isFavorite ? 'Yêu thích' : 'Đã bỏ yêu thích'
+                data.isFavorite ? 'Đã thêm vào danh sách yêu thích' : 'Đã xóa khỏi danh sách yêu thích',
+                'success'
             );
             if (!data.isFavorite && window.location.pathname.toLowerCase().startsWith('/user/favorites')) {
                 const item = btn.closest('.col') ?? btn.closest('.rm-product-card');
@@ -184,7 +430,7 @@
                 if (!document.querySelector('.rm-product-card')) window.location.reload();
             }
         } catch {
-            thongBao('Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.', 'error', 'Lỗi kết nối');
+            thongBao('Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.', 'error');
         } finally {
             btn.disabled = false;
         }
