@@ -128,18 +128,16 @@
         });
     };
 
-    const thongBao = (message) => {
-        let status = document.getElementById('rmFavoriteStatus');
-        if (!status) {
-            status = document.createElement('div');
-            status.id = 'rmFavoriteStatus';
-            status.className = 'visually-hidden';
-            status.setAttribute('role', 'status');
-            status.setAttribute('aria-live', 'polite');
-            document.body.appendChild(status);
+    const thongBao = (message, type = 'info', title = null) => {
+        if (window.showNotifyBox) {
+            window.showNotifyBox({
+                title: title || (type === 'success' ? 'Đã lưu yêu thích' : type === 'error' ? 'Lỗi' : 'Thông báo'),
+                message: message,
+                type: type
+            });
+        } else if (window.alertBox) {
+            window.alertBox(message, type);
         }
-        status.textContent = '';
-        window.setTimeout(() => { status.textContent = message; }, 20);
     };
 
     document.addEventListener('click', async (e) => {
@@ -166,23 +164,27 @@
                 return;
             }
             if (!res.ok) {
-                thongBao('Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.');
+                thongBao('Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.', 'warning', 'Cần lưu ý');
                 return;
             }
             const data = await res.json();
             if (!data.success) {
-                thongBao('Không thể lưu sản phẩm yêu thích này.');
+                thongBao(data.message || 'Không thể lưu sản phẩm yêu thích này.', 'error', 'Không thành công');
                 return;
             }
             danhDau(productId, data.isFavorite);
-            thongBao(data.isFavorite ? 'Đã thêm vào yêu thích.' : 'Đã bỏ khỏi yêu thích.');
+            thongBao(
+                data.isFavorite ? 'Sản phẩm đã được thêm vào danh sách yêu thích của bạn!' : 'Đã bỏ sản phẩm khỏi danh sách yêu thích.',
+                data.isFavorite ? 'success' : 'info',
+                data.isFavorite ? 'Yêu thích' : 'Đã bỏ yêu thích'
+            );
             if (!data.isFavorite && window.location.pathname.toLowerCase().startsWith('/user/favorites')) {
                 const item = btn.closest('.col') ?? btn.closest('.rm-product-card');
                 item?.remove();
                 if (!document.querySelector('.rm-product-card')) window.location.reload();
             }
         } catch {
-            thongBao('Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.');
+            thongBao('Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.', 'error', 'Lỗi kết nối');
         } finally {
             btn.disabled = false;
         }
@@ -373,3 +375,296 @@
 
     targets.forEach(target => observer.observe(target));
 })();
+
+// Quản lý Modal Box "Thêm vào giỏ hàng" & Thông báo Box
+(() => {
+    let autoCloseTimer = null;
+
+    const closeModal = () => {
+        const modal = document.getElementById('rmCartModal');
+        if (!modal) return;
+        modal.classList.remove('is-active');
+        document.body.classList.remove('rm-modal-open');
+        if (autoCloseTimer) {
+            clearTimeout(autoCloseTimer);
+            autoCloseTimer = null;
+        }
+    };
+
+    // Đăng ký sự kiện đóng modal
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#rmCartModalCloseBtn') || e.target.closest('#rmCartModalCloseX')) {
+            closeModal();
+            return;
+        }
+        const modal = document.getElementById('rmCartModal');
+        if (modal && e.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('rmCartModal');
+            if (modal && modal.classList.contains('is-active')) {
+                closeModal();
+            }
+        }
+    });
+
+    const updateCartCount = async () => {
+        const cartBadge = document.getElementById('rmCartBadge');
+        try {
+            const res = await fetch('/User/Cart/DemSoLuong');
+            if (res.ok) {
+                const data = await res.json();
+                if (cartBadge) {
+                    if (data.count > 0) {
+                        cartBadge.textContent = data.count > 99 ? '99+' : data.count;
+                        cartBadge.style.display = 'inline-block';
+                    } else {
+                        cartBadge.style.display = 'none';
+                    }
+                }
+            }
+        } catch { }
+    };
+
+    // Tự động load số lượng giỏ hàng khi có đăng nhập
+    if (document.querySelector('meta[name="rm-csrf"]')) {
+        updateCartCount();
+    }
+
+    // Bắt sự kiện submit form Thêm vào giỏ
+    document.addEventListener('submit', async (e) => {
+        const form = e.target.closest('form[action*="/Cart/Them"], form.rm-add-to-cart-form');
+        if (!form) return;
+
+        const csrf = form.querySelector('input[name="__RequestVerificationToken"]')?.value || document.querySelector('meta[name="rm-csrf"]')?.content;
+        if (!csrf) return; // Khách chưa đăng nhập: để form submit chuẩn để chuyển hướng sang trang Login
+
+        e.preventDefault();
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" style="width:14px;height:14px;"></span> Đang thêm...';
+        }
+
+        try {
+            const formData = new FormData(form);
+            const res = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams(formData)
+            });
+
+            if (res.redirected) {
+                window.location.href = res.url;
+                return;
+            }
+
+            const data = await res.json();
+
+            if (data.success) {
+                const prodName = form.dataset.productName || document.querySelector('.detail-title, .product-title')?.textContent?.trim() || 'Sản phẩm';
+                const prodPrice = form.dataset.productPrice || document.querySelector('.main-price, .detail-pricing-row .main-price')?.textContent?.trim() || '';
+                const prodImg = form.dataset.productImage || document.querySelector('.detail-main-img img, .rm-card-image')?.src || '';
+
+                const modal = document.getElementById('rmCartModal');
+                const modalName = document.getElementById('rmCartModalName');
+                const modalPrice = document.getElementById('rmCartModalPrice');
+                const modalImg = document.getElementById('rmCartModalImg');
+
+                if (modal) {
+                    if (modalName) modalName.textContent = prodName;
+                    if (modalPrice) modalPrice.textContent = prodPrice;
+                    if (modalImg) {
+                        if (prodImg) {
+                            modalImg.src = prodImg;
+                            modalImg.style.display = 'block';
+                        } else {
+                            modalImg.style.display = 'none';
+                        }
+                    }
+                    modal.classList.add('is-active');
+                    document.body.classList.add('rm-modal-open');
+                    if (autoCloseTimer) clearTimeout(autoCloseTimer);
+                    autoCloseTimer = setTimeout(closeModal, 6000);
+                } else {
+                    window.showNotifyBox({
+                        title: 'Đã thêm vào giỏ hàng!',
+                        message: `Đã thêm "${prodName}" vào giỏ hàng thành công.`,
+                        type: 'success',
+                        buttonText: 'Đồng ý'
+                    });
+                }
+
+                updateCartCount();
+            } else {
+                window.showNotifyBox({
+                    title: 'Thông báo giỏ hàng',
+                    message: data.message || 'Không thể thêm sản phẩm vào giỏ hàng.',
+                    type: 'warning',
+                    buttonText: 'Đã hiểu'
+                });
+            }
+        } catch {
+            window.showNotifyBox({
+                title: 'Lỗi kết nối',
+                message: 'Không thể kết nối máy chủ. Vui lòng thử lại sau.',
+                type: 'error',
+                buttonText: 'Đóng'
+            });
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = origBtnHtml;
+            }
+        }
+    });
+
+    // =========================================================================
+    // HỘP THÔNG BÁO TOÀN DIỆN (Universal Notification Box Modal) chống chìm web
+    // =========================================================================
+    let notifyAutoTimer = null;
+
+    window.closeNotifyBox = () => {
+        const modal = document.getElementById('rmNotifyModal');
+        if (!modal) return;
+        if (notifyAutoTimer) {
+            clearTimeout(notifyAutoTimer);
+            notifyAutoTimer = null;
+        }
+        modal.classList.remove('is-active');
+        document.body.classList.remove('rm-modal-open');
+        setTimeout(() => {
+            if (!modal.classList.contains('is-active')) {
+                modal.style.display = 'none';
+            }
+        }, 260);
+    };
+
+    window.showNotifyBox = (opts) => {
+        if (typeof opts === 'string') {
+            opts = { message: opts, type: arguments[1] || 'success', title: arguments[2] || null };
+        }
+        let modal = document.getElementById('rmNotifyModal');
+        if (!modal) {
+            // Tự tạo modal nếu trang chưa có sẵn
+            modal = document.createElement('div');
+            modal.id = 'rmNotifyModal';
+            modal.className = 'rm-notify-backdrop';
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            modal.innerHTML = `
+                <div class="rm-notify-box rm-notify-box-success">
+                    <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="Đóng">&times;</button>
+                    <div class="rm-notify-icon-wrap">
+                        <div class="rm-notify-icon rm-notify-icon-success" id="rmNotifyIcon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                    </div>
+                    <div class="rm-notify-content">
+                        <h4 class="rm-notify-title" id="rmNotifyTitle">Thành công!</h4>
+                        <div class="rm-notify-message" id="rmNotifyDesc"></div>
+                    </div>
+                    <div class="rm-notify-actions">
+                        <button type="button" class="rm-notify-btn rm-notify-btn-success" id="rmNotifyBtn">Đồng ý</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            initNotifyModalEvents(modal);
+        }
+
+        const type = opts.type || 'success';
+        const title = opts.title || (type === 'success' ? 'Thành công!' : type === 'error' ? 'Đã xảy ra lỗi' : type === 'warning' ? 'Cần lưu ý' : 'Thông báo');
+        const message = opts.message || '';
+        const btnText = opts.buttonText || 'Đồng ý';
+
+        const boxEl = modal.querySelector('.rm-notify-box');
+        if (boxEl) {
+            boxEl.className = `rm-notify-box rm-notify-box-${type}`;
+        }
+
+        const iconEl = document.getElementById('rmNotifyIcon');
+        if (iconEl) {
+            iconEl.className = `rm-notify-icon rm-notify-icon-${type}`;
+            let iconHtml = '<i class="bi bi-check-circle-fill"></i>';
+            if (type === 'error') iconHtml = '<i class="bi bi-x-circle-fill"></i>';
+            else if (type === 'warning') iconHtml = '<i class="bi bi-exclamation-triangle-fill"></i>';
+            else if (type === 'info') iconHtml = '<i class="bi bi-info-circle-fill"></i>';
+            iconEl.innerHTML = iconHtml;
+        }
+
+        const titleEl = document.getElementById('rmNotifyTitle');
+        if (titleEl) titleEl.textContent = title;
+
+        const descEl = document.getElementById('rmNotifyDesc');
+        if (descEl) descEl.textContent = message;
+
+        const btnEl = document.getElementById('rmNotifyBtn');
+        if (btnEl) {
+            btnEl.textContent = btnText;
+            btnEl.className = `rm-notify-btn rm-notify-btn-${type}`;
+        }
+
+        modal.style.display = 'flex';
+        void modal.offsetWidth; // force reflow
+        modal.classList.add('is-active');
+        document.body.classList.add('rm-modal-open');
+
+        if (notifyAutoTimer) clearTimeout(notifyAutoTimer);
+        // Tự động đóng sau 4.5s với loại thông báo success/info
+        if (opts.autoCloseMs || (type === 'success' || type === 'info')) {
+            const ms = opts.autoCloseMs || 4500;
+            notifyAutoTimer = setTimeout(window.closeNotifyBox, ms);
+        }
+    };
+
+    const initNotifyModalEvents = (modal) => {
+        if (!modal || modal.dataset.initEvents) return;
+        modal.dataset.initEvents = 'true';
+
+        const closeBtn = modal.querySelector('#rmNotifyBtn');
+        const closeX = modal.querySelector('#rmNotifyCloseX');
+
+        if (closeBtn) closeBtn.addEventListener('click', window.closeNotifyBox);
+        if (closeX) closeX.addEventListener('click', window.closeNotifyBox);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                window.closeNotifyBox();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) {
+                window.closeNotifyBox();
+            }
+        });
+    };
+
+    // Khởi tạo sự kiện cho modal đã render từ Razor server TempData
+    const serverNotifyModal = document.getElementById('rmNotifyModal');
+    if (serverNotifyModal) {
+        initNotifyModalEvents(serverNotifyModal);
+        if (serverNotifyModal.classList.contains('is-active')) {
+            document.body.classList.add('rm-modal-open');
+            const isErrorOrWarn = serverNotifyModal.querySelector('.rm-notify-box-error, .rm-notify-box-warning');
+            if (!isErrorOrWarn) {
+                notifyAutoTimer = setTimeout(window.closeNotifyBox, 4500);
+            }
+        }
+    }
+
+    // Tương thích ngược: alertBox chuyển thành hiển thị Hộp thông báo Box nổi bật
+    window.alertBox = (message, type = 'success', title = null) => {
+        window.showNotifyBox({ message, type, title });
+    };
+})();
+

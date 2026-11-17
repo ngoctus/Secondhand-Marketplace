@@ -34,6 +34,21 @@
     }
     catch { }
 
+    // Lấy sản phẩm nổi bật theo từng danh mục
+    var sanPhamTheoDanhMuc = new List<(SecondHandMarketplace.Web.Models.Entities.DanhMuc DanhMuc, List<ProductCardVm> SanPhams)>();
+    foreach (var dm in danhMuc)
+    {
+        try
+        {
+            var res = await ProductService.SearchAsync(new ProductSearchVm { CategoryId = dm.MaDanhMuc, PageSize = 4 });
+            if (res.Items.Any())
+            {
+                sanPhamTheoDanhMuc.Add((dm, res.Items.ToList()));
+            }
+        }
+        catch { }
+    }
+
     // Đánh giá thật từ đơn đã hoàn tất cho khối "Người dùng nói gì"
     List<DanhGiaNoiBatVm> danhGiaNoiBat = new();
     try
@@ -60,8 +75,11 @@
         if (ten.Contains("điện tử") || ten.Contains("máy tính") || ten.Contains("điện thoại")) return "bi-laptop";
         if (ten.Contains("gia dụng") || ten.Contains("bếp")) return "bi-house-door";
         if (ten.Contains("sách") || ten.Contains("truyện")) return "bi-book";
-        if (ten.Contains("phụ kiện") || ten.Contains("đồng hồ")) return "bi-watch";
+        if (ten.Contains("xe") || ten.Contains("xe cộ")) return "bi-bicycle";
+        if (ten.Contains("chơi") || ten.Contains("mẹ bé") || ten.Contains("bé")) return "bi-controller";
+        if (ten.Contains("thể thao") || ten.Contains("dã ngoại")) return "bi-trophy";
         if (ten.Contains("nội thất") || ten.Contains("bàn") || ten.Contains("ghế")) return "bi-lamp";
+        if (ten.Contains("phụ kiện") || ten.Contains("đồng hồ")) return "bi-watch";
         return "bi-box-seam";
     }
 
@@ -145,14 +163,7 @@
                     {
                         <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100" style="aspect-ratio:10/3; object-fit:cover;" data-fallback />
                     }
-                    @* Chỉ hiển thị caption HTML khi ảnh không phải là banner SVG (vì banner SVG đã có chữ thiết kế sẵn bên trong ảnh) *@
-                    @if (!string.IsNullOrWhiteSpace(b.MoTa) && !b.DuongDanAnh.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
-                    {
-                        <div class="carousel-caption d-none d-md-block text-start" style="background:rgba(15,23,42,.75); backdrop-filter:blur(6px); border-radius:10px; padding:10px 16px; bottom:20px; left:30px; max-width:60%;">
-                            <h5 class="mb-1 text-white fw-bold">@b.TieuDe</h5>
-                            <p class="mb-0 small text-white-50">@b.MoTa</p>
-                        </div>
-                    }
+
                 </div>
             }
         </div>
@@ -183,7 +194,7 @@
         @foreach (var c in danhMuc.Take(6))
         {
             <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" class="category-card">
-                <div class="cat-circle"><i class="bi @LayIconDanhMuc(c.Ten)"></i></div>
+                <div class="cat-circle cat-icon"><i class="bi @LayIconDanhMuc(c.Ten)"></i></div>
                 <span class="cat-name">@c.Ten</span>
             </a>
         }
@@ -217,6 +228,39 @@
         <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 10px 24px;">Xem thêm sản phẩm</a>
     </div>
 </section>
+
+@if (sanPhamTheoDanhMuc.Count > 0)
+{
+    <!-- 3b. SẢN PHẨM NỔI BẬT THEO TỪNG DANH MỤC -->
+    @foreach (var nhom in sanPhamTheoDanhMuc)
+    {
+        <section class="landing-section pt-3" data-rm-reveal>
+            <div class="landing-section-header mb-3 pb-2 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="cat-circle cat-icon" style="width: 38px; height: 38px; font-size: 18px; margin: 0; display: inline-flex; align-items: center; justify-content: center; background: #e8f5e9; color: #198754; border-radius: 50%;">
+                        <i class="bi @LayIconDanhMuc(nhom.DanhMuc.Ten)"></i>
+                    </div>
+                    <div>
+                        <div class="section-label mb-0" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #198754; font-weight: 700;">NỔI BẬT THEO DANH MỤC</div>
+                        <h3 class="section-title h5 mb-0 fw-bold text-dark">@nhom.DanhMuc.Ten</h3>
+                    </div>
+                </div>
+                <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@nhom.DanhMuc.MaDanhMuc" class="btn-rm-outline text-decoration-none" style="padding: 6px 16px; font-size: 13px; border-radius: 999px;">
+                    Xem tất cả @nhom.DanhMuc.Ten <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 mb-2" data-rm-stagger>
+                @foreach (var p in nhom.SanPhams.Take(4))
+                {
+                    <div class="col">
+                        <partial name="_ProductCard" model="p" />
+                    </div>
+                }
+            </div>
+        </section>
+    }
+}
 
 <!-- 4. CÁCH THỨC HOẠT ĐỘNG (Ảnh 3) -->
 <section class="landing-section" data-rm-reveal>

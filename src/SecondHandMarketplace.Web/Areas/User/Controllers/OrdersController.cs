@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using SecondHandMarketplace.Web.Common;
+using SecondHandMarketplace.Web.Models.ViewModels.Areas;
 using SecondHandMarketplace.Web.Models.ViewModels.Disputes;
 using SecondHandMarketplace.Web.Models.ViewModels.Orders;
+using SecondHandMarketplace.Web.Services.Areas;
 using SecondHandMarketplace.Web.Services.Disputes;
 using SecondHandMarketplace.Web.Services.Orders;
 
@@ -11,11 +13,13 @@ public class OrdersController : UserBaseController
 {
     private readonly IOrderService _orderService;
     private readonly IDisputeService _disputeService;
+    private readonly IKhuVucService _khuVucService;
 
-    public OrdersController(IOrderService orderService, IDisputeService disputeService)
+    public OrdersController(IOrderService orderService, IDisputeService disputeService, IKhuVucService khuVucService)
     {
         _orderService = orderService;
         _disputeService = disputeService;
+        _khuVucService = khuVucService;
     }
 
     /// <summary>Danh sách đơn mua của người dùng.</summary>
@@ -69,6 +73,7 @@ public class OrdersController : UserBaseController
             }
         }
 
+        await NapKhuVucChoCheckoutAsync(vm);
         return View(vm);
     }
 
@@ -78,6 +83,29 @@ public class OrdersController : UserBaseController
     public async Task<IActionResult> DatHang(CheckoutViewModel model)
     {
         var userId = User.LayNguoiDungId()!.Value;
+
+        // Xử lý địa chỉ: Nếu khách hàng chọn qua 2 dropdown API (Tỉnh/Thành & Phường/Xã)
+        if (model.MaTinhThanh.HasValue && model.MaPhuongXa.HasValue)
+        {
+            var hopLe = await _khuVucService.PhuongXaThuocTinhAsync(model.MaTinhThanh.Value, model.MaPhuongXa.Value);
+            if (!hopLe)
+            {
+                ModelState.AddModelError(nameof(model.MaPhuongXa), "Phường/Xã đã chọn không thuộc Tỉnh/Thành phố.");
+            }
+            else
+            {
+                var tinhs = await _khuVucService.GetTinhThanhAsync();
+                var tenTinh = tinhs.FirstOrDefault(t => t.Ma == model.MaTinhThanh.Value)?.Ten ?? "";
+                var xas = await _khuVucService.GetPhuongXaTheoTinhAsync(model.MaTinhThanh.Value);
+                var tenXa = xas.FirstOrDefault(x => x.Ma == model.MaPhuongXa.Value)?.Ten ?? "";
+
+                var chiTiet = (model.DiaChiChiTiet ?? "").Trim();
+                model.DiaChiNhan = !string.IsNullOrWhiteSpace(chiTiet)
+                    ? $"{chiTiet}, {tenXa}, {tenTinh}"
+                    : $"{tenXa}, {tenTinh}";
+                ModelState.Remove(nameof(model.DiaChiNhan));
+            }
+        }
 
         CheckoutViewModel? checkoutData = null;
         if (model.PhuongThucThanhToan == "BANK_TRANSFER")
@@ -99,6 +127,7 @@ public class OrdersController : UserBaseController
 
         if (!ModelState.IsValid)
         {
+            await NapKhuVucChoCheckoutAsync(model);
             if (model.MaSanPhamMuaNgay.HasValue)
             {
                 var prep = await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, model.MaSanPhamMuaNgay.Value);
@@ -222,4 +251,26 @@ public class OrdersController : UserBaseController
         return RedirectToAction(nameof(ChiTiet), new { id = maDonHang });
     }
 
+    private async Task NapKhuVucChoCheckoutAsync(CheckoutViewModel vm, CancellationToken cancellationToken = default)
+    {
+        var tinhThanhs = await _khuVucService.GetTinhThanhAsync(cancellationToken);
+        IReadOnlyList<PhuongXaItem> phuongXas = Array.Empty<PhuongXaItem>();
+        if (vm.MaTinhThanh.HasValue)
+        {
+            phuongXas = await _khuVucService.GetPhuongXaTheoTinhAsync(vm.MaTinhThanh.Value, cancellationToken);
+        }
+
+        vm.KhuVuc = new ChonKhuVucVm
+        {
+            TenFieldTinh = nameof(vm.MaTinhThanh),
+            TenFieldXa = nameof(vm.MaPhuongXa),
+            MaTinh = vm.MaTinhThanh,
+            MaXa = vm.MaPhuongXa,
+            TinhThanhs = tinhThanhs,
+            PhuongXas = phuongXas,
+            ChoPhepTatCa = false,
+            NhanTinh = "Tỉnh/Thành phố *",
+            NhanXa = "Phường/Xã *"
+        };
+    }
 }

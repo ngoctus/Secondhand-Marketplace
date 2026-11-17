@@ -345,13 +345,24 @@
         btn.disabled = true;
         try {
             const { ok, data } = await api(cfg.start, { method: 'POST', form: { productId: btn.dataset.productId } });
-            if (!ok || !data.success) { alert(data.message || 'Không mở được cuộc trò chuyện.'); return; }
+            if (!ok || !data.success) {
+                if (window.showNotifyBox) {
+                    window.showNotifyBox({ title: 'Không mở được trò chuyện', message: data.message || 'Không mở được cuộc trò chuyện.', type: 'warning' });
+                } else {
+                    alert(data.message || 'Không mở được cuộc trò chuyện.');
+                }
+                return;
+            }
             setOpen(true);
             await showThread(data.data);
             if (btn.dataset.prefill && !input.value) input.value = btn.dataset.prefill;
             input.focus();
         } catch (err) {
-            alert(err.message);
+            if (window.showNotifyBox) {
+                window.showNotifyBox({ title: 'Đã xảy ra lỗi', message: err.message || 'Lỗi kết nối trò chuyện.', type: 'error' });
+            } else {
+                alert(err.message);
+            }
         } finally {
             btn.disabled = false;
         }

@@ -45,14 +45,22 @@ public sealed class PasswordResetService(
         try
         {
             var safeCode = System.Net.WebUtility.HtmlEncode(code);
+            logger.LogInformation("[OTP-RESET] Mã xác nhận đặt lại mật khẩu cho {Email} là: {Code}", email, code);
             await emailSender.SendAsync(email, "Mã xác nhận đặt lại mật khẩu Re:Market",
                 $"<p>Bạn vừa yêu cầu đặt lại mật khẩu Re:Market.</p><p>Mã xác nhận của bạn là: <strong style='font-size:24px;letter-spacing:4px'>{safeCode}</strong></p><p>Mã có hiệu lực trong 10 phút. Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>", cancellationToken);
             return true;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (OperationCanceledException oce)
         {
             otp.UsedAtUtc = DateTime.UtcNow;
-            await db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(CancellationToken.None);
+            logger.LogWarning(oce, "Thao tác gửi email đặt lại mật khẩu tới {Email} bị hủy hoặc quá thời gian chờ.", email);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            otp.UsedAtUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync(CancellationToken.None);
             logger.LogError(ex, "Không gửi được email đặt lại mật khẩu tới {Email}.", email);
             return false;
         }

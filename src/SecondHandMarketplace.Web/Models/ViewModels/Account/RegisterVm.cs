@@ -15,14 +15,15 @@ public class RegisterVm
     [RegularExpression(@"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$", ErrorMessage = "Email không hợp lệ")]
     public string Email { get; set; } = string.Empty;
 
-    // DB bắt buộc USER phải có số điện thoại, chỉ gồm 9-15 chữ số (CK_NguoiDung_SDTBatBuoc, CK_NguoiDung_SoDienThoai).
-    [Required(ErrorMessage = "Nhập số điện thoại")]
-    [RegularExpression(@"^[0-9]{9,15}$", ErrorMessage = "Số điện thoại chỉ gồm 9 đến 15 chữ số")]
+    // Số điện thoại Việt Nam 10 chữ số (bắt đầu bằng 03, 05, 07, 08, 09), thỏa mãn ràng buộc DB 9-15 chữ số.
+    [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
+    [RegularExpression(@"^0[35789][0-9]{8}$", ErrorMessage = "Số điện thoại không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)")]
     [Display(Name = "Số điện thoại")]
     public string Phone { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Nhập mật khẩu"), DataType(DataType.Password)]
-    [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
+    [Required(ErrorMessage = "Vui lòng nhập mật khẩu"), DataType(DataType.Password)]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$",
+        ErrorMessage = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ thường, 1 chữ số và 1 ký tự đặc biệt.")]
     [Display(Name = "Mật khẩu")]
     public string Password { get; set; } = string.Empty;
 

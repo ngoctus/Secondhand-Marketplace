@@ -102,34 +102,33 @@ FROM SanPham sp
 JOIN CuaHang ch   ON ch.MaCuaHang = sp.MaCuaHang
 JOIN NguoiDung nd ON nd.MaNguoiDung = ch.MaNguoiDung
 CROSS APPLY (
-    SELECT CASE
-        WHEN sp.Ten LIKE N'%Tủ%' THEN 'sp023'
-        WHEN sp.Ten LIKE N'%Kệ%' OR sp.Ten LIKE N'%Giá sách%' THEN 'sp015'
-        WHEN sp.Ten LIKE N'%Bàn học%' OR sp.Ten LIKE N'%Bàn ăn%' OR sp.Ten LIKE N'%Bàn trà%' OR sp.Ten LIKE N'%Sofa%' OR sp.Ten LIKE N'%bàn ghế%' OR sp.Ten LIKE N'%Ghế%' THEN 'sp017'
-        WHEN sp.Ten LIKE N'%Gối%' OR sp.Ten LIKE N'%Chăn%' OR sp.Ten LIKE N'%Giường%' OR sp.Ten LIKE N'%Nệm%' THEN 'sp016'
-        WHEN sp.Ten LIKE N'%Đèn%' THEN 'sp018'
-        WHEN sp.Ten LIKE N'%iPhone%' OR sp.Ten LIKE N'%Galaxy%' OR sp.Ten LIKE N'%iPad%' OR sp.Ten LIKE N'%Điện thoại%' OR sp.Ten LIKE N'%Sạc dự phòng%' OR sp.Ten LIKE N'%điện thoại%' THEN 'sp003'
-        WHEN sp.Ten LIKE N'%Laptop%' OR sp.Ten LIKE N'%máy tính bàn%' OR sp.Ten LIKE N'%Màn hình%' OR sp.Ten LIKE N'%VivoBook%' OR sp.Ten LIKE N'%Latitude%' THEN 'sp004'
-        WHEN sp.Ten LIKE N'%Bàn phím%' OR sp.Ten LIKE N'%Chuột%' OR sp.Ten LIKE N'%Keychron%' OR sp.Ten LIKE N'%DareU%' OR sp.Ten LIKE N'%Máy in%' THEN 'sp005'
-        WHEN sp.Ten LIKE N'%Tai nghe%' THEN 'sp009'
-        WHEN sp.Ten LIKE N'%Máy ảnh%' OR sp.Ten LIKE N'%Ống kính%' OR sp.Ten LIKE N'%chống rung%' OR sp.Ten LIKE N'%Máy quay%' OR sp.Ten LIKE N'%flash studio%' THEN 'sp010'
-        WHEN sp.Ten LIKE N'%Loa%' THEN 'sp013'
-        WHEN sp.Ten LIKE N'%Đồng hồ%' OR sp.Ten LIKE N'%nhịp tim%' THEN 'sp012'
-        WHEN sp.Ten LIKE N'%Xe đạp%' OR sp.Ten LIKE N'%Xe máy%' OR sp.Ten LIKE N'%Wave%' OR sp.Ten LIKE N'%Bơm lốp%' OR sp.Ten LIKE N'%Khóa dây%' OR sp.Ten LIKE N'%Mũ bảo hiểm%' OR sp.Ten LIKE N'%Ván chèo%' OR sp.Ten LIKE N'%xe số%' THEN 'sp008'
-        WHEN sp.Ten LIKE N'%Balo%' OR sp.Ten LIKE N'%Túi xách%' OR sp.Ten LIKE N'%Túi chống nước%' OR sp.Ten LIKE N'%Lều du lịch%' THEN 'sp014'
-        WHEN sp.Ten LIKE N'%Nồi chiên%' OR sp.Ten LIKE N'%Nồi cơm%' THEN 'sp006'
-        WHEN sp.Ten LIKE N'%nồi%' OR sp.Ten LIKE N'%Bếp từ%' OR sp.Ten LIKE N'%Ấm%' OR sp.Ten LIKE N'%thủy tinh%' OR sp.Ten LIKE N'%dao và thớt%' OR sp.Ten LIKE N'%bình trà%' OR sp.Ten LIKE N'%ly đồng%' THEN 'sp019'
-        WHEN sp.Ten LIKE N'%xay sinh tố%' THEN 'sp024'
-        WHEN sp.Ten LIKE N'%Bàn ủi%' THEN 'sp025'
-        WHEN sp.Ten LIKE N'%Quạt%' OR sp.Ten LIKE N'%lọc không khí%' OR sp.Ten LIKE N'%hút bụi%' OR sp.Ten LIKE N'%Máy giặt%' THEN 'sp026'
-        WHEN sp.Ten LIKE N'%Xe đẩy%' OR sp.Ten LIKE N'%Xe tập đi%' OR sp.Ten LIKE N'%ăn dặm%' OR sp.Ten LIKE N'%Nôi điện%' THEN 'sp022'
-        WHEN sp.Ten LIKE N'%Lego%' OR sp.Ten LIKE N'%Xếp hình%' OR sp.Ten LIKE N'%Đồ chơi gỗ%' OR sp.Ten LIKE N'%Lắp ráp%' OR sp.Ten LIKE N'%Bập bênh%' THEN 'sp027'
-        WHEN sp.Ten LIKE N'%Giày%' OR sp.Ten LIKE N'%sneaker%' OR sp.Ten LIKE N'%Dép%' THEN 'sp002'
-        WHEN sp.Ten LIKE N'%Áo%' OR sp.Ten LIKE N'%Quần%' OR sp.Ten LIKE N'%Váy%' OR sp.Ten LIKE N'%denim%' OR sp.Ten LIKE N'%Khăn%' OR sp.Ten LIKE N'%Set năm bộ đồ%' OR sp.Ten LIKE N'%Nón cói%' THEN 'sp001'
-        WHEN sp.Ten LIKE N'%cờ vua%' OR sp.Ten LIKE N'%Tượng gốm%' OR sp.Ten LIKE N'%Hộp nhạc%' OR sp.Ten LIKE N'%men rạn%' OR sp.Ten LIKE N'%sơn mài%' OR sp.Ten LIKE N'%thư pháp%' OR sp.Ten LIKE N'%Bình hoa%' OR sp.Ten LIKE N'%Bình gốm%' THEN 'sp011'
-        WHEN sp.Ten LIKE N'%Vợt%' OR sp.Ten LIKE N'%chạy bộ%' OR sp.Ten LIKE N'%yoga%' OR sp.Ten LIKE N'%tạ tay%' OR sp.Ten LIKE N'%Gậy golf%' OR sp.Ten LIKE N'%Kính lặn%' OR sp.Ten LIKE N'%Kính bơi%' OR sp.Ten LIKE N'%padel%' THEN 'sp021'
-        WHEN sp.Ten LIKE N'%Truyện%' OR sp.Ten LIKE N'%Conan%' OR sp.Ten LIKE N'%Doraemon%' OR sp.Ten LIKE N'%Sherlock%' THEN 'sp020'
-        WHEN sp.Ten LIKE N'%Giải tích%' OR sp.Ten LIKE N'%Cấu trúc dữ liệu%' OR sp.Ten LIKE N'%Giáo trình%' OR sp.Ten LIKE N'%Kinh tế học%' OR sp.Ten LIKE N'%Tư duy phản biện%' OR sp.Ten LIKE N'%vở kẻ ngang%' OR sp.Ten LIKE N'%Bút máy%' OR sp.Ten LIKE N'%Casio fx%' OR sp.Ten LIKE N'%IELTS%' OR sp.Ten LIKE N'%Sách%' THEN 'sp007'
+    SELECT CASE sp.Ten
+        WHEN N'Áo khoác denim nam size L'           THEN 'sp001'
+        WHEN N'Giày sneaker trắng size 42'          THEN 'sp002'
+        WHEN N'iPhone 11 64GB màu đen'              THEN 'sp101'
+        WHEN N'Laptop Dell Latitude 7490 i5'        THEN 'sp081'
+        WHEN N'Bàn phím cơ Keychron K2'             THEN 'sp103'
+        WHEN N'Nồi chiên không dầu 5L'              THEN 'sp006'
+        WHEN N'Giáo trình Lập trình Web trọn bộ'    THEN 'sp007'
+        WHEN N'Xe đạp địa hình Giant ATX'           THEN 'sp073'
+        WHEN N'Tai nghe Sony WH-1000XM3'            THEN 'sp009'
+        WHEN N'Máy ảnh Canon EOS 700D kèm lens kit' THEN 'sp037'
+        WHEN N'Đồng hồ Casio vintage'               THEN 'sp012'
+        WHEN N'Loa Bluetooth JBL Flip 4'            THEN 'sp013'
+        WHEN N'Balo laptop chống nước'              THEN 'sp102'
+        WHEN N'Kệ sách 5 tầng'                      THEN 'sp015'
+        WHEN N'Gối ôm và chăn mỏng'                 THEN 'sp016'
+        WHEN N'Bàn học gỗ kèm ghế'                  THEN 'sp109'
+        WHEN N'Đèn bàn LED chống cận'               THEN 'sp084'
+        WHEN N'Bộ nồi inox 3 món'                   THEN 'sp019'
+        WHEN N'Truyện tranh Doraemon trọn bộ'       THEN 'sp020'
+        WHEN N'Vợt cầu lông Yonex Astrox'           THEN 'sp021'
+        WHEN N'Xe đẩy em bé gấp gọn'                THEN 'sp110'
+        WHEN N'Tủ quần áo vải 3 ngăn'               THEN 'sp111'
+        WHEN N'Máy xay sinh tố Philips'             THEN 'sp024'
+        WHEN N'Bàn ủi hơi nước Tefal'               THEN 'sp052'
+        WHEN N'Quạt đứng Senko'                     THEN 'sp026'
+        WHEN N'Bộ xếp hình Lego City'               THEN 'sp027'
         ELSE 'sp007'
     END AS SeedImg
 ) m
@@ -445,7 +444,8 @@ GO
 --     PENDING_REVIEW (chờ duyệt), ACTIVE (đang bán), RESERVED (đã giữ), SOLD (đã bán).
 --   - Gắn vào 13 shop: 2 shop của 29_seed_demo_goc.sql + 11 shop của 30_seed_dia_chi_shop.sql.
 --     Shop nguoiban12 cố ý để trống để test trang shop chưa có sản phẩm.
---   - Ảnh dùng lại 54 file có sẵn trong wwwroot/uploads/seed (mỗi tin 2 ảnh, ảnh 1 là ảnh chính).
+--   - Ảnh thực (Wikimedia Commons, xem CREDITS.json) khớp đúng từng sản phẩm, mỗi tin 2 ảnh,
+--     ảnh 1 là ảnh chính; dùng dải mã sp001..sp112 trong wwwroot/uploads/seed.
 --   - Chạy sau 29 và 30. Chạy lại không nhân đôi (đối chiếu theo MaCuaHang + Ten).
 -- =============================================================================
 
@@ -470,103 +470,104 @@ CREATE TABLE #SeedSp (
     MoTa          nvarchar(2000) COLLATE DATABASE_DEFAULT NOT NULL,
     Gia           decimal(18,2)  NOT NULL,
     TrangThai     varchar(20)    COLLATE DATABASE_DEFAULT NOT NULL,
-    GioTruoc      int            NOT NULL
+    GioTruoc      int            NOT NULL,
+    SeedImg       varchar(20)    COLLATE DATABASE_DEFAULT NOT NULL
 );
 
-INSERT #SeedSp (Stt, EmailChuShop, TenDanhMuc, CodeTinhTrang, Ten, MoTa, Gia, TrangThai, GioTruoc) VALUES
+INSERT #SeedSp (Stt, EmailChuShop, TenDanhMuc, CodeTinhTrang, Ten, MoTa, Gia, TrangThai, GioTruoc, SeedImg) VALUES
 -- Long Tech Cũ (nguoiban01) - đồ điện tử
- (1,  'nguoiban01@demo.local', N'Đồ điện tử',             'GOOD',     N'Điện thoại Samsung Galaxy A54 128GB',                 N'Máy còn đẹp, pin còn 88%, đã thay kính lưng vì nứt nhẹ. Kèm sạc nhanh, cáp và ốp lưng.', 4900000, 'ACTIVE',         210),
- (2,  'nguoiban01@demo.local', N'Đồ điện tử',             'LIKE_NEW', N'Laptop Asus VivoBook 14 Ryzen 5 RAM 8GB',              N'Mua đầu năm 2025, mới dùng ba tháng cho học tập, bàn phím chưa bóng. Còn hộp, sạc và túi chống sốc.', 9500000, 'ACTIVE',         190),
- (3,  'nguoiban01@demo.local', N'Đồ điện tử',             'FAIR',     N'iPad Gen 9 64GB WiFi viền bạc',                        N'Mặt kính có một vết trầy mảnh, cảm ứng và loa vẫn ổn. Bán kèm bút cảm ứng cổng sạc và kính cường lực.', 4200000, 'PENDING_REVIEW', 12),
- (4,  'nguoiban01@demo.local', N'Đồ điện tử',             'GOOD',     N'Màn hình Dell 24 inch Full HD 75Hz',                   N'Không điểm chết, chân xoay đã tháo rời, còn dây nguồn và dây HDMI. Phù hợp làm việc văn phòng.', 1800000, 'ACTIVE',         160),
- (5,  'nguoiban01@demo.local', N'Đồ điện tử',             'WORN',     N'Cây máy tính bàn i5 thế hệ 8 RAM 8GB SSD 240GB',        N'Vỏ máy ố vàng, quạt kêu to nhưng khởi động và chạy ổn định. Đã bán cho bạn sinh viên tháng trước.', 3500000, 'SOLD',           700),
- (6,  'nguoiban01@demo.local', N'Đồ điện tử',             'NEW',      N'Sạc dự phòng Anker 20000mAh chưa bóc seal',             N'Mua dư khi đi công tác nên chưa dùng lần nào, tem seal còn nguyên. Kèm cáp và túi vải.', 350000, 'RESERVED',       95),
- (7,  'nguoiban01@demo.local', N'Khác',                   'GOOD',     N'Đèn để bàn cảm ứng ba mức sáng',                       N'Đèn sáng đều, mạch cảm ứng nhạy, kèm adapter đúng chuẩn. Bán vì chuyển sang đèn kẹp bàn.', 220000, 'ACTIVE',         120),
+ (1,  'nguoiban01@demo.local', N'Đồ điện tử',             'GOOD',     N'Máy tính bảng iPad Gen 9 64GB WiFi viền bạc',                 N'Máy nguyên bản zin all, màn đẹp không trầy, pin 92%, kèm sạc cáp zin và bao da gập thông minh.', 4600000, 'ACTIVE',         210, 'sp003'),
+ (2,  'nguoiban01@demo.local', N'Đồ điện tử',             'LIKE_NEW', N'Laptop Dell Latitude 7490 Core i5 RAM 8GB SSD 256GB',         N'Dòng doanh nhân siêu bền, bàn phím gõ êm, pin dùng 4-5 tiếng, kèm sạc zin và chuột không dây.', 7200000, 'ACTIVE',         190, 'sp081'),
+ (3,  'nguoiban01@demo.local', N'Đồ điện tử',             'FAIR',     N'iPad Pro 11 inch WiFi 128GB màu xám không gian',              N'Mặt lưng xước dăm nhẹ theo thời gian, màn hình 120Hz mượt mà, FaceID nhạy bén, loa to rõ.', 8900000, 'PENDING_REVIEW', 12, 'sp003'),
+ (4,  'nguoiban01@demo.local', N'Đồ điện tử',             'GOOD',     N'Màn hình vi tính Dell 24 inch Full HD chống lóa',             N'Tấm nền IPS sáng đẹp không điểm chết, chân đế xoay linh hoạt, cổng HDMI và DisplayPort đầy đủ.', 1800000, 'ACTIVE',         160, 'sp082'),
+ (5,  'nguoiban01@demo.local', N'Đồ điện tử',             'WORN',     N'Cây máy tính bàn Intel Core i5 RAM 8GB SSD 240GB',            N'Thùng máy Mid-Tower tản nhiệt tốt, máy chạy mượt ứng dụng văn phòng, khởi động nhanh.', 3500000, 'SOLD',           700, 'sp005'),
+ (6,  'nguoiban01@demo.local', N'Đồ điện tử',             'NEW',      N'Sạc dự phòng Anker 20000mAh hỗ trợ sạc nhanh',               N'Hàng chính hãng mới 100% nguyên hộp chưa bóc seal, sạc được 4 lần điện thoại, 2 cổng ra tiện lợi.', 350000, 'RESERVED',       95, 'sp083'),
+ (7,  'nguoiban01@demo.local', N'Khác',                   'GOOD',     N'Đèn LED để bàn cảm ứng ba mức sáng chống cận',                N'Thân kim loại sang trọng, bóng LED ánh sáng dịu bảo vệ mắt khi đọc sách, cắm nguồn USB tiện lợi.', 220000, 'ACTIVE',         120, 'sp084'),
 -- Hà Vintage Closet (nguoiban02) - thời trang
- (8,  'nguoiban02@demo.local', N'Thời trang',             'LIKE_NEW', N'Váy denim chữ A cạp cao size S',                       N'May từ vải denim dày, mới mặc hai buổi đi tiệc, không phai màu. Có khóa kéo sau và túi trong.', 320000, 'ACTIVE',         140),
- (9,  'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Áo blazer nữ công sở màu be size M',                    N'Form đứng, lớp lót còn tốt, một cúc ở tay bị lỏng nhẹ. Phù hợp mặc đi làm cả tuần.', 280000, 'ACTIVE',         260),
- (10, 'nguoiban02@demo.local', N'Thời trang',             'FAIR',     N'Túi xách da thật màu nâu quai đeo chéo',                 N'Da có vân xước tự nhiên, góc đáy hơi mòn, khóa và ngăn trong còn nguyên. Không còn hộp.', 450000, 'ACTIVE',         300),
- (11, 'nguoiban02@demo.local', N'Thời trang',             'LIKE_NEW', N'Giày cao gót mũi nhọn 5cm size 37',                     N'Đi được hai buổi, đế chưa mòn, gót có tiếng kêu rất nhỏ. Kèm hộp và túi bụi.', 250000, 'RESERVED',       180),
- (12, 'nguoiban02@demo.local', N'Thời trang',             'WORN',     N'Áo len cashmere cổ tim màu xám nhạt',                    N'Sợi len đã xù ở khuỷu tay nhưng chưa thủng lỗ, giặt tay nước lạnh. Bán vì không còn mặc vừa.', 180000, 'PENDING_REVIEW', 20),
- (13, 'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Quần kaki nam ống suông lưng chun size 32',               N'Vải kaki mỏng, ít nhăn, đã cắt lai theo chiều cao 1m68. Khách đã nhận hàng và xác nhận đơn.', 200000, 'SOLD',           640),
- (14, 'nguoiban02@demo.local', N'Thời trang',             'NEW',      N'Khăn lụa vuông họa tiết hoa sen 70cm',                   N'Quà tặng chưa sử dụng, còn nhãn, kích thước 70x70cm, chạm mát, không xù sợi.', 120000, 'ACTIVE',         70),
+ (8,  'nguoiban02@demo.local', N'Thời trang',             'LIKE_NEW', N'Áo khoác denim vintage Levi''s dáng suông size L',            N'Vải bò cotton dày dặn, form suông phong cách bụi bặm retro, giặt sạch sẽ thơm tho không sờn rách.', 320000, 'ACTIVE',         140, 'sp001'),
+ (9,  'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Áo khoác gió nữ chống nước 2 lớp có lót lưới size M',          N'Khóa kéo chống thấm nước, mũ trùm gấp gọn được, vải nhẹ giữ ấm tốt cho thời tiết se lạnh.', 280000, 'ACTIVE',         260, 'sp059'),
+ (10, 'nguoiban02@demo.local', N'Thời trang',             'FAIR',     N'Túi xách nữ da thật quai đeo chéo màu nâu cổ điển',          N'Chất da bò thật vân xước tự nhiên, form cứng cáp, khóa kim loại mạ đồng sáng đẹp, nhiều ngăn đựng đồ.', 450000, 'ACTIVE',         300, 'sp010'),
+ (11, 'nguoiban02@demo.local', N'Thời trang',             'LIKE_NEW', N'Giày sneaker Converse Jack Purcell trắng cổ thấp size 42',     N'Đế cao su lưu hóa đầm chắc, mũi giày mặt cười đặc trưng, lót giày êm ái, mới mang thử 2 lần.', 450000, 'RESERVED',       180, 'sp002'),
+ (12, 'nguoiban02@demo.local', N'Thời trang',             'WORN',     N'Áo len cashmere ấm áp cổ tròn màu xám nhạt size M',           N'Sợi len lông cừu tự nhiên mềm mịn giữ nhiệt cực tốt, dáng basic dễ phối đồ mùa đông.', 180000, 'PENDING_REVIEW', 20, 'sp085'),
+ (13, 'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Quần kaki nam ống suông màu be nhạt size 32',                N'Vải kaki co giãn nhẹ thoáng mát, đường may kỹ càng, form đứng tôn dáng, phù hợp đi làm đi chơi.', 200000, 'SOLD',           640, 'sp086'),
+ (14, 'nguoiban02@demo.local', N'Thời trang',             'NEW',      N'Khăn lụa vuông cao cấp họa tiết hoa sen kích thước 70cm',     N'Lụa mềm mại trơn mướt, viền cuốn mép tay thủ công, quà tặng nguyên hộp chưa sử dụng.', 120000, 'ACTIVE',         70, 'sp014'),
 -- Huy Gia Dụng (nguoiban03) - đồ gia dụng
- (15, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Máy lọc không khí phòng dưới 40m2',                     N'Tấm lọc còn dùng tốt, cảm biến bụi hoạt động, vỏ có vệt xước nhẹ. Kèm một tấm lọc dự phòng.', 1600000, 'ACTIVE',         230),
- (16, 'nguoiban03@demo.local', N'Đồ gia dụng',            'FAIR',     N'Bếp từ đôi bảng điều khiển rời',                        N'Mặt kính nhiễm màu ở vùng nấu bên phải, hai bên đều sôi bình thường. Khách đã nhận hàng, hỗ trợ đổi lỗi trong 7 ngày.', 1300000, 'ACTIVE',       280),
- (17, 'nguoiban03@demo.local', N'Đồ gia dụng',            'LIKE_NEW', N'Ấm đun nước siêu tốc 1.7L tự ngắt',                     N'Sôi khoảng bốn phút, tự ngắt khi cạn, lòng ấm còn sáng. Dùng ở phòng trọ một năm, còn lưới lọc cặn.', 250000, 'PENDING_REVIEW', 16),
- (18, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bộ sáu hộp thủy tinh chịu nhiệt có nắp',                 N'Thủy tinh dày, không sứt mẻ, hai nắp hơi trầy. Dùng đựng thực phẩm nóng và đông lạnh đều ổn.', 190000, 'ACTIVE',         150),
- (19, 'nguoiban03@demo.local', N'Đồ gia dụng',            'WORN',     N'Máy hút bụi dạng đứng công suất lớn',                    N'Ống hút nứt một đoạn đã băng tạm, lực hút còn mạnh, túi bụi đã vệ sinh. Đã bán, khách tự sửa tiếp.', 600000, 'SOLD',           720),
- (20, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bàn ủi khô đế chống dây nhiệt ổn',                       N'Đế còn phẳng, không cháy vải, dây nguồn chuẩn. Bán vì chuyển sang dùng bàn ủi hơi nước.', 230000, 'ACTIVE',         190),
+ (15, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Quạt tháp và lọc không khí gia đình phòng dưới 40m2',         N'Tấm lọc HEPA còn mới, lọc sạch bụi mịn và khử mùi hôi, máy vận hành êm ái không gây ồn khi ngủ.', 1600000, 'ACTIVE',         230, 'sp087'),
+ (16, 'nguoiban03@demo.local', N'Đồ gia dụng',            'FAIR',     N'Bộ nồi chảo inox đáy từ cao cấp 3 đáy sáng bóng',             N'Chất liệu inox 304 không gỉ an toàn cho sức khỏe, truyền nhiệt nhanh và giữ nhiệt lâu trên bếp từ.', 1300000, 'ACTIVE',       280, 'sp019'),
+ (17, 'nguoiban03@demo.local', N'Đồ gia dụng',            'LIKE_NEW', N'Nồi chiên không dầu Philips 4.5L lòng nồi chống dính',         N'Công nghệ nhiệt đối lưu Rapid Air giòn ngoài mềm trong, núm vặn cơ bền bỉ dễ thao tác, lòng nồi tháo rời.', 750000, 'PENDING_REVIEW', 16, 'sp006'),
+ (18, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bộ 6 hộp thủy tinh chịu nhiệt có nắp khóa khí kín',          N'Thủy tinh borosilicate chịu sốc nhiệt cao từ ngăn đá sang lò vi sóng, nắp gioăng silicone kín nước.', 190000, 'ACTIVE',         150, 'sp018'),
+ (19, 'nguoiban03@demo.local', N'Đồ gia dụng',            'WORN',     N'Bộ nồi inox 3 món kèm nắp vung kính cường lực',               N'Bộ gồm 3 nồi size 16-20-24cm tiện lợi, dùng được bếp từ và bếp gas, quai cầm chắc chắn.', 600000, 'SOLD',           720, 'sp019'),
+ (20, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bàn ủi hơi nước cầm tay Tefal mặt đế chống dính',            N'Phun hơi mạnh mẽ làm phẳng nhanh quần áo công sở, gọn nhẹ dễ mang theo đi du lịch hoặc công tác.', 230000, 'ACTIVE',         190, 'sp052'),
 -- Mai Books (nguoiban04) - sách và văn phòng phẩm
- (21, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Bộ giáo trình Kinh tế học vĩ mô hai tập',                N'Gáy sách còn chắc, có ghi chú bút chì ở một số trang, không thiếu chương nào.', 150000, 'ACTIVE',         320),
- (22, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'LIKE_NEW', N'Sách Tư duy phản biện bản in 2024',                     N'Mới đọc một lượt, trang sạch, bìa không gấp mép. Bán vì đã giữ bản mềm để mang đi.', 65000, 'ACTIVE',         110),
- (23, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'FAIR',     N'Truyện Sherlock Holmes trọn bộ bốn tập',                 N'Giấy hơi ngả vàng theo thời gian, đủ bốn tập, góc bìa mềm bị cong nhẹ. Đọc không sao.', 120000, 'ACTIVE',         400),
- (24, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Combo năm vở kẻ ngang bìa cứng 200 trang',               N'Chưa viết chữ nào, mua dư khi chuẩn bị năm học mới, giấy mịn không thấm mực.', 60000, 'ACTIVE',         80),
- (25, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'LIKE_NEW', N'Bút máy nắp bấm ngòi M kèm lọ mực',                      N'Viết trơn, ngòi không xẻ, đã vệ sinh sạch. Kèm một lọ mực xanh và hộp giấy.', 280000, 'RESERVED',       170),
- (26, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'FAIR',     N'Giá sách gỗ thông để bàn ba tầng',                        N'Sơn bề mặt tróc ở một thanh ngang, kết cấu còn vững, kích thước 40x20x50cm.', 175000, 'ACTIVE',         240),
- (27, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Bộ tài liệu luyện thi IELTS 18 kèm mã file nghe',         N'Sách mới khoảng 95%, mã nghe chưa kích hoạt, bìa không quăn mép. Khách đã nhận hàng.', 210000, 'SOLD',           610),
+ (21, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Trọn bộ truyện tranh Doraemon 45 tập tuổi thơ',               N'Bộ truyện bản in đẹp, không rách trang, gáy sách chắc chắn, đầy đủ từ tập 1 đến tập 45.', 450000, 'ACTIVE',         320, 'sp020'),
+ (22, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'LIKE_NEW', N'Sách Tư duy phản biện bản in mới xuất bản',                  N'Mới đọc một lần, các trang sạch sẽ không nếp gấp mép, không gạch chân hay ghi chú bẩn.', 65000, 'ACTIVE',         110, 'sp089'),
+ (23, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'FAIR',     N'Truyện Sherlock Holmes trọn bộ bốn tập kinh điển',            N'Bản dịch chuẩn của Hội Nhà văn, giấy vàng chống mỏi mắt, bìa gáy còn chắc.', 120000, 'ACTIVE',         400, 'sp090'),
+ (24, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Bộ sách giáo trình Lập trình căn bản và Cấu trúc dữ liệu',    N'Tập hợp các cuốn kinh điển ngành lập trình, minh họa rõ ràng, phù hợp cho sinh viên CNTT.', 160000, 'ACTIVE',         80, 'sp007'),
+ (25, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'LIKE_NEW', N'Bút máy nắp bấm Jinhao ngòi M kèm piston hút mực',           N'Thân bút kim loại đầm tay, ngòi trơn đều nét êm, đã vệ sinh sạch sẽ, tặng kèm lọ mực xanh.', 280000, 'RESERVED',       170, 'sp025'),
+ (26, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'FAIR',     N'Kệ sách gỗ thông để bàn 3 tầng lắp ghép nhỏ gọn',             N'Kệ mini để bàn học, đựng được 20-30 cuốn sách và phụ kiện học tập, gỗ thông tự nhiên đã sơn phủ.', 175000, 'ACTIVE',         240, 'sp015'),
+ (27, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Bộ tài liệu luyện thi IELTS Cambridge trọn bộ kèm audio',      N'Bao gồm các đề thi mẫu mới nhất kèm giải chi tiết và link tải file nghe chất lượng cao.', 210000, 'SOLD',           610, 'sp007'),
 -- Khôi Sport (nguoiban05) - thể thao và dã ngoại
- (28, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Máy chạy bộ điện trong nhà gập được',                    N'Chạy êm, bảng mạch còn tốt, băng tải có vết mòn nhẹ ở giữa. Người mua tự thuê xe chở trong nội thành.', 6500000, 'ACTIVE',        350),
- (29, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'LIKE_NEW', N'Thảm tập yoga 6mm kèm dây kháng lực',                    N'Dùng vài buổi ở nhà, không rách, cuộn lại vẫn gọn. Kèm hai dây kháng lực và túi đựng.', 150000, 'ACTIVE',         90),
- (30, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'FAIR',     N'Bộ ba tạ tay bọc gang mỗi bên năm ký',                    N'Lớp cao su bọc trầy nhiều chỗ nhưng chưa nứt, trọng lượng vẫn chuẩn. Bán vì chuyển nhà.', 320000, 'ACTIVE',         200),
- (31, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Gậy golf sắt số 7 đã thay grip mới',                      N'Lưng gậy còn nét, grip vừa thay, cán không cong vênh. Phù hợp người mới tập đánh.', 1800000, 'PENDING_REVIEW', 22),
- (32, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Lều du lịch hai người chống mưa',                         N'Khung nhôm không gãy, vải có một mối chỉ sờn đã vá lại, xếp gọn vào túi tròn.', 750000, 'ACTIVE',         260),
- (33, 'nguoiban05@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Xe đạp gấp bánh 20 inch đã bảo dưỡng',                    N'Đã thay xích và bố thắng, líp có tiếng lách cách khi lên số. Khách đến lấy xe trực tiếp tại cửa hàng.', 1500000, 'SOLD',          520),
+ (28, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Máy chạy bộ điện trong nhà gập được',                         N'Chạy êm, bảng mạch còn tốt, băng tải có vết mòn nhẹ ở giữa. Người mua tự thuê xe chở trong nội thành.', 6500000, 'ACTIVE',        350, 'sp028'),
+ (29, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'LIKE_NEW', N'Thảm tập yoga 6mm kèm dây kháng lực',                         N'Dùng vài buổi ở nhà, không rách, cuộn lại vẫn gọn. Kèm hai dây kháng lực và túi đựng.', 150000, 'ACTIVE',         90, 'sp029'),
+ (30, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'FAIR',     N'Bộ ba tạ tay bọc gang mỗi bên năm ký',                         N'Lớp cao su bọc trầy nhiều chỗ nhưng chưa nứt, trọng lượng vẫn chuẩn. Bán vì chuyển nhà.', 320000, 'ACTIVE',         200, 'sp030'),
+ (31, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Gậy golf sắt số 7 đã thay grip mới',                           N'Lưng gậy còn nét, grip vừa thay, cán không cong vênh. Phù hợp người mới tập đánh.', 1800000, 'PENDING_REVIEW', 22, 'sp031'),
+ (32, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Lều du lịch hai người chống mưa',                              N'Khung nhôm không gãy, vải có một mối chỉ sờn đã vá lại, xếp gọn vào túi tròn.', 750000, 'ACTIVE',         260, 'sp032'),
+ (33, 'nguoiban05@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Xe đạp gấp bánh 20 inch đã bảo dưỡng',                         N'Đã thay xích và bố thắng, líp có tiếng lách cách khi lên số. Khách đến lấy xe trực tiếp tại cửa hàng.', 1500000, 'SOLD',          520, 'sp033'),
 -- Lan Mẹ và Bé (nguoiban06) - đồ chơi và mẹ bé
- (34, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'LIKE_NEW', N'Đồ chơi gỗ xếp hình 100 chi tiết',                       N'Đủ mảnh theo danh sách, sơn không bong, đã lau bằng khăn ẩm. Có túi vải đựng kèm.', 95000, 'ACTIVE',         100),
- (35, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'GOOD',     N'Ghế ăn dặm nhựa nguyên khối có khay rời',                 N'Khay còn chắc, chân không nứt, vệ sinh sạch sẽ. Bé nhà dùng khoảng một năm.', 210000, 'ACTIVE',         220),
- (36, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'FAIR',     N'Xe tập đi trẻ em có vòng nhạc phía trước',                 N'Bánh xoay còn mượt, khung gấp chắc, vòng nhạc có một nốt kêu nhỏ. Bán vì bé đã biết đi.', 300000, 'PENDING_REVIEW', 18),
- (37, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'GOOD',     N'Lắp ráp kiểu 500 mảnh mô hình lâu đài có hộp',            N'Đủ mảnh, khớp nối còn chắc, hộp giấy bị móp một góc. Đã phân loại theo túi zip.', 380000, 'ACTIVE',         280),
- (38, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'LIKE_NEW', N'Nôi điện tự đưa kèm màn chống muỗi',                      N'Dộng cơ chạy êm, nệm sạch không xẹp, màn không thủng. Bé đã ra nôi nên thanh lý.', 1200000, 'RESERVED',       130),
- (39, 'nguoiban06@demo.local', N'Thời trang',             'GOOD',     N'Set năm bộ đồ thu đông cho bé size 6',                    N'Vải cotton không xù, một bộ nhạt màu ở cổ, bốn bộ còn lại đều đẹp. Khách đã nhận hàng.', 160000, 'SOLD',           480),
+ (34, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'LIKE_NEW', N'Đồ chơi gỗ xếp hình 100 chi tiết',                            N'Đủ mảnh theo danh sách, sơn không bong, đã lau bằng khăn ẩm. Có túi vải đựng kèm.', 95000, 'ACTIVE',         100, 'sp091'),
+ (35, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'GOOD',     N'Ghế ăn dặm nhựa nguyên khối có khay rời',                      N'Khay còn chắc, chân không nứt, vệ sinh sạch sẽ. Bé nhà dùng khoảng một năm.', 210000, 'ACTIVE',         220, 'sp035'),
+ (36, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'FAIR',     N'Xe tập đi trẻ em có vòng nhạc phía trước',                      N'Bánh xoay còn mượt, khung gấp chắc, vòng nhạc có một nốt kêu nhỏ. Bán vì bé đã biết đi.', 300000, 'PENDING_REVIEW', 18, 'sp036'),
+ (37, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'GOOD',     N'Lắp ráp kiểu 500 mảnh mô hình lâu đài có hộp',                 N'Đủ mảnh, khớp nối còn chắc, hộp giấy bị móp một góc. Đã phân loại theo túi zip.', 380000, 'ACTIVE',         280, 'sp092'),
+ (38, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'LIKE_NEW', N'Nôi điện tự đưa kèm màn chống muỗi',                           N'Dộng cơ chạy êm, nệm sạch không xẹp, màn không thủng. Bé đã ra nôi nên thanh lý.', 1200000, 'RESERVED',       130, 'sp038'),
+ (39, 'nguoiban06@demo.local', N'Thời trang',             'GOOD',     N'Set năm bộ đồ thu đông cho bé size 6',                         N'Vải cotton không xù, một bộ nhạt màu ở cổ, bốn bộ còn lại đều đẹp. Khách đã nhận hàng.', 160000, 'SOLD',           480, 'sp039'),
 -- Tuấn Nội Thất (nguoiban07) - nội thất
- (40, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Sofa văng ba chỗ bọc nỉ màu xám',                        N'Đệm không xẹp, vải có một vết ố nhỏ ở tay tựa, khung gỗ còn chắc. Người mua tự thuê xe vận chuyển.', 3500000, 'ACTIVE',        300),
- (41, 'nguoiban07@demo.local', N'Nội thất',               'FAIR',     N'Bàn ăn mặt đá bốn ghế chân sắt',                         N'Mặt đá có vệt nhiệt tròn, chân ghế xước sơn, đế nhựa còn đủ bốn cái. Bán vì chuyển căn hộ nhỏ hơn.', 2800000, 'ACTIVE',       420),
- (42, 'nguoiban07@demo.local', N'Nội thất',               'LIKE_NEW', N'Tủ quần áo bốn cánh gỗ công nghiệp chống ẩm',              N'Lắp ráp một tháng rồi tháo vì không vừa phòng, ray trượt và bản lề đều còn mới. Có đầy đủ ốc vít.', 2400000, 'PENDING_REVIEW', 26),
- (43, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Đèn thả trần gỗ thông ba bóng',                           N'Chóa gỗ không nứt, dây điện và đui còn tốt, chưa kèm bóng. Phù hợp bàn ăn nhỏ.', 450000, 'ACTIVE',         210),
- (44, 'nguoiban07@demo.local', N'Nội thất',               'WORN',     N'Kệ tivi gỗ xoan đào dài một mét sáu',                     N'Mặt kệ bạc màu ở giữa, ngăn kéo vẫn trượt, một tay nắm đã thay tạm. Khách đã nhận và lắp đặt.', 1100000, 'SOLD',         690),
- (45, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Giường tầng sắt có lưới bảo vệ tầng trên',                  N'Không kêu cót két, sơn tĩnh điện còn khoảng 90%, lưới không rách. Nệm bán riêng.', 1750000, 'ACTIVE',         250),
- (46, 'nguoiban07@demo.local', N'Nội thất',               'LIKE_NEW', N'Ghế công thái học lưng lưới có tựa đầu',                   N'Piston nâng hạ bình thường, bánh xe không mòn, tay ghế còn bọc nỉ. Bán vì công ty đã trang bị ghế.', 1450000, 'RESERVED',     160),
+ (40, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Sofa văng ba chỗ bọc nỉ màu xám',                             N'Đệm không xẹp, vải có một vết ố nhỏ ở tay tựa, khung gỗ còn chắc. Người mua tự thuê xe vận chuyển.', 3500000, 'ACTIVE',        300, 'sp040'),
+ (41, 'nguoiban07@demo.local', N'Nội thất',               'FAIR',     N'Bàn ăn mặt đá bốn ghế chân sắt',                              N'Mặt đá có vệt nhiệt tròn, chân ghế xước sơn, đế nhựa còn đủ bốn cái. Bán vì chuyển căn hộ nhỏ hơn.', 2800000, 'ACTIVE',       420, 'sp041'),
+ (42, 'nguoiban07@demo.local', N'Nội thất',               'LIKE_NEW', N'Tủ quần áo bốn cánh gỗ công nghiệp chống ẩm',                   N'Lắp ráp một tháng rồi tháo vì không vừa phòng, ray trượt và bản lề đều còn mới. Có đầy đủ ốc vít.', 2400000, 'PENDING_REVIEW', 26, 'sp042'),
+ (43, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Đèn thả trần gỗ thông ba bóng',                                N'Chóa gỗ không nứt, dây điện và đui còn tốt, chưa kèm bóng. Phù hợp bàn ăn nhỏ.', 450000, 'ACTIVE',         210, 'sp043'),
+ (44, 'nguoiban07@demo.local', N'Nội thất',               'WORN',     N'Kệ tivi gỗ xoan đào dài một mét sáu',                          N'Mặt kệ bạc màu ở giữa, ngăn kéo vẫn trượt, một tay nắm đã thay tạm. Khách đã nhận và lắp đặt.', 1100000, 'SOLD',         690, 'sp093'),
+ (45, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Giường tầng sắt có lưới bảo vệ tầng trên',                       N'Không kêu cót két, sơn tĩnh điện còn khoảng 90%, lưới không rách. Nệm bán riêng.', 1750000, 'ACTIVE',         250, 'sp045'),
+ (46, 'nguoiban07@demo.local', N'Nội thất',               'LIKE_NEW', N'Ghế công thái học lưng lưới có tựa đầu',                        N'Piston nâng hạ bình thường, bánh xe không mòn, tay ghế còn bọc nỉ. Bán vì công ty đã trang bị ghế.', 1450000, 'RESERVED',     160, 'sp046'),
 -- Tâm Camera Hà Nội (nguoiban08) - thiết bị ảnh
- (47, 'nguoiban08@demo.local', N'Đồ điện tử',             'GOOD',     N'Máy ảnh Sony A6000 kèm ống kính 16-50mm',                 N'Cảm biến sạch, màn hình không ố, số ảnh đã chụp khoảng 12 nghìn. Kèm hai pin và sạc đôi.', 8900000, 'ACTIVE',        330),
- (48, 'nguoiban08@demo.local', N'Đồ điện tử',             'FAIR',     N'Ống kính 50mm f/1.8 lấy nét tự động',                     N'Khung xước sơn ở viền, vòng tiêu cự và lấy nét vẫn mượt, không mốc. Có nắp trước và nắp sau.', 2200000, 'ACTIVE',        270),
- (49, 'nguoiban08@demo.local', N'Đồ điện tử',             'LIKE_NEW', N'Tay chống rung máy ảnh không gương lật',                    N'Các trục cân bằng tốt, pin theo máy còn khỏe, tay cầm không lỏng. Mua để quay một dự án đã xong.', 4100000, 'PENDING_REVIEW', 30),
- (50, 'nguoiban08@demo.local', N'Đồ điện tử',             'GOOD',     N'Máy quay tay cầm độ phân giải Full HD',                    N'Zoom cơ không bị đứng, vỏ có dấu hiệu sử dụng, pin và dây HDMI đi kèm. Khách đã nhận máy.', 3000000, 'SOLD',          560),
- (51, 'nguoiban08@demo.local', N'Đồ điện tử',             'WORN',     N'Đèn flash studio kèm dù tán 80cm',                         N'Bóng flash đã thay một lần, nhiệt màu vẫn ổn, dù tán còn nguyên. Bán vì nâng cấp sang đèn LED.', 550000, 'ACTIVE',        380),
- (52, 'nguoiban08@demo.local', N'Khác',                   'GOOD',     N'Balo máy ảnh chống nước có áo mưa phủ',                     N'Ngăn mút xốp không lún, khóa kéo trơn, áo mưa phủ còn đủ. Đựng vừa hai ống kính và một máy.', 400000, 'ACTIVE',         140),
+ (47, 'nguoiban08@demo.local', N'Đồ điện tử',             'GOOD',     N'Máy ảnh Sony A6000 kèm ống kính 16-50mm',                      N'Cảm biến sạch, màn hình không ố, số ảnh đã chụp khoảng 12 nghìn. Kèm hai pin và sạc đôi.', 8900000, 'ACTIVE',        330, 'sp047'),
+ (48, 'nguoiban08@demo.local', N'Đồ điện tử',             'FAIR',     N'Ống kính 50mm f/1.8 lấy nét tự động',                          N'Khung xước sơn ở viền, vòng tiêu cự và lấy nét vẫn mượt, không mốc. Có nắp trước và nắp sau.', 2200000, 'ACTIVE',        270, 'sp048'),
+ (49, 'nguoiban08@demo.local', N'Đồ điện tử',             'LIKE_NEW', N'Tay chống rung máy ảnh không gương lật',                         N'Các trục cân bằng tốt, pin theo máy còn khỏe, tay cầm không lỏng. Mua để quay một dự án đã xong.', 4100000, 'PENDING_REVIEW', 30, 'sp049'),
+ (50, 'nguoiban08@demo.local', N'Đồ điện tử',             'GOOD',     N'Máy quay tay cầm độ phân giải Full HD',                         N'Zoom cơ không bị đứng, vỏ có dấu hiệu sử dụng, pin và dây HDMI đi kèm. Khách đã nhận máy.', 3000000, 'SOLD',          560, 'sp050'),
+ (51, 'nguoiban08@demo.local', N'Đồ điện tử',             'WORN',     N'Đèn flash studio kèm dù tán 80cm',                              N'Bóng flash đã thay một lần, nhiệt màu vẫn ổn, dù tán còn nguyên. Bán vì nâng cấp sang đèn LED.', 550000, 'ACTIVE',        380, 'sp051'),
+ (52, 'nguoiban08@demo.local', N'Khác',                   'GOOD',     N'Balo máy ảnh chống nước có áo mưa phủ',                          N'Ngăn mút xốp không lún, khóa kéo trơn, áo mưa phủ còn đủ. Đựng vừa hai ống kính và một máy.', 400000, 'ACTIVE',         140, 'sp094'),
 -- Châu Đồ Cổ (nguoiban09) - hàng sưu tầm
- (53, 'nguoiban09@demo.local', N'Khác',                   'FAIR',     N'Đồng hồ bàn cơ lên dây cót kiểu cổ',                       N'Chạy đúng giờ sau khi vệ sinh bộ lò xo, mặt số ố nhẹ, chân gỗ không nứt. Không còn hộp gốc.', 1200000, 'ACTIVE',        500),
- (54, 'nguoiban09@demo.local', N'Khác',                   'WORN',     N'Bình gốm men rạn cao 40cm',                               N'Men có đường rạn tự nhiên theo phong cách, miệng bình sứt một điểm nhỏ. Phù hợp trưng bày.', 650000, 'ACTIVE',         460),
- (55, 'nguoiban09@demo.local', N'Khác',                   'GOOD',     N'Tranh sơn mài phong cảnh phố cổ 60x80cm',                  N'Màu sơn còn bóng, khung gỗ không mối mọt, mặt kính phía trước nguyên vẹn. Treo được ngay.', 2500000, 'PENDING_REVIEW', 34),
- (56, 'nguoiban09@demo.local', N'Nội thất',               'FAIR',     N'Bàn trà gỗ hương kèm hai đôn nhỏ',                         N'Mặt bàn có vết nhiệt tròn, gỗ không cong vênh, hai đôn còn chắc. Bán kèm khăn phủ.', 1900000, 'ACTIVE',         520),
- (57, 'nguoiban09@demo.local', N'Khác',                   'GOOD',     N'Bộ tranh chữ thư pháp Phúc Lộc Thọ Khang',                  N'Viết tay trên giấy dó, đã phủ bóng, một khung hơi lỏng ở góc. Khách đã nhận và treo phòng khách.', 300000, 'SOLD',         600),
+ (53, 'nguoiban09@demo.local', N'Khác',                   'FAIR',     N'Đồng hồ bàn cơ lên dây cót kiểu cổ',                            N'Chạy đúng giờ sau khi vệ sinh bộ lò xo, mặt số ố nhẹ, chân gỗ không nứt. Không còn hộp gốc.', 1200000, 'ACTIVE',        500, 'sp053'),
+ (54, 'nguoiban09@demo.local', N'Khác',                   'WORN',     N'Bình gốm men rạn cao 40cm',                                    N'Men có đường rạn tự nhiên theo phong cách, miệng bình sứt một điểm nhỏ. Phù hợp trưng bày.', 650000, 'ACTIVE',         460, 'sp054'),
+ (55, 'nguoiban09@demo.local', N'Khác',                   'GOOD',     N'Tranh sơn mài phong cảnh phố cổ 60x80cm',                       N'Màu sơn còn bóng, khung gỗ không mối mọt, mặt kính phía trước nguyên vẹn. Treo được ngay.', 2500000, 'PENDING_REVIEW', 34, 'sp055'),
+ (56, 'nguoiban09@demo.local', N'Nội thất',               'FAIR',     N'Bàn trà gỗ hương kèm hai đôn nhỏ',                              N'Mặt bàn có vết nhiệt tròn, gỗ không cong vênh, hai đôn còn chắc. Bán kèm khăn phủ.', 1900000, 'ACTIVE',         520, 'sp056'),
+ (57, 'nguoiban09@demo.local', N'Khác',                   'GOOD',     N'Bộ tranh chữ thư pháp Phúc Lộc Thọ Khang',                       N'Viết tay trên giấy dó, đã phủ bóng, một khung hơi lỏng ở góc. Khách đã nhận và treo phòng khách.', 300000, 'SOLD',         600, 'sp057'),
 -- Hân Biển Xanh (nguoiban10) - đồ biển và du lịch
- (58, 'nguoiban10@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Vợt padel mặt sợi carbon đã dùng mười trận',               N'Mặt vợt chưa phồng, quai cán còn dính, kèm bao đựng. Bán vì chuyển sang thuê vợt theo giờ.', 1800000, 'PENDING_REVIEW', 40),
- (59, 'nguoiban10@demo.local', N'Thời trang',             'LIKE_NEW', N'Áo khoác chống nước nữ có lót lưới',                      N'Khóa chống nước còn mượt, vải không thủng, mới mặc hai chuyến đi biển. Size M.', 260000, 'ACTIVE',         130),
- (60, 'nguoiban10@demo.local', N'Thời trang',             'LIKE_NEW', N'Kính mát phân cực chống tia UV đi biển',        N'Kính râm mắt phân cực chống lóa cực tốt khi đi biển hay lái xe, gọng dẻo nhẹ, đầy đủ bao da và khăn lau. Mới đeo một chuyến du lịch.', 180000, 'ACTIVE',         90),
- (61, 'nguoiban10@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Ván chèo hơi kèm bơm tay và dây an toàn',                  N'Van hơi không xì sau khi thử giữ 24 giờ, mặt ván trầy nhẹ. Khách đã nhận ván tại kho.', 4200000, 'SOLD',          540),
- (62, 'nguoiban10@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Kính bơi kèm cặp mũi silicone',                           N'Mắt kính không mờ, dây đàn hồi tốt, đã thay cặp mũi mới. Vệ sinh bằng nước ấm sau khi dùng.', 90000, 'ACTIVE',         75),
+ (58, 'nguoiban10@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Vợt padel mặt sợi carbon đã dùng mười trận',                    N'Mặt vợt chưa phồng, quai cán còn dính, kèm bao đựng. Bán vì chuyển sang thuê vợt theo giờ.', 1800000, 'PENDING_REVIEW', 40, 'sp058'),
+ (59, 'nguoiban10@demo.local', N'Thời trang',             'LIKE_NEW', N'Áo khoác chống nước nữ có lót lưới',                           N'Khóa chống nước còn mượt, vải không thủng, mới mặc hai chuyến đi biển. Size M.', 260000, 'ACTIVE',         130, 'sp059'),
+ (60, 'nguoiban10@demo.local', N'Thời trang',             'LIKE_NEW', N'Kính mát phân cực chống tia UV đi biển',             N'Kính râm mắt phân cực chống lóa cực tốt khi đi biển hay lái xe, gọng dẻo nhẹ, đầy đủ bao da và khăn lau. Mới đeo một chuyến du lịch.', 180000, 'ACTIVE',         90, 'sp060'),
+ (61, 'nguoiban10@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Ván chèo hơi kèm bơm tay và dây an toàn',                       N'Van hơi không xì sau khi thử giữ 24 giờ, mặt ván trầy nhẹ. Khách đã nhận ván tại kho.', 4200000, 'SOLD',          540, 'sp061'),
+ (62, 'nguoiban10@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Kính bơi kèm cặp mũi silicone',                                N'Mắt kính không mờ, dây đàn hồi tốt, đã thay cặp mũi mới. Vệ sinh bằng nước ấm sau khi dùng.', 90000, 'ACTIVE',         75, 'sp062'),
 -- Kiệt Miền Tây (nguoiban11) - xe và đồ dùng miền Tây
- (63, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'GOOD',     N'Xe máy số 110cc chính chủ một đời sử dụng',                N'Động cơ êm, nước sơn còn khoảng 85%, đã thay nhớt và lốp trước. Giấy tờ đầy đủ, công chứng tại quận.', 14500000, 'ACTIVE',       430),
- (64, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Xe đạp điện đi được khoảng 45km mỗi lần sạc',              N'Pin còn khoảng 70% dung lượng gốc, tay ga mượt, yên có vết nứt nhỏ. Cần người tự chở về.', 6800000, 'PENDING_REVIEW', 48),
- (65, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'LIKE_NEW', N'Mũ bảo hiểm ba phần tư có kính chắn gió size L',           N'Vỏ không bị va chạm, mút bên trong còn đàn hồi, quai và khóa chắc. Mới dùng một mùa mưa.', 350000, 'ACTIVE',         110),
- (66, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'WORN',     N'Giá đỡ điện thoại gắn xe máy có cổng USB',                  N'Kẹp tay vẫn chặt, một ngàm nhựa đã hàn lại, dây nguồn đấu thẳng vào bình. Khách đã nhận hàng.', 120000, 'SOLD',         500),
- (67, 'nguoiban11@demo.local', N'Đồ gia dụng',            'GOOD',     N'Quạt trần ba cánh có điều khiển từ xa',                     N'Quay êm ở cả ba số, cánh không cong, remote còn pin. Tháo ra từ phòng khách cũ.', 1250000, 'ACTIVE',         300),
- (68, 'nguoiban11@demo.local', N'Khác',                   'GOOD',     N'Bơm lốp xe mini chạy điện 12V có đồng hồ',                   N'Đồng hồ chỉ gần đúng khi so với bơm trạm, dây nguồn theo thuốc lá xe còn tốt, vỏ trầy nhẹ.', 300000, 'PENDING_REVIEW', 28),
+ (63, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'GOOD',     N'Xe máy số 110cc chính chủ một đời sử dụng',                     N'Động cơ êm, nước sơn còn khoảng 85%, đã thay nhớt và lốp trước. Giấy tờ đầy đủ, công chứng tại quận.', 14500000, 'ACTIVE',       430, 'sp063'),
+ (64, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'FAIR',     N'Xe đạp điện đi được khoảng 45km mỗi lần sạc',                   N'Pin còn khoảng 70% dung lượng gốc, tay ga mượt, yên có vết nứt nhỏ. Cần người tự chở về.', 6800000, 'PENDING_REVIEW', 48, 'sp064'),
+ (65, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'LIKE_NEW', N'Mũ bảo hiểm ba phần tư có kính chắn gió size L',                N'Vỏ không bị va chạm, mút bên trong còn đàn hồi, quai và khóa chắc. Mới dùng một mùa mưa.', 350000, 'ACTIVE',         110, 'sp065'),
+ (66, 'nguoiban11@demo.local', N'Xe cộ & phụ kiện',        'WORN',     N'Giá đỡ điện thoại gắn xe máy có cổng USB',                       N'Kẹp tay vẫn chặt, một ngàm nhựa đã hàn lại, dây nguồn đấu thẳng vào bình. Khách đã nhận hàng.', 120000, 'SOLD',         500, 'sp066'),
+ (67, 'nguoiban11@demo.local', N'Đồ gia dụng',            'GOOD',     N'Quạt trần ba cánh có điều khiển từ xa',                          N'Quay êm ở cả ba số, cánh không cong, remote còn pin. Tháo ra từ phòng khách cũ.', 1250000, 'ACTIVE',         300, 'sp067'),
+ (68, 'nguoiban11@demo.local', N'Khác',                   'GOOD',     N'Bơm lốp xe mini chạy điện 12V có đồng hồ',                        N'Đồng hồ chỉ gần đúng khi so với bơm trạm, dây nguồn theo thuốc lá xe còn tốt, vỏ trầy nhẹ.', 300000, 'PENDING_REVIEW', 28, 'sp068'),
 -- An Store (an.seller) - nhiều nhóm hàng
- (69, 'an.seller@demo.local',  N'Thời trang',             'GOOD',     N'Quần tây nam ống đứng lưng cao size 30',                    N'Vải kaki không bóng, đã cắt lai, một túi trượt vẫn kéo được. Mặc đi làm hai năm.', 180000, 'ACTIVE',         120),
- (70, 'an.seller@demo.local',  N'Thời trang',             'LIKE_NEW', N'Giày tây da bò cổ cao size 41 đã đánh xi',                  N'Da không nứt, đế cao su chưa mòn nhiều, dây còn nguyên. Kèm hộp và một hộp xi.', 400000, 'RESERVED',       150),
- (71, 'an.seller@demo.local',  N'Đồ điện tử',             'GOOD',     N'Đồng hồ thông minh viền nhôm dây thể thao',                  N'Màn hình không sọc, pin dùng khoảng một ngày, đã thay dây của hãng khác. Không còn hộp.', 3200000, 'ACTIVE',        240),
- (72, 'an.seller@demo.local',  N'Đồ điện tử',             'FAIR',     N'Loa Bluetooth cỡ lớn pin khoảng sáu tiếng',                  N'Vỏ loa có vết xước, màng loa không rách, nút nguồn hơi cứng. Âm trầm vẫn chắc.', 1400000, 'PENDING_REVIEW', 24),
- (73, 'an.seller@demo.local',  N'Xe cộ & phụ kiện',        'GOOD',     N'Xe đạp thể thao khung nhôm bánh 26 inch',                    N'Đã bảo dưỡng lốp và thắng, bộ sang số mượt, yên có vết ngồi. Bán vì chuyển sang chung cư.', 2100000, 'ACTIVE',        360),
- (74, 'an.seller@demo.local',  N'Đồ chơi & mẹ bé',        'GOOD',     N'Bập bênh gỗ trẻ em có tay vịn',                            N'Ghế gỗ không vênh, thanh trượt còn trơn, sơn không bong. Nhà có bé dùng một mùa rồi thôi.', 350000, 'ACTIVE',         170),
- (75, 'an.seller@demo.local',  N'Nội thất',               'GOOD',     N'Tủ giày nhựa ba cánh kiểu gấp hai tầng',                     N'Khung nhựa chắc, một cánh trượt nhẹ, bề mặt đã lau sạch. Khách nhận hàng và xác nhận dùng tốt.', 280000, 'SOLD',         620),
+ (69, 'an.seller@demo.local',  N'Thời trang',             'GOOD',     N'Quần tây nam ống đứng lưng cao size 30',                         N'Vải kaki không bóng, đã cắt lai, một túi trượt vẫn kéo được. Mặc đi làm hai năm.', 180000, 'ACTIVE',         120, 'sp069'),
+ (70, 'an.seller@demo.local',  N'Thời trang',             'LIKE_NEW', N'Giày tây da bò cổ cao size 41 đã đánh xi',                       N'Da không nứt, đế cao su chưa mòn nhiều, dây còn nguyên. Kèm hộp và một hộp xi.', 400000, 'RESERVED',       150, 'sp070'),
+ (71, 'an.seller@demo.local',  N'Đồ điện tử',             'GOOD',     N'Đồng hồ thông minh viền nhôm dây thể thao',                       N'Màn hình không sọc, pin dùng khoảng một ngày, đã thay dây của hãng khác. Không còn hộp.', 3200000, 'ACTIVE',        240, 'sp071'),
+ (72, 'an.seller@demo.local',  N'Đồ điện tử',             'FAIR',     N'Loa Bluetooth cỡ lớn pin khoảng sáu tiếng',                       N'Vỏ loa có vết xước, màng loa không rách, nút nguồn hơi cứng. Âm trầm vẫn chắc.', 1400000, 'PENDING_REVIEW', 24, 'sp072'),
+ (73, 'an.seller@demo.local',  N'Xe cộ & phụ kiện',        'GOOD',     N'Xe đạp thể thao khung nhôm bánh 26 inch',                         N'Đã bảo dưỡng lốp và thắng, bộ sang số mượt, yên có vết ngồi. Bán vì chuyển sang chung cư.', 2100000, 'ACTIVE',        360, 'sp073'),
+ (74, 'an.seller@demo.local',  N'Đồ chơi & mẹ bé',        'GOOD',     N'Bập bênh gỗ trẻ em có tay vịn',                                 N'Ghế gỗ không vênh, thanh trượt còn trơn, sơn không bong. Nhà có bé dùng một mùa rồi thôi.', 350000, 'ACTIVE',         170, 'sp074'),
+ (75, 'an.seller@demo.local',  N'Nội thất',               'GOOD',     N'Tủ giày nhựa ba cánh kiểu gấp hai tầng',                          N'Khung nhựa chắc, một cánh trượt nhẹ, bề mặt đã lau sạch. Khách nhận hàng và xác nhận dùng tốt.', 280000, 'SOLD',         620, 'sp075'),
 -- Bình Vintage (binh.seller) - gia dụng và nội thất nhỏ
- (76, 'binh.seller@demo.local', N'Đồ gia dụng',           'GOOD',     N'Máy giặt mini ba kg cho đồ trẻ em',                        N'Giặt êm, không rò nước, lồng inox còn sáng. Trước đây dùng riêng cho quần áo em bé.', 900000, 'ACTIVE',         200),
- (77, 'binh.seller@demo.local', N'Đồ gia dụng',           'LIKE_NEW', N'Bộ dao và thớt inox cho bếp gia đình',                      N'Lưỡi dao còn sắc, thớt chưa sâu rãnh, mua dư so với nhu cầu nên chưa dùng hết bộ.', 180000, 'PENDING_REVIEW', 32),
- (78, 'binh.seller@demo.local', N'Nội thất',              'FAIR',     N'Bộ bàn ghế nhựa xếp dùng cho ban công',                     N'Nhựa hơi phai màu do nắng, khớp xếp còn chắc, mặt bàn không nứt. Phù hợp hai người.', 300000, 'ACTIVE',         260),
- (79, 'binh.seller@demo.local', N'Sách & văn phòng phẩm', 'GOOD',     N'Máy in phun bốn màu bình mực liên tục',                     N'In đều không sọc ngang, đầu phun đã vệ sinh, còn hai bình mực. Bán vì chuyển sang máy in laser.', 1300000, 'ACTIVE',       340),
- (80, 'binh.seller@demo.local', N'Thể thao & dã ngoại',   'GOOD',     N'Đồng hồ đo nhịp tim chạy bộ kèm dây đeo ngực',               N'Bắt mạch nhanh, pin dây đeo còn tốt, màn hình không xước. Kèm cáp sạc micro.', 750000, 'SOLD',           580);
+ (76, 'binh.seller@demo.local', N'Đồ gia dụng',           'GOOD',     N'Máy giặt mini ba kg cho đồ trẻ em',                             N'Giặt êm, không rò nước, lồng inox còn sáng. Trước đây dùng riêng cho quần áo em bé.', 900000, 'ACTIVE',         200, 'sp076'),
+ (77, 'binh.seller@demo.local', N'Đồ gia dụng',           'LIKE_NEW', N'Bộ dao và thớt inox cho bếp gia đình',                           N'Lưỡi dao còn sắc, thớt chưa sâu rãnh, mua dư so với nhu cầu nên chưa dùng hết bộ.', 180000, 'PENDING_REVIEW', 32, 'sp077'),
+ (78, 'binh.seller@demo.local', N'Nội thất',              'FAIR',     N'Bộ bàn ghế nhựa xếp dùng cho ban công',                          N'Nhựa hơi phai màu do nắng, khớp xếp còn chắc, mặt bàn không nứt. Phù hợp hai người.', 300000, 'ACTIVE',         260, 'sp078'),
+ (79, 'binh.seller@demo.local', N'Sách & văn phòng phẩm', 'GOOD',     N'Máy in phun bốn màu bình mực liên tục',                          N'In đều không sọc ngang, đầu phun đã vệ sinh, còn hai bình mực. Bán vì chuyển sang máy in laser.', 1300000, 'ACTIVE',       340, 'sp079'),
+ (80, 'binh.seller@demo.local', N'Thể thao & dã ngoại',   'GOOD',     N'Đồng hồ đo nhịp tim chạy bộ kèm dây đeo ngực',                    N'Bắt mạch nhanh, pin dây đeo còn tốt, màn hình không xước. Kèm cáp sạc micro.', 750000, 'SOLD',           580, 'sp080');
 
 -- 2. Insert sản phẩm (đối chiếu theo shop + tên nên chạy lại không nhân đôi) ------
 INSERT SanPham (MaCuaHang, MaDanhMuc, MaTinhTrang, Ten, ChuoiTimKiem, MoTa, Gia, TrangThai, NgayTao, NgayCapNhat)
@@ -598,13 +599,20 @@ END;
 -- 3. Ảnh: khớp ảnh thực tế chính xác từng sản phẩm (sp001..sp080) ----------------
 INSERT AnhSanPham (MaSanPham, DuongDan, ThuTu, LaAnhChinh, DungLuong)
 SELECT x.MaSanPham,
-       N'/uploads/seed/sp' + RIGHT('00' + CAST(x.Stt AS varchar(3)), 3) + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
+       N'/uploads/seed/' + s.SeedImg + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
        n.ThuTu,
        CASE WHEN n.ThuTu = 1 THEN 1 ELSE 0 END,
        200000 + x.Stt * 1000 + n.ThuTu * 100
 FROM #SpB8 x
+JOIN #SeedSp s ON s.Stt = x.Stt
 CROSS JOIN (VALUES (1), (2)) n (ThuTu)
 WHERE NOT EXISTS (SELECT 1 FROM AnhSanPham a WHERE a.MaSanPham = x.MaSanPham AND a.ThuTu = n.ThuTu);
+
+UPDATE a
+SET a.DuongDan = N'/uploads/seed/' + s.SeedImg + N'-' + CAST(a.ThuTu AS varchar(1)) + N'.jpg'
+FROM AnhSanPham a
+JOIN #SpB8 x ON x.MaSanPham = a.MaSanPham
+JOIN #SeedSp s ON s.Stt = x.Stt;
 
 -- 4. Lịch sử trạng thái để trang kiểm duyệt và lịch sử tin đăng có dữ liệu --------
 INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
@@ -1066,33 +1074,21 @@ FROM (
 JOIN SanPham sp ON sp.MaCuaHang = ordSp.MaCuaHang AND sp.Ten = ordSp.TenSanPham
 CROSS APPLY (
     SELECT CASE
-        WHEN sp.Ten LIKE N'%Tủ%' THEN 'sp023'
-        WHEN sp.Ten LIKE N'%Kệ%' OR sp.Ten LIKE N'%Giá sách%' THEN 'sp015'
-        WHEN sp.Ten LIKE N'%Bàn học%' OR sp.Ten LIKE N'%Bàn ăn%' OR sp.Ten LIKE N'%Bàn trà%' OR sp.Ten LIKE N'%Sofa%' OR sp.Ten LIKE N'%bàn ghế%' OR sp.Ten LIKE N'%Ghế%' THEN 'sp017'
-        WHEN sp.Ten LIKE N'%Gối%' OR sp.Ten LIKE N'%Chăn%' OR sp.Ten LIKE N'%Giường%' OR sp.Ten LIKE N'%Nệm%' THEN 'sp016'
-        WHEN sp.Ten LIKE N'%Đèn%' THEN 'sp018'
-        WHEN sp.Ten LIKE N'%iPhone%' OR sp.Ten LIKE N'%Galaxy%' OR sp.Ten LIKE N'%iPad%' OR sp.Ten LIKE N'%Điện thoại%' OR sp.Ten LIKE N'%Sạc dự phòng%' OR sp.Ten LIKE N'%điện thoại%' THEN 'sp003'
-        WHEN sp.Ten LIKE N'%Laptop%' OR sp.Ten LIKE N'%máy tính bàn%' OR sp.Ten LIKE N'%Màn hình%' OR sp.Ten LIKE N'%VivoBook%' OR sp.Ten LIKE N'%Latitude%' THEN 'sp004'
-        WHEN sp.Ten LIKE N'%Bàn phím%' OR sp.Ten LIKE N'%Chuột%' OR sp.Ten LIKE N'%Keychron%' OR sp.Ten LIKE N'%DareU%' OR sp.Ten LIKE N'%Máy in%' THEN 'sp005'
-        WHEN sp.Ten LIKE N'%Tai nghe%' THEN 'sp009'
-        WHEN sp.Ten LIKE N'%Máy ảnh%' OR sp.Ten LIKE N'%Ống kính%' OR sp.Ten LIKE N'%chống rung%' OR sp.Ten LIKE N'%Máy quay%' OR sp.Ten LIKE N'%flash studio%' THEN 'sp010'
-        WHEN sp.Ten LIKE N'%Loa%' THEN 'sp013'
-        WHEN sp.Ten LIKE N'%Đồng hồ%' OR sp.Ten LIKE N'%nhịp tim%' THEN 'sp012'
-        WHEN sp.Ten LIKE N'%Xe đạp%' OR sp.Ten LIKE N'%Xe máy%' OR sp.Ten LIKE N'%Wave%' OR sp.Ten LIKE N'%Bơm lốp%' OR sp.Ten LIKE N'%Khóa dây%' OR sp.Ten LIKE N'%Mũ bảo hiểm%' OR sp.Ten LIKE N'%Ván chèo%' OR sp.Ten LIKE N'%xe số%' THEN 'sp008'
-        WHEN sp.Ten LIKE N'%Balo%' OR sp.Ten LIKE N'%Túi xách%' OR sp.Ten LIKE N'%Túi chống nước%' OR sp.Ten LIKE N'%Lều du lịch%' THEN 'sp014'
-        WHEN sp.Ten LIKE N'%Nồi chiên%' OR sp.Ten LIKE N'%Nồi cơm%' THEN 'sp006'
-        WHEN sp.Ten LIKE N'%nồi%' OR sp.Ten LIKE N'%Bếp từ%' OR sp.Ten LIKE N'%Ấm%' OR sp.Ten LIKE N'%thủy tinh%' OR sp.Ten LIKE N'%dao và thớt%' OR sp.Ten LIKE N'%bình trà%' OR sp.Ten LIKE N'%ly đồng%' THEN 'sp019'
-        WHEN sp.Ten LIKE N'%xay sinh tố%' THEN 'sp024'
-        WHEN sp.Ten LIKE N'%Bàn ủi%' THEN 'sp025'
-        WHEN sp.Ten LIKE N'%Quạt%' OR sp.Ten LIKE N'%lọc không khí%' OR sp.Ten LIKE N'%hút bụi%' OR sp.Ten LIKE N'%Máy giặt%' THEN 'sp026'
-        WHEN sp.Ten LIKE N'%Xe đẩy%' OR sp.Ten LIKE N'%Xe tập đi%' OR sp.Ten LIKE N'%ăn dặm%' OR sp.Ten LIKE N'%Nôi điện%' THEN 'sp022'
-        WHEN sp.Ten LIKE N'%Lego%' OR sp.Ten LIKE N'%Xếp hình%' OR sp.Ten LIKE N'%Đồ chơi gỗ%' OR sp.Ten LIKE N'%Lắp ráp%' OR sp.Ten LIKE N'%Bập bênh%' THEN 'sp027'
-        WHEN sp.Ten LIKE N'%Giày%' OR sp.Ten LIKE N'%sneaker%' OR sp.Ten LIKE N'%Dép%' THEN 'sp002'
-        WHEN sp.Ten LIKE N'%Áo%' OR sp.Ten LIKE N'%Quần%' OR sp.Ten LIKE N'%Váy%' OR sp.Ten LIKE N'%denim%' OR sp.Ten LIKE N'%Khăn%' OR sp.Ten LIKE N'%Set năm bộ đồ%' OR sp.Ten LIKE N'%Nón cói%' THEN 'sp001'
-        WHEN sp.Ten LIKE N'%cờ vua%' OR sp.Ten LIKE N'%Tượng gốm%' OR sp.Ten LIKE N'%Hộp nhạc%' OR sp.Ten LIKE N'%men rạn%' OR sp.Ten LIKE N'%sơn mài%' OR sp.Ten LIKE N'%thư pháp%' OR sp.Ten LIKE N'%Bình hoa%' OR sp.Ten LIKE N'%Bình gốm%' THEN 'sp011'
-        WHEN sp.Ten LIKE N'%Vợt%' OR sp.Ten LIKE N'%chạy bộ%' OR sp.Ten LIKE N'%yoga%' OR sp.Ten LIKE N'%tạ tay%' OR sp.Ten LIKE N'%Gậy golf%' OR sp.Ten LIKE N'%Kính lặn%' OR sp.Ten LIKE N'%Kính bơi%' OR sp.Ten LIKE N'%padel%' THEN 'sp021'
-        WHEN sp.Ten LIKE N'%Truyện%' OR sp.Ten LIKE N'%Conan%' OR sp.Ten LIKE N'%Doraemon%' OR sp.Ten LIKE N'%Sherlock%' THEN 'sp020'
-        WHEN sp.Ten LIKE N'%Giải tích%' OR sp.Ten LIKE N'%Cấu trúc dữ liệu%' OR sp.Ten LIKE N'%Giáo trình%' OR sp.Ten LIKE N'%Kinh tế học%' OR sp.Ten LIKE N'%Tư duy phản biện%' OR sp.Ten LIKE N'%vở kẻ ngang%' OR sp.Ten LIKE N'%Bút máy%' OR sp.Ten LIKE N'%Casio fx%' OR sp.Ten LIKE N'%IELTS%' OR sp.Ten LIKE N'%Sách%' THEN 'sp007'
+        WHEN sp.Ten LIKE N'%Giải tích%'          THEN 'sp007'
+        WHEN sp.Ten LIKE N'%Cấu trúc dữ liệu%'   THEN 'sp007'
+        WHEN sp.Ten LIKE N'%Áo thun polo%'       THEN 'sp106'
+        WHEN sp.Ten LIKE N'%Quần jean Levis%'    THEN 'sp104'
+        WHEN sp.Ten LIKE N'%Chuột không dây%'    THEN 'sp105'
+        WHEN sp.Ten LIKE N'%Bàn phím DareU%'     THEN 'sp103'
+        WHEN sp.Ten LIKE N'%Tai nghe gaming%'    THEN 'sp009'
+        WHEN sp.Ten LIKE N'%Ấm siêu tốc%'        THEN 'sp107'
+        WHEN sp.Ten LIKE N'%Quạt bàn mini%'      THEN 'sp026'
+        WHEN sp.Ten LIKE N'%Balo đi học%'        THEN 'sp102'
+        WHEN sp.Ten LIKE N'%Đồng hồ thể thao%'   THEN 'sp012'
+        WHEN sp.Ten LIKE N'%Máy tính bỏ túi%'    THEN 'sp108'
+        WHEN sp.Ten LIKE N'%Đèn học%'            THEN 'sp084'
+        WHEN sp.Ten LIKE N'%Nồi cơm điện%'       THEN 'sp112'
+        WHEN sp.Ten LIKE N'%Loa kéo%'            THEN 'sp013'
         ELSE 'sp007'
     END AS SeedImg
 ) m
@@ -1644,6 +1640,64 @@ BEGIN CATCH
 END CATCH;
 
 PRINT CONCAT(N'Seed đánh giá: đã thêm ', @SoDanhGiaThem, N' đánh giá mới (chạy lại sẽ chỉ thêm các đơn còn thiếu).');
+GO
+
+-- -----------------------------------------------------------------------------
+-- BỔ SUNG: Thông báo mẫu (ThongBao) cho chuông thông báo ở header
+--   - Đủ 3 loại ORDER / PRODUCT / SYSTEM, có cả đã đọc và chưa đọc.
+--   - MaThamChieu trỏ đúng đơn hàng / sản phẩm đã seed để bấm vào mở được chi tiết.
+--   - Chạy lại không nhân đôi (đối chiếu MaNguoiDung + TieuDe).
+-- -----------------------------------------------------------------------------
+DECLARE @ThongBaoMau TABLE (
+    Email     varchar(100) COLLATE DATABASE_DEFAULT NOT NULL,
+    Loai      varchar(10)  COLLATE DATABASE_DEFAULT NOT NULL,
+    TieuDe    nvarchar(200) COLLATE DATABASE_DEFAULT NOT NULL,
+    NoiDung   nvarchar(1000) COLLATE DATABASE_DEFAULT NOT NULL,
+    MaDon     varchar(30)  COLLATE DATABASE_DEFAULT NULL,
+    TenSP     nvarchar(200) COLLATE DATABASE_DEFAULT NULL,
+    DaDoc     bit          NOT NULL,
+    GioTruoc  int          NOT NULL
+);
+
+INSERT @ThongBaoMau (Email, Loai, TieuDe, NoiDung, MaDon, TenSP, DaDoc, GioTruoc) VALUES
+ ('chi.buyer@demo.local',  'ORDER',   N'Đơn hàng đang giao',
+  N'Đơn DH20261001-000003 đã được người bán bàn giao cho đơn vị vận chuyển. Theo dõi trạng thái trong mục Đơn mua.', 'DH20261001-000003', NULL, 0, 3),
+ ('chi.buyer@demo.local',  'ORDER',   N'Đơn hàng đã hoàn tất',
+  N'Đơn DH20261001-000005 đã hoàn tất. Hãy đánh giá người bán để giúp cộng đồng mua sắm an toàn hơn.', 'DH20261001-000005', NULL, 1, 26),
+ ('dung.buyer@demo.local', 'ORDER',   N'Chờ bạn xác nhận đã nhận hàng',
+  N'Đơn DH20261001-000004 đã giao đến bạn. Vui lòng kiểm tra hàng và bấm "Đã nhận hàng" để giải ngân cho người bán.', 'DH20261001-000004', NULL, 0, 5),
+ ('an.seller@demo.local',  'ORDER',   N'Bạn có đơn hàng mới',
+  N'Đơn DH20261001-000003 vừa được tạo cho sản phẩm trong shop của bạn. Vui lòng xác nhận đơn trong mục Đơn bán.', 'DH20261001-000003', NULL, 1, 72),
+ ('an.seller@demo.local',  'ORDER',   N'Đơn hàng đã hoàn tất',
+  N'Người mua đã xác nhận nhận hàng cho đơn DH20261001-000005. Tiền hàng sẽ được đối soát theo hình thức thanh toán.', 'DH20261001-000005', NULL, 0, 25),
+ ('binh.seller@demo.local', 'ORDER',  N'Bạn có đơn hàng mới',
+  N'Đơn DH20261001-000001 đang chờ bạn xác nhận. Khách chọn thanh toán khi nhận hàng (COD).', 'DH20261001-000001', NULL, 0, 8),
+ ('chi.buyer@demo.local',  'PRODUCT', N'Phiên đấu giá đang diễn ra',
+  N'Phiên đấu giá "Máy ảnh Canon EOS 700D kèm lens kit" đang nhận đặt giá. Bạn đang là người dẫn đầu với 3.400.000đ.', NULL, N'Máy ảnh Canon EOS 700D kèm lens kit', 0, 2),
+ ('dung.buyer@demo.local', 'PRODUCT', N'Bạn đang dẫn đầu phiên đấu giá',
+  N'Bạn vừa vượt giá thành công cho "Đồng hồ Casio vintage" với 350.000đ. Phiên sẽ kết thúc sau 18 giờ.', NULL, N'Đồng hồ Casio vintage', 0, 1),
+ ('nguoiban01@demo.local', 'PRODUCT', N'Tin đăng đã được duyệt',
+  N'Tin "Laptop Dell Latitude 7490 Core i5 RAM 8GB SSD 256GB" đã được kiểm duyệt và hiển thị công khai.', NULL, N'Laptop Dell Latitude 7490 Core i5 RAM 8GB SSD 256GB', 0, 40),
+ ('an.seller@demo.local',  'PRODUCT', N'Tin đăng bị gỡ',
+  N'Tin "Loa Bluetooth JBL Flip 4" bị gỡ vì mô tả không đúng sự thật về tình trạng sản phẩm. Bạn có thể sửa và gửi duyệt lại.', NULL, N'Loa Bluetooth JBL Flip 4', 1, 120),
+ ('binh.seller@demo.local', 'PRODUCT', N'Phiên đấu giá sắp kết thúc',
+  N'Phiên đấu giá "Đồng hồ Casio vintage" sẽ kết thúc trong 18 giờ tới. Hiện có 3 lượt đặt giá.', NULL, N'Đồng hồ Casio vintage', 0, 1),
+ ('chi.buyer@demo.local',  'SYSTEM',  N'Chào mừng bạn đến với Re:Market',
+  N'Hoàn thiện hồ sơ và xác thực email để tăng độ tin cậy khi mua bán đồ cũ.', NULL, NULL, 1, 168),
+ ('nguoimua01@demo.local', 'SYSTEM',  N'Cập nhật chính sách giao dịch',
+  N'Từ tháng này, người mua có thể mở tranh chấp trong 48 giờ sau khi đơn được đánh dấu đã giao.', NULL, NULL, 0, 48),
+ ('admin@secondhand.local', 'SYSTEM', N'Có báo cáo vi phạm mới cần xử lý',
+  N'Hệ thống ghi nhận báo cáo vi phạm đang chờ quản trị viên phản hồi. Vào mục Quản lý báo cáo để xem chi tiết.', NULL, NULL, 0, 4);
+
+INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu, DaDoc, NgayTao)
+SELECT nd.MaNguoiDung, v.Loai, v.TieuDe, v.NoiDung,
+       COALESCE(dh.MaDonHang, sp.MaSanPham),
+       v.DaDoc, DATEADD(HOUR, -v.GioTruoc, SYSUTCDATETIME())
+FROM @ThongBaoMau v
+JOIN NguoiDung nd     ON nd.Email = v.Email
+LEFT JOIN DonHang dh ON dh.MaDon = v.MaDon
+LEFT JOIN SanPham sp ON sp.Ten = v.TenSP
+WHERE NOT EXISTS (SELECT 1 FROM ThongBao t WHERE t.MaNguoiDung = nd.MaNguoiDung AND t.TieuDe = v.TieuDe);
 GO
 
 -- =============================================================================

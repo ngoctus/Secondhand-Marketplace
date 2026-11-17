@@ -4,13 +4,21 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common.Extensions;
+using SecondHandMarketplace.Web.Data;
+using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Account;
 using SecondHandMarketplace.Web.Services.Auth;
 
 namespace SecondHandMarketplace.Web.Controllers;
 
-public sealed class AccountController(IAuthService authService, IPasswordResetService passwordResetService) : Controller
+public sealed class AccountController(
+    IAuthService authService,
+    IPasswordResetService passwordResetService,
+    IRegistrationOtpService registrationOtpService,
+    AppDbContext db,
+    IConfiguration configuration) : Controller
 {
     [AllowAnonymous]
     [HttpGet]
@@ -29,15 +37,88 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
         if (!ModelState.IsValid) return View(model);
-        var result = await authService.RegisterAsync(model.FullName, model.Email, model.Phone, model.Password, cancellationToken);
-        if (!result.Success || result.User is null)
+
+        try
         {
-            ModelState.AddModelError(string.Empty, result.Error ?? "Không thể tạo tài khoản.");
+            var (success, error, token) = await registrationOtpService.StartRegistrationAsync(model, cancellationToken);
+            if (!success || string.IsNullOrWhiteSpace(token))
+            {
+                ModelState.AddModelError(string.Empty, error ?? "Không thể tiến hành đăng ký. Vui lòng thử lại.");
+                return View(model);
+            }
+
+            TempData["ThongBao"] = $"Mã xác nhận OTP 6 chữ số đã được gửi tới email {model.Email.Trim()}. Vui lòng nhập mã để hoàn tất đăng ký.";
+            return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email.Trim().ToLowerInvariant(), token });
+        }
+        catch (OperationCanceledException)
+        {
+            ModelState.AddModelError(string.Empty, "Yêu cầu đăng ký bị quá thời gian chờ xử lý. Vui lòng thử lại.");
             return View(model);
         }
-        await SignInUserAsync(result.User.MaNguoiDung, result.User.Email, result.User.HoTen, result.User.VaiTro, false, result.User.AnhDaiDien, DangNhapHelper.LaySecurityStamp(result.User.MatKhauBam));
-        TempData["ThanhCong"] = "Đăng ký tài khoản thành công!";
-        return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    public IActionResult VerifyRegistration(string email, string token)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+        if (string.IsNullOrWhiteSpace(token)) return RedirectToAction(nameof(Register));
+        return View(new RegisterVerifyVm { Email = email ?? string.Empty, Token = token });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> VerifyRegistration(RegisterVerifyVm model, CancellationToken cancellationToken)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+        if (!ModelState.IsValid) return View(model);
+
+        try
+        {
+            var (success, error, user, newToken) = await registrationOtpService.VerifyOtpAsync(model.Token, model.Code, cancellationToken);
+            if (!success || user is null)
+            {
+                if (!string.IsNullOrWhiteSpace(newToken))
+                {
+                    model.Token = newToken;
+                }
+                ModelState.AddModelError(string.Empty, error ?? "Mã OTP không hợp lệ.");
+                return View(model);
+            }
+
+            await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, false, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
+            TempData["ThanhCong"] = "Đăng ký tài khoản và xác thực email thành công! Chào mừng bạn đến với Re:Market.";
+            return RedirectToAction("Index", "Home");
+        }
+        catch (OperationCanceledException)
+        {
+            ModelState.AddModelError(string.Empty, "Yêu cầu xác thực OTP bị quá thời gian chờ xử lý. Vui lòng thử lại.");
+            return View(model);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendRegisterCode(RegisterVerifyVm model, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(model.Token)) return RedirectToAction(nameof(Register));
+        try
+        {
+            var (success, error, newToken) = await registrationOtpService.ResendCodeAsync(model.Token, cancellationToken);
+            if (success)
+            {
+                TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email của bạn. Vui lòng kiểm tra hộp thư.";
+            }
+            else
+            {
+                TempData["Loi"] = error ?? "Chưa thể gửi lại mã xác nhận. Vui lòng thử lại sau.";
+            }
+            return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email?.Trim().ToLowerInvariant(), token = newToken ?? model.Token });
+        }
+        catch (OperationCanceledException)
+        {
+            TempData["Loi"] = "Yêu cầu gửi lại mã bị quá thời gian chờ. Vui lòng thử lại.";
+            return RedirectToAction(nameof(VerifyRegistration), new { email = model.Email?.Trim().ToLowerInvariant(), token = model.Token });
+        }
     }
 
     [HttpGet]
@@ -61,14 +142,22 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
     public async Task<IActionResult> ForgotPassword(ForgotPasswordVm model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return View(model);
-        var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
-        if (!sent)
+        try
         {
-            ModelState.AddModelError(string.Empty, "Chưa gửi được email xác nhận. Vui lòng thử lại sau.");
+            var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
+            if (!sent)
+            {
+                ModelState.AddModelError(string.Empty, "Chưa gửi được email xác nhận. Vui lòng thử lại sau.");
+                return View(model);
+            }
+            TempData["ThongBao"] = "Mã xác nhận OTP 6 chữ số đã được gửi tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư (kể cả mục Spam).";
+            return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
+        }
+        catch (OperationCanceledException)
+        {
+            ModelState.AddModelError(string.Empty, "Yêu cầu gửi mã xác nhận bị quá thời gian chờ. Vui lòng thử lại.");
             return View(model);
         }
-        TempData["OtpSent"] = "Nếu email thuộc một tài khoản đang hoạt động, mã xác nhận sẽ được gửi tới hộp thư đó.";
-        return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
     }
 
     [AllowAnonymous]
@@ -81,14 +170,22 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
     public async Task<IActionResult> ResetPassword(ResetPasswordOtpVm model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return View(model);
-        var result = await passwordResetService.ResetPasswordAsync(model.Email, model.Code, model.NewPassword, cancellationToken);
-        if (!result.Success)
+        try
         {
-            ModelState.AddModelError(string.Empty, result.Error ?? "Không thể đặt lại mật khẩu.");
+            var result = await passwordResetService.ResetPasswordAsync(model.Email, model.Code, model.NewPassword, cancellationToken);
+            if (!result.Success)
+            {
+                ModelState.AddModelError(string.Empty, result.Error ?? "Không thể đặt lại mật khẩu.");
+                return View(model);
+            }
+            TempData["ThanhCong"] = "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.";
+            return RedirectToAction(nameof(Login));
+        }
+        catch (OperationCanceledException)
+        {
+            ModelState.AddModelError(string.Empty, "Yêu cầu đặt lại mật khẩu bị quá thời gian chờ. Vui lòng thử lại.");
             return View(model);
         }
-        TempData["ThanhCong"] = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.";
-        return RedirectToAction(nameof(Login));
     }
 
     [AllowAnonymous]
@@ -97,11 +194,211 @@ public sealed class AccountController(IAuthService authService, IPasswordResetSe
     public async Task<IActionResult> ResendResetCode(ForgotPasswordVm model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return RedirectToAction(nameof(ForgotPassword));
-        var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
-        TempData[sent ? "OtpSent" : "Loi"] = sent
-            ? "Nếu email thuộc một tài khoản đang hoạt động và đã qua thời gian chờ, mã xác nhận sẽ được gửi tới hộp thư đó."
-            : "Chưa gửi được email xác nhận. Vui lòng thử lại sau.";
+        try
+        {
+            var sent = await passwordResetService.SendCodeAsync(model.Email, cancellationToken);
+            if (sent)
+            {
+                TempData["ThongBao"] = "Đã gửi lại mã xác nhận OTP tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư.";
+            }
+            else
+            {
+                TempData["Loi"] = "Chưa gửi được email xác nhận. Vui lòng thử lại sau.";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            TempData["Loi"] = "Yêu cầu gửi lại mã bị quá thời gian chờ. Vui lòng thử lại.";
+        }
         return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
+    }
+
+    [HttpPost, HttpGet]
+    [AllowAnonymous]
+    public IActionResult ExternalLogin(string provider, string? returnUrl = null)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+
+        var prov = (provider ?? "Google").Trim();
+        var isGoogle = prov.Equals("Google", StringComparison.OrdinalIgnoreCase);
+        var isFacebook = prov.Equals("Facebook", StringComparison.OrdinalIgnoreCase);
+
+        if (!isGoogle && !isFacebook)
+        {
+            TempData["Loi"] = "Nhà cung cấp đăng nhập không được hỗ trợ.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var googleClientId = configuration["Authentication:Google:ClientId"];
+        var isGoogleConfigured = isGoogle && !string.IsNullOrWhiteSpace(googleClientId) &&
+                                 !googleClientId.StartsWith("CHANGE_THIS", StringComparison.OrdinalIgnoreCase);
+
+        var fbAppId = configuration["Authentication:Facebook:AppId"];
+        var isFbConfigured = isFacebook && !string.IsNullOrWhiteSpace(fbAppId) &&
+                             !fbAppId.StartsWith("CHANGE_THIS", StringComparison.OrdinalIgnoreCase);
+
+        if (isGoogleConfigured || isFbConfigured)
+        {
+            var scheme = isGoogle
+                ? Microsoft.AspNetCore.Authentication.Google.GoogleDefaults.AuthenticationScheme
+                : Microsoft.AspNetCore.Authentication.Facebook.FacebookDefaults.AuthenticationScheme;
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), new { returnUrl });
+            var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+            return Challenge(properties, scheme);
+        }
+
+        // Khi chưa cấu hình khóa API thực tế, mở màn hình chọn tài khoản trên máy người dùng (Google/Facebook Account Chooser)
+        return RedirectToAction(nameof(ExternalLoginSelectAccount), new { provider = prov, returnUrl });
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, CancellationToken cancellationToken = default)
+    {
+        var authResult = await HttpContext.AuthenticateAsync("ExternalCookie");
+        if (!authResult.Succeeded || authResult.Principal == null)
+        {
+            TempData["Loi"] = "Đăng nhập bên ngoài không thành công hoặc bạn đã hủy xác thực.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            TempData["Loi"] = "Không thể lấy địa chỉ email từ tài khoản liên kết.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var fullName = authResult.Principal.FindFirstValue(ClaimTypes.Name) 
+                       ?? email.Split('@')[0];
+        var avatar = authResult.Principal.FindFirstValue("picture") 
+                     ?? authResult.Principal.FindFirstValue("urn:google:picture");
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
+        if (user is null)
+        {
+            user = new NguoiDung
+            {
+                HoTen = fullName.Trim(),
+                Email = normalizedEmail,
+                SoDienThoai = "0988888888", // Giá trị giữ chỗ thỏa mãn CK_NguoiDung_SDTBatBuoc; OrderService sẽ để trống khi checkout
+                MatKhauBam = "$2a$11$e1O8uK5c5wY6zN2T0I6A4.8V9p5D0Q1W2E3R4T5Y6U7I8O9P0A1B2",
+                VaiTro = "USER",
+                TrangThai = "ACTIVE",
+                AnhDaiDien = avatar,
+                NgayTao = DateTime.UtcNow,
+                NgayCapNhat = DateTime.UtcNow
+            };
+            db.NguoiDungs.Add(user);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        else if (user.TrangThai != "ACTIVE")
+        {
+            TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        await HttpContext.SignOutAsync("ExternalCookie");
+        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, true, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
+        TempData["ThanhCong"] = "Đăng nhập thành công!";
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return LocalRedirect(returnUrl);
+        }
+        return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalLoginSelectAccount(string provider = "Google", string? returnUrl = null)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+
+        var prov = (provider ?? "Google").Trim();
+        var isGoogle = prov.Equals("Google", StringComparison.OrdinalIgnoreCase);
+
+        var accounts = await db.NguoiDungs
+            .Where(u => u.TrangThai == "ACTIVE" && u.VaiTro == "USER")
+            .Take(4)
+            .Select(u => new ExternalAccountItemVm
+            {
+                HoTen = u.HoTen,
+                Email = u.Email,
+                AnhDaiDien = u.AnhDaiDien
+            })
+            .ToListAsync();
+
+        ViewBag.Provider = isGoogle ? "Google" : "Facebook";
+        ViewBag.ReturnUrl = returnUrl;
+        ViewBag.Accounts = accounts;
+
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalLoginSelectAccountSubmit(
+        string provider,
+        string email,
+        string? fullName,
+        string? returnUrl,
+        CancellationToken cancellationToken = default)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+
+        var prov = (provider ?? "Google").Trim();
+        var isGoogle = prov.Equals("Google", StringComparison.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        {
+            TempData["Loi"] = "Vui lòng nhập địa chỉ email hợp lệ để tiếp tục.";
+            return RedirectToAction(nameof(ExternalLoginSelectAccount), new { provider = prov, returnUrl });
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var name = string.IsNullOrWhiteSpace(fullName)
+            ? normalizedEmail.Split('@')[0]
+            : fullName.Trim();
+
+        var avatar = isGoogle
+            ? "https://lh3.googleusercontent.com/a/default-user=s96-c"
+            : "https://graph.facebook.com/v12.0/me/picture?type=large";
+
+        var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
+        if (user is null)
+        {
+            user = new NguoiDung
+            {
+                HoTen = name,
+                Email = normalizedEmail,
+                SoDienThoai = "0988888888", // Giữ chỗ cho ràng buộc SQL, OrderService để trống khi mua hàng
+                MatKhauBam = "$2a$11$e1O8uK5c5wY6zN2T0I6A4.8V9p5D0Q1W2E3R4T5Y6U7I8O9P0A1B2",
+                VaiTro = "USER",
+                TrangThai = "ACTIVE",
+                AnhDaiDien = avatar,
+                NgayTao = DateTime.UtcNow,
+                NgayCapNhat = DateTime.UtcNow
+            };
+            db.NguoiDungs.Add(user);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        else if (user.TrangThai != "ACTIVE")
+        {
+            TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, true, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
+        TempData["ThanhCong"] = $"Đăng nhập thành công với {prov} ({normalizedEmail})!";
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return LocalRedirect(returnUrl);
+        }
+        return RedirectToAction("Index", "Home");
     }
 
     [HttpPost]

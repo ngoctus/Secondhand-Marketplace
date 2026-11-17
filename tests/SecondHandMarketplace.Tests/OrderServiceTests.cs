@@ -711,4 +711,89 @@ public class OrderServiceTests
         Assert.Equal("GAP_TRUC_TIEP", detail!.HinhThucNhan);
         Assert.True(detail.CoTheXacNhanNhanHang);
     }
+
+    [Fact]
+    public async Task ChuanBiCheckoutTuGioAsync_TaiKhoanOAuth_KhongDienSanSoDienThoaiVaHoTenMacDinh()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_OAuthCheckoutEmpty");
+        var fakeCart = new FakeCartService();
+
+        db.NguoiDungs.Add(new NguoiDung
+        {
+            MaNguoiDung = 88,
+            HoTen = "Người dùng Google",
+            SoDienThoai = "0988888888",
+            DiaChiMacDinh = null
+        });
+        await db.SaveChangesAsync();
+
+        fakeCart.GioHangReturn = new CartIndexViewModel
+        {
+            DanhSachNhomShop = new List<CartShopGroupViewModel>
+            {
+                new()
+                {
+                    MaCuaHang = 10,
+                    TenShop = "Shop A",
+                    Items = new List<CartItemViewModel>
+                    {
+                        new() { MaSanPham = 100, TenSanPham = "Laptop Cu", Gia = 5000000, DaChon = true, CoTheMua = true }
+                    }
+                }
+            }
+        };
+
+        var service = new OrderService(db, fakeCart);
+        var vm = await service.ChuanBiCheckoutTuGioAsync(88);
+
+        Assert.Equal(string.Empty, vm.TenNguoiNhan);
+        Assert.Equal(string.Empty, vm.SoDienThoaiNhan);
+        Assert.Equal(string.Empty, vm.DiaChiNhan);
+    }
+
+    [Fact]
+    public void CheckoutViewModel_ValidationDiaChi_BatDungTruongHop()
+    {
+        // 1. Không có địa chỉ nào -> lỗi MaTinhThanh
+        var vm1 = new CheckoutViewModel
+        {
+            TenNguoiNhan = "An",
+            SoDienThoaiNhan = "0912345678",
+            MaTinhThanh = null,
+            MaPhuongXa = null,
+            DiaChiNhan = ""
+        };
+        var results1 = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+        var valid1 = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(vm1, new System.ComponentModel.DataAnnotations.ValidationContext(vm1), results1, true);
+        Assert.False(valid1);
+        Assert.Contains(results1, r => r.MemberNames.Contains(nameof(CheckoutViewModel.MaTinhThanh)));
+
+        // 2. Có Tỉnh nhưng chưa có Xã -> lỗi MaPhuongXa
+        var vm2 = new CheckoutViewModel
+        {
+            TenNguoiNhan = "An",
+            SoDienThoaiNhan = "0912345678",
+            MaTinhThanh = 1,
+            MaPhuongXa = null,
+            DiaChiNhan = ""
+        };
+        var results2 = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+        var valid2 = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(vm2, new System.ComponentModel.DataAnnotations.ValidationContext(vm2), results2, true);
+        Assert.False(valid2);
+        Assert.Contains(results2, r => r.MemberNames.Contains(nameof(CheckoutViewModel.MaPhuongXa)));
+
+        // 3. Có đủ Tỉnh và Xã -> Hợp lệ
+        var vm3 = new CheckoutViewModel
+        {
+            TenNguoiNhan = "An",
+            SoDienThoaiNhan = "0912345678",
+            MaTinhThanh = 1,
+            MaPhuongXa = 10,
+            DiaChiChiTiet = "So 123",
+            DiaChiNhan = ""
+        };
+        var results3 = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+        var valid3 = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(vm3, new System.ComponentModel.DataAnnotations.ValidationContext(vm3), results3, true);
+        Assert.True(valid3);
+    }
 }

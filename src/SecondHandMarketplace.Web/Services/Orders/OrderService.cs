@@ -53,11 +53,13 @@ public class OrderService : IOrderService
 
         var tienHang = cartVm.TongTienTamTinh;
 
+        var (tenNguoiNhan, sdtNguoiNhan, diaChiNhan) = LayThongTinNguoiNhanKhoiTao(user);
+
         return new CheckoutViewModel
         {
-            TenNguoiNhan = user?.HoTen ?? string.Empty,
-            SoDienThoaiNhan = user?.SoDienThoai ?? string.Empty,
-            DiaChiNhan = user?.DiaChiMacDinh ?? string.Empty,
+            TenNguoiNhan = tenNguoiNhan,
+            SoDienThoaiNhan = sdtNguoiNhan,
+            DiaChiNhan = diaChiNhan,
             KhungGioNhan = string.Empty,
             GioHang = cartVm,
             ThanhToanTheoShop = thanhToanTheoShop,
@@ -102,11 +104,13 @@ public class OrderService : IOrderService
                          ?? sp.Anh.Select(a => a.DuongDan).FirstOrDefault()
         };
 
+        var (tenNguoiNhan, sdtNguoiNhan, diaChiNhan) = LayThongTinNguoiNhanKhoiTao(user);
+
         return new CheckoutViewModel
         {
-            TenNguoiNhan = user?.HoTen ?? string.Empty,
-            SoDienThoaiNhan = user?.SoDienThoai ?? string.Empty,
-            DiaChiNhan = user?.DiaChiMacDinh ?? string.Empty,
+            TenNguoiNhan = tenNguoiNhan,
+            SoDienThoaiNhan = sdtNguoiNhan,
+            DiaChiNhan = diaChiNhan,
             KhungGioNhan = string.Empty,
             MaSanPhamMuaNgay = maSanPham,
             SanPhamMuaNgay = itemVm,
@@ -858,4 +862,23 @@ public class OrderService : IOrderService
     }
 
     private static string LayThongBaoLoi(Exception ex) => SqlLoi.ThongBao(ex);
+
+    private static (string ten, string sdt, string diaChi) LayThongTinNguoiNhanKhoiTao(NguoiDung? user)
+    {
+        var hoTen = (user?.HoTen ?? string.Empty).Trim();
+        if (hoTen.StartsWith("Người dùng Google", StringComparison.OrdinalIgnoreCase) ||
+            hoTen.StartsWith("Người dùng Facebook", StringComparison.OrdinalIgnoreCase))
+        {
+            hoTen = string.Empty;
+        }
+
+        var sdt = (user?.SoDienThoai ?? string.Empty).Trim();
+        if (sdt == "0988888888" || sdt == "0977777777")
+        {
+            sdt = string.Empty;
+        }
+
+        var diaChi = (user?.DiaChiMacDinh ?? string.Empty).Trim();
+        return (hoTen, sdt, diaChi);
+    }
 }

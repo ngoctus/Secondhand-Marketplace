@@ -228,4 +228,57 @@ public class ProductSearchServiceTests
             Assert.Equal(4, trang2.TotalItems);
         }
     }
+
+    [Fact]
+    public async Task SearchAsync_TimNhieuTuKhoaKhongLienTiep_VanKhopChinhXac()
+    {
+        var (db, service) = await DaoTaoCoSoDungTimKiemAsync();
+        using (db)
+        {
+            // "ao jeans" không đứng liền nhau trong "Áo khoác jeans" (ID 101)
+            var ketQua = await service.SearchAsync(new ProductSearchVm { Keyword = "ao jeans" });
+            Assert.Equal(new[] { 101 }, ketQua.Items.Select(i => i.Id));
+
+            // Tìm kiếm kết hợp có dấu "khoác jeans"
+            var coDau = await service.SearchAsync(new ProductSearchVm { Keyword = "khoác jeans" });
+            Assert.Equal(new[] { 101 }, coDau.Items.Select(i => i.Id));
+        }
+    }
+
+    [Fact]
+    public async Task SearchAsync_VuaTimKiemVuaLocGia_DongThoiKhop()
+    {
+        var (db, service) = await DaoTaoCoSoDungTimKiemAsync();
+        using (db)
+        {
+            // Tìm từ khóa "khoác" (có sản phẩm 101 giá 50.000) với phân khúc giá 1 (0 - 100.000) -> ra 101
+            var ketQuaKhop = await service.SearchAsync(new ProductSearchVm { Keyword = "khoác", PriceRange = 1 });
+            Assert.Equal(new[] { 101 }, ketQuaKhop.Items.Select(i => i.Id));
+
+            // Tìm từ khóa "khoác" với phân khúc giá 2 (100.000 - 350.000) -> 0 kết quả vì giá không nằm trong khoảng
+            var ketQuaLechGia = await service.SearchAsync(new ProductSearchVm { Keyword = "khoác", PriceRange = 2 });
+            Assert.Empty(ketQuaLechGia.Items);
+        }
+    }
+
+    [Fact]
+    public async Task SearchAsync_TuKhoaNganKhongKhopVaoTuKhac()
+    {
+        using var db = NewDb();
+        db.NguoiDungs.Add(User(1));
+        db.CuaHangs.Add(Shop(1, 1));
+        db.SanPhams.AddRange(
+            Product(201, 1, 100_000m, "Áo khoác chống nước nữ"),
+            Product(202, 1, 200_000m, "Mũ bảo hiểm có kính"),
+            Product(203, 1, 300_000m, "Quần tây lưng cao"),
+            Product(204, 1, 400_000m, "Bộ dao và thớt inox")
+        );
+        await db.SaveChangesAsync();
+
+        var service = new ProductService(db, new ReviewService(db));
+        var ketQua = await service.SearchAsync(new ProductSearchVm { Keyword = "áo" });
+
+        Assert.Single(ketQua.Items);
+        Assert.Equal(201, ketQua.Items[0].Id);
+    }
 }
