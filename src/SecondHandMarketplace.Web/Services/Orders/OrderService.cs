@@ -861,6 +861,179 @@ public class OrderService : IOrderService
         return (true, "Đã xác nhận nhận tiền thành công!");
     }
 
+    public async Task<(bool ThanhCong, string? ThongBao)> MoPhongThanhToanDemoAsync(int maNguoiDung, int maDonHang)
+    {
+        var don = await _db.DonHangs
+            .Include(d => d.CuaHang)
+            .FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
+
+        if (don == null) return (false, "Đơn hàng không tồn tại hoặc không thuộc tài khoản của bạn.");
+        if (don.TrangThai == "CANCELLED") return (false, "Không thể thanh toán cho đơn hàng đã hủy.");
+
+        var now = DateTime.UtcNow;
+        var trangThaiCu = don.TrangThai;
+
+        don.TrangThaiThanhToan = "PAID";
+        if (don.TrangThai == "PENDING")
+        {
+            don.TrangThai = "CONFIRMED";
+            don.ThoiGianXacNhan = now;
+        }
+        don.NgayCapNhat = now;
+
+        var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
+        if (tt != null)
+        {
+            tt.TrangThaiThanhToan = "SUCCESS";
+            tt.ThoiGianThanhToan = now;
+        }
+        else
+        {
+            _db.ThanhToans.Add(new ThanhToan
+            {
+                MaDonHang = don.MaDonHang,
+                MaGiaoDich = "TXN_DEMO_" + don.MaDon + "_" + DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                PhuongThucThanhToan = don.PhuongThucThanhToan,
+                SoTien = don.TongTien,
+                TrangThaiThanhToan = "SUCCESS",
+                ThoiGianThanhToan = now,
+                NgayTao = now
+            });
+        }
+
+        _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+        {
+            MaDonHang = don.MaDonHang,
+            TrangThaiCu = trangThaiCu,
+            TrangThaiMoi = don.TrangThai,
+            LoaiNguoiThucHien = "SYSTEM",
+            NguoiThucHienId = maNguoiDung,
+            LyDo = "Mô phỏng thanh toán VietQR thành công (Chế độ Demo BTL).",
+            ThoiGian = now
+        });
+
+        _db.ThongBaos.Add(new ThongBao
+        {
+            MaNguoiDung = don.MaNguoiDung,
+            Loai = "ORDER",
+            TieuDe = "Thanh toán thành công (Demo)",
+            NoiDung = $"Đơn hàng #{don.MaDon} đã thanh toán thành công qua VietQR (Demo) và chuyển sang trạng thái Đã xác nhận.",
+            MaThamChieu = don.MaDonHang,
+            DaDoc = false,
+            NgayTao = now
+        });
+
+        if (don.CuaHang != null && don.CuaHang.MaNguoiDung != maNguoiDung)
+        {
+            _db.ThongBaos.Add(new ThongBao
+            {
+                MaNguoiDung = don.CuaHang.MaNguoiDung,
+                Loai = "ORDER",
+                TieuDe = "Đơn hàng đã được thanh toán (Demo)",
+                NoiDung = $"Đơn hàng #{don.MaDon} đã được thanh toán qua VietQR (Mô phỏng Demo) và tự động xác nhận.",
+                MaThamChieu = don.MaDonHang,
+                DaDoc = false,
+                NgayTao = now
+            });
+        }
+
+        await _db.SaveChangesAsync();
+        return (true, $"Mô phỏng thanh toán đơn #{don.MaDon} thành công! Đơn hàng đã chuyển sang trạng thái ĐÃ XÁC NHẬN & ĐÃ THANH TOÁN.");
+    }
+
+    public async Task<(bool ThanhCong, string? ThongBao)> MoPhongThanhToanTatCaDemoAsync(int maNguoiDung, IEnumerable<int> maDonHangs)
+    {
+        var idList = maDonHangs.Distinct().ToList();
+        if (idList.Count == 0) return (false, "Không có đơn hàng nào.");
+
+        var dons = await _db.DonHangs
+            .Include(d => d.CuaHang)
+            .Where(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung)
+            .ToListAsync();
+
+        if (dons.Count == 0) return (false, "Không tìm thấy đơn hàng thuộc tài khoản của bạn.");
+
+        var now = DateTime.UtcNow;
+        var daCapNhat = 0;
+
+        foreach (var don in dons)
+        {
+            if (don.TrangThai == "CANCELLED") continue;
+
+            var trangThaiCu = don.TrangThai;
+            don.TrangThaiThanhToan = "PAID";
+            if (don.TrangThai == "PENDING")
+            {
+                don.TrangThai = "CONFIRMED";
+                don.ThoiGianXacNhan = now;
+            }
+            don.NgayCapNhat = now;
+
+            var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == don.MaDonHang);
+            if (tt != null)
+            {
+                tt.TrangThaiThanhToan = "SUCCESS";
+                tt.ThoiGianThanhToan = now;
+            }
+            else
+            {
+                _db.ThanhToans.Add(new ThanhToan
+                {
+                    MaDonHang = don.MaDonHang,
+                    MaGiaoDich = "TXN_DEMO_" + don.MaDon + "_" + DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    PhuongThucThanhToan = don.PhuongThucThanhToan,
+                    SoTien = don.TongTien,
+                    TrangThaiThanhToan = "SUCCESS",
+                    ThoiGianThanhToan = now,
+                    NgayTao = now
+                });
+            }
+
+            _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+            {
+                MaDonHang = don.MaDonHang,
+                TrangThaiCu = trangThaiCu,
+                TrangThaiMoi = don.TrangThai,
+                LoaiNguoiThucHien = "SYSTEM",
+                NguoiThucHienId = maNguoiDung,
+                LyDo = "Mô phỏng thanh toán VietQR thành công (Chế độ Demo BTL).",
+                ThoiGian = now
+            });
+
+            _db.ThongBaos.Add(new ThongBao
+            {
+                MaNguoiDung = don.MaNguoiDung,
+                Loai = "ORDER",
+                TieuDe = "Thanh toán thành công (Demo)",
+                NoiDung = $"Đơn hàng #{don.MaDon} đã thanh toán thành công qua VietQR (Demo) và chuyển sang trạng thái Đã xác nhận.",
+                MaThamChieu = don.MaDonHang,
+                DaDoc = false,
+                NgayTao = now
+            });
+
+            if (don.CuaHang != null && don.CuaHang.MaNguoiDung != maNguoiDung)
+            {
+                _db.ThongBaos.Add(new ThongBao
+                {
+                    MaNguoiDung = don.CuaHang.MaNguoiDung,
+                    Loai = "ORDER",
+                    TieuDe = "Đơn hàng đã được thanh toán (Demo)",
+                    NoiDung = $"Đơn hàng #{don.MaDon} đã được thanh toán qua VietQR (Mô phỏng Demo) và tự động xác nhận.",
+                    MaThamChieu = don.MaDonHang,
+                    DaDoc = false,
+                    NgayTao = now
+                });
+            }
+
+            daCapNhat++;
+        }
+
+        if (daCapNhat == 0) return (false, "Không có đơn hàng nào hợp lệ để cập nhật.");
+
+        await _db.SaveChangesAsync();
+        return (true, $"Đã mô phỏng thanh toán thành công cho {daCapNhat} đơn hàng! Tất cả đơn đã chuyển sang trạng thái ĐÃ XÁC NHẬN & ĐÃ THANH TOÁN.");
+    }
+
     private static string LayThongBaoLoi(Exception ex) => SqlLoi.ThongBao(ex);
 
     private static (string ten, string sdt, string diaChi) LayThongTinNguoiNhanKhoiTao(NguoiDung? user)

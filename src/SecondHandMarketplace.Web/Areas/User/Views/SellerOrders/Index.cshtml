@@ -27,25 +27,25 @@
 }
 else
 {
-    <div class="panel table-wrap">
-        <table class="table align-middle">
+    <div class="panel table-wrap rm-order-table-wrap">
+        <table class="table align-middle rm-order-table-responsive">
             <thead><tr><th>ĐƠN HÀNG</th><th>NGƯỜI MUA</th><th>TỔNG TIỀN</th><th>THANH TOÁN</th><th>TRẠNG THÁI</th><th>NGÀY ĐẶT</th><th class="text-end">Hành động</th></tr></thead>
             <tbody>
             @foreach (var o in Model.Result.Items)
             {
-                <tr>
-                    <td>
+                <tr class="rm-order-row-card">
+                    <td data-label="Đơn hàng" class="rm-td-order-title">
                         <div class="d-flex align-items-center gap-2">
                             @if (!string.IsNullOrEmpty(o.FirstImage)) { <img class="thumb" src="@o.FirstImage" alt="" data-fallback /> }
                             <div><b>@o.MaDon</b><div class="small text-muted">@o.FirstItem@(o.ItemCount > 1 ? $" +{o.ItemCount - 1} sản phẩm" : "")</div></div>
                         </div>
                     </td>
-                    <td>@o.BuyerName</td>
-                    <td><b>@HienThi.Tien(o.Total)</b></td>
-                    <td class="small">@HienThi.PhuongThucThanhToan(o.PaymentMethod)<br />@HienThi.TrangThaiThanhToan(o.PaymentStatus)</td>
-                    <td><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td>
-                    <td class="small">@HienThi.NgayGio(o.CreatedAt)</td>
-                    <td class="text-end"><a class="smallbtn text-decoration-none" asp-action="Details" asp-route-id="@o.Id">Xử lý</a></td>
+                    <td data-label="Người mua">@o.BuyerName</td>
+                    <td data-label="Tổng tiền" class="rm-td-price"><b>@HienThi.Tien(o.Total)</b></td>
+                    <td data-label="Thanh toán" class="small">@HienThi.PhuongThucThanhToan(o.PaymentMethod)<br />@HienThi.TrangThaiThanhToan(o.PaymentStatus)</td>
+                    <td data-label="Trạng thái"><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td>
+                    <td data-label="Ngày đặt" class="small">@HienThi.NgayGio(o.CreatedAt)</td>
+                    <td data-label="Thao tác" class="text-end rm-td-action"><a class="smallbtn text-decoration-none" asp-action="Details" asp-route-id="@o.Id">Xử lý</a></td>
                 </tr>
             }
             </tbody>

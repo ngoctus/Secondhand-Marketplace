@@ -1,4 +1,5 @@
 @model List<SecondHandMarketplace.Web.Models.ViewModels.Orders.DonHangItemViewModel>?
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 @{
     ViewData["Title"] = "Đặt hàng thành công";
     var danhSachMaDon = ViewBag.DanhSachMaDon as string[] ?? Array.Empty<string>();
@@ -57,12 +58,25 @@
         @if (unpaidBankOrders.Count > 0)
         {
             <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
-                <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                    <i class="bi bi-qr-code-scan fs-4 text-primary"></i>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-0">Thanh toán chuyển khoản VietQR</h5>
-                        <div class="text-muted small">Mỗi đơn được thanh toán riêng cho cửa hàng tương ứng. Shop cập nhật trạng thái sau khi kiểm tra giao dịch.</div>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-qr-code-scan fs-4 text-primary"></i>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">Thanh toán chuyển khoản VietQR</h5>
+                            <div class="text-muted small">Mỗi đơn được thanh toán riêng cho cửa hàng tương ứng. Shop cập nhật trạng thái sau khi kiểm tra giao dịch.</div>
+                        </div>
                     </div>
+                    @if (Env.IsDevelopment() && unpaidBankOrders.Count > 1)
+                    {
+                        <form asp-area="User" asp-controller="Orders" asp-action="MoPhongThanhToanDemo" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="dsMaDonHang" value="@string.Join(",", unpaidBankOrders.Select(d => d.MaDonHang))" />
+                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                            <button type="submit" class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm">
+                                <i class="bi bi-lightning-fill me-1"></i> [Demo] Thanh toán tất cả (@unpaidBankOrders.Count đơn)
+                            </button>
+                        </form>
+                    }
                 </div>
 
                 @foreach (var don in unpaidBankOrders)
@@ -83,7 +97,8 @@
                                 ChuTaiKhoan = don.ThanhToanShop.TenChuTaiKhoan!,
                                 MaDonHang = don.MaDonHang,
                                 MaDon = don.MaDon,
-                                ChoPhepXacNhan = false
+                                ChoPhepXacNhan = false,
+                                ReturnUrl = Context.Request.Path + Context.Request.QueryString
                             }' />
                         }
                         else
@@ -97,7 +112,8 @@
                                 ChuTaiKhoan = "PHAN HIEU TRUONG DH GTVT TAI TPHCM",
                                 MaDonHang = don.MaDonHang,
                                 MaDon = don.MaDon,
-                                ChoPhepXacNhan = false
+                                ChoPhepXacNhan = false,
+                                ReturnUrl = Context.Request.Path + Context.Request.QueryString
                             }' />
                         }
                     </div>

@@ -4223,3 +4223,190 @@ a.smallbtn:hover {
     padding-left: 20px !important;
 }
 
+/* ==========================================================================
+   TASK E-03: CARD LAYOUT RESPONSIVE CHO ĐƠN BÁN & ĐƠN MUA TRÊN MOBILE (< 768px)
+   ========================================================================== */
+
+@media (max-width: 767.98px) {
+    /* --- Bảng đơn bán hàng (SellerOrders/Index) chuyển sang Card Layout --- */
+    .rm-order-table-wrap {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+
+    .rm-order-table-responsive {
+        display: block;
+        width: 100%;
+        border: none !important;
+    }
+
+    .rm-order-table-responsive thead {
+        display: none; /* Ẩn tiêu đề cột trên mobile */
+    }
+
+    .rm-order-table-responsive tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+    }
+
+    .rm-order-table-responsive tr.rm-order-row-card {
+        display: block;
+        background: #ffffff;
+        border: 1px solid var(--color-border-subtle, #e2e8f0);
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        padding: 16px;
+        margin-bottom: 0;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .rm-order-table-responsive tr.rm-order-row-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .rm-order-table-responsive td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0 !important;
+        border-bottom: 1px dashed var(--color-border-subtle, #edf2f7) !important;
+        font-size: 13px;
+        text-align: right;
+    }
+
+    /* Thuộc tính label hiển thị bên trái */
+    .rm-order-table-responsive td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 12px;
+        color: var(--color-text-muted, #718096);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        text-align: left;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+
+    /* Hàng tiêu đề đơn hàng (Mã đơn + ảnh + tên) */
+    .rm-order-table-responsive td.rm-td-order-title {
+        display: block;
+        text-align: left;
+        padding-top: 0 !important;
+        padding-bottom: 12px !important;
+        border-bottom: 2px solid var(--color-border-subtle, #e2e8f0) !important;
+        margin-bottom: 6px;
+    }
+
+    .rm-order-table-responsive td.rm-td-order-title::before {
+        display: none; /* Ẩn label để dồn không gian cho card title */
+    }
+
+    .rm-order-table-responsive td.rm-td-order-title .thumb {
+        width: 52px;
+        height: 52px;
+        border-radius: 10px;
+        object-fit: cover;
+    }
+
+    .rm-order-table-responsive td.rm-td-price b {
+        color: var(--color-primary, #285b43);
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    /* Hàng hành động / nút bấm trên mobile */
+    .rm-order-table-responsive td.rm-td-action {
+        display: block;
+        border-bottom: none !important;
+        padding-top: 12px !important;
+        padding-bottom: 0 !important;
+        text-align: center;
+    }
+
+    .rm-order-table-responsive td.rm-td-action::before {
+        display: none;
+    }
+
+    .rm-order-table-responsive td.rm-td-action a.smallbtn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 10px 16px;
+        border-radius: 30px;
+        background: var(--color-primary, #285b43);
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 13px;
+        box-shadow: 0 4px 10px rgba(40, 91, 67, 0.2);
+    }
+
+    /* --- Tối ưu Thẻ Đơn Mua hàng (Orders/Index) trên Mobile --- */
+    .rm-order-card-mobile {
+        border-radius: 16px !important;
+        border: 1px solid var(--color-border-subtle, #e2e8f0) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+        margin-bottom: 16px !important;
+    }
+
+    .rm-order-card-mobile .card-header {
+        padding: 12px 14px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+
+    .rm-order-card-mobile .card-header > div:last-child {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .rm-order-card-mobile .card-body {
+        padding: 14px !important;
+    }
+
+    .rm-order-card-mobile .rm-order-footer {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .rm-order-card-mobile .rm-order-footer-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .rm-order-card-mobile .rm-order-footer-actions a {
+        width: 100%;
+        text-align: center;
+        padding: 9px 16px;
+        font-size: 13px;
+    }
+
+    /* Cuộn ngang mượt cho các thanh Tabs trên Mobile */
+    .rm-mobile-tabs, .status-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+    }
+
+    .rm-mobile-tabs::-webkit-scrollbar, .status-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .rm-mobile-tabs > *, .status-tabs > * {
+        flex-shrink: 0 !important;
+    }
+}
+
+

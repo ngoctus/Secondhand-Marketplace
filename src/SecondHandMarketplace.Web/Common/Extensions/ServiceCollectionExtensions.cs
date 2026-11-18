@@ -71,6 +71,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuctionRealtime, AuctionRealtime>();
         services.AddScoped<IAuctionService, AuctionService>();
         services.AddHostedService<AuctionBackgroundService>();
+        services.AddHostedService<OrderCleanupBackgroundService>();
 
         return services;
     }

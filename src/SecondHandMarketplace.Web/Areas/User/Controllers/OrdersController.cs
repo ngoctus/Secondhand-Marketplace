@@ -14,12 +14,18 @@ public class OrdersController : UserBaseController
     private readonly IOrderService _orderService;
     private readonly IDisputeService _disputeService;
     private readonly IKhuVucService _khuVucService;
+    private readonly IWebHostEnvironment _env;
 
-    public OrdersController(IOrderService orderService, IDisputeService disputeService, IKhuVucService khuVucService)
+    public OrdersController(
+        IOrderService orderService, 
+        IDisputeService disputeService, 
+        IKhuVucService khuVucService,
+        IWebHostEnvironment env)
     {
         _orderService = orderService;
         _disputeService = disputeService;
         _khuVucService = khuVucService;
+        _env = env;
     }
 
     /// <summary>Danh sách đơn mua của người dùng.</summary>
@@ -203,6 +209,50 @@ public class OrdersController : UserBaseController
             var (ok, msg) = await _orderService.XacNhanThanhToanChuyenKhoanAsync(userId, maDonHang.Value);
             if (ok) this.ThongBaoThanhCong(msg ?? "Đã xác nhận thanh toán chuyển khoản.");
             else this.ThongBaoLoi(msg ?? "Không thể xác nhận thanh toán.");
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+            return RedirectToAction(nameof(ChiTiet), new { id = maDonHang.Value });
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>
+    /// Task E-01: Mô phỏng thanh toán chuyển khoản VietQR thành công ngay lập tức (Chỉ dùng trong môi trường Development).
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MoPhongThanhToanDemo(int? maDonHang, string? dsMaDonHang, string? returnUrl = null)
+    {
+        if (!_env.IsDevelopment())
+        {
+            this.ThongBaoLoi("Tính năng mô phỏng thanh toán chỉ được phép hoạt động trong môi trường Development.");
+            return RedirectToAction(nameof(Index));
+        }
+
+        var userId = User.LayNguoiDungId()!.Value;
+        if (!string.IsNullOrEmpty(dsMaDonHang))
+        {
+            var ids = dsMaDonHang.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                 .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
+                                 .Where(id => id > 0)
+                                 .ToList();
+            if (ids.Count > 0)
+            {
+                var (okAll, msgAll) = await _orderService.MoPhongThanhToanTatCaDemoAsync(userId, ids);
+                if (okAll) this.ThongBaoThanhCong(msgAll ?? "Đã mô phỏng thanh toán VietQR thành công!");
+                else this.ThongBaoLoi(msgAll ?? "Không thể mô phỏng thanh toán.");
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+                return RedirectToAction(nameof(XacNhan), new { maDon = string.Join(",", ids) });
+            }
+        }
+
+        if (maDonHang.HasValue)
+        {
+            var (ok, msg) = await _orderService.MoPhongThanhToanDemoAsync(userId, maDonHang.Value);
+            if (ok) this.ThongBaoThanhCong(msg ?? "Đã mô phỏng thanh toán VietQR thành công!");
+            else this.ThongBaoLoi(msg ?? "Không thể mô phỏng thanh toán.");
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
             return RedirectToAction(nameof(ChiTiet), new { id = maDonHang.Value });

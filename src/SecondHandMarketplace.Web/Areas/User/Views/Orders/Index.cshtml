@@ -20,7 +20,7 @@
 
     <!-- Thanh bộ lọc trạng thái đơn hàng -->
     <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-2">
-        <div class="d-flex flex-nowrap overflow-auto gap-2 py-1 px-2">
+        <div class="d-flex flex-nowrap overflow-auto gap-2 py-1 px-2 rm-mobile-tabs">
             <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(string.IsNullOrEmpty(currentFilter) ? "btn-success" : "btn-light text-secondary")" 
                style="@(string.IsNullOrEmpty(currentFilter) ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
                asp-area="User" asp-controller="Orders" asp-action="Index">Tất cả đơn</a>
@@ -70,7 +70,7 @@
     {
         @foreach (var don in Model)
         {
-            <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+            <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden bg-white rm-order-card-mobile">
                 <!-- Header của đơn hàng -->
                 <div class="card-header bg-light py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
@@ -109,7 +109,7 @@
                     }
 
                     <!-- Footer của thẻ đơn hàng -->
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3 rm-order-footer">
                         <div class="text-muted small">
                             Ngày đặt: @HienThi.NgayGio(don.NgayTao)
                             @if (!string.IsNullOrEmpty(don.LyDoHuy))
@@ -117,8 +117,8 @@
                                 <div class="text-danger small mt-1">Lý do hủy: @don.LyDoHuy</div>
                             }
                         </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div>
+                        <div class="d-flex align-items-center gap-3 rm-order-footer-actions">
+                            <div class="d-flex justify-content-between align-items-center w-100 d-md-block">
                                 <span class="text-muted small">Tổng tiền:</span>
                                 <span class="h5 fw-bold text-success ms-1 mb-0">@don.TongTien.ToString("N0") ₫</span>
                             </div>

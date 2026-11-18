@@ -796,4 +796,110 @@ public class OrderServiceTests
         var valid3 = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(vm3, new System.ComponentModel.DataAnnotations.ValidationContext(vm3), results3, true);
         Assert.True(valid3);
     }
+
+    [Fact]
+    public async Task MoPhongThanhToanDemoAsync_CapNhatTrangThaiSangConfirmedVaPaid()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_MoPhongDemo");
+        var fakeCart = new FakeCartService();
+        var orderService = new OrderService(db, fakeCart);
+
+        var shopOwner = new NguoiDung { MaNguoiDung = 20, HoTen = "Chu Shop", SoDienThoai = "0901234567" };
+        var buyer = new NguoiDung { MaNguoiDung = 10, HoTen = "Nguoi Mua", SoDienThoai = "0909999999" };
+        var shop = new CuaHang { MaCuaHang = 5, MaNguoiDung = 20, TenShop = "Shop Test", TrangThai = "ACTIVE" };
+        var don = new DonHang
+        {
+            MaDonHang = 100,
+            MaDon = "ORD-TEST-001",
+            MaNguoiDung = 10,
+            MaCuaHang = 5,
+            TrangThai = "PENDING",
+            TrangThaiThanhToan = "UNPAID",
+            PhuongThucThanhToan = "BANK_TRANSFER",
+            TongTien = 250000,
+            NgayTao = DateTime.UtcNow,
+            NgayCapNhat = DateTime.UtcNow,
+            CuaHang = shop,
+            NguoiDung = buyer
+        };
+
+        db.NguoiDungs.AddRange(shopOwner, buyer);
+        db.CuaHangs.Add(shop);
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var (ok, msg) = await orderService.MoPhongThanhToanDemoAsync(10, 100);
+
+        Assert.True(ok);
+        var updated = await db.DonHangs.FindAsync(100);
+        Assert.NotNull(updated);
+        Assert.Equal("CONFIRMED", updated!.TrangThai);
+        Assert.Equal("PAID", updated.TrangThaiThanhToan);
+        Assert.NotNull(updated.ThoiGianXacNhan);
+
+        var tt = await db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == 100);
+        Assert.NotNull(tt);
+        Assert.Equal("SUCCESS", tt!.TrangThaiThanhToan);
+
+        var lichSu = await db.LichSuTrangThaiDonHangs.FirstOrDefaultAsync(l => l.MaDonHang == 100);
+        Assert.NotNull(lichSu);
+        Assert.Equal("CONFIRMED", lichSu!.TrangThaiMoi);
+        Assert.Equal("SYSTEM", lichSu.LoaiNguoiThucHien);
+    }
+
+    [Fact]
+    public async Task MoPhongThanhToanTatCaDemoAsync_CapNhatNhieuDonHang()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_MoPhongTatCaDemo");
+        var fakeCart = new FakeCartService();
+        var orderService = new OrderService(db, fakeCart);
+
+        var buyer = new NguoiDung { MaNguoiDung = 11, HoTen = "Buyer 11", SoDienThoai = "0911111111" };
+        var shop = new CuaHang { MaCuaHang = 6, MaNguoiDung = 21, TenShop = "Shop 6", TrangThai = "ACTIVE" };
+        var don1 = new DonHang
+        {
+            MaDonHang = 101,
+            MaDon = "ORD-001",
+            MaNguoiDung = 11,
+            MaCuaHang = 6,
+            TrangThai = "PENDING",
+            TrangThaiThanhToan = "UNPAID",
+            PhuongThucThanhToan = "BANK_TRANSFER",
+            TongTien = 100000,
+            NgayTao = DateTime.UtcNow,
+            NgayCapNhat = DateTime.UtcNow,
+            CuaHang = shop,
+            NguoiDung = buyer
+        };
+        var don2 = new DonHang
+        {
+            MaDonHang = 102,
+            MaDon = "ORD-002",
+            MaNguoiDung = 11,
+            MaCuaHang = 6,
+            TrangThai = "PENDING",
+            TrangThaiThanhToan = "UNPAID",
+            PhuongThucThanhToan = "BANK_TRANSFER",
+            TongTien = 200000,
+            NgayTao = DateTime.UtcNow,
+            NgayCapNhat = DateTime.UtcNow,
+            CuaHang = shop,
+            NguoiDung = buyer
+        };
+
+        db.NguoiDungs.Add(buyer);
+        db.CuaHangs.Add(shop);
+        db.DonHangs.AddRange(don1, don2);
+        await db.SaveChangesAsync();
+
+        var (ok, msg) = await orderService.MoPhongThanhToanTatCaDemoAsync(11, new[] { 101, 102 });
+
+        Assert.True(ok);
+        var list = await db.DonHangs.Where(d => d.MaNguoiDung == 11).ToListAsync();
+        Assert.All(list, d =>
+        {
+            Assert.Equal("CONFIRMED", d.TrangThai);
+            Assert.Equal("PAID", d.TrangThaiThanhToan);
+        });
+    }
 }

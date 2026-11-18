@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\uploads\" />
+    <InternalsVisibleTo Include="SecondHandMarketplace.Tests" />
   </ItemGroup>
 
   <ItemGroup>
