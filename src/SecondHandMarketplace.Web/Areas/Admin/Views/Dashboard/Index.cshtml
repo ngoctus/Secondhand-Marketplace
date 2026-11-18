@@ -3,16 +3,73 @@
     ViewData["Title"] = "Thống kê hệ thống";
     var tt = new[] { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" };
 }
-<div class="page-head"><div><h2>Thống kê hệ thống</h2><p class="muted">Tổng quan hoạt động của sàn.</p></div></div>
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+        <h2>Thống kê hệ thống</h2>
+        <p class="muted mb-0">Tổng quan hoạt động, doanh thu tháng, lợi nhuận và sản phẩm bán chạy của sàn.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalThemDoanhThu">
+            <i class="bi bi-plus-circle me-1"></i>Thêm doanh thu / đơn hàng
+        </button>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Users" asp-action="Index">Người dùng</a>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Sellers" asp-action="Index">Cửa hàng</a>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE">Sản phẩm</a>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Orders" asp-action="Index">Đơn hàng</a>
+    </div>
+</div>
 
 <div class="kpi-grid">
-    <div class="kpi"><span>Doanh thu (đơn hoàn tất)</span><b>@HienThi.Tien(Model.DoanhThu)</b></div>
-    <div class="kpi"><span>Người dùng</span><b>@Model.TongNguoiDung</b></div>
-    <div class="kpi"><span>Cửa hàng</span><b>@Model.TongCuaHang</b></div>
-    <div class="kpi"><span>Sản phẩm</span><b>@Model.TongSanPham</b></div>
-    <div class="kpi"><span>Tổng đơn hàng</span><b>@Model.TongDonHang</b><small>@Model.DonHoanTat đã hoàn tất</small></div>
-    <a class="kpi warn" asp-controller="Products" asp-action="Index"><span>Sản phẩm chờ duyệt</span><b>@Model.SanPhamChoDuyet</b></a>
-    <a class="kpi warn" asp-controller="Reports" asp-action="Index"><span>Báo cáo chưa xử lý</span><b>@(Model.BaoCaoChuaXuLy?.ToString() ?? "—")</b></a>
+    <a class="kpi highlight" asp-controller="Orders" asp-action="Index" asp-route-status="COMPLETED" title="Xem toàn bộ đơn hàng hoàn tất">
+        <span>Doanh thu (đơn hoàn tất)</span>
+        <b>@HienThi.Tien(Model.DoanhThu)</b>
+        <small>Tổng lợi nhuận: @HienThi.Tien(Model.TongLoiNhuan)</small>
+    </a>
+    <a class="kpi highlight" asp-controller="Orders" asp-action="Index" asp-route-status="COMPLETED" title="Doanh thu đơn hoàn tất trong tháng @Model.ThangHienTai">
+        <span>Doanh thu tháng (@Model.ThangHienTai)</span>
+        <b>@HienThi.Tien(Model.DoanhThuThang)</b>
+        <small>@Model.DonHoanTatThang đơn trong tháng</small>
+    </a>
+    <a class="kpi highlight" href="#bang-ban-chay" title="Lợi nhuận sàn tháng @Model.ThangHienTai (chiết khấu @Model.TyLeLoiNhuan%)">
+        <span>Lợi nhuận tháng (@Model.ThangHienTai)</span>
+        <b>@HienThi.Tien(Model.LoiNhuanThang)</b>
+        <small>Phí sàn @Model.TyLeLoiNhuan% doanh thu</small>
+    </a>
+    <a class="kpi highlight" href="#bang-ban-chay" title="@(Model.SanPhamBanChayNhat?.Name ?? "Chưa có sản phẩm bán chạy")">
+        <span>Sản phẩm bán chạy nhất</span>
+        <b class="kpi-text-val">@(Model.SanPhamBanChayNhat?.Name ?? "Chưa có")</b>
+        <small>@(Model.SanPhamBanChayNhat != null ? $"Đã bán {Model.SanPhamBanChayNhat.QuantitySold} · {HienThi.Tien(Model.SanPhamBanChayNhat.Revenue)}" : "Chưa có dữ liệu")</small>
+    </a>
+    <a class="kpi" asp-controller="Users" asp-action="Index" title="Quản lý người dùng (Thêm / Sửa / Xóa)">
+        <span>Người dùng</span>
+        <b>@Model.TongNguoiDung</b>
+        <small>Thêm / Sửa / Xóa</small>
+    </a>
+    <a class="kpi" asp-controller="Sellers" asp-action="Index" title="Quản lý cửa hàng (Thêm / Sửa / Xóa)">
+        <span>Cửa hàng</span>
+        <b>@Model.TongCuaHang</b>
+        <small>Thêm / Sửa / Xóa</small>
+    </a>
+    <a class="kpi" asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE" title="Quản lý sản phẩm (Thêm / Sửa / Xóa)">
+        <span>Sản phẩm</span>
+        <b>@Model.TongSanPham</b>
+        <small>Thêm / Sửa / Xóa</small>
+    </a>
+    <a class="kpi" asp-controller="Orders" asp-action="Index" title="Quản lý tổng đơn hàng (Thêm / Sửa / Xóa)">
+        <span>Tổng đơn hàng</span>
+        <b>@Model.TongDonHang</b>
+        <small>@Model.DonHoanTat đã hoàn tất</small>
+    </a>
+    <a class="kpi warn" asp-controller="Products" asp-action="Index" asp-route-tab="PENDING_REVIEW" title="Duyệt hoặc từ chối sản phẩm chờ duyệt">
+        <span>Sản phẩm chờ duyệt</span>
+        <b>@Model.SanPhamChoDuyet</b>
+        <small>Xem &amp; duyệt ngay</small>
+    </a>
+    <a class="kpi warn" asp-controller="Reports" asp-action="Index" title="Xử lý báo cáo vi phạm">
+        <span>Báo cáo chưa xử lý</span>
+        <b>@(Model.BaoCaoChuaXuLy?.ToString() ?? "—")</b>
+        <small>Kiểm tra &amp; xử lý</small>
+    </a>
 </div>
 
 <div class="row g-3">
@@ -23,28 +80,234 @@
             @foreach (var s in tt)
             {
                 var n = Model.DonTheoTrangThai.GetValueOrDefault(s);
-                <div class="bar-row">
+                <a class="bar-row text-decoration-none text-reset" asp-controller="Orders" asp-action="Index" asp-route-status="@s">
                     <span class="@HienThi.LopTrangThai(s)">@HienThi.TrangThaiDon(s)</span>
                     <div class="bar"><i style="width:@(Model.TongDonHang == 0 ? 0 : n * 100 / Model.TongDonHang)%"></i></div>
                     <b>@n</b>
-                </div>
+                </a>
             }
         </div>
     </div>
 </div>
 
-<div class="panel">
-    <div class="panel-head"><h3>Đơn hàng mới nhất</h3><a asp-controller="Orders" asp-action="Index">Xem tất cả</a></div>
-    <table class="table">
-        <thead><tr><th>MÃ ĐƠN</th><th>NGƯỜI MUA</th><th>CỬA HÀNG</th><th>TỔNG</th><th>TRẠNG THÁI</th></tr></thead>
-        <tbody>
-        @foreach (var o in Model.DonMoiNhat)
-        {
-            <tr><td><a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">@o.MaDon</a></td><td>@o.BuyerName</td><td>@o.ShopName</td><td>@HienThi.Tien(o.Total)</td>
-                <td><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td></tr>
-        }
-        </tbody>
-    </table>
+<div class="panel mt-3" id="bang-ban-chay">
+    <div class="panel-head">
+        <h3>Top sản phẩm bán chạy nhất &amp; Lợi nhuận sàn</h3>
+        <a asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE">Quản lý sản phẩm</a>
+    </div>
+    @if (Model.SanPhamBanChay.Count == 0)
+    {
+        <div class="empty">Chưa có sản phẩm hoàn tất nào.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>HẠNG</th>
+                        <th>SẢN PHẨM</th>
+                        <th>CỬA HÀNG</th>
+                        <th class="text-center">SỐ LƯỢNG BÁN</th>
+                        <th class="text-end">DOANH THU</th>
+                        <th class="text-end">LỢI NHUẬN SÀN (@Model.TyLeLoiNhuan%)</th>
+                        <th class="text-end">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for (var i = 0; i < Model.SanPhamBanChay.Count; i++)
+                {
+                    var p = Model.SanPhamBanChay[i];
+                    var loiNhuanSp = Math.Round(p.Revenue * (Model.TyLeLoiNhuan / 100m), 0);
+                    <tr>
+                        <td><span class="badge @(i == 0 ? "bg-success" : "bg-secondary")">#@(i + 1)</span></td>
+                        <td>
+                            <a asp-controller="Products" asp-action="Details" asp-route-id="@p.ProductId"><strong>@p.Name</strong></a>
+                            @if (i == 0)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">Bán chạy nhất</span>
+                            }
+                        </td>
+                        <td>@p.ShopName</td>
+                        <td class="text-center"><b>@p.QuantitySold</b></td>
+                        <td class="text-end"><b>@HienThi.Tien(p.Revenue)</b></td>
+                        <td class="text-end text-success"><b>@HienThi.Tien(loiNhuanSp)</b></td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Details" asp-route-id="@p.ProductId">Xem</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
 
-@section Scripts { <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script> }
+<div class="panel mt-3">
+    <div class="panel-head d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h3 class="mb-0">Đơn hàng &amp; Doanh thu mới nhất (Thêm / Sửa / Xóa)</h3>
+        <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalThemDoanhThu">
+                + Thêm đơn / doanh thu
+            </button>
+            <a asp-controller="Orders" asp-action="Index">Xem tất cả</a>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>MÃ ĐƠN</th>
+                    <th>SẢN PHẨM</th>
+                    <th>NGƯỜI MUA</th>
+                    <th>CỬA HÀNG</th>
+                    <th>DOANH THU</th>
+                    <th>LỢI NHUẬN (@Model.TyLeLoiNhuan%)</th>
+                    <th>TRẠNG THÁI</th>
+                    <th class="text-end">THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var o in Model.DonMoiNhat)
+            {
+                var loiNhuanDon = o.Status == "COMPLETED" ? Math.Round(o.Total * (Model.TyLeLoiNhuan / 100m), 0) : 0m;
+                <tr>
+                    <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id"><b>@o.MaDon</b></a></td>
+                    <td>@o.FirstItem</td>
+                    <td>@o.BuyerName</td>
+                    <td>@o.ShopName</td>
+                    <td><b>@HienThi.Tien(o.Total)</b></td>
+                    <td class="text-success">@(o.Status == "COMPLETED" ? HienThi.Tien(loiNhuanDon) : "—")</td>
+                    <td><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-1">
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">Chi tiết</a>
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    onclick="openEditOrderModal(@o.Id, '@Html.Raw((o.MaDon ?? "").Replace("'", "\\'"))', '@Html.Raw((o.FirstItem ?? "").Replace("'", "\\'"))', @o.Total.ToString(System.Globalization.CultureInfo.InvariantCulture), '@o.Status')">
+                                Sửa
+                            </button>
+                            <form asp-action="DeleteOrder" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa đơn hàng @o.MaDon không?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@o.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Thêm Doanh Thu / Đơn Hàng -->
+<div class="modal fade" id="modalThemDoanhThu" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="CreateOrder" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm đơn hàng / Ghi nhận doanh thu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tên sản phẩm</label>
+                    <input type="text" name="productName" class="form-control" placeholder="VD: Tai nghe Sony WH-1000XM3" required maxlength="200" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Số tiền / Doanh thu (đ)</label>
+                    <input type="number" name="amount" class="form-control" min="1000" step="1000" value="500000" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Cửa hàng</label>
+                    <select name="shopId" class="form-select">
+                        @if (ViewBag.Shops != null)
+                        {
+                            foreach (var s in ViewBag.Shops)
+                            {
+                                <option value="@s.MaCuaHang">@s.TenShop</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Người mua</label>
+                    <select name="buyerId" class="form-select">
+                        @if (ViewBag.Buyers != null)
+                        {
+                            foreach (var u in ViewBag.Buyers)
+                            {
+                                <option value="@u.MaNguoiDung">@u.HoTen</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Trạng thái đơn</label>
+                    <select name="status" class="form-select">
+                        <option value="COMPLETED" selected>Hoàn tất (Tính vào doanh thu &amp; lợi nhuận tháng)</option>
+                        <option value="PENDING">Chờ xác nhận</option>
+                        <option value="CONFIRMED">Đã xác nhận</option>
+                        <option value="SHIPPING">Đang giao</option>
+                        <option value="DELIVERED">Đã giao</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-success">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Sửa Đơn Hàng / Doanh Thu -->
+<div class="modal fade" id="modalSuaDoanhThu" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="EditOrder" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="editOrderId" />
+            <div class="modal-header">
+                <h5 class="modal-title">Sửa đơn hàng / Doanh thu <span id="editOrderCode" class="text-muted"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tên sản phẩm</label>
+                    <input type="text" name="productName" id="editOrderProduct" class="form-control" required maxlength="200" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tổng tiền / Doanh thu (đ)</label>
+                    <input type="number" name="amount" id="editOrderAmount" class="form-control" min="1000" step="1000" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select name="status" id="editOrderStatus" class="form-select">
+                        @foreach (var s in tt)
+                        {
+                            <option value="@s">@HienThi.TrangThaiDon(s)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Cập nhật</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script>
+        function openEditOrderModal(id, code, product, amount, status) {
+            document.getElementById('editOrderId').value = id;
+            document.getElementById('editOrderCode').textContent = '(' + code + ')';
+            document.getElementById('editOrderProduct').value = product;
+            document.getElementById('editOrderAmount').value = amount;
+            document.getElementById('editOrderStatus').value = status;
+            new bootstrap.Modal(document.getElementById('modalSuaDoanhThu')).show();
+        }
+    </script>
+}

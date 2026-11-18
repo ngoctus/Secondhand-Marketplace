@@ -2,9 +2,11 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -18,8 +20,12 @@ public sealed class AccountController(
     IPasswordResetService passwordResetService,
     IRegistrationOtpService registrationOtpService,
     AppDbContext db,
-    IConfiguration configuration) : Controller
+    IConfiguration configuration,
+    IWebHostEnvironment environment) : Controller
 {
+    private bool IsMockOAuthEnabled() =>
+        environment.IsDevelopment() && configuration.GetValue("MockOAuth:Enabled", false);
+
     [AllowAnonymous]
     [HttpGet]
     public IActionResult AccessDenied() => View("AccessDenied");
@@ -247,7 +253,12 @@ public sealed class AccountController(
             return Challenge(properties, scheme);
         }
 
-        // Khi chưa cấu hình khóa API thực tế, mở màn hình chọn tài khoản trên máy người dùng (Google/Facebook Account Chooser)
+        if (!IsMockOAuthEnabled())
+        {
+            TempData["Loi"] = $"Đăng nhập bằng {prov} chưa được cấu hình.";
+            return RedirectToAction(nameof(Login), new { returnUrl });
+        }
+
         return RedirectToAction(nameof(ExternalLoginSelectAccount), new { provider = prov, returnUrl });
     }
 
@@ -265,38 +276,24 @@ public sealed class AccountController(
         var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
         if (string.IsNullOrWhiteSpace(email))
         {
+            await HttpContext.SignOutAsync("ExternalCookie");
             TempData["Loi"] = "Không thể lấy địa chỉ email từ tài khoản liên kết.";
             return RedirectToAction(nameof(Login));
         }
 
-        var fullName = authResult.Principal.FindFirstValue(ClaimTypes.Name) 
-                       ?? email.Split('@')[0];
-        var avatar = authResult.Principal.FindFirstValue("picture") 
-                     ?? authResult.Principal.FindFirstValue("urn:google:picture");
-
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
-        if (user is null)
+        if (user is not null && user.TrangThai != "ACTIVE")
         {
-            user = new NguoiDung
-            {
-                HoTen = fullName.Trim(),
-                Email = normalizedEmail,
-                SoDienThoai = "0988888888", // Giá trị giữ chỗ thỏa mãn CK_NguoiDung_SDTBatBuoc; OrderService sẽ để trống khi checkout
-                MatKhauBam = "$2a$11$e1O8uK5c5wY6zN2T0I6A4.8V9p5D0Q1W2E3R4T5Y6U7I8O9P0A1B2",
-                VaiTro = "USER",
-                TrangThai = "ACTIVE",
-                AnhDaiDien = avatar,
-                NgayTao = DateTime.UtcNow,
-                NgayCapNhat = DateTime.UtcNow
-            };
-            db.NguoiDungs.Add(user);
-            await db.SaveChangesAsync(cancellationToken);
-        }
-        else if (user.TrangThai != "ACTIVE")
-        {
+            await HttpContext.SignOutAsync("ExternalCookie");
             TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
             return RedirectToAction(nameof(Login));
+        }
+
+        // Nếu đăng nhập mạng xã hội lần đầu hoặc tài khoản chưa có số điện thoại hợp lệ -> chuyển sang Hoàn tất hồ sơ
+        if (user is null || string.IsNullOrWhiteSpace(user.SoDienThoai))
+        {
+            return RedirectToAction(nameof(CompleteProfile), new { returnUrl });
         }
 
         await HttpContext.SignOutAsync("ExternalCookie");
@@ -312,8 +309,143 @@ public sealed class AccountController(
 
     [HttpGet]
     [AllowAnonymous]
+    public async Task<IActionResult> CompleteProfile(string? returnUrl = null, CancellationToken cancellationToken = default)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+
+        var authResult = await HttpContext.AuthenticateAsync("ExternalCookie");
+        if (!authResult.Succeeded || authResult.Principal == null)
+        {
+            TempData["Loi"] = "Phiên xác thực mạng xã hội đã hết hạn. Vui lòng đăng nhập lại.";
+            return RedirectToAction(nameof(Login), new { returnUrl });
+        }
+
+        var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            await HttpContext.SignOutAsync("ExternalCookie");
+            TempData["Loi"] = "Không tìm thấy email từ tài khoản liên kết.";
+            return RedirectToAction(nameof(Login), new { returnUrl });
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var fullName = authResult.Principal.FindFirstValue(ClaimTypes.Name) ?? normalizedEmail.Split('@')[0];
+        var existingUser = await db.NguoiDungs.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
+
+        return View(new CompleteProfileVm
+        {
+            Email = normalizedEmail,
+            HoTen = existingUser?.HoTen ?? fullName.Trim(),
+            DiaChiMacDinh = existingUser?.DiaChiMacDinh,
+            ReturnUrl = returnUrl
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [AllowAnonymous]
+    public async Task<IActionResult> CompleteProfile(CompleteProfileVm model, CancellationToken cancellationToken = default)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+
+        var authResult = await HttpContext.AuthenticateAsync("ExternalCookie");
+        if (!authResult.Succeeded || authResult.Principal == null)
+        {
+            TempData["Loi"] = "Phiên xác thực mạng xã hội đã hết hạn. Vui lòng đăng nhập lại.";
+            return RedirectToAction(nameof(Login), new { returnUrl = model.ReturnUrl });
+        }
+
+        var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            await HttpContext.SignOutAsync("ExternalCookie");
+            TempData["Loi"] = "Không tìm thấy email từ tài khoản liên kết.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        model.Email = normalizedEmail;
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var normalizedPhone = model.SoDienThoai.Trim();
+        var phoneInUse = await db.NguoiDungs.AnyAsync(
+            u => u.Email != normalizedEmail && u.SoDienThoai == normalizedPhone,
+            cancellationToken);
+        if (phoneInUse)
+        {
+            ModelState.AddModelError(nameof(model.SoDienThoai), "Số điện thoại này đã được sử dụng bởi tài khoản khác.");
+            return View(model);
+        }
+
+        var avatar = authResult.Principal.FindFirstValue("picture")
+                     ?? authResult.Principal.FindFirstValue("urn:google:picture");
+
+        var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
+        if (user is null)
+        {
+            user = new NguoiDung
+            {
+                HoTen = model.HoTen.Trim(),
+                Email = normalizedEmail,
+                SoDienThoai = normalizedPhone,
+                DiaChiMacDinh = string.IsNullOrWhiteSpace(model.DiaChiMacDinh) ? null : model.DiaChiMacDinh.Trim(),
+                MatKhauBam = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")),
+                VaiTro = "USER",
+                TrangThai = "ACTIVE",
+                AnhDaiDien = avatar,
+                NgayTao = DateTime.UtcNow,
+                NgayCapNhat = DateTime.UtcNow
+            };
+            db.NguoiDungs.Add(user);
+        }
+        else
+        {
+            if (user.TrangThai != "ACTIVE")
+            {
+                await HttpContext.SignOutAsync("ExternalCookie");
+                TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
+                return RedirectToAction(nameof(Login));
+            }
+            user.HoTen = model.HoTen.Trim();
+            user.SoDienThoai = normalizedPhone;
+            if (!string.IsNullOrWhiteSpace(model.DiaChiMacDinh))
+            {
+                user.DiaChiMacDinh = model.DiaChiMacDinh.Trim();
+            }
+            user.NgayCapNhat = DateTime.UtcNow;
+        }
+
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError(nameof(model.SoDienThoai), "Số điện thoại đã được sử dụng hoặc thông tin không hợp lệ.");
+            return View(model);
+        }
+
+        await HttpContext.SignOutAsync("ExternalCookie");
+        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, true, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
+        TempData["ThanhCong"] = "Hoàn tất hồ sơ và đăng nhập thành công!";
+
+        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+        {
+            return LocalRedirect(model.ReturnUrl);
+        }
+        return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> ExternalLoginSelectAccount(string provider = "Google", string? returnUrl = null)
     {
+        if (!IsMockOAuthEnabled()) return NotFound();
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
 
         var prov = (provider ?? "Google").Trim();
@@ -321,6 +453,7 @@ public sealed class AccountController(
 
         var accounts = await db.NguoiDungs
             .Where(u => u.TrangThai == "ACTIVE" && u.VaiTro == "USER")
+            .OrderBy(u => u.MaNguoiDung)
             .Take(4)
             .Select(u => new ExternalAccountItemVm
             {
@@ -343,56 +476,46 @@ public sealed class AccountController(
     public async Task<IActionResult> ExternalLoginSelectAccountSubmit(
         string provider,
         string email,
-        string? fullName,
         string? returnUrl,
         CancellationToken cancellationToken = default)
     {
+        if (!IsMockOAuthEnabled()) return NotFound();
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
 
         var prov = (provider ?? "Google").Trim();
-        var isGoogle = prov.Equals("Google", StringComparison.OrdinalIgnoreCase);
+        var normalizedEmail = (email ?? string.Empty).Trim().ToLowerInvariant();
 
-        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        var allowedAccounts = await db.NguoiDungs
+            .Where(u => u.TrangThai == "ACTIVE" && u.VaiTro == "USER")
+            .OrderBy(u => u.MaNguoiDung)
+            .Take(4)
+            .ToListAsync(cancellationToken);
+
+        var user = allowedAccounts.FirstOrDefault(u => u.Email.Equals(normalizedEmail, StringComparison.OrdinalIgnoreCase));
+        if (user is null)
         {
-            TempData["Loi"] = "Vui lòng nhập địa chỉ email hợp lệ để tiếp tục.";
+            TempData["Loi"] = "Chỉ cho phép đăng nhập thử nghiệm bằng 1 trong 4 tài khoản test có sẵn.";
             return RedirectToAction(nameof(ExternalLoginSelectAccount), new { provider = prov, returnUrl });
         }
 
-        var normalizedEmail = email.Trim().ToLowerInvariant();
-        var name = string.IsNullOrWhiteSpace(fullName)
-            ? normalizedEmail.Split('@')[0]
-            : fullName.Trim();
-
-        var avatar = isGoogle
-            ? "https://lh3.googleusercontent.com/a/default-user=s96-c"
-            : "https://graph.facebook.com/v12.0/me/picture?type=large";
-
-        var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
-        if (user is null)
+        if (string.IsNullOrWhiteSpace(user.SoDienThoai))
         {
-            user = new NguoiDung
+            var extClaims = new List<Claim>
             {
-                HoTen = name,
-                Email = normalizedEmail,
-                SoDienThoai = "0988888888", // Giữ chỗ cho ràng buộc SQL, OrderService để trống khi mua hàng
-                MatKhauBam = "$2a$11$e1O8uK5c5wY6zN2T0I6A4.8V9p5D0Q1W2E3R4T5Y6U7I8O9P0A1B2",
-                VaiTro = "USER",
-                TrangThai = "ACTIVE",
-                AnhDaiDien = avatar,
-                NgayTao = DateTime.UtcNow,
-                NgayCapNhat = DateTime.UtcNow
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Name, user.HoTen)
             };
-            db.NguoiDungs.Add(user);
-            await db.SaveChangesAsync(cancellationToken);
-        }
-        else if (user.TrangThai != "ACTIVE")
-        {
-            TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
-            return RedirectToAction(nameof(Login));
+            if (!string.IsNullOrWhiteSpace(user.AnhDaiDien))
+            {
+                extClaims.Add(new("picture", user.AnhDaiDien));
+            }
+            var extIdentity = new ClaimsIdentity(extClaims, "ExternalCookie");
+            await HttpContext.SignInAsync("ExternalCookie", new ClaimsPrincipal(extIdentity));
+            return RedirectToAction(nameof(CompleteProfile), new { returnUrl });
         }
 
         await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, true, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
-        TempData["ThanhCong"] = $"Đăng nhập thành công với {prov} ({normalizedEmail})!";
+        TempData["ThanhCong"] = $"Đăng nhập thành công với {prov} ({user.Email})!";
 
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
