@@ -3,6 +3,7 @@ using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Models.ViewModels.Ai;
 using SecondHandMarketplace.Web.Services.Ai;
+using SecondHandMarketplace.Web.Services.AuditLogs;
 
 namespace SecondHandMarketplace.Web.Areas.Admin.Controllers;
 
@@ -14,8 +15,13 @@ namespace SecondHandMarketplace.Web.Areas.Admin.Controllers;
 public sealed class AiSettingsController : AdminBaseController
 {
     private readonly IAiSettingsService _settings;
+    private readonly IAuditLogService _auditLog;
 
-    public AiSettingsController(IAiSettingsService settings) => _settings = settings;
+    public AiSettingsController(IAiSettingsService settings, IAuditLogService auditLog)
+    {
+        _settings = settings;
+        _auditLog = auditLog;
+    }
 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -44,6 +50,10 @@ public sealed class AiSettingsController : AdminBaseController
             var (success, error) = await _settings.SaveAsync(vm.Enabled, vm.ModelName, vm.SystemPrompt, adminId, cancellationToken);
             if (success)
             {
+                if (adminId.HasValue)
+                {
+                    await _auditLog.LogAsync(adminId.Value, "UPDATE_AI_SETTINGS", "CauHinhAI", 1, "SUCCESS", $"Cập nhật cấu hình AI: Enabled={vm.Enabled}, Model={vm.ModelName}");
+                }
                 this.ThongBaoThanhCong("Đã lưu cấu hình Chatbox AI. Cấu hình mới có hiệu lực ngay cho các tin nhắn tiếp theo.");
                 return RedirectToAction(nameof(Index));
             }

@@ -21,7 +21,7 @@ public sealed class AuthController(IAuthService authService, JwtTokenService tok
             return BadRequest(new { message = "Email và mật khẩu không được để trống." });
         var user = await authService.AuthenticateAsync(request.Email, request.Password, cancellationToken);
         if (user is null) return Unauthorized(new { message = "Email hoặc mật khẩu không chính xác, hoặc tài khoản đã bị khóa." });
-        var token = tokenService.CreateToken(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro);
+        var token = tokenService.CreateToken(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
         return Ok(new { accessToken = token.Token, tokenType = "Bearer", expiresAtUtc = token.ExpiresAtUtc,
             user = new { id = user.MaNguoiDung, fullName = user.HoTen, email = user.Email, role = user.VaiTro } });
     }

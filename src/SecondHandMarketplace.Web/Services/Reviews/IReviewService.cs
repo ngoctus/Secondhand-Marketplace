@@ -110,4 +110,23 @@ public interface IReviewService
     Task<DanhSachShopCanRaSoatVm> LayDanhSachShopCanRaSoatAsync(
         ShopCanRaSoatFilterVm filter,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cho phép chủ shop viết phản hồi giải trình (Reply) đối với đánh giá của khách hàng (C4).
+    /// Người thực hiện bắt buộc phải là chủ của cửa hàng nhận đánh giá.
+    /// </summary>
+    Task<(bool Success, string? Error)> PhanHoiDanhGiaAsync(
+        int maDanhGia,
+        int maChuShop,
+        string phanHoi,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lấy danh sách đánh giá nhận được của shop do chính người dùng sở hữu (dùng cho Kênh Người Bán /User/Reviews/Shop).
+    /// </summary>
+    Task<DanhSachDanhGiaTheoShopVm> LayDanhGiaCuaShopAsync(
+        int maChuShop,
+        int page = 1,
+        int pageSize = 10,
+        CancellationToken cancellationToken = default);
 }

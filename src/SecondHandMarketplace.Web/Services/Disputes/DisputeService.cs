@@ -277,8 +277,8 @@ public class DisputeService : IDisputeService
 
     public async Task<AdminDisputeListViewModel> LayDanhSachTranhChapAdminAsync(string? trangThai, int page = 1, int pageSize = 10)
     {
-        if (page < 1) page = 1;
-        if (pageSize < 1) pageSize = 10;
+        page = Math.Clamp(page, 1, 10000);
+        pageSize = Math.Clamp(pageSize, 1, 100);
 
         var query = _db.TranhChaps
             .Include(t => t.DonHang)
@@ -353,9 +353,19 @@ public class DisputeService : IDisputeService
             return (false, "Tranh chấp này đã được phân xử trước đó.");
         }
 
-        if (!string.IsNullOrWhiteSpace(ghiChu) && ghiChu.Trim().Length > 400)
+        if (tc.DonHang.TrangThai == "CANCELLED" && phanQuyet == "REFUND_BUYER")
         {
-            return (false, "Ghi chú của quản trị viên không được vượt quá 400 ký tự.");
+            return (false, "Đơn hàng đã ở trạng thái Đã hủy, không thể chọn phán quyết hoàn tiền. Vui lòng chọn Bác bỏ khiếu nại.");
+        }
+
+        if (phanQuyet == "RELEASE_SELLER" && (tc.DonHang.TrangThai == "CANCELLED" || tc.DonHang.TrangThai == "COMPLETED"))
+        {
+            return (false, "Trạng thái đơn hàng không phù hợp với phán quyết thanh toán cho người bán.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(ghiChu) && ghiChu.Trim().Length > 500)
+        {
+            return (false, "Ghi chú của quản trị viên không được vượt quá 500 ký tự.");
         }
 
         using var tx = _db.Database.IsRelational() ? await _db.Database.BeginTransactionAsync() : null;
@@ -479,7 +489,7 @@ public class DisputeService : IDisputeService
                     foreach (var ct in chiTiets)
                     {
                         ct.DangGiuCho = false;
-                        if (ct.SanPham != null && ct.SanPham.TrangThai != "SOLD")
+                        if (ct.SanPham != null && ct.SanPham.TrangThai == "RESERVED")
                         {
                             var spCu = ct.SanPham.TrangThai;
                             ct.SanPham.TrangThai = "SOLD";

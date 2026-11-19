@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
@@ -71,7 +72,7 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
                          where dh.MaCuaHang == shopId && dh.TrangThai == "COMPLETED"
                          group ct2 by new { ct2.MaSanPham, ct2.TenSanPham } into g
                          orderby g.Sum(x => x.Gia) descending
-                         select new TopProductVm { ProductId = g.Key.MaSanPham, Name = g.Key.TenSanPham, Revenue = g.Sum(x => x.Gia) })
+                         select new TopProductVm { ProductId = g.Key.MaSanPham, Name = g.Key.TenSanPham, QuantitySold = g.Count(), Revenue = g.Sum(x => x.Gia) })
             .Take(5).ToListAsync(ct);
 
         var phien = await db.PhienDauGias.AsNoTracking()
@@ -104,6 +105,43 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
         var moiNhat = await OrderManagementService.Rows(
             db.DonHangs.AsNoTracking().OrderByDescending(d => d.NgayTao).Take(6)).ToListAsync(ct);
 
+        var nowVn = HienThi.SangGioVn(DateTime.UtcNow);
+        var dauThangVn = new DateTime(nowVn.Year, nowVn.Month, 1);
+        var dauThangUtc = HienThi.TuGioVnSangUtc(dauThangVn);
+
+        var donThang = await db.DonHangs.AsNoTracking()
+            .Where(d => d.TrangThai == "COMPLETED" && (d.ThoiGianHoanTat ?? d.NgayTao) >= dauThangUtc)
+            .Select(d => d.TongTien)
+            .ToListAsync(ct);
+
+        var doanhThuThang = donThang.Sum();
+        var donHoanTatThang = donThang.Count;
+        const decimal tyLePhiSan = 0.05m; // Lợi nhuận sàn 5% trên doanh thu đơn hoàn tất
+        var loiNhuanThang = Math.Round(doanhThuThang * tyLePhiSan, 0);
+        var tongLoiNhuan = Math.Round(tk.DoanhThu * tyLePhiSan, 0);
+
+        var chiTietHoanTat = await (from ct2 in db.ChiTietDonHangs.AsNoTracking()
+                                    join dh in db.DonHangs.AsNoTracking() on ct2.MaDonHang equals dh.MaDonHang
+                                    join ch in db.CuaHangs.AsNoTracking() on dh.MaCuaHang equals ch.MaCuaHang
+                                    where dh.TrangThai == "COMPLETED"
+                                    select new { ct2.MaSanPham, ct2.TenSanPham, ct2.Gia, ch.TenShop })
+            .ToListAsync(ct);
+
+        var topSanPham = chiTietHoanTat
+            .GroupBy(x => Regex.Replace(x.TenSanPham.Trim(), @"\s+#\d+$", ""), StringComparer.OrdinalIgnoreCase)
+            .Select(g => new TopProductVm
+            {
+                ProductId = g.First().MaSanPham,
+                Name = g.Key,
+                ShopName = g.First().TenShop,
+                QuantitySold = g.Count(),
+                Revenue = g.Sum(x => x.Gia)
+            })
+            .OrderByDescending(x => x.QuantitySold)
+            .ThenByDescending(x => x.Revenue)
+            .Take(6)
+            .ToList();
+
         return new AdminDashboardVm
         {
             TongNguoiDung = tk.TongNguoiDung,
@@ -113,6 +151,14 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
             TongDonHang = tk.TongDonHang,
             DonHoanTat = tk.DonHoanTat,
             DoanhThu = tk.DoanhThu,
+            ThangHienTai = nowVn.ToString("MM/yyyy"),
+            DoanhThuThang = doanhThuThang,
+            DonHoanTatThang = donHoanTatThang,
+            LoiNhuanThang = loiNhuanThang,
+            TongLoiNhuan = tongLoiNhuan,
+            TyLeLoiNhuan = 5m,
+            SanPhamBanChayNhat = topSanPham.FirstOrDefault(),
+            SanPhamBanChay = topSanPham,
             BaoCaoChuaXuLy = await DemBaoCaoAsync(ct),
             PhienDangMo = await db.PhienDauGias.AsNoTracking().CountAsync(p => p.TrangThai == "SCHEDULED" || p.TrangThai == "RUNNING", ct),
             DonTheoTrangThai = theoTrangThai,
@@ -162,8 +208,8 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
             return theoThang ? new DateTime(v.Year, v.Month, 1) : v.Date;
         }
 
-        var hoanTat = await q.Where(d => d.TrangThai == "COMPLETED" && d.ThoiGianHoanTat >= batDauUtc)
-            .Select(d => new { T = d.ThoiGianHoanTat!.Value, d.TongTien }).ToListAsync(ct);
+        var hoanTat = await q.Where(d => d.TrangThai == "COMPLETED" && (d.ThoiGianHoanTat ?? d.NgayTao) >= batDauUtc)
+            .Select(d => new { T = d.ThoiGianHoanTat ?? d.NgayTao, d.TongTien }).ToListAsync(ct);
         var taoMoi = await q.Where(d => d.NgayTao >= batDauUtc).Select(d => d.NgayTao).ToListAsync(ct);
 
         var doanhThu = hoanTat.GroupBy(x => Bucket(x.T)).ToDictionary(g => g.Key.Date, g => g.Sum(x => x.TongTien));

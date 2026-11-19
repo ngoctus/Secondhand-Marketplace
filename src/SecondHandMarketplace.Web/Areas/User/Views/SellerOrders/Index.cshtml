@@ -3,8 +3,13 @@
     ViewData["Title"] = "Đơn bán hàng";
     var tatCa = new[] { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" };
 }
-<div class="page-head">
+<div class="page-head d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div><h2>Đơn bán hàng</h2><p class="muted">Đơn của khách gửi tới cửa hàng của bạn.</p></div>
+    <div>
+        <a asp-area="User" asp-controller="Reviews" asp-action="Shop" class="btn btn-outline-success btn-sm rounded-pill px-3">
+            <i class="bi bi-star me-1"></i> Xem đánh giá cửa hàng
+        </a>
+    </div>
 </div>
 
 <div class="status-tabs">

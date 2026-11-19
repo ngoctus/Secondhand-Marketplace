@@ -1,10 +1,10 @@
 /* Widget Chatbox AI. Mọi class đều có tiền tố rmchat- để không đụng CSS chung (site.css).
    Màu và font lấy từ biến của site.css, có giá trị dự phòng nếu biến chưa tồn tại. */
-.rmchat{position:fixed;right:20px;bottom:20px;z-index:12;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink,#202a24)}
+.rmchat{position:fixed;right:20px;bottom:20px;z-index:12;font-family:var(--font-main, 'Be Vietnam Pro', sans-serif);font-size:13px;color:var(--ink,#202a24)}
 .rmchat[hidden]{display:none}
 .rmchat *{box-sizing:border-box}
 
-.rmchat-toggle{display:flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:13px 19px;background:var(--green,#285b43);color:#fff;font:600 13px 'DM Sans',sans-serif;cursor:pointer;box-shadow:0 10px 28px #283e2535;transition:background .2s,transform .2s}
+.rmchat-toggle{display:flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:13px 19px;background:var(--green,#285b43);color:#fff;font:600 13px var(--font-main, 'Be Vietnam Pro', sans-serif);cursor:pointer;box-shadow:0 10px 28px #283e2535;transition:background .2s,transform .2s}
 .rmchat-toggle:hover{background:#1d4532;transform:translateY(-1px)}
 .rmchat-toggle-icon{color:var(--lime,#d6ed8a);font-size:15px}
 .rmchat-toggle:focus-visible,.rmchat-close:focus-visible,.rmchat-send:focus-visible{outline:2px solid var(--lime,#d6ed8a);outline-offset:2px}
@@ -36,10 +36,10 @@
 @media (prefers-reduced-motion:reduce){.rmchat-dot{animation:none}.rmchat-toggle{transition:none}}
 
 .rmchat-composer{display:flex;align-items:flex-end;gap:8px;padding:10px;border-top:1px solid var(--line,#e6e8df);background:#fff}
-.rmchat-input{flex:1;min-height:38px;max-height:110px;resize:none;padding:9px 10px;border:1px solid var(--line,#e6e8df);border-radius:8px;background:#fff;color:var(--ink,#202a24);font:13px/1.4 'DM Sans',sans-serif}
+.rmchat-input{flex:1;min-height:38px;max-height:110px;resize:none;padding:9px 10px;border:1px solid var(--line,#e6e8df);border-radius:8px;background:#fff;color:var(--ink,#202a24);font:13px/1.4 var(--font-main, 'Be Vietnam Pro', sans-serif)}
 .rmchat-input:focus{outline:2px solid var(--lime,#d6ed8a);border-color:var(--green,#285b43)}
 .rmchat-input:disabled{background:#f3f4ef}
-.rmchat-send{height:38px;padding:0 15px;border:0;border-radius:8px;background:var(--green,#285b43);color:#fff;font:600 13px 'DM Sans',sans-serif;cursor:pointer}
+.rmchat-send{height:38px;padding:0 15px;border:0;border-radius:8px;background:var(--green,#285b43);color:#fff;font:600 13px var(--font-main, 'Be Vietnam Pro', sans-serif);cursor:pointer}
 .rmchat-send:hover:not(:disabled){background:#1d4532}
 .rmchat-send:disabled{opacity:.55;cursor:not-allowed}
 .rmchat-note{margin:0;padding:0 12px 9px;background:#fff;color:var(--muted,#788078);font-size:10.5px;text-align:center}

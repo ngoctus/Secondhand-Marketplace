@@ -122,6 +122,62 @@ public sealed class NotificationService(
         return true;
     }
 
+    public async Task<int> MarkAllAsReadAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        EnsureNoPendingChanges();
+
+        var unread = await db.ThongBaos
+            .Where(x => x.MaNguoiDung == userId && !x.DaDoc)
+            .ToListAsync(cancellationToken);
+
+        if (unread.Count == 0) return 0;
+
+        foreach (var item in unread)
+        {
+            item.DaDoc = true;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return unread.Count;
+    }
+
+    public async Task<string> ResolveTargetUrlAsync(int userId, int notificationId, CancellationToken cancellationToken = default)
+    {
+        var n = await db.ThongBaos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.MaThongBao == notificationId && x.MaNguoiDung == userId, cancellationToken);
+
+        if (n is null || !n.MaThamChieu.HasValue)
+            return "/User/Notifications";
+
+        if (n.Loai == NotificationTypes.Order)
+        {
+            var orderId = n.MaThamChieu.Value;
+            var order = await db.DonHangs
+                .AsNoTracking()
+                .Include(x => x.CuaHang)
+                .FirstOrDefaultAsync(x => x.MaDonHang == orderId, cancellationToken);
+
+            if (order is null)
+                return "/User/Orders";
+
+            // Nếu người nhận thông báo là chủ shop (người bán) của đơn hàng này
+            if (order.CuaHang != null && order.CuaHang.MaNguoiDung == userId)
+                return $"/User/SellerOrders/Details/{orderId}";
+
+            // Ngược lại, người nhận là người mua
+            return $"/User/Orders/ChiTiet/{orderId}";
+        }
+
+        if (n.Loai == NotificationTypes.Product)
+        {
+            var productId = n.MaThamChieu.Value;
+            return $"/Products/Details/{productId}";
+        }
+
+        return "/User/Notifications";
+    }
+
     // SaveChanges lưu mọi thay đổi đang chờ trong AppDbContext dùng chung (scoped). Nếu nơi gọi còn thay đổi chưa lưu,
     // service sẽ vô tình lưu dở dang nghiệp vụ của họ nên báo lỗi ngay thay vì âm thầm lưu.
     private void EnsureNoPendingChanges()

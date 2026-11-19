@@ -6,10 +6,10 @@ public class VietQrViewModel
 {
     public decimal SoTien { get; set; }
     public string NoiDung { get; set; } = "REMARKET THANHTOAN";
-    public string NganHang { get; set; } = string.Empty;
-    public string MaNganHang { get; set; } = string.Empty;
-    public string SoTaiKhoan { get; set; } = string.Empty;
-    public string ChuTaiKhoan { get; set; } = string.Empty;
+    public string NganHang { get; set; } = "VietinBank";
+    public string MaNganHang { get; set; } = "970415"; // VietinBank BIN
+    public string SoTaiKhoan { get; set; } = "119002953584"; // Tài khoản trường UTC2
+    public string ChuTaiKhoan { get; set; } = "PHAN HIEU TRUONG DH GTVT TAI TPHCM"; // Phân hiệu UTC2
     public int? MaDonHang { get; set; }
     public string? MaDon { get; set; }
     public string? DanhSachMaDonHang { get; set; }

@@ -86,7 +86,7 @@
                         </div>
 
                         <div class="text-muted small" style="font-size: 11px;">
-                            <i class="bi bi-check2-circle text-success me-1"></i>Đã mua hàng • @review.NgayTao.ToLocalTime().ToString("dd/MM/yyyy")
+                            <i class="bi bi-check2-circle text-success me-1"></i>Đã mua hàng • @HienThi.Ngay(review.NgayTao)
                         </div>
                     </div>
 
@@ -98,12 +98,30 @@
                     {
                         <p class="text-muted fst-italic small mb-0 ps-1">Người mua không để lại nhận xét bằng lời.</p>
                     }
+
+                    @if (!string.IsNullOrWhiteSpace(review.PhanHoiShop))
+                    {
+                        <div class="mt-2.5 p-2.5 rounded-3 bg-white border border-success-subtle border-start border-start-3 border-start-success ms-2 mt-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 11px;">
+                                    <i class="bi bi-reply-fill me-1"></i>Phản hồi từ người bán
+                                </span>
+                                @if (review.NgayPhanHoi.HasValue)
+                                {
+                                    <span class="text-muted" style="font-size: 11px;">@HienThi.Ngay(review.NgayPhanHoi.Value)</span>
+                                }
+                            </div>
+                            <p class="text-dark small mb-0 ps-1" style="white-space: pre-line; font-size: 12.5px;">@review.PhanHoiShop</p>
+                        </div>
+                    }
                 </div>
             }
         </div>
 
         @if (Model != null && Model.TotalPages > 1)
         {
+            var prodPage = Context.Request.Query["page"].ToString();
+            var pagePrefix = !string.IsNullOrWhiteSpace(prodPage) ? $"page={prodPage}&" : "";
             <div class="d-flex justify-content-center mt-3">
                 <nav aria-label="Phân trang đánh giá shop">
                     <ul class="pagination pagination-sm mb-0">
@@ -112,7 +130,7 @@
                             var isActive = p == Model.Page;
                             <li class="page-item @(isActive ? "active" : "")">
                                 <a class="page-link rounded-pill px-3 mx-1 @(isActive ? "bg-success border-success text-white" : "text-dark bg-white border")"
-                                   href="?reviewPage=@p#shop-reviews"
+                                   href="?@(pagePrefix)reviewPage=@p#shop-reviews"
                                    data-review-page="@p">
                                     @p
                                 </a>

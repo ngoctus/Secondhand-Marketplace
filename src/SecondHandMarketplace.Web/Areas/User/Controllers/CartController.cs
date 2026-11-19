@@ -32,7 +32,8 @@ public class CartController : UserBaseController
 
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
-            return Json(new { success = thanhCong, message = thongBao });
+            var cartCount = thanhCong ? await _cartService.DemSoLuongMonAsync(userId) : 0;
+            return Json(new { success = thanhCong, message = thongBao, cartCount });
         }
 
         if (thanhCong)

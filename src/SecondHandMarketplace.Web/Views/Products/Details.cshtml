@@ -101,14 +101,32 @@
             @(string.IsNullOrWhiteSpace(Model.Description) ? "Người bán chưa viết mô tả cho tin đăng này." : Model.Description)
         </div>
 
-        @if (Model.CanBuy)
+        @{
+            var currentUserId = User.LayNguoiDungId();
+            var isOwner = currentUserId.HasValue && currentUserId.Value == Model.SellerUserId;
+            var currentUrl = Context.Request.Path + Context.Request.QueryString;
+        }
+
+        @if (isOwner)
+        {
+            <div class="detail-actions-row mb-3">
+                <a asp-area="User" asp-controller="Products" asp-action="Edit" asp-route-id="@Model.Id" class="btn-main text-decoration-none text-center" style="padding: 10px 24px; font-weight: 600;">
+                    <i class="bi bi-pencil-square me-1"></i> Quản lý tin đăng
+                </a>
+                <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn-rm-outline text-decoration-none text-center" style="padding: 10px 20px; font-weight: 600;">
+                    Danh sách sản phẩm của tôi
+                </a>
+            </div>
+        }
+        else if (Model.CanBuy)
         {
             <div class="detail-actions-row">
                 @if (User.IsInRole("USER"))
                 {
-                    <form asp-area="User" asp-controller="Cart" asp-action="Them" method="post" style="display: inline-block;">
+                    <form asp-area="User" asp-controller="Cart" asp-action="Them" method="post" class="rm-add-to-cart-form" style="display: inline-block;" data-product-id="@Model.Id" data-product-name="@Model.Name" data-product-price="@Model.Price.ToString("N0") ₫" data-product-image="@(Model.Images.FirstOrDefault() ?? "")">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="maSanPham" value="@Model.Id" />
+                        <input type="hidden" name="returnUrl" value="@currentUrl" />
                         <button type="submit" class="btn-rm-outline" style="padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="9" cy="21" r="1"></circle>
@@ -124,8 +142,16 @@
                 }
                 else if (User.Identity?.IsAuthenticated != true)
                 {
-                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)" class="btn-main text-decoration-none text-center" style="padding: 10px 24px; font-weight: 600;">
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@currentUrl" class="btn-rm-outline text-decoration-none" style="padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
                         Đăng nhập để mua
+                    </a>
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Url.Action("Checkout", "Orders", new { area = "User", maSanPham = Model.Id })" class="btn-main text-decoration-none text-center" style="padding: 10px 24px; font-weight: 600;">
+                        Mua ngay
                     </a>
                 }
                 else
@@ -160,7 +186,16 @@
                 }
                 <div class="shop-snippet-info">
                     <a href="@urlXemShop" class="detail-shop-name">@Model.ShopName</a>
-                    <span>@Model.DanhGiaHienThi</span>
+                    @if (Model.CoDanhGia && Model.DiemTrungBinh.HasValue)
+                    {
+                        <span class="text-warning fw-bold" style="font-size: 12px;">
+                            ★ @Model.DiemTrungBinh.Value.ToString("0.0") <span class="text-muted fw-normal">(@Model.SoDanhGia)</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span style="font-size: 12px; color: var(--color-text-muted);">@Model.DanhGiaHienThi</span>
+                    }
                 </div>
             </div>
             <div class="d-flex gap-2">
@@ -209,27 +244,59 @@
     <div class="detail-content-block">
         <h4>Thông tin người bán</h4>
         <div class="detail-shop-box">
-            <div class="d-flex align-items-center gap-3">
-                @if (!string.IsNullOrWhiteSpace(Model.ShopLogoUrl))
-                {
-                    <img src="@Model.ShopLogoUrl" alt="" class="detail-shop-logo rm-seller-logo" data-fallback />
-                }
-                else
-                {
-                    <div class="detail-shop-logo"></div>
-                }
-                <div>
-                    <a href="@urlXemShop" class="detail-shop-name">@Model.ShopName</a>
-                    <p class="detail-shop-meta">
-                        <span class="@(Model.CoDanhGia ? "" : "is-empty")">@Model.DanhGiaHienThi</span>
-                        <span>@(Model.SoDonThanhCong > 0 ? $"{Model.SoDonThanhCong} đơn đã hoàn tất" : "Chưa có đơn hoàn tất")</span>
-                        <span>@(string.IsNullOrWhiteSpace(Model.KhuVuc) ? "Chưa cập nhật khu vực" : Model.KhuVuc)</span>
-                    </p>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    @if (!string.IsNullOrWhiteSpace(Model.ShopLogoUrl))
+                    {
+                        <img src="@Model.ShopLogoUrl" alt="" class="detail-shop-logo rm-seller-logo" data-fallback />
+                    }
+                    else
+                    {
+                        <div class="detail-shop-logo"></div>
+                    }
+                    <div>
+                        <a href="@urlXemShop" class="detail-shop-name fw-bold fs-6">@Model.ShopName</a>
+                        <p class="detail-shop-meta mb-0 mt-1">
+                            <span>@(Model.SoDonThanhCong > 0 ? $"{Model.SoDonThanhCong} đơn đã hoàn tất" : "Chưa có đơn hoàn tất")</span>
+                            <span>•</span>
+                            <span>@(string.IsNullOrWhiteSpace(Model.KhuVuc) ? "Chưa cập nhật khu vực" : Model.KhuVuc)</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Card chỉ số uy tín & điểm sao nổi bật (C-04) -->
+                <div class="d-flex align-items-center gap-3 bg-white px-3 py-2 rounded-3 border shadow-sm">
+                    @if (Model.CoDanhGia && Model.DiemTrungBinh.HasValue)
+                    {
+                        <div class="text-center pe-3 border-end">
+                            <div class="d-flex align-items-center gap-1 justify-content-center">
+                                <span class="fs-4 fw-bold" style="color: var(--color-star, #b28a4a); line-height: 1;">@Model.DiemTrungBinh.Value.ToString("0.0")</span>
+                                <i class="bi bi-star-fill text-warning fs-5"></i>
+                            </div>
+                            <div class="text-muted" style="font-size: 11px;">Điểm uy tín</div>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark" style="font-size: 13px;">@Model.SoDanhGia đánh giá</div>
+                            <div class="text-warning small" style="letter-spacing: 1px; font-size: 12px;">
+                                @(new string('★', (int)Math.Round(Model.DiemTrungBinh.Value)))
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 12.5px;">
+                            <i class="bi bi-shop fs-4 text-success opacity-75"></i>
+                            <div>
+                                <div class="fw-semibold text-dark">Cửa hàng mới</div>
+                                <div style="font-size: 11px;">Chưa có lượt đánh giá</div>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
             @if (!string.IsNullOrWhiteSpace(Model.ShopDescription))
             {
-                <p style="font-size: 13px; color: var(--color-text-secondary); margin: 10px 0 0;">@Model.ShopDescription</p>
+                <p style="font-size: 13px; color: var(--color-text-secondary); margin: 12px 0 0; padding-top: 10px; border-top: 1px dashed var(--color-border, #e6e8df);">@Model.ShopDescription</p>
             }
         </div>
     </div>
@@ -279,6 +346,21 @@
                                 <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">
                                     @(string.IsNullOrWhiteSpace(dg.NoiDung) ? "Khách không để lại nội dung." : dg.NoiDung)
                                 </p>
+                                @if (!string.IsNullOrWhiteSpace(dg.PhanHoiShop))
+                                {
+                                    <div class="mt-2 p-2 rounded-2 border-start border-3 border-success" style="background-color: var(--color-surface, #f8f5ee); font-size: 12px;">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong class="text-success" style="font-size: 11.5px;">
+                                                <i class="bi bi-reply-fill me-1"></i>Phản hồi từ shop:
+                                            </strong>
+                                            @if (dg.NgayPhanHoi.HasValue)
+                                            {
+                                                <span class="text-muted" style="font-size: 10.5px;">@HienThi.Ngay(dg.NgayPhanHoi.Value)</span>
+                                            }
+                                        </div>
+                                        <p class="text-dark mb-0" style="white-space: pre-line;">@dg.PhanHoiShop</p>
+                                    </div>
+                                }
                             </div>
                         </div>
                         <span class="detail-review-date" style="font-size: 11.5px; color: var(--color-text-muted);">@HienThi.Ngay(dg.NgayTao)</span>

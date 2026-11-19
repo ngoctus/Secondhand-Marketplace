@@ -962,7 +962,8 @@ Các tài liệu này là **bàn giao/lịch sử**, không phải đặc tả h
 - Đăng nhập MVC kiểm tra email/mật khẩu/trạng thái, tạo cookie 7 ngày.
 - Đăng nhập API kiểm tra cùng `IAuthService`, phát JWT 60 phút.
 - `JwtTokenService` không đọc lại DB sau khi phát token; việc kiểm tra `ACTIVE` nằm ở `OnTokenValidated` mỗi request.
-- Chưa có xác thực email, quên mật khẩu, đổi email, refresh token hay thu hồi token.
+- Quên mật khẩu đã có OTP 6 chữ số gửi qua Gmail SMTP, hết hạn sau 10 phút và khóa sau 5 lần nhập sai; SMTP credentials lấy từ User Secrets/secret manager.
+- Chưa có xác thực email khi đăng ký, đổi email, refresh token hay thu hồi token.
 
 #### Nhóm sản phẩm và kiểm duyệt
 

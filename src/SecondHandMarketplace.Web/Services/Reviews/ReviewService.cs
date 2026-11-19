@@ -4,6 +4,8 @@ using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Reviews;
+using SecondHandMarketplace.Web.Services.AuditLogs;
+using SecondHandMarketplace.Web.Services.Notifications;
 
 namespace SecondHandMarketplace.Web.Services.Reviews;
 
@@ -22,7 +24,7 @@ namespace SecondHandMarketplace.Web.Services.Reviews;
 ///   InMemory    → thực thi logic tương đương bằng EF (chỉ dùng trong xUnit test).
 ///   Không được âm thầm chuyển sang InMemory khi SQL Server lỗi về nghiệp vụ.
 /// </summary>
-public sealed class ReviewService(AppDbContext db) : IReviewService
+public sealed class ReviewService(AppDbContext db, IAuditLogService? auditLog = null, INotificationService? notificationService = null) : IReviewService
 {
     // =========================================================
     // Hằng số nghiệp vụ
@@ -72,13 +74,6 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
     {
         try
         {
-            // sp_TaoDanhGia trả về 1 dòng: MaDanhGia
-            var sql = $@"EXEC dbo.sp_TaoDanhGia
-                            @MaDonHang  = {maDonHang},
-                            @MaNguoiMua = {maNguoiMua},
-                            @SoSao      = {soSao},
-                            @NoiDung    = {(object?)noiDung ?? DBNull.Value}";
-
             var result = await db.Database
                 .SqlQueryRaw<int>(
                     "EXEC dbo.sp_TaoDanhGia @MaDonHang, @MaNguoiMua, @SoSao, @NoiDung",
@@ -163,7 +158,7 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
         bool chiLayTatCa = false,
         CancellationToken cancellationToken = default)
     {
-        page     = Math.Max(1, page);
+        page     = Math.Clamp(page, 1, 10000);
         pageSize = Math.Clamp(pageSize, 1, 50);
 
         var query = db.DanhGias.AsNoTracking()
@@ -188,6 +183,8 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
                 AnhDaiDienNguoiMua = d.NguoiMua.AnhDaiDien,
                 SoSao              = d.SoSao,
                 NoiDung            = d.NoiDung,
+                PhanHoiShop        = d.PhanHoiShop,
+                NgayPhanHoi        = d.NgayPhanHoi,
                 TrangThai          = d.TrangThai,
                 NgayTao            = d.NgayTao
             })
@@ -270,6 +267,20 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
         try
         {
             await db.SaveChangesAsync(cancellationToken);
+            if (auditLog != null)
+            {
+                await auditLog.LogAsync(adminId, trangThaiMoi == "HIDDEN" ? "HIDE_REVIEW" : "UNHIDE_REVIEW", "DanhGia", maDanhGia, "SUCCESS", $"Chuyển trạng thái đánh giá #{maDanhGia} sang {trangThaiMoi}");
+            }
+            if (trangThaiMoi == "HIDDEN" && notificationService != null)
+            {
+                await notificationService.CreateAsync(
+                    entity.MaNguoiMua,
+                    NotificationTypes.System,
+                    "Đánh giá của bạn đã bị ẩn",
+                    $"Đánh giá #{maDanhGia} của bạn đã bị quản trị viên ẩn do vi phạm tiêu chuẩn cộng đồng.",
+                    maDanhGia,
+                    cancellationToken);
+            }
             return (true, null);
         }
         catch (DbUpdateException ex)
@@ -354,7 +365,7 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
         int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
-        page = Math.Max(1, page);
+        page = Math.Clamp(page, 1, 10000);
         pageSize = Math.Clamp(pageSize, 1, 50);
 
         var query = db.DanhGias.AsNoTracking()
@@ -374,6 +385,8 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
                 TenShop = d.CuaHang.TenShop,
                 SoSao = d.SoSao,
                 NoiDung = d.NoiDung,
+                PhanHoiShop = d.PhanHoiShop,
+                NgayPhanHoi = d.NgayPhanHoi,
                 TrangThai = d.TrangThai,
                 NgayTao = d.NgayTao,
                 TenSanPhams = d.DonHang.ChiTiet.Select(ct => ct.TenSanPham).ToList(),
@@ -404,7 +417,7 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
     {
         filter   ??= new ShopCanRaSoatFilterVm();
         var tab  = filter.TabChuanHoa;
-        var page = Math.Max(1, filter.Page);
+        var page = Math.Clamp(filter.Page, 1, 10000);
         var pageSize = Math.Clamp(filter.PageSize <= 0 ? 10 : filter.PageSize, 1, 50);
 
         var query =
@@ -499,9 +512,92 @@ public sealed class ReviewService(AppDbContext db) : IReviewService
                 AnhDaiDienNguoiMua = d.NguoiMua.AnhDaiDien,
                 SoSao = d.SoSao,
                 NoiDung = d.NoiDung,
+                PhanHoiShop = d.PhanHoiShop,
+                NgayPhanHoi = d.NgayPhanHoi,
                 TrangThai = d.TrangThai,
                 NgayTao = d.NgayTao
             })
             .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    // =========================================================
+    // 9. Chủ shop phản hồi giải trình đánh giá (C4)
+    // =========================================================
+    public async Task<(bool Success, string? Error)> PhanHoiDanhGiaAsync(
+        int maDanhGia,
+        int maChuShop,
+        string phanHoi,
+        CancellationToken cancellationToken = default)
+    {
+        phanHoi = phanHoi?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(phanHoi))
+            return (false, "Nội dung phản hồi không được để trống.");
+
+        if (phanHoi.Length > 1000)
+            return (false, "Nội dung phản hồi không được vượt quá 1 000 ký tự.");
+
+        var danhGia = await db.DanhGias
+            .Include(d => d.CuaHang)
+            .FirstOrDefaultAsync(d => d.MaDanhGia == maDanhGia, cancellationToken);
+
+        if (danhGia == null)
+            return (false, "Đánh giá không tồn tại.");
+
+        if (danhGia.CuaHang.MaNguoiDung != maChuShop)
+            return (false, "Bạn không có quyền phản hồi đánh giá này vì không phải là chủ cửa hàng.");
+
+        danhGia.PhanHoiShop = phanHoi;
+        danhGia.NgayPhanHoi = DateTime.UtcNow;
+
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+
+            // Gửi thông báo cho người mua khi shop gửi phản hồi
+            if (notificationService != null)
+            {
+                var snippet = phanHoi.Length > 80 ? phanHoi.Substring(0, 77) + "..." : phanHoi;
+                await notificationService.CreateAsync(
+                    danhGia.MaNguoiMua,
+                    NotificationTypes.Order,
+                    $"Shop {danhGia.CuaHang.TenShop} đã phản hồi đánh giá của bạn",
+                    $"Chủ shop phản hồi: \"{snippet}\"",
+                    danhGia.MaDonHang,
+                    cancellationToken);
+            }
+
+            return (true, null);
+        }
+        catch (DbUpdateException ex)
+        {
+            return (false, SqlLoi.ThongBao(ex));
+        }
+    }
+
+    public async Task<DanhSachDanhGiaTheoShopVm> LayDanhGiaCuaShopAsync(
+        int maChuShop,
+        int page = 1,
+        int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var shop = await db.CuaHangs.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.MaNguoiDung == maChuShop, cancellationToken);
+
+        if (shop == null)
+        {
+            return new DanhSachDanhGiaTheoShopVm
+            {
+                MaCuaHang = 0,
+                TenShop = string.Empty,
+                DiemTrungBinh = 0m,
+                SoDanhGia = 0,
+                Items = Array.Empty<DanhGiaItemVm>(),
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = 0
+            };
+        }
+
+        return await LayDanhGiaTheoShopAsync(shop.MaCuaHang, page, pageSize, chiLayTatCa: false, cancellationToken);
     }
 }

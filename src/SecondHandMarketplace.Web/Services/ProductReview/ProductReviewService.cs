@@ -36,7 +36,7 @@ public class ProductReviewService(
     // =====================================================================
     public async Task<ProductListPage> GetListAsync(string? tab, int page, CancellationToken cancellationToken = default)
     {
-        page = Math.Max(1, page);
+        page = Math.Clamp(page, 1, 10000);
         return tab == ProductReviewTabs.Active
             ? await GetActiveAsync(page, cancellationToken)
             : await GetPendingAsync(page, cancellationToken);
@@ -336,7 +336,7 @@ public class ProductReviewService(
     // =====================================================================
     public async Task<ViolationPage> GetViolationsAsync(int? sellerId, int page, CancellationToken cancellationToken = default)
     {
-        page = Math.Max(1, page);
+        page = Math.Clamp(page, 1, 10000);
         var query = db.LichSuViPhams.AsNoTracking().AsQueryable();
         string? sellerName = null;
         if (sellerId is not null)

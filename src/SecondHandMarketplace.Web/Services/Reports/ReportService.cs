@@ -237,6 +237,7 @@ public class ReportService : IReportService
                     }
                     else
                     {
+                        if (tx != null) await tx.RollbackAsync();
                         await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errUser);
                         return (false, errUser ?? "Không thể khóa tài khoản người dùng.");
                     }
@@ -262,6 +263,7 @@ public class ReportService : IReportService
                     }
                     else
                     {
+                        if (tx != null) await tx.RollbackAsync();
                         await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", errShop);
                         return (false, errShop ?? "Không thể khóa cửa hàng.");
                     }
@@ -300,6 +302,7 @@ public class ReportService : IReportService
                     }
                     catch (Exception ex)
                     {
+                        if (tx != null) await tx.RollbackAsync();
                         await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", ex.Message);
                         return (false, "Không thể gỡ sản phẩm: " + SqlLoi.ThongBao(ex));
                     }
@@ -309,6 +312,7 @@ public class ReportService : IReportService
                     var sp = await _db.SanPhams.FindAsync(bc.MaDoiTuong);
                     if (sp == null || sp.DaXoa)
                     {
+                        if (tx != null) await tx.RollbackAsync();
                         await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "FAILED", "Sản phẩm không tồn tại.");
                         return (false, "Sản phẩm không tồn tại.");
                     }

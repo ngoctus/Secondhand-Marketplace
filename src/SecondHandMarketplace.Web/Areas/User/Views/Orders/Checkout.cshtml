@@ -82,17 +82,29 @@
                         <span asp-validation-for="SoDienThoaiNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
 
-                    <div class="mb-2">
-                        <label asp-for="DiaChiNhan" id="lblDiaChiNhan" class="form-label fw-semibold small text-dark">
-                            @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Địa điểm hẹn gặp mong muốn" : "Địa chỉ giao hàng chi tiết") <span class="text-danger">*</span>
+                    <!-- Chọn Tỉnh/Thành & Phường/Xã qua API khu vực -->
+                    <div class="mb-3">
+                        @if (Model.KhuVuc != null)
+                        {
+                            <partial name="_ChonKhuVuc" model="Model.KhuVuc" />
+                        }
+                    </div>
+
+                    <!-- Địa chỉ chi tiết (Không bắt buộc) -->
+                    <div class="mb-3">
+                        <label asp-for="DiaChiChiTiet" id="lblDiaChiChiTiet" class="form-label fw-semibold small text-dark">
+                            @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Địa điểm hẹn gặp chi tiết (Không bắt buộc)" : "Địa chỉ chi tiết (Số nhà, tên ngõ/đường - Không bắt buộc)")
                         </label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted align-items-start pt-2"><i class="bi bi-geo-alt"></i></span>
-                            <textarea asp-for="DiaChiNhan" id="txtDiaChiNhan" rows="3" class="form-control rounded-end-3 border-start-0" 
-                                      placeholder="@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Ví dụ: Quán cafe X, cổng trường UTC2, công viên Y..." : "Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố...")" required maxlength="500"></textarea>
+                            <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-geo-alt"></i></span>
+                            <input asp-for="DiaChiChiTiet" id="txtDiaChiChiTiet" class="form-control rounded-end-3 border-start-0" 
+                                   placeholder="@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Ví dụ: Quán cafe X, cổng trường UTC2..." : "Ví dụ: Số 123 ngõ 45 đường Giải Phóng (tùy chọn)")" maxlength="300" />
                         </div>
-                        <span asp-validation-for="DiaChiNhan" class="text-danger small mt-1 d-block"></span>
+                        <span asp-validation-for="DiaChiChiTiet" class="text-danger small mt-1 d-block"></span>
+                        <div class="form-text text-muted" style="font-size: 11px;">Bạn có thể để trống nếu chỉ cần giao nhận tại địa bàn Phường/Xã đã chọn.</div>
                     </div>
+
+                    <input type="hidden" asp-for="DiaChiNhan" id="hiddenDiaChiNhan" />
 
                     <div class="mb-2">
                         <label asp-for="KhungGioNhan" class="form-label fw-semibold small text-dark">Khung giờ hoặc lưu ý khi nhận hàng</label>
@@ -184,7 +196,7 @@
                                 <img src="@(string.IsNullOrEmpty(Model.SanPhamMuaNgay.AnhDaiDien) ? "/uploads/products/placeholder.svg" : Model.SanPhamMuaNgay.AnhDaiDien)" 
                                      class="rounded-3 border bg-white" style="width: 58px; height: 58px; object-fit: cover;" 
                                      alt="@Model.SanPhamMuaNgay.TenSanPham"
-                                     onerror="this.src='/uploads/banners/banner-1.svg';" />
+                                     onerror="this.src='/uploads/products/placeholder.svg';" />
                                 <div class="flex-grow-1 min-w-0">
                                     <div class="fw-semibold text-truncate small text-dark" title="@Model.SanPhamMuaNgay.TenSanPham">
                                         @Model.SanPhamMuaNgay.TenSanPham
@@ -213,7 +225,7 @@
                                             <img src="@(string.IsNullOrEmpty(it.AnhDaiDien) ? "/uploads/products/placeholder.svg" : it.AnhDaiDien)" 
                                                  class="rounded-3 border bg-white" style="width: 54px; height: 54px; object-fit: cover;" 
                                                  alt="@it.TenSanPham"
-                                                 onerror="this.src='/uploads/banners/banner-1.svg';" />
+                                                 onerror="this.src='/uploads/products/placeholder.svg';" />
                                             <div class="flex-grow-1 min-w-0">
                                                 <div class="fw-semibold text-truncate small text-dark" title="@it.TenSanPham">
                                                     @it.TenSanPham
@@ -311,6 +323,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/khu-vuc.js" asp-append-version="true"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const paymentRadios = document.querySelectorAll('input[name="PhuongThucThanhToan"]');
@@ -345,8 +358,8 @@
         // Xử lý đổi hình thức nhận hàng (Task D3)
         const deliveryRadios = document.querySelectorAll('input[name="HinhThucNhan"]');
         const deliveryCards = document.querySelectorAll('.delivery-option-card');
-        const lblDiaChiNhan = document.getElementById('lblDiaChiNhan');
-        const txtDiaChiNhan = document.getElementById('txtDiaChiNhan');
+        const lblDiaChiChiTiet = document.getElementById('lblDiaChiChiTiet');
+        const txtDiaChiChiTiet = document.getElementById('txtDiaChiChiTiet');
 
         function updateDeliveryUI() {
             let selectedVal = 'GIAO_HANG';
@@ -367,14 +380,14 @@
             const inputPhiVc = document.getElementById('PhiVanChuyen');
 
             if (selectedVal === 'GAP_TRUC_TIEP') {
-                if (lblDiaChiNhan) lblDiaChiNhan.innerHTML = 'Địa điểm hẹn gặp mong muốn <span class="text-danger">*</span>';
-                if (txtDiaChiNhan) txtDiaChiNhan.placeholder = 'Ví dụ: Quán cafe X, cổng trường UTC2, công viên Y...';
+                if (lblDiaChiChiTiet) lblDiaChiChiTiet.textContent = 'Địa điểm hẹn gặp chi tiết (Không bắt buộc)';
+                if (txtDiaChiChiTiet) txtDiaChiChiTiet.placeholder = 'Ví dụ: Quán cafe X, cổng trường UTC2, công viên Y...';
                 if (phiVcTxt) phiVcTxt.textContent = 'Miễn phí (0 ₫)';
                 if (totalTxt) totalTxt.textContent = tienHang.toLocaleString('vi-VN') + ' ₫';
                 if (inputPhiVc) inputPhiVc.value = '0';
             } else {
-                if (lblDiaChiNhan) lblDiaChiNhan.innerHTML = 'Địa chỉ giao hàng chi tiết <span class="text-danger">*</span>';
-                if (txtDiaChiNhan) txtDiaChiNhan.placeholder = 'Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố...';
+                if (lblDiaChiChiTiet) lblDiaChiChiTiet.textContent = 'Địa chỉ chi tiết (Số nhà, tên ngõ/đường - Không bắt buộc)';
+                if (txtDiaChiChiTiet) txtDiaChiChiTiet.placeholder = 'Ví dụ: Số 123 ngõ 45 đường Giải Phóng (tùy chọn)';
                 if (phiVcTxt) phiVcTxt.textContent = (originalPhiVc === 0 ? 'Miễn phí' : originalPhiVc.toLocaleString('vi-VN') + ' ₫');
                 if (totalTxt) totalTxt.textContent = (tienHang + originalPhiVc).toLocaleString('vi-VN') + ' ₫';
                 if (inputPhiVc) inputPhiVc.value = originalPhiVc;

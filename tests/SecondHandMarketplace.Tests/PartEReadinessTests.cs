@@ -11,8 +11,15 @@ public sealed class PartEReadinessTests
     public void DemoSeed_IsSeparatedFromSystemSeed_AndCannotBeAppliedTwice()
     {
         var root = FindRepositoryRoot();
-        var systemSeed = File.ReadAllText(Path.Combine(root, "database", "09_seed_data.sql"));
-        var demoSeed = File.ReadAllText(Path.Combine(root, "database", "29_seed_demo_goc.sql"));
+        var systemSeedPath = File.Exists(Path.Combine(root, "database", "12_seed_core.sql"))
+            ? Path.Combine(root, "database", "12_seed_core.sql")
+            : Path.Combine(root, "database", "09_seed_data.sql");
+        var demoSeedPath = File.Exists(Path.Combine(root, "database", "13_seed_demo.sql"))
+            ? Path.Combine(root, "database", "13_seed_demo.sql")
+            : Path.Combine(root, "database", "29_seed_demo_goc.sql");
+
+        var systemSeed = File.ReadAllText(systemSeedPath);
+        var demoSeed = File.ReadAllText(demoSeedPath);
 
         Assert.DoesNotContain("INSERT NguoiDung", systemSeed, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("INSERT NguoiDung", demoSeed, StringComparison.OrdinalIgnoreCase);
@@ -62,7 +69,8 @@ public sealed class PartEReadinessTests
     private static string FindRepositoryRoot()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
-            if (File.Exists(Path.Combine(directory.FullName, "database", "09_seed_data.sql")))
+            if (File.Exists(Path.Combine(directory.FullName, "database", "12_seed_core.sql")) ||
+                File.Exists(Path.Combine(directory.FullName, "database", "09_seed_data.sql")))
                 return directory.FullName;
         throw new DirectoryNotFoundException("Could not locate the repository root.");
     }

@@ -1,0 +1,83 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Account.RegisterVerifyVm
+@{
+    ViewData["Title"] = "Xác nhận OTP đăng ký";
+}
+
+<div class="form-page page rm-auth-page">
+    <div class="row justify-content-center py-5">
+        <div class="col-12 col-md-7 col-lg-5">
+            <div class="card shadow-sm border-0 rm-auth-card">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-3">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-3" style="width:64px;height:64px">
+                            <i class="bi bi-shield-check fs-2"></i>
+                        </div>
+                        <h2 class="h3 mb-2">Xác nhận đăng ký</h2>
+                        <p class="text-muted small">Nhập mã OTP 6 chữ số đã được gửi tới</p>
+                        <p class="fw-semibold text-primary mb-3">@Model.Email</p>
+                    </div>
+
+                    @if (TempData["Loi"] is string error)
+                    {
+                        <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0 text-danger"></i>
+                            <div class="small">@error</div>
+                        </div>
+                    }
+
+                    <form asp-action="VerifyRegistration" method="post" id="verifyForm">
+                        @Html.AntiForgeryToken()
+                        <input asp-for="Email" type="hidden" />
+                        <input asp-for="Token" type="hidden" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3 text-center">
+                            <label asp-for="Code" class="form-label fw-semibold">Mã xác nhận OTP</label>
+                            <input asp-for="Code" class="form-control text-center fs-3 fw-bold tracking-widest py-2"
+                                   inputmode="numeric"
+                                   autocomplete="one-time-code"
+                                   maxlength="6"
+                                   placeholder="••••••"
+                                   autofocus
+                                   style="letter-spacing: 8px;" />
+                            <span asp-validation-for="Code" class="text-danger small mt-1 d-block"></span>
+                        </div>
+
+                        <div class="form-text text-muted small text-center mb-4">
+                            <i class="bi bi-clock-history me-1"></i> Mã có hiệu lực trong <strong>10 phút</strong> (tối đa 5 lần thử trên máy chủ). Hãy kiểm tra cả hộp thư <em>Spam/Rác</em> nếu không thấy.
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                            <i class="bi bi-check2-circle me-1"></i> Xác nhận và kích hoạt tài khoản
+                        </button>
+                    </form>
+
+                    <form asp-action="ResendRegisterCode" method="post" class="text-center mt-3" id="resendForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Email" value="@Model.Email" />
+                        <input type="hidden" name="Token" value="@Model.Token" />
+                        <button type="submit" class="btn btn-link text-decoration-none small text-muted">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Chưa nhận được mã? Gửi lại OTP
+                        </button>
+                    </form>
+
+                    <hr class="my-4 text-muted opacity-25" />
+
+                    <p class="text-center mb-0 small">
+                        Sai địa chỉ email? <a asp-action="Register" class="text-decoration-none fw-semibold">Đăng ký lại</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $('form').on('submit', function () {
+            const btn = $(this).find('button[type="submit"]');
+            btn.prop('disabled', true);
+        });
+    </script>
+}

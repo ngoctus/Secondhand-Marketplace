@@ -3,10 +3,25 @@
     ViewData["Title"] = "Cửa hàng của tôi";
     var thieuDiaChi = Model.MaCuaHang.HasValue && (Model.MaTinhThanh is null || Model.MaPhuongXa is null || string.IsNullOrWhiteSpace(Model.DiaChiChiTiet));
 }
-<div class="container py-4" style="max-width:760px"><h2>Cửa hàng của tôi</h2><p class="text-muted">Mỗi tài khoản USER được tạo tối đa một cửa hàng.</p>
+<div class="container py-4" style="max-width:760px">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h2 class="mb-1">Cửa hàng của tôi</h2>
+            <p class="text-muted mb-0">Mỗi tài khoản USER được tạo tối đa một cửa hàng.</p>
+        </div>
+        @if (Model.MaCuaHang.HasValue)
+        {
+            <a asp-area="User" asp-controller="Reviews" asp-action="Shop" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                <i class="bi bi-star me-1"></i> Xem đánh giá cửa hàng
+            </a>
+        }
+    </div>
 @if (thieuDiaChi)
 {
-    <div class="alert alert-warning">Cửa hàng của bạn chưa có địa chỉ. Vui lòng chọn tỉnh/thành, phường/xã và nhập địa chỉ chi tiết rồi bấm lưu.</div>
+    <div class="alert alert-warning d-flex align-items-center gap-3">
+        <i class="bi bi-exclamation-triangle-fill fs-4 text-warning flex-shrink-0"></i>
+        <div>Cửa hàng của bạn chưa có địa chỉ. Vui lòng chọn tỉnh/thành, phường/xã và nhập địa chỉ chi tiết rồi bấm lưu.</div>
+    </div>
 }
 <form asp-action="Index" method="post" class="card card-body gap-3"><div asp-validation-summary="ModelOnly" class="text-danger"></div>
 <div><label asp-for="TenShop" class="form-label"></label><input asp-for="TenShop" class="form-control"/><span asp-validation-for="TenShop" class="text-danger"></span></div>
@@ -39,6 +54,6 @@
     <div><label asp-for="TenChuTaiKhoan" class="form-label"></label><input asp-for="TenChuTaiKhoan" class="form-control" maxlength="100" placeholder="NGUYEN VAN A"/><span asp-validation-for="TenChuTaiKhoan" class="text-danger"></span></div>
 </fieldset>
 
-@if(Model.MaCuaHang.HasValue){<p>Trạng thái: <strong>@Model.TrangThai</strong></p>}
+@if(Model.MaCuaHang.HasValue){<p>Trạng thái: <strong class="@(Model.TrangThai == "ACTIVE" ? "text-success" : "text-danger")">@(Model.TrangThai == "ACTIVE" ? "Đang hoạt động" : Model.TrangThai == "LOCKED" ? "Đang bị khóa" : Model.TrangThai)</strong></p>}
 <button class="btn btn-primary" type="submit">@(Model.MaCuaHang.HasValue ? "Cập nhật cửa hàng" : "Tạo cửa hàng")</button></form></div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/khu-vuc.js" asp-append-version="true"></script> }

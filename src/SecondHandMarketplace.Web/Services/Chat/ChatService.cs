@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Chat;
@@ -9,7 +9,7 @@ public interface IChatService
 {
     /// <summary>Người mua bấm "Chat" ở một sản phẩm: tìm hoặc tạo hội thoại với chủ shop.</summary>
     Task<(bool Ok, string? Error, ConversationVm? Conversation)> StartByProductAsync(int userId, int productId, CancellationToken ct = default);
-    Task<IReadOnlyList<ConversationVm>> GetConversationsAsync(int userId, CancellationToken ct = default);
+    Task<IReadOnlyList<ConversationVm>> GetConversationsAsync(int userId, int skip = 0, int take = 50, CancellationToken ct = default);
     /// <summary>Trả null nếu userId không thuộc hội thoại. beforeId = phân trang tin cũ hơn.</summary>
     Task<IReadOnlyList<ChatMessageVm>?> GetMessagesAsync(int userId, int conversationId, long? beforeId, int take, CancellationToken ct = default);
     Task<(bool Ok, string? Error, ChatMessageVm? Message, int ReceiverId)> SendAsync(int userId, int conversationId, string? content);
@@ -41,14 +41,15 @@ public sealed class ChatService(AppDbContext db) : IChatService
             .Select(h => (int?)(h.MaNguoiDung1 == userId ? h.MaNguoiDung2 : h.MaNguoiDung1))
             .FirstOrDefaultAsync(ct);
 
-    private async Task<List<ConversationVm>> LoadAsync(int userId, int? onlyId, CancellationToken ct)
+    private async Task<List<ConversationVm>> LoadAsync(int userId, int? onlyId, CancellationToken ct, int skip = 0, int take = 50)
     {
         var q = db.HoiThoais.AsNoTracking().Where(h => h.MaNguoiDung1 == userId || h.MaNguoiDung2 == userId);
         if (onlyId is int one) q = q.Where(h => h.MaHoiThoai == one);
 
         var rows = await q
             .OrderByDescending(h => h.NgayTinCuoi ?? h.NgayTao)
-            .Take(50)
+            .Skip(Math.Max(0, skip))
+            .Take(Math.Clamp(take, 1, 100))
             .Select(h => new
             {
                 h.MaHoiThoai,
@@ -119,8 +120,8 @@ public sealed class ChatService(AppDbContext db) : IChatService
         return conv is null ? (false, "Không tải được cuộc trò chuyện.", null) : (true, null, conv);
     }
 
-    public async Task<IReadOnlyList<ConversationVm>> GetConversationsAsync(int userId, CancellationToken ct = default) =>
-        await LoadAsync(userId, null, ct);
+    public async Task<IReadOnlyList<ConversationVm>> GetConversationsAsync(int userId, int skip = 0, int take = 50, CancellationToken ct = default) =>
+        await LoadAsync(userId, null, ct, skip, take);
 
     public async Task<IReadOnlyList<ChatMessageVm>?> GetMessagesAsync(int userId, int conversationId, long? beforeId, int take, CancellationToken ct = default)
     {
@@ -157,7 +158,9 @@ public sealed class ChatService(AppDbContext db) : IChatService
         var recent = await db.TinNhans.CountAsync(t => t.MaNguoiGui == userId && t.NgayGui > since);
         if (recent >= MaxPerMinute) return (false, "Bạn gửi quá nhanh, vui lòng chờ một chút.", null, 0);
 
-        var conv = await db.HoiThoais.FirstAsync(h => h.MaHoiThoai == conversationId);
+        var conv = await db.HoiThoais.FirstOrDefaultAsync(h => h.MaHoiThoai == conversationId);
+        if (conv is null) return (false, "Không tìm thấy cuộc trò chuyện.", null, 0);
+
         var msg = new TinNhan
         {
             MaHoiThoai = conversationId,
@@ -171,7 +174,8 @@ public sealed class ChatService(AppDbContext db) : IChatService
         conv.NgayTinCuoi = now;
         await db.SaveChangesAsync();
 
-        var sender = users.First(u => u.MaNguoiDung == userId);
+        var sender = users.FirstOrDefault(u => u.MaNguoiDung == userId);
+        if (sender is null) return (false, "Không tìm thấy tài khoản người gửi.", null, 0);
         return (true, null, ToVm(msg, sender.HoTen), otherId);
     }
 

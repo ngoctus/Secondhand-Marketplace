@@ -1,8 +1,10 @@
 @using SecondHandMarketplace.Web.Common
 @using SecondHandMarketplace.Web.Services.Categories
+@using SecondHandMarketplace.Web.Services.Carts
 @using Microsoft.AspNetCore.Antiforgery
 @inject IAntiforgery Antiforgery
 @inject ICategoryService CategoryService
+@inject ICartService CartService
 @{
     IReadOnlyList<SecondHandMarketplace.Web.Models.Entities.DanhMuc> menuDanhMuc = [];
     try
@@ -14,13 +16,38 @@
         // Layout vẫn phải render được khi DB chưa sẵn sàng
         menuDanhMuc = [];
     }
+
+    var cartCount = 0;
+    if (User.Identity?.IsAuthenticated == true && User.IsInRole("USER") && User.LayNguoiDungId() is int currentUserId)
+    {
+        try
+        {
+            cartCount = await CartService.DemSoLuongMonAsync(currentUserId);
+        }
+        catch
+        {
+            cartCount = 0;
+        }
+    }
+
+    var currentArea = Context.Request.RouteValues["area"]?.ToString() ?? string.Empty;
+    var currentController = Context.Request.RouteValues["controller"]?.ToString() ?? string.Empty;
+    var currentAction = Context.Request.RouteValues["action"]?.ToString() ?? string.Empty;
+    var isSellerChannelPage = currentArea.Equals("User", StringComparison.OrdinalIgnoreCase) &&
+                              (currentController.Equals("Products", StringComparison.OrdinalIgnoreCase) ||
+                               currentController.Equals("SellerOrders", StringComparison.OrdinalIgnoreCase) ||
+                               currentController.Equals("Shop", StringComparison.OrdinalIgnoreCase) ||
+                               currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ||
+                               (currentController.Equals("Reviews", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Shop", StringComparison.OrdinalIgnoreCase)));
 }
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Re:Market - Chợ đồ cũ thông minh, kết nối người mua và người bán, bảo vệ môi trường và tối ưu chi phí." />
     <title>@ViewData["Title"] - Re:Market</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
     @if (User.Identity?.IsAuthenticated == true)
     {
         <meta name="rm-csrf" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
@@ -51,14 +78,41 @@
             </a>
 
             <!-- Search Bar pill theo Wireframe -->
-            <form class="rm-header-search" asp-area="" asp-controller="Products" asp-action="Index" method="get">
+            <form class="rm-header-search" asp-area="" asp-controller="Products" asp-action="Index" method="get" role="search" aria-label="Tìm sản phẩm">
+                @if (Context.Request.RouteValues["controller"]?.ToString()?.Equals("Products", StringComparison.OrdinalIgnoreCase) == true && string.IsNullOrEmpty(currentArea))
+                {
+                    @if (Context.Request.Query.ContainsKey("CategoryId"))
+                    {
+                        <input type="hidden" name="CategoryId" value="@Context.Request.Query["CategoryId"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("PriceRange"))
+                    {
+                        <input type="hidden" name="PriceRange" value="@Context.Request.Query["PriceRange"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("ConditionId"))
+                    {
+                        <input type="hidden" name="ConditionId" value="@Context.Request.Query["ConditionId"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("MaTinhThanh"))
+                    {
+                        <input type="hidden" name="MaTinhThanh" value="@Context.Request.Query["MaTinhThanh"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("MaPhuongXa"))
+                    {
+                        <input type="hidden" name="MaPhuongXa" value="@Context.Request.Query["MaPhuongXa"]" />
+                    }
+                    @if (Context.Request.Query.ContainsKey("Sort"))
+                    {
+                        <input type="hidden" name="Sort" value="@Context.Request.Query["Sort"]" />
+                    }
+                }
                 <span class="search-icon" aria-hidden="true">
                     <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="9" cy="9" r="6"></circle>
                         <line x1="13.5" y1="13.5" x2="18" y2="18"></line>
                     </svg>
                 </span>
-                <input type="search" name="Keyword" class="search-input" placeholder="Tìm món đồ bạn cần..." value="@(Context.Request.Query["Keyword"])" autocomplete="off" />
+                <input type="search" name="Keyword" class="search-input" placeholder="Tìm món đồ bạn cần..." value="@(Context.Request.Query["Keyword"])" autocomplete="off" aria-label="Từ khóa sản phẩm" />
             </form>
 
             <!-- Menu điều hướng ngang -->
@@ -72,15 +126,15 @@
                     <div class="rm-dropdown-menu" id="catDropdownMenu" aria-labelledby="catMenuBtn" hidden>
                         @foreach (var c in menuDanhMuc)
                         {
-                            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc">@c.Ten</a>
+                            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" asp-route-Keyword="@(Context.Request.Query["Keyword"])">@c.Ten</a>
                         }
                         <div class="rm-dropdown-divider"></div>
-                        <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Xem tất cả</a>
+                        <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Xem tất cả</a>
                     </div>
                 </div>
 
-                <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
-                <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1">Giá tốt</a>
+                <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Sort="newest" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Mới đăng</a>
+                <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Giá tốt</a>
 
                 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
                 {
@@ -102,17 +156,27 @@
                 {
                     @if (User.IsInRole("USER"))
                     {
+                        <a asp-area="User" asp-controller="Products" asp-action="Index"
+                           class="btn-rm-outline d-inline-flex align-items-center gap-1"
+                           style="font-weight: 600; padding: 6px 14px; border-radius: 999px;"
+                           title="Quản lý cửa hàng, sản phẩm và đơn bán">
+                            <i class="bi bi-shop"></i>
+                            <span>Kênh Người Bán</span>
+                        </a>
                         <a asp-area="User" asp-controller="Favorites" asp-action="Index" class="rm-nav-link" title="Yêu thích">
                             <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
                         </a>
-                        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="rm-nav-link" title="Giỏ hàng">
+                        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="rm-nav-link rm-cart-link" title="Giỏ hàng" style="position: relative;">
                             <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8">
                                 <circle cx="9" cy="21" r="1"></circle>
                                 <circle cx="20" cy="21" r="1"></circle>
                                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                             </svg>
+                            <span class="rm-cart-badge count" id="rmCartBadge" style="@(cartCount > 0 ? "display: inline-flex;" : "display: none;")">
+                                @(cartCount > 99 ? "99+" : cartCount.ToString())
+                            </span>
                         </a>
                     }
 
@@ -122,9 +186,19 @@
 
                     <div class="rm-dropdown">
                         <button type="button" class="rm-user-trigger" id="userMenuBtn" aria-expanded="false">
-                            <span class="user-avatar" aria-hidden="true">
-                                @(User.Identity?.Name?.Substring(0, 1).ToUpperInvariant() ?? "U")
-                            </span>
+                            @{
+                                var userAvatar = User.FindFirst("avatar")?.Value;
+                                var userInitial = User.Identity?.Name?.Length > 0 ? User.Identity.Name.Substring(0, 1).ToUpperInvariant() : "U";
+                            }
+                            @if (!string.IsNullOrWhiteSpace(userAvatar))
+                            {
+                                <img src="@userAvatar" alt="Avatar" class="user-avatar" style="object-fit: cover;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';" />
+                                <span class="user-avatar" style="display:none;" aria-hidden="true">@userInitial</span>
+                            }
+                            else
+                            {
+                                <span class="user-avatar" aria-hidden="true">@userInitial</span>
+                            }
                             <span style="font-size: 13.5px; font-weight: 500;">@User.Identity?.Name</span>
                             <svg viewBox="0 0 12 8" width="9" height="5" fill="currentColor"><path d="M1.41 0L6 4.58L10.59 0L12 1.41L6 7.41L0 1.41L1.41 0Z"/></svg>
                         </button>
@@ -137,6 +211,7 @@
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">Đánh giá của tôi</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán (Shop)</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">Đánh giá cửa hàng</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê doanh thu</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">Yêu thích</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng của tôi</a>
@@ -151,10 +226,21 @@
                         </div>
                     </div>
 
-                    <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+                    @if (User.IsInRole("USER"))
+                    {
+                        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+                    }
+                    else if (User.IsInRole("ADMIN"))
+                    {
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn-rm-primary">Quản trị</a>
+                    }
                 }
                 else
                 {
+                    <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products" class="btn-rm-outline d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-shop"></i>
+                        <span>Kênh Người Bán</span>
+                    </a>
                     <a asp-area="" asp-controller="Account" asp-action="Login" class="btn-rm-outline">Đăng nhập</a>
                     <a asp-area="" asp-controller="Account" asp-action="Register" class="btn-rm-outline">Đăng ký</a>
                     <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-rm-primary">Đăng bán</a>
@@ -162,20 +248,20 @@
             </div>
         </div>
         <div class="rm-mobile-drawer" id="mobileDrawer" hidden>
-            <form asp-area="" asp-controller="Products" asp-action="Index" method="get" class="mb-3">
+            <form asp-area="" asp-controller="Products" asp-action="Index" method="get" class="mb-3" role="search" aria-label="Tìm sản phẩm">
                 <input type="search" name="Keyword" class="form-control" placeholder="Tìm món đồ bạn cần..."
-                       value="@(Context.Request.Query["Keyword"])" autocomplete="off" />
+                       value="@(Context.Request.Query["Keyword"])" autocomplete="off" aria-label="Từ khóa sản phẩm" />
             </form>
 
             <div class="rm-mobile-heading">Danh mục</div>
             @foreach (var c in menuDanhMuc.Take(6))
             {
-                <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc">@c.Ten</a>
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" asp-route-Keyword="@(Context.Request.Query["Keyword"])">@c.Ten</a>
             }
 
             <div class="rm-dropdown-divider"></div>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index">Mới đăng</a>
-            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-MaxPrice="300000">Giá tốt</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Sort="newest" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Mới đăng</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" asp-route-Keyword="@(Context.Request.Query["Keyword"])">Giá tốt</a>
 
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
             {
@@ -183,7 +269,38 @@
                 <div class="rm-mobile-heading">Quản trị</div>
                 <partial name="_AdminLinks" />
             }
-            @if (User.Identity?.IsAuthenticated != true)
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="rm-dropdown-divider"></div>
+                <div class="rm-mobile-heading">Tài khoản</div>
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a>
+                <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="ChangePassword">Đổi mật khẩu</a>
+                @if (User.IsInRole("USER"))
+                {
+                    <a class="rm-dropdown-item d-flex justify-content-between align-items-center" asp-area="User" asp-controller="Cart" asp-action="Index">
+                        <span>Giỏ hàng</span>
+                        <span class="rm-cart-badge-mobile" style="@(cartCount > 0 ? "display: inline-block;" : "display: none;")">
+                            @(cartCount > 99 ? "99+" : cartCount.ToString())
+                        </span>
+                    </a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">Yêu thích</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">Đánh giá của tôi</a>
+                    <div class="rm-dropdown-divider"></div>
+                    <a class="rm-dropdown-item fw-semibold" asp-area="User" asp-controller="Products" asp-action="Index">
+                        <i class="bi bi-shop me-1"></i> Kênh Người Bán
+                    </a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán (Shop)</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">Đánh giá cửa hàng</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê cửa hàng</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng của tôi</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Products" asp-action="Create">Đăng sản phẩm</a>
+                }
+                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
+                    <button type="submit" class="rm-dropdown-item text-danger">Đăng xuất</button>
+                </form>
+            }
+            else
             {
                 <div class="rm-dropdown-divider"></div>
                 <a class="rm-dropdown-item" asp-area="" asp-controller="Account" asp-action="Login">Đăng nhập</a>
@@ -194,9 +311,64 @@
 
     <!-- Main Content -->
     <main class="rm-main-content" role="main">
+        @if (isSellerChannelPage)
+        {
+            <nav class="d-flex flex-wrap align-items-center gap-2 mb-3 pb-2 border-bottom" aria-label="Điều hướng Kênh Người Bán">
+                <span class="fw-bold text-dark me-2 d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-shop text-primary"></i> Kênh Người Bán:
+                </span>
+                <a asp-area="User" asp-controller="Products" asp-action="Index"
+                   class="btn btn-sm @(currentController.Equals("Products", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
+                    Quản lý sản phẩm
+                </a>
+                <a asp-area="User" asp-controller="SellerOrders" asp-action="Index"
+                   class="btn btn-sm @(currentController.Equals("SellerOrders", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
+                    Đơn bán (Shop)
+                </a>
+                <a asp-area="User" asp-controller="Shop" asp-action="Index"
+                   class="btn btn-sm @(currentController.Equals("Shop", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
+                    Cửa hàng của tôi
+                </a>
+                <a asp-area="User" asp-controller="Reviews" asp-action="Shop"
+                   class="btn btn-sm @(currentController.Equals("Reviews", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Shop", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
+                    Đánh giá cửa hàng
+                </a>
+                <a asp-area="User" asp-controller="Dashboard" asp-action="Index"
+                   class="btn btn-sm @(currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
+                    Thống kê doanh thu
+                </a>
+            </nav>
+        }
         <partial name="_ThongBao" />
         @RenderBody()
     </main>
+
+    <!-- Add to Cart Confirmation Box / Modal -->
+    <div class="rm-cart-backdrop" id="rmCartModal" role="dialog" aria-modal="true" aria-labelledby="rmCartModalTitle">
+        <div class="rm-cart-box">
+            <button type="button" class="rm-cart-box-x" id="rmCartModalCloseX" aria-label="Đóng">&times;</button>
+            <div class="rm-cart-box-header">
+                <div class="rm-cart-box-icon">
+                    <i class="bi bi-check2"></i>
+                </div>
+                <div>
+                    <h4 class="rm-cart-box-title" id="rmCartModalTitle">Đã thêm vào giỏ hàng!</h4>
+                    <div class="text-muted small">Sản phẩm đã sẵn sàng trong giỏ của bạn.</div>
+                </div>
+            </div>
+            <div class="rm-cart-box-item">
+                <img id="rmCartModalImg" class="rm-cart-box-img" src="" alt="Ảnh sản phẩm" />
+                <div class="rm-cart-box-info">
+                    <div class="rm-cart-box-name" id="rmCartModalName"></div>
+                    <div class="rm-cart-box-price" id="rmCartModalPrice"></div>
+                </div>
+            </div>
+            <div class="rm-cart-box-actions">
+                <button type="button" class="rm-cart-box-btn-close" id="rmCartModalCloseBtn">Tiếp tục mua sắm</button>
+                <a asp-area="User" asp-controller="Cart" asp-action="Index" class="rm-cart-box-btn-view">Xem giỏ hàng</a>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer chuẩn 100% Wireframe (Ảnh 3, 4, 5) -->
     <footer class="rm-footer">
@@ -217,8 +389,9 @@
                 <div>
                     <h4 class="rm-footer-heading">Về chúng tôi</h4>
                     <ul class="rm-footer-links">
-                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="giao-dich">Giao dịch trên Re:Market</a></li>
-                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="su-co">Cách nhận hỗ trợ</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="About">Giới thiệu</a></li>
+                        <li><a href="/gioi-thieu#lien-he">Liên hệ</a></li>
+                        <li><a asp-controller="Help" asp-action="Index">Trung tâm trợ giúp</a></li>
                     </ul>
                 </div>
 
@@ -236,24 +409,26 @@
                 <div>
                     <h4 class="rm-footer-heading">Chính sách</h4>
                     <ul class="rm-footer-links">
-                        <li><a asp-controller="Help" asp-action="Index" asp-fragment="bao-mat">Bảo mật tài khoản</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Terms">Điều khoản sử dụng</a></li>
+                        <li><a href="/chinh-sach-bao-mat">Chính sách bảo mật</a></li>
                         <li><a asp-controller="Help" asp-action="Index" asp-fragment="su-co">Quy tắc xử lý sự cố</a></li>
                     </ul>
                 </div>
 
-                <!-- Cột 5: Mạng xã hội -->
+                <!-- Cột 5: Liên hệ và hỗ trợ -->
                 <div>
                     <h4 class="rm-footer-heading">Mạng xã hội</h4>
                     <div class="rm-social-icons">
-                        <a class="social-circle" href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook">f</a>
-                        <a class="social-circle" href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube">▶</a>
-                        <a class="social-circle" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram">📸</a>
+                        <a class="social-circle" href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a class="social-circle" href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                        <a class="social-circle" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
                     </div>
+                    <p class="rm-footer-contact-note">Với vấn đề về đơn hàng, vui lòng chuẩn bị mã đơn để được hỗ trợ nhanh hơn.</p>
                 </div>
             </div>
 
             <div class="rm-footer-bottom">
-                © 2026 Re:Market. Bảo lưu mọi quyền.
+                © @DateTime.Now.Year Re:Market. Bảo lưu mọi quyền.
             </div>
         </div>
     </footer>
@@ -269,6 +444,7 @@
         <script src="~/js/realtime.js" asp-append-version="true" data-hub="@Url.Content("~/hubs/notification")"></script>
     }
     @await RenderSectionAsync("Scripts", required: false)
+
     <partial name="_ChatWidget" />
     <partial name="_AiChatWidget" />
 </body>

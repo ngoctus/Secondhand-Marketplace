@@ -410,6 +410,8 @@ public class AppDbContext : DbContext
             e.ToTable("DanhGia");
             e.HasKey(x => x.MaDanhGia);
             e.Property(x => x.NoiDung).HasMaxLength(1000);
+            e.Property(x => x.PhanHoiShop).HasMaxLength(1000);
+            e.Property(x => x.NgayPhanHoi);
             e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(10);
             e.HasIndex(x => x.MaDonHang).IsUnique();
             e.HasOne(x => x.DonHang)

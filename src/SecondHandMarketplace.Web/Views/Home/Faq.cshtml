@@ -1,0 +1,112 @@
+@{
+    ViewData["Title"] = "Câu hỏi thường gặp & Hướng dẫn - Re:Market";
+}
+
+<div class="container py-5" style="max-width: 960px;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="font-size: 14px;">
+            <li class="breadcrumb-item"><a asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Hỗ trợ & FAQ</li>
+        </ol>
+    </nav>
+
+    <!-- Section: Hướng dẫn giao dịch -->
+    <section id="huong-dan-giao-dich" class="mb-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <h1 class="h2 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">Hướng dẫn giao dịch an toàn</h1>
+            <p class="text-muted mb-4">Để đảm bảo quyền lợi tối đa cho cả người mua và người bán, Re:Market khuyến nghị quy trình mua bán chuẩn:</p>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="badge bg-success mb-2">Bước 1</div>
+                        <h6 class="fw-bold">Kiểm tra thông tin món đồ</h6>
+                        <p class="small text-muted mb-0">Đọc kỹ mô tả, hình ảnh thật và độ mới của sản phẩm. Trao đổi với người bán qua tin nhắn nếu có thắc mắc.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="badge bg-success mb-2">Bước 2</div>
+                        <h6 class="fw-bold">Đặt hàng & Khung giờ nhận</h6>
+                        <p class="small text-muted mb-0">Chọn địa chỉ và khung giờ nhận hàng phù hợp. Hệ thống hỗ trợ thanh toán linh hoạt qua chuyển khoản hoặc COD.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="badge bg-success mb-2">Bước 3</div>
+                        <h6 class="fw-bold">Đồng kiểm & Đánh giá</h6>
+                        <p class="small text-muted mb-0">Khi nhận hàng, đồng kiểm ngoại quan. Sau khi hoàn tất đơn hàng, bạn có thể khiếu nại nếu sản phẩm không đúng mô tả.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section: FAQ -->
+    <section id="faq" class="mb-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <h2 class="h3 fw-bold mb-4" style="color: var(--color-primary-dark, #1B4332);">Câu hỏi thường gặp (FAQ)</h2>
+            <div class="accordion accordion-flush" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            1. Làm thế nào để đăng bán sản phẩm trên Re:Market?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-secondary">
+                            Bạn chỉ cần đăng nhập tài khoản, nhấn vào nút "Đăng bán" ở góc trên bên phải hoặc vào mục Cửa hàng của tôi. Điền tiêu đề, chọn danh mục, tải ảnh thật của món đồ và thiết lập giá bán. Tin đăng sẽ được kiểm duyệt trước khi hiển thị công khai.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            2. Thời gian kiểm duyệt tin đăng là bao lâu?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-secondary">
+                            Re:Market ứng dụng hệ thống lọc từ khóa vi phạm tự động và đội ngũ quản trị viên kiểm duyệt liên tục. Hầu hết tin đăng hợp lệ sẽ được duyệt trong vòng vài phút đến tối đa 2 giờ làm việc.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingThree">
+                        <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            3. Nếu hàng nhận được không đúng mô tả thì phải làm sao?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-secondary">
+                            Bạn có quyền gửi yêu cầu Khiếu nại / Tranh chấp trong vòng 48 giờ kể từ khi nhận hàng. Đính kèm hình ảnh bằng chứng rõ ràng. Đội ngũ Re:Market sẽ trung gian giải quyết và hoàn tiền nếu người bán vi phạm cam kết mô tả.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section: Báo cáo vi phạm -->
+    <section id="bao-cao-vi-pham">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                <h2 class="h3 fw-bold mb-0 text-danger"><i class="bi bi-flag-fill me-2"></i>Báo cáo vi phạm cộng đồng</h2>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-area="User" asp-controller="Reports" asp-action="Index" class="btn btn-outline-danger btn-sm">Xem lịch sử báo cáo của bạn</a>
+                }
+            </div>
+            <p class="text-muted">
+                Nếu bạn phát hiện hàng giả, hàng cấm, nội dung lừa đảo hoặc hành vi quấy rối, vui lòng báo cáo ngay để ban quản trị kịp thời xử lý và khóa tài khoản vi phạm.
+            </p>
+            <div class="alert alert-warning border-0 rounded-3 d-flex align-items-center gap-3">
+                <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
+                <div>
+                    <strong>Cách gửi báo cáo:</strong> Trên từng trang chi tiết sản phẩm hoặc trang cửa hàng của người bán, nhấn vào nút "Báo cáo tin đăng" hoặc "Báo cáo người bán" để gửi khiếu nại kèm lý do cụ thể.
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

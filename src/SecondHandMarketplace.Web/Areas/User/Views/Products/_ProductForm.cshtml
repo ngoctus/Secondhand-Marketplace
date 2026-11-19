@@ -22,6 +22,7 @@
         <select asp-for="MaDanhMuc" class="form-select" asp-items="@(new SelectList(Model.DanhSachDanhMuc.Where(d => d.DangHienThi), "MaDanhMuc", "Ten"))">
             <option value="">— Chọn danh mục —</option>
         </select>
+        <span asp-validation-for="MaDanhMuc" class="text-danger small"></span>
     </div>
 
     <div class="col-md-3">
@@ -29,6 +30,7 @@
         <select asp-for="MaTinhTrang" class="form-select" asp-items="@(new SelectList(Model.DanhSachTinhTrang.Where(t => t.DangSuDung), "MaTinhTrang", "Ten"))">
             <option value="">— Chọn tình trạng —</option>
         </select>
+        <span asp-validation-for="MaTinhTrang" class="text-danger small"></span>
     </div>
 
     <div class="col-12">

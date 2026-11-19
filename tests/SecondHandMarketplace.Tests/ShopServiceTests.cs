@@ -187,7 +187,8 @@ public class ShopServiceTests
     {
         Assert.All(VietQrBanks.All, b => Assert.Matches("^[0-9]{6}$", b.Bin));
         Assert.Equal(VietQrBanks.All.Count, VietQrBanks.All.Select(b => b.Bin).Distinct().Count());
-        Assert.Equal("970422", VietQrBanks.TimTheoBin("970422")!.Bin);   // MB Bank, khớp VietQrViewModel mặc định
+        Assert.Equal("970415", VietQrBanks.TimTheoBin("970415")!.Bin);   // VietinBank (UTC2), khớp VietQrViewModel mặc định
+        Assert.Equal("970422", VietQrBanks.TimTheoBin("970422")!.Bin);   // MB Bank
         Assert.Null(VietQrBanks.TimTheoBin("000000"));
     }
 }

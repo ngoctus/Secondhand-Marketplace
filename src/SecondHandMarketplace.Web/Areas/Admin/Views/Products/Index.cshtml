@@ -38,7 +38,7 @@
                     </td>
                     <td>@item.TenNguoiBan<div class="small text-muted">@item.EmailNguoiBan · @item.TenShop</div></td>
                     <td>@(item.Gia?.ToString("N0"))</td>
-                    <td>@item.Moc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@HienThi.NgayGio(item.Moc)</td>
                     @if (pending) { <td><span class="badge @badge.BadgeClass">@badge.Text</span></td> }
                     <td><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@item.MaSanPham">@(pending ? "Xem & xử lý" : "Xem / gỡ")</a></td>
                 </tr>

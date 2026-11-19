@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal
 cd /d "%~dp0"
 
@@ -29,5 +29,5 @@ if errorlevel 1 (
     exit /b 1
 )
 
-rem run-db.bat se chay 01-09 va cac file 10_banner_yeuthich.sql, 11_danhgia.sql, 12_tranhchap_baocao.sql, 13_daugia.sql, 14_donhang_admin.sql.
+rem run-db.bat se chay bo bootstrap moi gom 01-12; 13_seed_demo.sql chi chay trong DEV/TEST.
 call run-db.bat

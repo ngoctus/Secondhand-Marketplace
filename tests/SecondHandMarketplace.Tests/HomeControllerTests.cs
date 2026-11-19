@@ -36,7 +36,8 @@ public class HomeControllerTests
             new CategoryService(db, cache),
             new BannerService(db),
             reviews,
-            cache);
+            cache,
+            db);
     }
 
     private static async Task<HomeIndexVm> TrangChuAsync(HomeController controller) =>

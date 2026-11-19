@@ -1,4 +1,4 @@
-﻿namespace SecondHandMarketplace.Web.Models.ViewModels.Products;
+namespace SecondHandMarketplace.Web.Models.ViewModels.Products;
 
 /// <summary>Dữ liệu trang chi tiết sản phẩm.</summary>
 public class ProductDetailVm
@@ -16,6 +16,7 @@ public class ProductDetailVm
     public List<string> Images { get; set; } = new();
 
     public int ShopId { get; set; }
+    public int SellerUserId { get; set; }
     public string ShopName { get; set; } = string.Empty;
     public string? ShopDescription { get; set; }
     public string? ShopLogoUrl { get; set; }

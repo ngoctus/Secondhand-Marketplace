@@ -285,4 +285,125 @@ public class NotificationServiceTests
         Assert.Equal(0, sent);
         Assert.Empty(db.ThongBaos);
     }
+
+    [Fact]
+    public async Task MarkAllAsRead_MarksOnlyTargetUserUnreadNotifications()
+    {
+        using var db = NewDb();
+        var service = new NotificationService(db);
+
+        db.ThongBaos.AddRange(
+            new ThongBao { MaNguoiDung = Alice, Loai = "ORDER", TieuDe = "A1", NoiDung = "x1", DaDoc = false },
+            new ThongBao { MaNguoiDung = Alice, Loai = "PRODUCT", TieuDe = "A2", NoiDung = "x2", DaDoc = false },
+            new ThongBao { MaNguoiDung = Alice, Loai = "SYSTEM", TieuDe = "A3", NoiDung = "x3", DaDoc = true },
+            new ThongBao { MaNguoiDung = Bob, Loai = "ORDER", TieuDe = "B1", NoiDung = "y1", DaDoc = false }
+        );
+        await db.SaveChangesAsync();
+
+        var count = await service.MarkAllAsReadAsync(Alice);
+
+        Assert.Equal(2, count);
+        Assert.Equal(0, await service.CountUnreadAsync(Alice));
+        Assert.Equal(1, await service.CountUnreadAsync(Bob));
+
+        var aliceNotifications = await db.ThongBaos.Where(x => x.MaNguoiDung == Alice).ToListAsync();
+        Assert.All(aliceNotifications, n => Assert.True(n.DaDoc));
+    }
+
+    [Fact]
+    public async Task MarkAllAsRead_WhenAllAlreadyRead_ReturnsZero()
+    {
+        using var db = NewDb();
+        var service = new NotificationService(db);
+
+        db.ThongBaos.Add(new ThongBao { MaNguoiDung = Alice, Loai = "SYSTEM", TieuDe = "A1", NoiDung = "x1", DaDoc = true });
+        await db.SaveChangesAsync();
+
+        var count = await service.MarkAllAsReadAsync(Alice);
+
+        Assert.Equal(0, count);
+        Assert.Equal(0, await service.CountUnreadAsync(Alice));
+    }
+
+    [Fact]
+    public async Task MarkAllAsRead_WithPendingChangesInContext_ThrowsAndLeavesUnread()
+    {
+        using var db = NewDb();
+        var service = new NotificationService(db);
+        db.ThongBaos.Add(new ThongBao { MaNguoiDung = Alice, Loai = "SYSTEM", TieuDe = "a", NoiDung = "x", DaDoc = false });
+        await db.SaveChangesAsync();
+
+        db.NguoiDungs.Add(new NguoiDung { MaNguoiDung = 10, HoTen = "Pending", Email = "p@t.local", TrangThai = "ACTIVE" });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.MarkAllAsReadAsync(Alice));
+        Assert.False((await db.ThongBaos.AsNoTracking().SingleAsync()).DaDoc);
+    }
+
+    [Fact]
+    public async Task ResolveTargetUrl_WhenOrderAndUserIsSeller_ReturnsSellerOrderDetailsUrl()
+    {
+        using var db = NewDb();
+        var service = new NotificationService(db);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = Alice, TenShop = "Alice Shop", TrangThai = "ACTIVE" };
+        db.CuaHangs.Add(shop);
+        var order = new DonHang { MaDonHang = 100, MaNguoiDung = Bob, MaCuaHang = 1, MaDon = "DH-100", TrangThai = "PENDING" };
+        db.DonHangs.Add(order);
+        var noti = new ThongBao { MaThongBao = 50, MaNguoiDung = Alice, Loai = "ORDER", TieuDe = "Đơn mới", NoiDung = "x", MaThamChieu = 100 };
+        db.ThongBaos.Add(noti);
+        await db.SaveChangesAsync();
+
+        var url = await service.ResolveTargetUrlAsync(Alice, noti.MaThongBao);
+
+        Assert.Equal("/User/SellerOrders/Details/100", url);
+    }
+
+    [Fact]
+    public async Task ResolveTargetUrl_WhenOrderAndUserIsBuyer_ReturnsBuyerOrderChiTietUrl()
+    {
+        using var db = NewDb();
+        var service = new NotificationService(db);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = Alice, TenShop = "Alice Shop", TrangThai = "ACTIVE" };
+        db.CuaHangs.Add(shop);
+        var order = new DonHang { MaDonHang = 100, MaNguoiDung = Bob, MaCuaHang = 1, MaDon = "DH-100", TrangThai = "PENDING" };
+        db.DonHangs.Add(order);
+        var noti = new ThongBao { MaThongBao = 51, MaNguoiDung = Bob, Loai = "ORDER", TieuDe = "Đơn của bạn", NoiDung = "x", MaThamChieu = 100 };
+        db.ThongBaos.Add(noti);
+        await db.SaveChangesAsync();
+
+        var url = await service.ResolveTargetUrlAsync(Bob, noti.MaThongBao);
+
+        Assert.Equal("/User/Orders/ChiTiet/100", url);
+    }
+
+    [Fact]
+    public async Task ResolveTargetUrl_WhenProduct_ReturnsProductDetailsUrl()
+    {
+        using var db = NewDb();
+        var service = new NotificationService(db);
+
+        var noti = new ThongBao { MaThongBao = 52, MaNguoiDung = Alice, Loai = "PRODUCT", TieuDe = "Sản phẩm", NoiDung = "x", MaThamChieu = 99 };
+        db.ThongBaos.Add(noti);
+        await db.SaveChangesAsync();
+
+        var url = await service.ResolveTargetUrlAsync(Alice, noti.MaThongBao);
+
+        Assert.Equal("/Products/Details/99", url);
+    }
+
+    [Fact]
+    public async Task ResolveTargetUrl_WhenSystemOrNoRef_ReturnsNotificationsUrl()
+    {
+        using var db = NewDb();
+        var service = new NotificationService(db);
+
+        var noti = new ThongBao { MaThongBao = 53, MaNguoiDung = Alice, Loai = "SYSTEM", TieuDe = "Hệ thống", NoiDung = "x", MaThamChieu = null };
+        db.ThongBaos.Add(noti);
+        await db.SaveChangesAsync();
+
+        var url = await service.ResolveTargetUrlAsync(Alice, noti.MaThongBao);
+
+        Assert.Equal("/User/Notifications", url);
+    }
 }

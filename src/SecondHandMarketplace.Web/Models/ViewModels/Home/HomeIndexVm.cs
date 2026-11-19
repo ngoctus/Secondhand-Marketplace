@@ -18,4 +18,9 @@ public class HomeIndexVm
     public IReadOnlyList<ProductCardVm> SanPhamNoiBat { get; init; } = [];
     public IReadOnlyList<HomeCategoryTabVm> TabsDanhMuc { get; init; } = [];
     public IReadOnlyList<DanhGiaNoiBatVm> DanhGiaNoiBat { get; init; } = [];
+
+    // Ba số liệu cho khối hero và "Giá trị bền vững"; 0 nghĩa là chưa đếm được (DB thiếu bảng).
+    public int TongSanPham { get; init; }
+    public int TongNguoiBan { get; init; }
+    public int TongDonHoanTat { get; init; }
 }

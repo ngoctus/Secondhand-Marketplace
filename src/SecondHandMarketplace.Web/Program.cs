@@ -2,6 +2,8 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Facebook;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
@@ -96,14 +98,29 @@ public class Program
         if (jwtKeyIsPlaceholder && !builder.Environment.IsDevelopment())
             throw new InvalidOperationException("Phải đặt Jwt:Key thật (biến môi trường Jwt__Key) khi chạy ngoài Development.");
 
-        // Chỉ gọi AddAuthentication một lần: Cookie là mặc định cho MVC, API chọn JWT bằng AuthenticationSchemes.
-        builder.Services.AddAuthentication(options =>
+        // Cấu hình Authentication: Dùng PolicyScheme để tự động chọn JWT khi có header Bearer hoặc request tới /api, ngược lại dùng Cookie cho MVC.
+        var authBuilder = builder.Services.AddAuthentication(options =>
         {
-            options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultScheme = "SmartScheme";
+            options.DefaultChallengeScheme = "SmartScheme";
         })
-        .AddCookie(options =>
+        .AddPolicyScheme("SmartScheme", "Bearer or Cookie", options =>
+        {
+            options.ForwardDefaultSelector = context =>
+            {
+                var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    return JwtBearerDefaults.AuthenticationScheme;
+                }
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    return JwtBearerDefaults.AuthenticationScheme;
+                }
+                return CookieAuthenticationDefaults.AuthenticationScheme;
+            };
+        })
+        .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
         {
             options.LoginPath = "/Account/Login";
             options.AccessDeniedPath = "/Account/AccessDenied";
@@ -112,6 +129,26 @@ public class Program
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.ExpireTimeSpan = TimeSpan.FromDays(7);
             options.SlidingExpiration = true;
+            options.Events.OnRedirectToLogin = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                }
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                }
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            };
             // Mỗi request kiểm tra lại tài khoản: bị khóa/xóa thì phiên đang đăng nhập mất hiệu lực ngay.
             options.Events.OnValidatePrincipal = async context =>
             {
@@ -137,6 +174,19 @@ public class Program
             };
             options.Events = new JwtBearerEvents
             {
+                OnChallenge = context =>
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+                    return context.Response.WriteAsync("{\"error\":\"unauthorized\",\"message\":\"Bạn chưa đăng nhập hoặc token không hợp lệ.\"}");
+                },
+                OnForbidden = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    context.Response.ContentType = "application/json";
+                    return context.Response.WriteAsync("{\"error\":\"forbidden\",\"message\":\"Bạn không có quyền truy cập tài nguyên này.\"}");
+                },
                 OnTokenValidated = async context =>
                 {
                     if (!await IsUserActiveAsync(context.HttpContext, context.Principal))
@@ -144,6 +194,46 @@ public class Program
                 }
             };
         });
+
+        authBuilder.AddCookie("ExternalCookie", options =>
+        {
+            options.Cookie.Name = "SecondHand.External";
+            options.ExpireTimeSpan = TimeSpan.FromMinutes(15);
+        });
+
+        var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        var isGoogleOAuthActive = !string.IsNullOrWhiteSpace(googleClientId) &&
+                                  !googleClientId.StartsWith("CHANGE_THIS", StringComparison.OrdinalIgnoreCase);
+        if (isGoogleOAuthActive)
+        {
+            authBuilder.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            {
+                options.SignInScheme = "ExternalCookie";
+                options.ClientId = googleClientId!;
+                options.ClientSecret = googleClientSecret ?? "";
+                options.SaveTokens = true;
+                options.Events.OnRedirectToAuthorizationEndpoint = context =>
+                {
+                    context.Response.Redirect(context.RedirectUri + "&prompt=select_account");
+                    return Task.CompletedTask;
+                };
+            });
+        }
+
+        var fbAppId = builder.Configuration["Authentication:Facebook:AppId"];
+        var fbAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+        var isFbOAuthActive = !string.IsNullOrWhiteSpace(fbAppId) &&
+                              !fbAppId.StartsWith("CHANGE_THIS", StringComparison.OrdinalIgnoreCase);
+        if (isFbOAuthActive)
+        {
+            authBuilder.AddFacebook(FacebookDefaults.AuthenticationScheme, options =>
+            {
+                options.SignInScheme = "ExternalCookie";
+                options.AppId = fbAppId!;
+                options.AppSecret = fbAppSecret ?? "";
+            });
+        }
 
         var app = builder.Build();
         var forwardedHeaders = new ForwardedHeadersOptions
@@ -162,12 +252,15 @@ public class Program
             app.UseHsts();
         }
 
-        app.UseSwagger();
-        app.UseSwaggerUI(c =>
+        if (app.Environment.IsDevelopment())
         {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "SecondHand Marketplace API v1");
-            c.RoutePrefix = "swagger";
-        });
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "SecondHand Marketplace API v1");
+                c.RoutePrefix = "swagger";
+            });
+        }
 
         app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api") && !context.Request.Path.StartsWithSegments("/swagger"),
             branch => branch.UseStatusCodePagesWithReExecute("/Home/TrangLoi", "?ma={0}"));
@@ -191,7 +284,21 @@ public class Program
     {
         if (!int.TryParse(principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId)) return false;
         var db = httpContext.RequestServices.GetRequiredService<AppDbContext>();
-        return await db.NguoiDungs.AsNoTracking()
-            .AnyAsync(x => x.MaNguoiDung == userId && x.TrangThai == "ACTIVE", httpContext.RequestAborted);
+        var user = await db.NguoiDungs.AsNoTracking()
+            .Where(x => x.MaNguoiDung == userId)
+            .Select(x => new { x.TrangThai, x.MatKhauBam })
+            .FirstOrDefaultAsync(httpContext.RequestAborted);
+
+        if (user is null || user.TrangThai != "ACTIVE") return false;
+
+        var stamp = principal?.FindFirst("sec_stamp")?.Value;
+        if (!string.IsNullOrEmpty(stamp))
+        {
+            var expectedStamp = DangNhapHelper.LaySecurityStamp(user.MatKhauBam);
+            if (!string.Equals(stamp, expectedStamp, StringComparison.Ordinal))
+                return false;
+        }
+
+        return true;
     }
 }

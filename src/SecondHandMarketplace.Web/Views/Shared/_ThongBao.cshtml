@@ -1,60 +1,114 @@
-@* Thông báo dùng chung chuẩn UI kit Re:Market
-   Hỗ trợ: TempData["ThanhCong"] / TempData["Success"], TempData["Loi"] / TempData["Error"], TempData["CanhBao"] / TempData["Info"] *@
+@* Thông báo dùng chung chuẩn UI kit Re:Market - Dạng HỘP THÔNG BÁO (Box Dialog & Card Box) chống chìm vào web *@
 @{
+    // Ngăn chặn render lặp nếu cả Layout và View con cùng gọi
+    if (Context.Items.ContainsKey("_ThongBaoRendered"))
+    {
+        return;
+    }
+    Context.Items["_ThongBaoRendered"] = true;
+
     var thanhCong = (TempData["ThanhCong"] ?? TempData["Success"]) as string;
     var loi = (TempData["Loi"] ?? TempData["Error"]) as string;
-    var canhBao = (TempData["CanhBao"] ?? TempData["Info"]) as string;
+    var canhBao = (TempData["CanhBao"] ?? TempData["Warning"]) as string;
+    var thongTin = (TempData["ThongBao"] ?? TempData["Info"] ?? TempData["OtpSent"] ?? TempData["Message"]) as string;
+    var modalLoi = (TempData["ModalLoi"] ?? TempData["CriticalError"]) as string;
+    var modalTieuDe = (TempData["ModalTieuDe"] ?? TempData["ModalTitle"] ?? "Cảnh báo nghiêm trọng") as string;
+
+    var coThongBao = !string.IsNullOrWhiteSpace(thanhCong)
+                     || !string.IsNullOrWhiteSpace(loi)
+                     || !string.IsNullOrWhiteSpace(canhBao)
+                     || !string.IsNullOrWhiteSpace(thongTin);
+
+    string boxType = "success";
+    string boxTitle = "Thành công!";
+    string boxMessage = "";
+
+    if (!string.IsNullOrWhiteSpace(loi))
+    {
+        boxType = "error";
+        boxTitle = "Đã xảy ra lỗi";
+        boxMessage = loi;
+    }
+    else if (!string.IsNullOrWhiteSpace(canhBao))
+    {
+        boxType = "warning";
+        boxTitle = "Cần lưu ý";
+        boxMessage = canhBao;
+    }
+    else if (!string.IsNullOrWhiteSpace(thanhCong))
+    {
+        boxType = "success";
+        boxTitle = "Thành công!";
+        boxMessage = thanhCong;
+    }
+    else if (!string.IsNullOrWhiteSpace(thongTin))
+    {
+        boxType = "info";
+        boxTitle = "Thông báo";
+        boxMessage = thongTin;
+    }
 }
 
-<div class="rm-alerts-container" aria-live="polite">
-    @if (!string.IsNullOrWhiteSpace(thanhCong))
-    {
-        <div class="rm-alert rm-alert-success" role="status">
-            <div class="rm-alert-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
+@* 1. Modal Dialog trung tâm cho các cảnh báo lỗi nghiêm trọng *@
+@if (!string.IsNullOrWhiteSpace(modalLoi))
+{
+    <div class="rm-modal-overlay" id="rmCriticalModal" role="dialog" aria-modal="true">
+        <div class="rm-modal-card">
+            <div class="rm-modal-header">
+                <div class="rm-modal-icon-badge danger" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <h5 class="rm-modal-title">@modalTieuDe</h5>
             </div>
-            <div class="rm-alert-content">
-                <span class="rm-alert-message">@thanhCong</span>
+            <div class="rm-modal-body">
+                <p class="mb-0">@modalLoi</p>
             </div>
-            <button type="button" class="rm-alert-close" aria-label="Đóng thông báo" onclick="this.closest('.rm-alert').remove()">
-                &times;
-            </button>
+            <div class="rm-modal-footer">
+                <button type="button" class="btn btn-secondary rounded-pill px-4 py-1" onclick="this.closest('.rm-modal-overlay').remove(); document.body.classList.remove('rm-modal-open');">
+                    Đã hiểu
+                </button>
+            </div>
         </div>
-    }
+    </div>
+}
 
-    @if (!string.IsNullOrWhiteSpace(loi))
-    {
-        <div class="rm-alert rm-alert-error" role="alert">
-            <div class="rm-alert-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
+@* 2. Hộp thoại thông báo Modal Box nổi bật ở giữa màn hình (Pop-up Dialog Box) chống chìm vào web *@
+<div id="rmNotifyModal" class="rm-notify-backdrop @(coThongBao ? "is-active" : "")" role="dialog" aria-modal="true" aria-labelledby="rmNotifyTitle" aria-describedby="rmNotifyDesc" style="@(coThongBao ? "" : "display:none;")">
+    <div class="rm-notify-box rm-notify-box-@boxType">
+        <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="Đóng">&times;</button>
+        <div class="rm-notify-icon-wrap">
+            <div class="rm-notify-icon rm-notify-icon-@boxType" id="rmNotifyIcon">
+                @if (boxType == "success")
+                {
+                    <i class="bi bi-check-circle-fill"></i>
+                }
+                else if (boxType == "error")
+                {
+                    <i class="bi bi-x-circle-fill"></i>
+                }
+                else if (boxType == "warning")
+                {
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                }
+                else
+                {
+                    <i class="bi bi-info-circle-fill"></i>
+                }
             </div>
-            <div class="rm-alert-content">
-                <span class="rm-alert-message">@loi</span>
-            </div>
-            <button type="button" class="rm-alert-close" aria-label="Đóng thông báo" onclick="this.closest('.rm-alert').remove()">
-                &times;
-            </button>
         </div>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(canhBao))
-    {
-        <div class="rm-alert rm-alert-warning" role="status">
-            <div class="rm-alert-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                </svg>
-            </div>
-            <div class="rm-alert-content">
-                <span class="rm-alert-message">@canhBao</span>
-            </div>
-            <button type="button" class="rm-alert-close" aria-label="Đóng thông báo" onclick="this.closest('.rm-alert').remove()">
-                &times;
-            </button>
+        <div class="rm-notify-content">
+            <h4 class="rm-notify-title" id="rmNotifyTitle">@boxTitle</h4>
+            <div class="rm-notify-message" id="rmNotifyDesc">@boxMessage</div>
         </div>
-    }
+        <div class="rm-notify-actions">
+            <button type="button" class="rm-notify-btn rm-notify-btn-@boxType" id="rmNotifyBtn">Đồng ý</button>
+        </div>
+    </div>
 </div>
+
+@* 3. Toast container trôi nổi dành cho các thông báo dạng thẻ phụ *@
+<div class="rm-toasts rm-alerts-container" id="rmToastsContainer" aria-live="polite"></div>

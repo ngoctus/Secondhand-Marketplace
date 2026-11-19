@@ -74,18 +74,19 @@ public sealed class AiSettingsService : IAiSettingsService
 
         try
         {
-            var affected = await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"UPDATE dbo.CauHinhAI
-                   SET DangBat = {enabled}, TenModel = {model}, SystemPrompt = {systemPrompt},
-                       MaNguoiCapNhat = {adminUserId}, NgayCapNhat = SYSUTCDATETIME()
-                   WHERE MaCauHinhAI = {SingletonId}", cancellationToken);
-
-            if (affected == 0)
-            {
-                await _db.Database.ExecuteSqlInterpolatedAsync(
-                    $@"INSERT INTO dbo.CauHinhAI (MaCauHinhAI, DangBat, TenModel, SystemPrompt, MaNguoiCapNhat)
-                       VALUES ({SingletonId}, {enabled}, {model}, {systemPrompt}, {adminUserId})", cancellationToken);
-            }
+            await _db.Database.ExecuteSqlInterpolatedAsync(
+                $@"IF EXISTS (SELECT 1 FROM dbo.CauHinhAI WHERE MaCauHinhAI = {SingletonId})
+                   BEGIN
+                       UPDATE dbo.CauHinhAI
+                       SET DangBat = {enabled}, TenModel = {model}, SystemPrompt = {systemPrompt},
+                           MaNguoiCapNhat = {adminUserId}, NgayCapNhat = SYSUTCDATETIME()
+                       WHERE MaCauHinhAI = {SingletonId};
+                   END
+                   ELSE
+                   BEGIN
+                       INSERT INTO dbo.CauHinhAI (MaCauHinhAI, DangBat, TenModel, SystemPrompt, MaNguoiCapNhat)
+                       VALUES ({SingletonId}, {enabled}, {model}, {systemPrompt}, {adminUserId});
+                   END", cancellationToken);
 
             return (true, null);
         }
@@ -93,6 +94,24 @@ public sealed class AiSettingsService : IAiSettingsService
         {
             _logger.LogError("Không lưu được cấu hình AI: bảng CauHinhAI chưa tồn tại hoặc sai cấu trúc (SQL {Number}).", ex.Number);
             return (false, "Chưa lưu được: database chưa có bảng cấu hình AI (CauHinhAI). Vui lòng liên hệ người phụ trách database.");
+        }
+        catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601)
+        {
+            _logger.LogWarning(ex, "Xung đột ghi đồng thời khi lưu cấu hình AI, đang thử lại...");
+            try
+            {
+                await _db.Database.ExecuteSqlInterpolatedAsync(
+                    $@"UPDATE dbo.CauHinhAI
+                       SET DangBat = {enabled}, TenModel = {model}, SystemPrompt = {systemPrompt},
+                           MaNguoiCapNhat = {adminUserId}, NgayCapNhat = SYSUTCDATETIME()
+                       WHERE MaCauHinhAI = {SingletonId};", cancellationToken);
+                return (true, null);
+            }
+            catch (Exception retryEx)
+            {
+                _logger.LogError(retryEx, "Lỗi khi thử lại lưu cấu hình AI.");
+                return (false, "Có xung đột cập nhật đồng thời, vui lòng thử lại.");
+            }
         }
     }
 

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     image: secondhand-marketplace:latest
@@ -8,12 +6,12 @@ services:
       dockerfile: Dockerfile
     container_name: secondhand_web
     ports:
-      - "127.0.0.1:8080:8080"
+      - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
-      ConnectionStrings__DefaultConnection: "Server=${DB_SERVER:?Set DB_SERVER};Database=${DB_NAME:-SecondHandMarketplace};User Id=${DB_USER:?Set DB_USER};Password=${DB_PASSWORD:?Set DB_PASSWORD};Encrypt=True;TrustServerCertificate=False;MultipleActiveResultSets=True"
+      ConnectionStrings__DefaultConnection: "Server=${DB_SERVER:?Set DB_SERVER};Database=${DB_NAME:-SecondHandMarketplace};User Id=${DB_USER:?Set DB_USER};Password=${DB_PASSWORD:?Set DB_PASSWORD};Encrypt=True;TrustServerCertificate=${DB_TRUST_CERT:-True};MultipleActiveResultSets=True"
       Jwt__Key: ${JWT_KEY:?Set JWT_KEY to a random secret of at least 32 bytes}
       Ai__ApiKey: ${AI_API_KEY:-}
     volumes:

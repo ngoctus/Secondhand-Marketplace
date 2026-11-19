@@ -1,0 +1,255 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Reviews.DanhSachDanhGiaTheoShopVm
+@{
+    ViewData["Title"] = "Đánh giá cửa hàng của tôi";
+}
+
+<div class="container my-4" style="max-width: 950px;">
+    <!-- Tiêu đề & Breadcrumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom flex-wrap gap-2">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">
+                <i class="bi bi-shop text-success"></i> Đánh giá cửa hàng của tôi
+            </h2>
+            <div class="text-muted small">
+                Quản lý các nhận xét từ người mua và gửi phản hồi giải trình (Kênh Người Bán).
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-area="User" asp-controller="Reviews" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-star me-1"></i> Đánh giá tôi đã viết
+            </a>
+            <a asp-area="User" asp-controller="SellerOrders" asp-action="Index" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                <i class="bi bi-box-seam me-1"></i> Quản lý đơn bán
+            </a>
+        </div>
+    </div>
+
+    <partial name="_ThongBao" />
+
+    @if (Model.MaCuaHang == 0)
+    {
+        <div class="card text-center p-5 border-0 rounded-4 shadow-sm bg-white my-4">
+            <div class="card-body">
+                <div class="display-3 text-muted mb-3">
+                    <i class="bi bi-shop-window"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-2">Bạn chưa mở cửa hàng</h4>
+                <p class="text-secondary small mb-4" style="max-width: 480px; margin: 0 auto;">
+                    Hãy tạo hồ sơ cửa hàng để bắt đầu đăng bán sản phẩm và nhận đánh giá uy tín từ khách hàng.
+                </p>
+                <a asp-area="User" asp-controller="Shop" asp-action="Index" class="btn btn-success px-4 py-2 rounded-pill fw-semibold">
+                    Tạo hồ sơ cửa hàng
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Thống kê điểm uy tín của Shop -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+            <div class="row align-items-center g-3">
+                <div class="col-md-7">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-warning-subtle text-warning d-flex align-items-center justify-content-center"
+                             style="width: 60px; height: 60px; font-size: 26px;">
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1">@Model.TenShop</h4>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="fs-4 fw-bold text-warning">@(Model.DiemTrungBinh > 0 ? Model.DiemTrungBinh.ToString("0.0") : "Chưa có")</span>
+                                <span class="text-warning small">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= Math.Round(Model.DiemTrungBinh))
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star text-muted opacity-25"></i>
+                                        }
+                                    }
+                                </span>
+                                <span class="text-muted small">• @Model.TotalItems lượt đánh giá</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5 text-md-end">
+                    @if (Model.DiemTrungBinh >= 4.5m && Model.TotalItems >= 3)
+                    {
+                        <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill fs-6">
+                            <i class="bi bi-shield-fill-check me-1"></i> Cửa hàng uy tín xuất sắc
+                        </span>
+                    }
+                    else if (Model.DiemTrungBinh >= 4.0m)
+                    {
+                        <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2 rounded-pill fs-6">
+                            <i class="bi bi-hand-thumbs-up-fill me-1"></i> Đánh giá tích cực
+                        </span>
+                    }
+                    else if (Model.TotalItems > 0 && Model.DiemTrungBinh < 3.0m)
+                    {
+                        <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2 rounded-pill fs-6">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Cần cải thiện chất lượng
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill fs-6">
+                            <i class="bi bi-shop me-1"></i> Cửa hàng đang hoạt động
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Items.Count == 0)
+        {
+            <div class="card text-center p-5 border-0 rounded-4 shadow-sm bg-white my-4">
+                <div class="card-body">
+                    <div class="display-3 text-muted mb-3">
+                        <i class="bi bi-chat-heart"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Chưa có đánh giá nào từ người mua</h5>
+                    <p class="text-secondary small mb-0">
+                        Khi người mua hoàn tất đơn hàng và để lại nhận xét, bạn có thể xem và gửi phản hồi giải trình tại đây.
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3 mb-4">
+                @foreach (var review in Model.Items)
+                {
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white p-4" id="review-@review.MaDanhGia">
+                        <!-- Header đánh giá -->
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 pb-3 border-bottom">
+                            <div class="d-flex align-items-center gap-2">
+                                @if (!string.IsNullOrWhiteSpace(review.AnhDaiDienNguoiMua))
+                                {
+                                    <img src="@review.AnhDaiDienNguoiMua" alt="@review.TenNguoiMua"
+                                         width="40" height="40" class="rounded-circle border" style="object-fit:cover" />
+                                }
+                                else
+                                {
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold"
+                                         style="width: 40px; height: 40px;">
+                                        @(string.IsNullOrWhiteSpace(review.TenNguoiMua) ? "U" : review.TenNguoiMua.Substring(0, 1).ToUpperInvariant())
+                                    </div>
+                                }
+                                <div>
+                                    <div class="fw-bold text-dark">@review.TenNguoiMua</div>
+                                    <div class="text-muted small" style="font-size: 11.5px;">
+                                        <i class="bi bi-clock me-1"></i>@HienThi.NgayGio(review.NgayTao)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-1">
+                                @for (byte s = 1; s <= 5; s++)
+                                {
+                                    if (s <= review.SoSao)
+                                    {
+                                        <i class="bi bi-star-fill text-warning fs-5"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star text-secondary fs-5 opacity-50"></i>
+                                    }
+                                }
+                                <span class="ms-1 fw-bold text-dark">@review.SoSao sao</span>
+                            </div>
+                        </div>
+
+                        <!-- Nội dung đánh giá của khách -->
+                        <div class="py-3">
+                            <div class="text-muted small mb-1">Nhận xét của khách:</div>
+                            @if (!string.IsNullOrWhiteSpace(review.NoiDung))
+                            {
+                                <p class="text-dark mb-0 bg-light p-3 rounded-3 border" style="white-space: pre-line;">@review.NoiDung</p>
+                            }
+                            else
+                            {
+                                <p class="text-muted fst-italic mb-0 bg-light p-2 rounded-2 small">
+                                    <i class="bi bi-info-circle me-1"></i>Khách không để lại lời nhận xét chi tiết.
+                                </p>
+                            }
+                        </div>
+
+                        <!-- Phản hồi của shop -->
+                        @if (!string.IsNullOrWhiteSpace(review.PhanHoiShop))
+                        {
+                            <div class="p-3 rounded-3 bg-success-subtle border border-success-subtle mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="text-success small">
+                                        <i class="bi bi-reply-fill me-1"></i>Phản hồi của shop bạn:
+                                    </strong>
+                                    @if (review.NgayPhanHoi.HasValue)
+                                    {
+                                        <span class="text-muted" style="font-size: 11px;">@HienThi.NgayGio(review.NgayPhanHoi.Value)</span>
+                                    }
+                                </div>
+                                <p class="text-dark small mb-0" style="white-space: pre-line;">@review.PhanHoiShop</p>
+                            </div>
+                        }
+
+                        <!-- Form phản hồi giải trình (Reply) -->
+                        <div class="border-top pt-3">
+                            <button class="btn btn-sm btn-outline-success rounded-pill px-3" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#reply-form-@review.MaDanhGia"
+                                    aria-expanded="false" aria-controls="reply-form-@review.MaDanhGia">
+                                <i class="bi bi-chat-right-text me-1"></i>
+                                @(string.IsNullOrWhiteSpace(review.PhanHoiShop) ? "Viết phản hồi giải trình" : "Chỉnh sửa phản hồi")
+                            </button>
+
+                            <div class="collapse mt-3" id="reply-form-@review.MaDanhGia">
+                                <form asp-action="PhanHoi" method="post" class="bg-light p-3 rounded-3 border">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="MaDanhGia" value="@review.MaDanhGia" />
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString#review-@review.MaDanhGia" />
+
+                                    <div class="mb-2">
+                                        <label class="form-label fw-semibold small text-dark">
+                                            Nội dung phản hồi giải trình của shop:
+                                        </label>
+                                        <textarea name="PhanHoi" class="form-control form-control-sm" rows="3" maxlength="1000"
+                                                  placeholder="Cảm ơn bạn đã phản hồi hoặc giải trình cụ thể về đơn hàng..." required>@review.PhanHoiShop</textarea>
+                                        <div class="form-text" style="font-size: 11.5px;">Tối đa 1 000 ký tự. Phản hồi sẽ hiển thị công khai bên dưới đánh giá của khách.</div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-light btn-sm rounded-pill px-3"
+                                                data-bs-toggle="collapse" data-bs-target="#reply-form-@review.MaDanhGia">Hủy</button>
+                                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 fw-semibold">
+                                            <i class="bi bi-send me-1"></i>Gửi phản hồi
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Phân trang -->
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Phân trang đánh giá" class="d-flex justify-content-center">
+                    <ul class="pagination pagination-sm">
+                        @for (int p = 1; p <= Model.TotalPages; p++)
+                        {
+                            var isActive = p == Model.Page;
+                            <li class="page-item @(isActive ? "active" : "")">
+                                <a class="page-link rounded-pill px-3 mx-1 @(isActive ? "bg-success border-success text-white" : "text-dark bg-light border-0")"
+                                   asp-action="Shop" asp-route-page="@p">@p</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+    }
+</div>

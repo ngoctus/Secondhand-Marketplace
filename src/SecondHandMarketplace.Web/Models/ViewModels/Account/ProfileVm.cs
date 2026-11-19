@@ -13,8 +13,8 @@ public sealed class ProfileVm
     [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Nhập số điện thoại")]
-    [RegularExpression("^[0-9]{9,15}$", ErrorMessage = "Số điện thoại gồm 9–15 chữ số")]
+    [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
+    [RegularExpression(@"^0[35789][0-9]{8}$", ErrorMessage = "Số điện thoại không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)")]
     [Display(Name = "Số điện thoại")]
     public string SoDienThoai { get; set; } = string.Empty;
 

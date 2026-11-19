@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -318,15 +318,17 @@ public sealed class OrderManagementService(AppDbContext db, IAuditLogService aud
         var ids = d.LichSu.Where(l => l.NguoiThucHienId.HasValue).Select(l => l.NguoiThucHienId!.Value).Distinct().ToList();
 
         var names = await db.NguoiDungs.AsNoTracking().Where(n => ids.Contains(n.MaNguoiDung))
-
             .ToDictionaryAsync(n => n.MaNguoiDung, n => n.HoTen, ct);
 
-
+        var activeDispute = await db.TranhChaps.AsNoTracking()
+            .Where(t => t.MaDonHang == d.MaDonHang && (t.TrangThai == "OPEN" || t.TrangThai == "PROCESSING"))
+            .FirstOrDefaultAsync(ct);
 
         return new OrderDetailVm
-
         {
-
+            ActiveDisputeId = activeDispute?.MaTranhChap,
+            ActiveDisputeReason = activeDispute?.LyDo,
+            ActiveDisputeStatus = activeDispute?.TrangThai,
             Id = d.MaDonHang,
 
             MaDon = d.MaDon,
@@ -351,6 +353,7 @@ public sealed class OrderManagementService(AppDbContext db, IAuditLogService aud
             RecipientAddress = d.DiaChiNhan,
             DeliveryWindow = d.KhungGioNhan,
 
+            BuyerId = d.MaNguoiDung,
             BuyerName = d.NguoiDung.HoTen,
 
             ShopName = d.CuaHang.TenShop,

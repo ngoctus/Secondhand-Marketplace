@@ -10,7 +10,7 @@ namespace SecondHandMarketplace.Web.Common;
 /// </summary>
 public static class DangNhapHelper
 {
-    public static ClaimsPrincipal TaoPrincipal(int nguoiDungId, string email, string hoTen, string vaiTro)
+    public static ClaimsPrincipal TaoPrincipal(int nguoiDungId, string email, string hoTen, string vaiTro, string? anhDaiDien = null, string? securityStamp = null)
     {
         var claims = new List<Claim>
         {
@@ -20,9 +20,22 @@ public static class DangNhapHelper
             new(ClaimTypes.Role, vaiTro)
         };
 
+        if (!string.IsNullOrWhiteSpace(anhDaiDien))
+        {
+            claims.Add(new("avatar", anhDaiDien));
+        }
+
+        if (!string.IsNullOrWhiteSpace(securityStamp))
+        {
+            claims.Add(new("sec_stamp", securityStamp));
+        }
+
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         return new ClaimsPrincipal(identity);
     }
+
+    public static string LaySecurityStamp(string? matKhauBam) =>
+        string.IsNullOrEmpty(matKhauBam) ? string.Empty : (matKhauBam.Length >= 12 ? matKhauBam[^12..] : matKhauBam);
 
     // Mã người dùng luôn lấy từ phiên đăng nhập, không tin dữ liệu client gửi lên.
     public static int? LayNguoiDungId(this ClaimsPrincipal user)

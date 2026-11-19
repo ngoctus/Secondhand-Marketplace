@@ -630,4 +630,121 @@ public class ReviewServiceTests
         Assert.Equal("Shop Test", item.TenShop);
         Assert.DoesNotContain("Email", typeof(DanhGiaNoiBatVm).GetProperties().Select(p => p.Name));
     }
+
+    // =========================================================
+    // C4: PhanHoiDanhGiaAsync & LayDanhGiaCuaShopAsync
+    // =========================================================
+
+    [Fact]
+    public async Task PhanHoiDanhGia_KhiKhongPhaiChuShop_TraVeLoi()
+    {
+        using var db = GetDb("phan_hoi_khong_phai_chu");
+        var (_, _, shop, _) = SeedCoSo(db);
+        var dg = new DanhGia
+        {
+            MaDanhGia = 10,
+            MaDonHang = 1,
+            MaNguoiMua = 1,
+            MaCuaHang = shop.MaCuaHang,
+            SoSao = 4,
+            NoiDung = "Đồ đẹp",
+            TrangThai = "VISIBLE"
+        };
+        db.DanhGias.Add(dg);
+        await db.SaveChangesAsync();
+
+        var service = new ReviewService(db);
+        // User 99 không phải chủ shop (chủ shop là 2)
+        var (success, error) = await service.PhanHoiDanhGiaAsync(10, 99, "Cảm ơn bạn nhé!");
+
+        Assert.False(success);
+        Assert.Contains("không có quyền", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task PhanHoiDanhGia_KhiLaChuShop_LuuPhanHoiThanhCong()
+    {
+        using var db = GetDb("phan_hoi_thanh_cong");
+        var (_, seller, shop, _) = SeedCoSo(db);
+        var dg = new DanhGia
+        {
+            MaDanhGia = 11,
+            MaDonHang = 1,
+            MaNguoiMua = 1,
+            MaCuaHang = shop.MaCuaHang,
+            SoSao = 5,
+            NoiDung = "Hàng rất tốt",
+            TrangThai = "VISIBLE"
+        };
+        db.DanhGias.Add(dg);
+        await db.SaveChangesAsync();
+
+        var service = new ReviewService(db);
+        var (success, error) = await service.PhanHoiDanhGiaAsync(11, seller.MaNguoiDung, "Cảm ơn bạn đã ủng hộ shop!");
+
+        Assert.True(success);
+        Assert.Null(error);
+
+        var updated = await db.DanhGias.FindAsync(11);
+        Assert.NotNull(updated);
+        Assert.Equal("Cảm ơn bạn đã ủng hộ shop!", updated.PhanHoiShop);
+        Assert.NotNull(updated.NgayPhanHoi);
+    }
+
+    [Fact]
+    public async Task PhanHoiDanhGia_NoiDungRong_TraVeLoi()
+    {
+        using var db = GetDb("phan_hoi_rong");
+        var (_, seller, shop, _) = SeedCoSo(db);
+        var dg = new DanhGia
+        {
+            MaDanhGia = 12,
+            MaDonHang = 1,
+            MaNguoiMua = 1,
+            MaCuaHang = shop.MaCuaHang,
+            SoSao = 3,
+            NoiDung = "Tạm được",
+            TrangThai = "VISIBLE"
+        };
+        db.DanhGias.Add(dg);
+        await db.SaveChangesAsync();
+
+        var service = new ReviewService(db);
+        var (success, error) = await service.PhanHoiDanhGiaAsync(12, seller.MaNguoiDung, "   ");
+
+        Assert.False(success);
+        Assert.Contains("trống", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task LayDanhGiaCuaShop_TraVeCacDanhGiaKemPhanHoi()
+    {
+        using var db = GetDb("lay_danh_gia_cua_shop");
+        var (buyer, seller, shop, _) = SeedCoSo(db);
+        var dg = new DanhGia
+        {
+            MaDanhGia = 13,
+            MaDonHang = 1,
+            MaNguoiMua = buyer.MaNguoiDung,
+            MaCuaHang = shop.MaCuaHang,
+            SoSao = 5,
+            NoiDung = "Rất ưng ý!",
+            PhanHoiShop = "Shop rất vui khi bạn hài lòng!",
+            NgayPhanHoi = DateTime.UtcNow,
+            TrangThai = "VISIBLE"
+        };
+        db.DanhGias.Add(dg);
+        await db.SaveChangesAsync();
+
+        var service = new ReviewService(db);
+        var result = await service.LayDanhGiaCuaShopAsync(seller.MaNguoiDung);
+
+        Assert.Equal(shop.MaCuaHang, result.MaCuaHang);
+        Assert.Equal(shop.TenShop, result.TenShop);
+        Assert.Single(result.Items);
+        var item = result.Items[0];
+        Assert.Equal("Rất ưng ý!", item.NoiDung);
+        Assert.Equal("Shop rất vui khi bạn hài lòng!", item.PhanHoiShop);
+        Assert.NotNull(item.NgayPhanHoi);
+    }
 }

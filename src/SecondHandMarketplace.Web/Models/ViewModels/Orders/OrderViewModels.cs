@@ -1,22 +1,36 @@
 using System.ComponentModel.DataAnnotations;
+using SecondHandMarketplace.Web.Models.ViewModels.Areas;
 using SecondHandMarketplace.Web.Models.ViewModels.Cart;
 
 namespace SecondHandMarketplace.Web.Models.ViewModels.Orders;
 
 /// <summary>Dữ liệu màn hình Thanh toán & Đặt hàng.</summary>
-public class CheckoutViewModel
+public class CheckoutViewModel : IValidatableObject
 {
     [Required(ErrorMessage = "Vui lòng nhập họ tên người nhận.")]
     [StringLength(100)]
     public string TenNguoiNhan { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Vui lòng nhập số điện thoại nhận hàng.")]
-    [RegularExpression(@"^[0-9]{9,15}$", ErrorMessage = "Số điện thoại từ 9 đến 15 chữ số.")]
+    [RegularExpression(@"^0[35789][0-9]{8}$", ErrorMessage = "Số điện thoại nhận hàng không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09).")]
     public string SoDienThoaiNhan { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng nhập địa chỉ nhận hàng.")]
+    /// <summary>Mã tỉnh/thành phố nhận hàng từ API khu vực.</summary>
+    public int? MaTinhThanh { get; set; }
+
+    /// <summary>Mã phường/xã nhận hàng từ API khu vực.</summary>
+    public int? MaPhuongXa { get; set; }
+
+    /// <summary>Địa chỉ chi tiết (số nhà, tên đường...) - không bắt buộc để người dùng điền nếu muốn.</summary>
+    [StringLength(300, ErrorMessage = "Địa chỉ chi tiết không được quá 300 ký tự.")]
+    public string? DiaChiChiTiet { get; set; }
+
+    /// <summary>Địa chỉ nhận hàng (chuỗi đầy đủ lưu vào đơn hàng).</summary>
     [StringLength(500)]
     public string DiaChiNhan { get; set; } = string.Empty;
+
+    /// <summary>Dropdown khu vực 2 cấp (Tỉnh/Thành - Phường/Xã) dùng partial _ChonKhuVuc.</summary>
+    public ChonKhuVucVm? KhuVuc { get; set; }
 
     [StringLength(200)]
     public string? KhungGioNhan { get; set; }
@@ -40,6 +54,18 @@ public class CheckoutViewModel
     [Range(0, 10000000, ErrorMessage = "Phí vận chuyển phải từ 0đ trở lên.")]
     public decimal PhiVanChuyen { get; set; }
     public decimal TongThanhToan => TienHang + PhiVanChuyen;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!MaTinhThanh.HasValue && string.IsNullOrWhiteSpace(DiaChiNhan))
+        {
+            yield return new ValidationResult("Vui lòng chọn Tỉnh/Thành phố nhận hàng.", new[] { nameof(MaTinhThanh) });
+        }
+        else if (MaTinhThanh.HasValue && !MaPhuongXa.HasValue && string.IsNullOrWhiteSpace(DiaChiNhan))
+        {
+            yield return new ValidationResult("Vui lòng chọn Phường/Xã nhận hàng.", new[] { nameof(MaPhuongXa) });
+        }
+    }
 }
 
 /// <summary>Thông tin chuyển khoản do từng cửa hàng cung cấp; luôn kiểm tra đủ dữ liệu trước khi tạo VietQR.</summary>
@@ -84,6 +110,7 @@ public class DonHangItemViewModel
     public string TenNguoiNhan { get; set; } = string.Empty;
     public string SoDienThoaiNhan { get; set; } = string.Empty;
     public string DiaChiNhan { get; set; } = string.Empty;
+    public string? KhungGioNhan { get; set; }
     public DateTime NgayTao { get; set; }
     public string? NguoiHuy { get; set; }
     public string? LyDoHuy { get; set; }

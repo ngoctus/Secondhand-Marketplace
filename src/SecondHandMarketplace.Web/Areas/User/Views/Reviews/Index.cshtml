@@ -14,9 +14,14 @@
                 Danh sách nhận xét bạn đã gửi cho các cửa hàng sau khi hoàn tất mua sắm.
             </div>
         </div>
-        <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-            <i class="bi bi-receipt me-1"></i> Xem đơn mua của tôi
-        </a>
+        <div class="d-flex gap-2">
+            <a asp-area="User" asp-controller="Reviews" asp-action="Shop" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                <i class="bi bi-shop me-1"></i> Đánh giá shop nhận được
+            </a>
+            <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-receipt me-1"></i> Xem đơn mua của tôi
+            </a>
+        </div>
     </div>
 
     <partial name="_ThongBao" />
@@ -61,7 +66,7 @@
                                 </a>
                             </div>
                             <div class="text-muted small mt-1">
-                                <i class="bi bi-clock me-1"></i>Ngày đánh giá: @item.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                <i class="bi bi-clock me-1"></i>Ngày đánh giá: @HienThi.NgayGio(item.NgayTao)
                             </div>
                         </div>
 
@@ -108,6 +113,22 @@
                             <p class="text-muted fst-italic mb-0 bg-light p-2 rounded-2 small">
                                 <i class="bi bi-info-circle me-1"></i>Không có nhận xét kèm theo.
                             </p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(item.PhanHoiShop))
+                        {
+                            <div class="mt-3 p-3 rounded-3 bg-success-subtle border border-success-subtle border-start border-start-4 border-start-success">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="text-success small">
+                                        <i class="bi bi-reply-fill me-1"></i>Phản hồi từ người bán:
+                                    </strong>
+                                    @if (item.NgayPhanHoi.HasValue)
+                                    {
+                                        <span class="text-muted small" style="font-size: 11px;">@HienThi.NgayGio(item.NgayPhanHoi.Value)</span>
+                                    }
+                                </div>
+                                <p class="text-dark small mb-0" style="white-space: pre-line;">@item.PhanHoiShop</p>
+                            </div>
                         }
                     </div>
 

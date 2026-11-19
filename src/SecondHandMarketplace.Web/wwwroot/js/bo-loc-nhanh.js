@@ -23,6 +23,16 @@
 
     const dinhDangGia = (n) => n.toLocaleString('vi-VN') + 'đ';
 
+    // Form có sẵn input hidden "Sort" (giữ sắp xếp khi tắt JS). Map phân biệt hoa thường nên phải
+    // xóa khóa cũ cùng tên trước khi ghi, nếu không URL mang cả Sort lẫn sort và binder gộp
+    // hai giá trị thành một chuỗi không hợp lệ.
+    const datParam = (map, key, value) => {
+        Array.from(map.keys())
+            .filter(k => k.toLowerCase() === key.toLowerCase())
+            .forEach(k => map.delete(k));
+        map.set(key, value);
+    };
+
     const layBoLoc = (page) => {
         const giaTri = new Map();
         new FormData(form).forEach((v, k) => {
@@ -32,8 +42,8 @@
         });
 
         const sort = nutSapXep();
-        if (sort && sort.value && sort.value !== 'newest') giaTri.set('sort', sort.value);
-        if (page && page !== '1') giaTri.set('page', page);
+        if (sort && sort.value && sort.value !== 'newest') datParam(giaTri, 'sort', sort.value);
+        if (page && page !== '1') datParam(giaTri, 'page', page);
 
         const p = new URLSearchParams();
         giaTri.forEach((v, k) => p.append(k, v));

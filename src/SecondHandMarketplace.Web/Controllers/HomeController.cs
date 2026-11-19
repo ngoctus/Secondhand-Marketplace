@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Models;
 using SecondHandMarketplace.Web.Models.ViewModels.Home;
@@ -16,7 +17,8 @@ namespace SecondHandMarketplace.Web.Controllers
         ICategoryService categories,
         IBannerService banners,
         IReviewService reviews,
-        IMemoryCache cache) : Controller
+        IMemoryCache cache,
+        SecondHandMarketplace.Web.Data.AppDbContext db) : Controller
     {
         private const string CacheKey = "home:catalog";
         private static readonly TimeSpan CacheTrangChu = TimeSpan.FromMinutes(5);
@@ -73,8 +75,24 @@ namespace SecondHandMarketplace.Web.Controllers
                 DanhMucs = danhMuc,
                 SanPhamNoiBat = tatCaTin.Take(SoTinNoiBat).ToList(),
                 TabsDanhMuc = tabs,
-                DanhGiaNoiBat = danhGia
+                DanhGiaNoiBat = danhGia,
+                TongSanPham = await DemAnToan(() => db.SanPhams.CountAsync(p => p.TrangThai == "ACTIVE" && !p.DaXoa)),
+                TongNguoiBan = await DemAnToan(() => db.CuaHangs.CountAsync(c => c.TrangThai == "ACTIVE")),
+                TongDonHoanTat = await DemAnToan(() => db.DonHangs.CountAsync(d => d.TrangThai == "COMPLETED"))
             };
+        }
+
+        // Ba con số thống kê chỉ mang tính trang trí: thiếu bảng thì hiện 0 chứ không làm trang chủ 500.
+        private static async Task<int> DemAnToan(Func<Task<int>> dem)
+        {
+            try
+            {
+                return await dem();
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         // Trang chủ phải mở được cả khi database chưa chạy đủ script (thiếu bảng Banner/DanhGia),
@@ -89,6 +107,27 @@ namespace SecondHandMarketplace.Web.Controllers
             {
                 return [];
             }
+        }
+
+        [HttpGet("/gioi-thieu")]
+        [HttpGet("/ve-chung-toi")]
+        public IActionResult About()
+        {
+            return View();
+        }
+
+        [HttpGet("/faq")]
+        [HttpGet("/huong-dan-giao-dich")]
+        public IActionResult Faq()
+        {
+            return View();
+        }
+
+        [HttpGet("/dieu-khoan")]
+        [HttpGet("/chinh-sach-bao-mat")]
+        public IActionResult Terms()
+        {
+            return View();
         }
 
         // Lỗi hệ thống bất ngờ (UseExceptionHandler)

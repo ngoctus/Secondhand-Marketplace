@@ -11,8 +11,8 @@ public sealed class ShopVm
     [Required(ErrorMessage = "Nhập tên cửa hàng"), StringLength(100)]
     [Display(Name = "Tên cửa hàng")]
     public string TenShop { get; set; } = string.Empty;
-    [Required(ErrorMessage = "Nhập số điện thoại liên hệ")]
-    [RegularExpression("^[0-9]{9,15}$", ErrorMessage = "Số điện thoại gồm 9–15 chữ số")]
+    [Required(ErrorMessage = "Vui lòng nhập số điện thoại liên hệ")]
+    [RegularExpression(@"^0[35789][0-9]{8}$", ErrorMessage = "Số điện thoại liên hệ không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)")]
     [Display(Name = "Số điện thoại liên hệ")]
     public string SoDienThoaiLienHe { get; set; } = string.Empty;
     [StringLength(1000), Display(Name = "Mô tả")]

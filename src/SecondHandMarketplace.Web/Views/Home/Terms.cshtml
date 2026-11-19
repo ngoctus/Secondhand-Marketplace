@@ -1,0 +1,71 @@
+@{
+    ViewData["Title"] = "Điều khoản sử dụng & Chính sách bảo mật - Re:Market";
+}
+
+<div class="container py-5" style="max-width: 960px;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="font-size: 14px;">
+            <li class="breadcrumb-item"><a asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Điều khoản & Chính sách</li>
+        </ol>
+    </nav>
+
+    <!-- Section: Điều khoản -->
+    <section id="dieu-khoan" class="mb-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <h1 class="h2 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">Điều khoản sử dụng</h1>
+            <p class="text-muted">Cập nhật lần cuối: Tháng 11/2026. Bằng việc truy cập hoặc sử dụng Re:Market, bạn đồng ý tuân thủ các điều khoản sau:</p>
+            <div class="d-flex flex-column gap-3 text-secondary">
+                <div>
+                    <h6 class="fw-bold text-dark">1. Tài khoản người dùng</h6>
+                    <p class="small mb-0">Người dùng chịu trách nhiệm bảo mật thông tin đăng nhập và mọi hoạt động diễn ra dưới tài khoản của mình. Không chia sẻ tài khoản cho người thứ ba sử dụng trái phép.</p>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark">2. Trách nhiệm người bán</h6>
+                    <p class="small mb-0">Người bán phải cung cấp hình ảnh thật, mô tả trung thực về tình trạng sản phẩm (độ mới, lỗi nếu có) và chỉ đăng bán hàng hóa thuộc quyền sở hữu hợp pháp.</p>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark">3. Trách nhiệm người mua</h6>
+                    <p class="small mb-0">Người mua cam kết nhận hàng đúng hẹn theo thỏa thuận hoặc khung giờ đã chọn, kiểm tra sản phẩm cẩn thận khi giao nhận và thanh toán đầy đủ.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section: Chính sách bảo mật -->
+    <section id="bao-mat" class="mb-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <h2 class="h3 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">Chính sách bảo mật dữ liệu</h2>
+            <p class="text-muted">Re:Market cam kết bảo vệ sự riêng tư và thông tin cá nhân của bạn theo tiêu chuẩn an toàn cao nhất:</p>
+            <div class="d-flex flex-column gap-3 text-secondary">
+                <div>
+                    <h6 class="fw-bold text-dark">1. Thu thập dữ liệu</h6>
+                    <p class="small mb-0">Chúng tôi chỉ thu thập thông tin cần thiết phục vụ việc xác thực tài khoản, xử lý đơn hàng và giao nhận hàng (họ tên, số điện thoại, địa chỉ nhận hàng).</p>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark">2. Bảo vệ thông tin</h6>
+                    <p class="small mb-0">Mật khẩu được mã hóa băm an toàn (BCrypt). Mọi liên lạc trao đổi nhạy cảm đều được bảo vệ trong hạ tầng máy chủ bảo mật.</p>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark">3. Quyền của người dùng</h6>
+                    <p class="small mb-0">Bạn có toàn quyền truy cập, chỉnh sửa thông tin cá nhân hoặc yêu cầu xóa dữ liệu bất kỳ lúc nào tại mục Hồ sơ cá nhân.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section: Quy định cộng đồng -->
+    <section id="quy-dinh">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <h2 class="h3 fw-bold mb-3 text-danger"><i class="bi bi-shield-slash-fill me-2"></i>Quy định cộng đồng & Danh mục cấm</h2>
+            <p class="text-muted">Các hành vi và mặt hàng tuyệt đối bị nghiêm cấm trên nền tảng Re:Market:</p>
+            <ul class="text-secondary small d-flex flex-column gap-2 mb-0">
+                <li>Nghiêm cấm đăng bán hàng giả, hàng nhái, vũ khí, chất cháy nổ hoặc các mặt hàng bị pháp luật Việt Nam cấm lưu hành.</li>
+                <li>Nghiêm cấm sử dụng ngôn từ tục tĩu, xúc phạm, phân biệt đối xử hoặc quấy rối người dùng khác trong tin nhắn và bình luận đánh giá.</li>
+                <li>Nghiêm cấm hành vi gian lận thanh toán, cố tình không giao hàng hoặc phá hoại uy tín của cửa hàng khác.</li>
+                <li>Tài khoản vi phạm nghiêm trọng sẽ bị hệ thống tự động khóa vĩnh viễn và chuyển hồ sơ đến cơ quan có thẩm quyền nếu có dấu hiệu tội phạm.</li>
+            </ul>
+        </div>
+    </section>
+</div>

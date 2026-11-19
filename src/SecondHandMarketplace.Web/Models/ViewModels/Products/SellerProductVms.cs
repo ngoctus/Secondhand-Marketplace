@@ -48,13 +48,16 @@ public class ProductFormVm
     public string? MoTa { get; set; }
 
     [Display(Name = "Giá (đồng)")]
+    [Required(ErrorMessage = "Giá sản phẩm là bắt buộc.")]
     [Range(1, 99_999_999_999, ErrorMessage = "Giá phải lớn hơn 0.")]
     public decimal? Gia { get; set; }
 
     [Display(Name = "Danh mục")]
+    [Required(ErrorMessage = "Vui lòng chọn danh mục sản phẩm.")]
     public int? MaDanhMuc { get; set; }
 
     [Display(Name = "Tình trạng")]
+    [Required(ErrorMessage = "Vui lòng chọn tình trạng sản phẩm.")]
     public int? MaTinhTrang { get; set; }
 
     public List<DanhMuc> DanhSachDanhMuc { get; set; } = new();

@@ -21,7 +21,7 @@
             @foreach (var v in Model.Items)
             {
                 <tr>
-                    <td>@v.ThoiGian.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@HienThi.NgayGio(v.ThoiGian)</td>
                     <td><a asp-action="Index" asp-route-sellerId="@v.MaNguoiBan">@v.TenNguoiBan</a><div class="small text-muted">@v.EmailNguoiBan</div></td>
                     <td>
                         <span class="badge @(v.TrangThaiNguoiBan == "ACTIVE" ? "bg-success" : "bg-secondary")">@v.TrangThaiNguoiBan</span>
