@@ -3,7 +3,7 @@
 <div class="container py-4 rm-account-page" style="max-width:760px">
     <h2>Hồ sơ cá nhân</h2>
     <p class="text-muted">Cập nhật thông tin tài khoản của bạn.</p>
-    <form asp-action="Profile" method="post" class="card card-body gap-3 rm-account-form">
+    <form asp-action="Profile" method="post" class="card card-body gap-3 rm-account-form mb-4">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div><label asp-for="HoTen" class="form-label"></label><input asp-for="HoTen" class="form-control"/><span asp-validation-for="HoTen" class="text-danger"></span></div>
         <div><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" readonly/><small class="text-muted">Email không thể thay đổi.</small></div>
@@ -12,5 +12,32 @@
         <div><label asp-for="AnhDaiDien" class="form-label"></label><input asp-for="AnhDaiDien" class="form-control" placeholder="/uploads/avatar.jpg"/><span asp-validation-for="AnhDaiDien" class="text-danger"></span></div>
         <div class="d-flex gap-2"><button class="btn btn-primary" type="submit">Lưu thay đổi</button><a asp-action="ChangePassword" class="btn btn-outline-secondary">Đổi mật khẩu</a></div>
     </form>
+
+    @if (User.IsInRole("USER"))
+    {
+        <div class="card card-body border-0 shadow-sm">
+            <h5 class="mb-3">Tiện ích tài khoản &amp; Kênh Người Bán</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-bag-check me-1"></i> Đơn mua của tôi
+                </a>
+                <a asp-area="User" asp-controller="Favorites" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-heart me-1"></i> Yêu thích
+                </a>
+                <a asp-area="User" asp-controller="Reviews" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-star me-1"></i> Đánh giá của tôi
+                </a>
+                <a asp-area="User" asp-controller="Disputes" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-exclamation-diamond me-1"></i> Khiếu nại / Tranh chấp
+                </a>
+                <a asp-area="User" asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-flag me-1"></i> Lịch sử báo cáo
+                </a>
+                <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-shop me-1"></i> Kênh Người Bán
+                </a>
+            </div>
+        </div>
+    }
 </div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,62 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Account.CompleteProfileVm
+@{
+    ViewData["Title"] = "Hoàn tất hồ sơ";
+}
+
+<div class="form-page page rm-auth-page">
+    <div class="row justify-content-center py-5">
+        <div class="col-12 col-md-7 col-lg-5">
+            <div class="card shadow-sm border-0 rm-auth-card">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-3" style="width:64px;height:64px">
+                            <i class="bi bi-person-vcard fs-2"></i>
+                        </div>
+                        <h2 class="h3 mb-2">Hoàn tất hồ sơ</h2>
+                        <p class="text-muted small mb-0">
+                            Vui lòng bổ sung số điện thoại liên hệ duy nhất để hoàn tất đăng nhập lần đầu vào <strong>Re:Market</strong>.
+                        </p>
+                    </div>
+
+                    <form asp-action="CompleteProfile" method="post">
+                        @Html.AntiForgeryToken()
+                        <input asp-for="ReturnUrl" type="hidden" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label fw-semibold"></label>
+                            <input asp-for="Email" class="form-control bg-light" readonly />
+                            <small class="text-muted">Email được xác thực từ tài khoản mạng xã hội của bạn.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="HoTen" class="form-label fw-semibold"></label>
+                            <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên của bạn" />
+                            <span asp-validation-for="HoTen" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="SoDienThoai" class="form-label fw-semibold"></label>
+                            <input asp-for="SoDienThoai" class="form-control" inputmode="tel" maxlength="10" placeholder="Ví dụ: 0901234567" autofocus />
+                            <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="DiaChiMacDinh" class="form-label fw-semibold"></label>
+                            <textarea asp-for="DiaChiMacDinh" class="form-control" rows="2" placeholder="Số nhà, đường, phường/xã, tỉnh/thành phố (không bắt buộc)"></textarea>
+                            <span asp-validation-for="DiaChiMacDinh" class="text-danger small"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                            <i class="bi bi-check2-circle me-1"></i> Hoàn tất và đăng nhập
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

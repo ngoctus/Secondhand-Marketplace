@@ -26,6 +26,7 @@
                     }
 
                     <form asp-action="VerifyRegistration" method="post" id="verifyForm">
+                        @Html.AntiForgeryToken()
                         <input asp-for="Email" type="hidden" />
                         <input asp-for="Token" type="hidden" />
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -43,7 +44,7 @@
                         </div>
 
                         <div class="form-text text-muted small text-center mb-4">
-                            <i class="bi bi-clock-history me-1"></i> Mã có hiệu lực trong <strong>10 phút</strong>. Hãy kiểm tra cả hộp thư <em>Spam/Rác</em> nếu không thấy.
+                            <i class="bi bi-clock-history me-1"></i> Mã có hiệu lực trong <strong>10 phút</strong> (tối đa 5 lần thử trên máy chủ). Hãy kiểm tra cả hộp thư <em>Spam/Rác</em> nếu không thấy.
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
@@ -52,6 +53,7 @@
                     </form>
 
                     <form asp-action="ResendRegisterCode" method="post" class="text-center mt-3" id="resendForm">
+                        @Html.AntiForgeryToken()
                         <input type="hidden" name="Email" value="@Model.Email" />
                         <input type="hidden" name="Token" value="@Model.Token" />
                         <button type="submit" class="btn btn-link text-decoration-none small text-muted">

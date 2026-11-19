@@ -4,6 +4,8 @@ public sealed class TopProductVm
 {
     public int ProductId { get; set; }
     public string Name { get; set; } = "";
+    public string ShopName { get; set; } = "";
+    public int QuantitySold { get; set; } = 1;
     public decimal Revenue { get; set; }
 }
 
@@ -38,6 +40,14 @@ public sealed class AdminDashboardVm
     public int TongDonHang { get; set; }
     public int DonHoanTat { get; set; }
     public decimal DoanhThu { get; set; }
+    public string ThangHienTai { get; set; } = "";
+    public decimal DoanhThuThang { get; set; }
+    public int DonHoanTatThang { get; set; }
+    public decimal LoiNhuanThang { get; set; }
+    public decimal TongLoiNhuan { get; set; }
+    public decimal TyLeLoiNhuan { get; set; } = 5m;
+    public TopProductVm? SanPhamBanChayNhat { get; set; }
+    public List<TopProductVm> SanPhamBanChay { get; set; } = new();
     public int? BaoCaoChuaXuLy { get; set; }      // null = chưa có bảng báo cáo (D chưa làm)
     public int PhienDangMo { get; set; }
     public Dictionary<string, int> DonTheoTrangThai { get; set; } = new();

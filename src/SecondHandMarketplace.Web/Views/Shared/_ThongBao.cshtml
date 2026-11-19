@@ -11,6 +11,8 @@
     var loi = (TempData["Loi"] ?? TempData["Error"]) as string;
     var canhBao = (TempData["CanhBao"] ?? TempData["Warning"]) as string;
     var thongTin = (TempData["ThongBao"] ?? TempData["Info"] ?? TempData["OtpSent"] ?? TempData["Message"]) as string;
+    var modalLoi = (TempData["ModalLoi"] ?? TempData["CriticalError"]) as string;
+    var modalTieuDe = (TempData["ModalTieuDe"] ?? TempData["ModalTitle"] ?? "Cảnh báo nghiêm trọng") as string;
 
     var coThongBao = !string.IsNullOrWhiteSpace(thanhCong)
                      || !string.IsNullOrWhiteSpace(loi)
@@ -47,7 +49,34 @@
     }
 }
 
-@* 1. Hộp thoại thông báo Modal Box nổi bật ở giữa màn hình (Pop-up Dialog Box) *@
+@* 1. Modal Dialog trung tâm cho các cảnh báo lỗi nghiêm trọng *@
+@if (!string.IsNullOrWhiteSpace(modalLoi))
+{
+    <div class="rm-modal-overlay" id="rmCriticalModal" role="dialog" aria-modal="true">
+        <div class="rm-modal-card">
+            <div class="rm-modal-header">
+                <div class="rm-modal-icon-badge danger" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <h5 class="rm-modal-title">@modalTieuDe</h5>
+            </div>
+            <div class="rm-modal-body">
+                <p class="mb-0">@modalLoi</p>
+            </div>
+            <div class="rm-modal-footer">
+                <button type="button" class="btn btn-secondary rounded-pill px-4 py-1" onclick="this.closest('.rm-modal-overlay').remove(); document.body.classList.remove('rm-modal-open');">
+                    Đã hiểu
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* 2. Hộp thoại thông báo Modal Box nổi bật ở giữa màn hình (Pop-up Dialog Box) chống chìm vào web *@
 <div id="rmNotifyModal" class="rm-notify-backdrop @(coThongBao ? "is-active" : "")" role="dialog" aria-modal="true" aria-labelledby="rmNotifyTitle" aria-describedby="rmNotifyDesc" style="@(coThongBao ? "" : "display:none;")">
     <div class="rm-notify-box rm-notify-box-@boxType">
         <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="Đóng">&times;</button>
@@ -81,5 +110,5 @@
     </div>
 </div>
 
-@* 2. Toast container trôi nổi dành cho các thông báo dạng thẻ phụ *@
-<div class="rm-alerts-container" aria-live="polite"></div>
+@* 3. Toast container trôi nổi dành cho các thông báo dạng thẻ phụ *@
+<div class="rm-toasts rm-alerts-container" id="rmToastsContainer" aria-live="polite"></div>

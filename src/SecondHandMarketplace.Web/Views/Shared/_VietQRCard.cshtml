@@ -151,6 +151,8 @@ function copyTextToClipboard(text, btn) {
                 type: 'success',
                 autoCloseMs: 2500
             });
+        } else if (typeof window.showToast === 'function') {
+            window.showToast('Đã sao chép: ' + text, 'info', 2500);
         }
         setTimeout(() => {
             btn.innerHTML = orig;
@@ -163,6 +165,8 @@ function copyTextToClipboard(text, btn) {
                 message: 'Vui lòng chọn và sao chép thủ công: ' + text,
                 type: 'warning'
             });
+        } else if (typeof window.showToast === 'function') {
+            window.showToast('Không thể sao chép tự động: ' + text, 'warning', 3500);
         } else {
             prompt('Vui lòng sao chép thủ công:', text);
         }
