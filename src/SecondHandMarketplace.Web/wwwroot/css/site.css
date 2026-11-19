@@ -4222,3 +4222,266 @@ a.smallbtn:hover {
     padding-left: 20px !important;
 }
 
+/* ==========================================================================
+   NOTIFICATION POPOVER DROPDOWN (Task C-02)
+   ========================================================================== */
+.rm-notify-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.rm-notify-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: -10px;
+    left: auto;
+    width: 380px;
+    max-width: calc(100vw - 24px);
+    background-color: var(--color-surface-white, #FFFFFF);
+    border: 1px solid var(--color-border, #E4DFD3);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: 0 12px 32px rgba(41, 35, 29, 0.16), 0 2px 6px rgba(41, 35, 29, 0.08);
+    z-index: 1060;
+    overflow: hidden;
+    animation: rmNotifyFadeDown 0.18s ease-out;
+}
+
+.rm-notify-dropdown[hidden] {
+    display: none !important;
+}
+
+@keyframes rmNotifyFadeDown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.rm-notify-drop-head {
+    padding: 12px 16px;
+    background-color: var(--color-surface, #F8F5EE);
+    border-bottom: 1px solid var(--color-border, #E4DFD3);
+}
+
+.rm-notify-drop-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-primary, #29231D);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rm-notify-unread-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-primary, #68705A);
+}
+
+.rm-notify-action-btn {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-secondary, #5C5549);
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.rm-notify-action-btn:hover:not(:disabled) {
+    color: var(--color-primary, #68705A);
+    background-color: rgba(104, 112, 90, 0.08);
+}
+
+.rm-notify-action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.rm-notify-drop-body {
+    max-height: 380px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.rm-notify-empty {
+    padding: 36px 20px;
+    text-align: center;
+    color: var(--color-text-secondary, #5C5549);
+}
+
+.rm-notify-empty-icon {
+    font-size: 32px;
+    line-height: 1;
+    margin-bottom: 8px;
+    opacity: 0.7;
+}
+
+.rm-notify-empty-text {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.rm-notify-drop-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.rm-notify-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid var(--color-border-light, #F0ECE1);
+    transition: background-color 0.15s ease;
+    position: relative;
+}
+
+.rm-notify-item:last-child {
+    border-bottom: none;
+}
+
+.rm-notify-item:hover {
+    background-color: var(--color-surface, #F8F5EE);
+    color: inherit;
+}
+
+.rm-notify-item.is-unread {
+    background-color: #FBF9F2;
+}
+
+.rm-notify-item.is-unread:hover {
+    background-color: #F4EFE3;
+}
+
+.rm-notify-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.rm-notify-icon-order {
+    background-color: #EEF4F8;
+    color: #20638F;
+}
+
+.rm-notify-icon-product {
+    background-color: #EAF4EC;
+    color: #2E7D32;
+}
+
+.rm-notify-icon-system {
+    background-color: #FEF3C7;
+    color: #D97706;
+}
+
+.rm-notify-item-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.rm-notify-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary, #29231D);
+    line-height: 1.4;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rm-notify-badge-new {
+    font-size: 9px;
+    font-weight: 700;
+    background: #E74C3C;
+    color: #FFFFFF;
+    padding: 1px 5px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.rm-notify-item-desc {
+    font-size: 12px;
+    color: var(--color-text-secondary, #5C5549);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.rm-notify-item-meta {
+    font-size: 11px;
+    color: var(--color-text-muted, #8C8275);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rm-notify-meta-sep {
+    color: var(--color-border, #E4DFD3);
+}
+
+.rm-notify-unread-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-error, #E74C3C);
+    flex-shrink: 0;
+    align-self: center;
+    margin-left: 4px;
+}
+
+.rm-notify-drop-foot {
+    padding: 10px 16px;
+    text-align: center;
+    background-color: var(--color-surface, #F8F5EE);
+    border-top: 1px solid var(--color-border, #E4DFD3);
+}
+
+.rm-notify-all-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-primary, #68705A);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    transition: color 0.15s ease;
+}
+
+.rm-notify-all-link:hover {
+    color: var(--color-primary-hover, #555C49);
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Chat P2P Mobile Optimization (C-03)
+   Khóa cuộn trang nền khi mở khung chat toàn màn hình trên điện thoại
+   ========================================================================== */
+body.rmc-open {
+    overflow: hidden !important;
+}
+
+

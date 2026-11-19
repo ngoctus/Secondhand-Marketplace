@@ -218,7 +218,11 @@
         showHint('');
         try { await loadMessages(false); } catch (e) { showHint(e.message); }
         markRead(conv.id);
-        input.focus();
+        updateMobileViewport();
+        toBottom();
+        if (window.innerWidth >= 768) {
+            input.focus();
+        }
     }
     async function showList() {
         st.cur = null;
@@ -228,6 +232,10 @@
         back.hidden = true;
         thread.hidden = true;
         list.hidden = false;
+        if (document.activeElement === input) {
+            input.blur();
+        }
+        updateMobileViewport();
         await loadConversations();
     }
     async function openById(id) {
@@ -236,12 +244,56 @@
         if (c) await showThread(c);
     }
 
+    // Xử lý đồng bộ kích thước viewport cho giao diện Full-screen và chống bàn phím ảo che khuất
+    function updateMobileViewport() {
+        if (!st.open || window.innerWidth >= 768) {
+            panel.style.top = '';
+            panel.style.height = '';
+            panel.style.bottom = '';
+            panel.classList.remove('rmc-keyboard-open');
+            return;
+        }
+
+        if (window.visualViewport) {
+            const vv = window.visualViewport;
+            panel.style.top = `${vv.offsetTop}px`;
+            panel.style.height = `${vv.height}px`;
+            panel.style.bottom = 'auto';
+
+            // Khi visual viewport nhỏ hơn đáng kể so với innerHeight tức là bàn phím ảo đang mở
+            const isKeyboardOpen = vv.height < (window.innerHeight - 120);
+            if (isKeyboardOpen) {
+                panel.classList.add('rmc-keyboard-open');
+            } else {
+                panel.classList.remove('rmc-keyboard-open');
+            }
+        } else {
+            panel.style.top = '0px';
+            panel.style.height = '100dvh';
+            panel.style.bottom = '0px';
+        }
+    }
+
     let closingAi = false;
     function setOpen(open) {
         st.open = open;
         panel.hidden = !open;
         launcher.setAttribute('aria-expanded', String(open));
-        if (!open) return;
+        if (open) {
+            root.classList.add('rmc-active');
+            if (window.innerWidth < 768) {
+                document.body.classList.add('rmc-open');
+            }
+            updateMobileViewport();
+        } else {
+            root.classList.remove('rmc-active');
+            document.body.classList.remove('rmc-open');
+            panel.style.top = '';
+            panel.style.height = '';
+            panel.style.bottom = '';
+            panel.classList.remove('rmc-keyboard-open');
+            return;
+        }
         // Chỉ mở một cửa sổ một lúc: đóng cửa sổ Trợ lý AI nếu đang mở.
         const ai = document.querySelector('.rmchat-toggle[aria-expanded="true"]');
         if (ai) { closingAi = true; ai.click(); closingAi = false; }
@@ -317,6 +369,40 @@
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); }
     });
+
+    // Khi chạm hoặc cuộn xem lịch sử tin nhắn: tự động hạ bàn phím ảo để giải phóng không gian đọc
+    msgs.addEventListener('touchstart', () => {
+        if (document.activeElement === input) {
+            input.blur();
+        }
+    }, { passive: true });
+
+    // Khi người dùng bấm vào ô nhập trên mobile: bàn phím ảo đẩy lên -> cuộn ngay tin nhắn mới nhất và cập nhật viewport
+    input.addEventListener('focus', () => {
+        if (window.innerWidth < 768) {
+            window.scrollTo(0, 0);
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+                updateMobileViewport();
+                toBottom();
+            }, 100);
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+                updateMobileViewport();
+                toBottom();
+            }, 300);
+        }
+    });
+
+    input.addEventListener('blur', () => {
+        if (window.innerWidth < 768) {
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+                updateMobileViewport();
+            }, 100);
+        }
+    });
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const text = input.value.trim();
@@ -327,13 +413,44 @@
             await st.conn.invoke('SendMessage', st.cur.id, text);
             input.value = '';
             input.style.height = 'auto';
+            toBottom();
         } catch (err) {
             const msg = String(err?.message || '');
             const i = msg.indexOf('HubException: ');
             showHint(i >= 0 ? msg.slice(i + 14) : 'Không gửi được tin nhắn.');
         } finally {
             sendBtn.disabled = false;
-            input.focus();
+            if (window.innerWidth >= 768 || document.activeElement === input) {
+                input.focus();
+            }
+            updateMobileViewport();
+        }
+    });
+
+    // Lắng nghe thay đổi kích thước do bàn phím ảo bật/tắt (qua VisualViewport API chuẩn mobile)
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            if (st.open) {
+                updateMobileViewport();
+                if (st.view === 'thread') toBottom();
+            }
+        });
+        window.visualViewport.addEventListener('scroll', () => {
+            if (st.open) {
+                updateMobileViewport();
+            }
+        });
+    }
+
+    // Lắng nghe resize cửa sổ trình duyệt (khi xoay màn hình hoặc đổi kích thước trên desktop/dev tools)
+    window.addEventListener('resize', () => {
+        if (st.open) {
+            if (window.innerWidth < 768) {
+                document.body.classList.add('rmc-open');
+            } else {
+                document.body.classList.remove('rmc-open');
+            }
+            updateMobileViewport();
         }
     });
 
@@ -356,7 +473,9 @@
             setOpen(true);
             await showThread(data.data);
             if (btn.dataset.prefill && !input.value) input.value = btn.dataset.prefill;
-            input.focus();
+            if (window.innerWidth >= 768) {
+                input.focus();
+            }
         } catch (err) {
             if (window.showNotifyBox) {
                 window.showNotifyBox({ title: 'Đã xảy ra lỗi', message: err.message || 'Lỗi kết nối trò chuyện.', type: 'error' });

@@ -183,6 +183,8 @@ public sealed class ReviewService(AppDbContext db, IAuditLogService? auditLog = 
                 AnhDaiDienNguoiMua = d.NguoiMua.AnhDaiDien,
                 SoSao              = d.SoSao,
                 NoiDung            = d.NoiDung,
+                PhanHoiShop        = d.PhanHoiShop,
+                NgayPhanHoi        = d.NgayPhanHoi,
                 TrangThai          = d.TrangThai,
                 NgayTao            = d.NgayTao
             })
@@ -383,6 +385,8 @@ public sealed class ReviewService(AppDbContext db, IAuditLogService? auditLog = 
                 TenShop = d.CuaHang.TenShop,
                 SoSao = d.SoSao,
                 NoiDung = d.NoiDung,
+                PhanHoiShop = d.PhanHoiShop,
+                NgayPhanHoi = d.NgayPhanHoi,
                 TrangThai = d.TrangThai,
                 NgayTao = d.NgayTao,
                 TenSanPhams = d.DonHang.ChiTiet.Select(ct => ct.TenSanPham).ToList(),
@@ -508,9 +512,92 @@ public sealed class ReviewService(AppDbContext db, IAuditLogService? auditLog = 
                 AnhDaiDienNguoiMua = d.NguoiMua.AnhDaiDien,
                 SoSao = d.SoSao,
                 NoiDung = d.NoiDung,
+                PhanHoiShop = d.PhanHoiShop,
+                NgayPhanHoi = d.NgayPhanHoi,
                 TrangThai = d.TrangThai,
                 NgayTao = d.NgayTao
             })
             .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    // =========================================================
+    // 9. Chủ shop phản hồi giải trình đánh giá (C4)
+    // =========================================================
+    public async Task<(bool Success, string? Error)> PhanHoiDanhGiaAsync(
+        int maDanhGia,
+        int maChuShop,
+        string phanHoi,
+        CancellationToken cancellationToken = default)
+    {
+        phanHoi = phanHoi?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(phanHoi))
+            return (false, "Nội dung phản hồi không được để trống.");
+
+        if (phanHoi.Length > 1000)
+            return (false, "Nội dung phản hồi không được vượt quá 1 000 ký tự.");
+
+        var danhGia = await db.DanhGias
+            .Include(d => d.CuaHang)
+            .FirstOrDefaultAsync(d => d.MaDanhGia == maDanhGia, cancellationToken);
+
+        if (danhGia == null)
+            return (false, "Đánh giá không tồn tại.");
+
+        if (danhGia.CuaHang.MaNguoiDung != maChuShop)
+            return (false, "Bạn không có quyền phản hồi đánh giá này vì không phải là chủ cửa hàng.");
+
+        danhGia.PhanHoiShop = phanHoi;
+        danhGia.NgayPhanHoi = DateTime.UtcNow;
+
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+
+            // Gửi thông báo cho người mua khi shop gửi phản hồi
+            if (notificationService != null)
+            {
+                var snippet = phanHoi.Length > 80 ? phanHoi.Substring(0, 77) + "..." : phanHoi;
+                await notificationService.CreateAsync(
+                    danhGia.MaNguoiMua,
+                    NotificationTypes.Order,
+                    $"Shop {danhGia.CuaHang.TenShop} đã phản hồi đánh giá của bạn",
+                    $"Chủ shop phản hồi: \"{snippet}\"",
+                    danhGia.MaDonHang,
+                    cancellationToken);
+            }
+
+            return (true, null);
+        }
+        catch (DbUpdateException ex)
+        {
+            return (false, SqlLoi.ThongBao(ex));
+        }
+    }
+
+    public async Task<DanhSachDanhGiaTheoShopVm> LayDanhGiaCuaShopAsync(
+        int maChuShop,
+        int page = 1,
+        int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var shop = await db.CuaHangs.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.MaNguoiDung == maChuShop, cancellationToken);
+
+        if (shop == null)
+        {
+            return new DanhSachDanhGiaTheoShopVm
+            {
+                MaCuaHang = 0,
+                TenShop = string.Empty,
+                DiemTrungBinh = 0m,
+                SoDanhGia = 0,
+                Items = Array.Empty<DanhGiaItemVm>(),
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = 0
+            };
+        }
+
+        return await LayDanhGiaTheoShopAsync(shop.MaCuaHang, page, pageSize, chiLayTatCa: false, cancellationToken);
     }
 }

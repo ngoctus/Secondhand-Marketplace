@@ -28,6 +28,19 @@ public sealed class TaoDanhGiaVm
 }
 
 /// <summary>
+/// Dữ liệu gửi lên khi chủ shop gửi phản hồi giải trình cho một đánh giá của khách.
+/// </summary>
+public sealed class PhanHoiDanhGiaVm
+{
+    [Required]
+    public int MaDanhGia { get; set; }
+
+    [Required(ErrorMessage = "Vui lòng nhập nội dung phản hồi giải trình.")]
+    [StringLength(1000, ErrorMessage = "Nội dung phản hồi không được vượt quá 1 000 ký tự.")]
+    public string PhanHoi { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// Một dòng đánh giá hiển thị ở trang shop hoặc danh sách đánh giá của người mua.
 /// Không bao gồm Email, SoDienThoai, DiaChiMacDinh của người mua (bảo vệ quyền riêng tư).
 /// </summary>
@@ -43,6 +56,8 @@ public sealed class DanhGiaItemVm
     public string? AnhDaiDienNguoiMua { get; init; }
     public byte SoSao { get; init; }
     public string? NoiDung { get; init; }
+    public string? PhanHoiShop { get; init; }
+    public DateTime? NgayPhanHoi { get; init; }
     public string TrangThai { get; init; } = "VISIBLE";
     public DateTime NgayTao { get; init; }
 }
@@ -108,6 +123,8 @@ public sealed class DanhGiaCuaToiItemVm
     public string TenShop { get; init; } = string.Empty;
     public byte SoSao { get; init; }
     public string? NoiDung { get; init; }
+    public string? PhanHoiShop { get; init; }
+    public DateTime? NgayPhanHoi { get; init; }
     public string TrangThai { get; init; } = "VISIBLE";
     public DateTime NgayTao { get; init; }
     public List<string> TenSanPhams { get; init; } = new();

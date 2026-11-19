@@ -323,6 +323,8 @@ BEGIN
         MaCuaHang     int            NOT NULL,
         SoSao         tinyint        NOT NULL,
         NoiDung       nvarchar(1000) NULL,
+        PhanHoiShop   nvarchar(1000) NULL,
+        NgayPhanHoi   datetime2(3)   NULL,
         TrangThai     varchar(10)    NOT NULL CONSTRAINT DF_DanhGia_TrangThai DEFAULT ('VISIBLE'),
         NgayTao       datetime2(3)   NOT NULL CONSTRAINT DF_DanhGia_NgayTao   DEFAULT (SYSUTCDATETIME())
     );

@@ -32,11 +32,13 @@
 
     var currentArea = Context.Request.RouteValues["area"]?.ToString() ?? string.Empty;
     var currentController = Context.Request.RouteValues["controller"]?.ToString() ?? string.Empty;
+    var currentAction = Context.Request.RouteValues["action"]?.ToString() ?? string.Empty;
     var isSellerChannelPage = currentArea.Equals("User", StringComparison.OrdinalIgnoreCase) &&
                               (currentController.Equals("Products", StringComparison.OrdinalIgnoreCase) ||
                                currentController.Equals("SellerOrders", StringComparison.OrdinalIgnoreCase) ||
                                currentController.Equals("Shop", StringComparison.OrdinalIgnoreCase) ||
-                               currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase));
+                               currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ||
+                               (currentController.Equals("Reviews", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Shop", StringComparison.OrdinalIgnoreCase)));
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -206,8 +208,16 @@
                             @if (User.IsInRole("USER"))
                             {
                                 <div class="rm-dropdown-divider"></div>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua của tôi</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">Đánh giá của tôi</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán (Shop)</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">Đánh giá cửa hàng</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê doanh thu</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">Yêu thích</a>
-                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng của tôi</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Products" asp-action="Index">Quản lý sản phẩm</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Disputes" asp-action="Index">Khiếu nại / Tranh chấp</a>
+                                <a class="rm-dropdown-item" asp-area="User" asp-controller="Reports" asp-action="Index">Lịch sử báo cáo</a>
                             }
                             <div class="rm-dropdown-divider"></div>
                             <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="m-0 p-0">
@@ -275,10 +285,16 @@
                     </a>
                     <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">Yêu thích</a>
                     <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">Đơn mua</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">Đánh giá của tôi</a>
                     <div class="rm-dropdown-divider"></div>
                     <a class="rm-dropdown-item fw-semibold" asp-area="User" asp-controller="Products" asp-action="Index">
                         <i class="bi bi-shop me-1"></i> Kênh Người Bán
                     </a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">Đơn bán (Shop)</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">Đánh giá cửa hàng</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">Thống kê cửa hàng</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">Cửa hàng của tôi</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Products" asp-action="Create">Đăng sản phẩm</a>
                 }
                 <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
                     <button type="submit" class="rm-dropdown-item text-danger">Đăng xuất</button>
@@ -312,6 +328,10 @@
                 <a asp-area="User" asp-controller="Shop" asp-action="Index"
                    class="btn btn-sm @(currentController.Equals("Shop", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
                     Cửa hàng của tôi
+                </a>
+                <a asp-area="User" asp-controller="Reviews" asp-action="Shop"
+                   class="btn btn-sm @(currentController.Equals("Reviews", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Shop", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
+                    Đánh giá cửa hàng
                 </a>
                 <a asp-area="User" asp-controller="Dashboard" asp-action="Index"
                    class="btn btn-sm @(currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">

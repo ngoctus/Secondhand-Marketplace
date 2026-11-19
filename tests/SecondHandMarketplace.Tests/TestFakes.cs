@@ -35,6 +35,16 @@ public class FakeNotificationService : INotificationService
     {
         return Task.FromResult(true);
     }
+
+    public Task<int> MarkAllAsReadAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(0);
+    }
+
+    public Task<string> ResolveTargetUrlAsync(int userId, int notificationId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult("/User/Notifications");
+    }
 }
 
 public class FakeAuditLogService : IAuditLogService

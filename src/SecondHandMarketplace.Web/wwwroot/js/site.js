@@ -8,6 +8,9 @@
         document.querySelectorAll('.rm-dropdown-menu, .account-panel, #mobileDrawer').forEach(el => {
             el.hidden = true;
         });
+        // Đóng notify dropdown riêng (không có class rm-dropdown-menu)
+        const notifyDrop = document.getElementById('notifyDropdownMenu');
+        if (notifyDrop) notifyDrop.hidden = true;
         document.querySelectorAll('[aria-expanded="true"]').forEach(btn => {
             btn.setAttribute('aria-expanded', 'false');
         });
@@ -35,6 +38,7 @@
     setupDropdown('adminMenuBtn', 'adminDropdownMenu');
     setupDropdown('userMenuBtn', 'userDropdownMenu');
     setupDropdown('accountButton', 'accountPanel');
+    setupDropdown('notifyBellBtn', 'notifyDropdownMenu');
 
     // Toggle menu mobile
     const mobileBtn = document.getElementById('mobileMenuBtn');
@@ -56,6 +60,8 @@
         if (!e.target.closest('.rm-dropdown') &&
             !e.target.closest('.rm-user-menu') &&
             !e.target.closest('.account-menu') &&
+            !e.target.closest('.rm-notify-wrapper') &&
+            !e.target.closest('.rm-notify-slot') &&
             !e.target.closest('.rm-mobile-drawer') &&
             !e.target.closest('.rm-mobile-toggle')) {
             closeAllDropdowns();
