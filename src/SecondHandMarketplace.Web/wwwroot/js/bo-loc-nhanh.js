@@ -35,8 +35,18 @@
 
     const layBoLoc = (page) => {
         const giaTri = new Map();
+
+        // Hai đầu thanh trượt nằm ở biên = không lọc giá. Phải bỏ hẳn tham số thay vì gửi
+        // giá trị biên, nếu không server coi đó là một khoảng giá thật và trả về rỗng.
+        const lo = rangeLo ? parseFloat(rangeLo.value) : NaN;
+        const cao = rangeCao ? parseFloat(rangeCao.value) : NaN;
+        const boQuaGia = new Set();
+        if (!isNaN(lo) && lo <= bienMin) boQuaGia.add('MinPrice');
+        if (!isNaN(cao) && cao >= bienMax) boQuaGia.add('MaxPrice');
+
         new FormData(form).forEach((v, k) => {
             if (LOAI_PARAM.indexOf(k) >= 0) return;
+            if (boQuaGia.has(k)) return;
             const s = v === null || v === undefined ? '' : String(v);
             if (s !== '') giaTri.set(k, s);
         });
@@ -80,14 +90,57 @@
         }
     }
 
-    // Chỉ gửi giá khi tay kéo lệch khỏi biên: nằm hết cỡ hai đầu nghĩa là không lọc giá,
-    // nhờ đó URL chia sẻ được vẫn ngắn như lúc dùng 6 nút radio.
+    // Chỉ gửi giá khi tay kéo lệch khỏi biên. Tuyệt đối không gán '' cho input range: theo chuẩn
+    // HTML, chuỗi rỗng bị chuẩn hoá về giữa thang (min+max)/2 nên MinPrice = MaxPrice = midpoint
+    // và bộ lọc luôn ra 0 sản phẩm. Giữ giá trị thật, layBoLoc tự bỏ qua đầu đang nằm ở biên.
     function chuanBiGiaGui() {
         if (!rangeLo || !rangeCao) return;
         const lo = parseFloat(rangeLo.value), cao = parseFloat(rangeCao.value);
-        rangeLo.value = (isNaN(lo) || lo <= bienMin) ? '' : String(Math.round(lo / buoc) * buoc);
-        rangeCao.value = (isNaN(cao) || cao >= bienMax) ? '' : String(Math.round(cao / buoc) * buoc);
+        if (!isNaN(lo)) rangeLo.value = String(Math.round(lo / buoc) * buoc);
+        if (!isNaN(cao)) rangeCao.value = String(Math.round(cao / buoc) * buoc);
     }
+
+    // B-04: sau khi lưới được thay bằng AJAX (Xóa bộ lọc, back/forward, đổi trang) sidebar phải
+    // khớp lại URL; nếu không lần thao tác sau sẽ lấy lại bộ lọc cũ đang còn trên form.
+    const dongBoBieuMau = (url) => {
+        const thamSo = new URL(url, window.location.href).searchParams;
+        const giaTri = (ten) => thamSo.get(ten) ?? '';
+
+        form.querySelectorAll('input, select').forEach(el => {
+            const ten = el.name;
+            if (!ten || ten === 'Sort') return;
+            if (el === rangeLo || el === rangeCao) return;
+            // Không đụng vào ô người dùng đang gõ để con trỏ không nhảy.
+            if (el === document.activeElement) return;
+
+            if (el.type === 'radio') {
+                el.checked = giaTri(ten) === el.value;
+            } else if (el.tagName === 'SELECT') {
+                if (!el.closest('[data-khuvuc]')) el.value = giaTri(ten);
+            } else if (el.type === 'search' || el.type === 'text') {
+                el.value = giaTri(ten);
+            }
+        });
+
+        // Tỉnh/phường phải tải lại danh sách xã theo tỉnh mới (khu-vuc.js).
+        if (typeof window.rmChonKhuVuc === 'function') {
+            window.rmChonKhuVuc(giaTri('MaTinhThanh'), giaTri('MaPhuongXa'));
+        }
+
+        if (rangeLo) rangeLo.value = thamSo.has('MinPrice') ? thamSo.get('MinPrice') : String(bienMin);
+        if (rangeCao) rangeCao.value = thamSo.has('MaxPrice') ? thamSo.get('MaxPrice') : String(bienMax);
+        veSlider();
+
+        const nutMobile = document.querySelector('.filter-toggle[data-so-bo-loc]');
+        if (nutMobile) {
+            const so = (thamSo.get('CategoryId') ? 1 : 0)
+                + (thamSo.get('ConditionId') ? 1 : 0)
+                + ((thamSo.get('MaTinhThanh') || thamSo.get('MaPhuongXa')) ? 1 : 0)
+                + ((thamSo.get('MinPrice') || thamSo.get('MaxPrice') || thamSo.get('TenPhanGia')) ? 1 : 0);
+            nutMobile.dataset.soBoLoc = String(so);
+            nutMobile.textContent = 'Hiện bộ lọc' + (so > 0 ? ` (${so})` : '');
+        }
+    };
 
     async function tai(url, ghiLichSu) {
         const current = ++lanGoi;
@@ -102,6 +155,9 @@
             if (current !== lanGoi) return;
 
             khoiKetQua.innerHTML = vanBan;
+            dongBoBieuMau(url);
+            // Lưới mới cần được đánh dấu tim yêu thích lại (site.js nghe sự kiện này).
+            document.dispatchEvent(new CustomEvent('rm:ket-qua-da-thay'));
             if (ghiLichSu) window.history.pushState({ loc: url }, '', url);
 
             // animations.js gắn reveal khi trang đầu tiên vẽ xong; nội dung mới cần gắn tiếp.

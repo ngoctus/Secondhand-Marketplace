@@ -58,9 +58,13 @@
         input.files = trungGian.files;
     };
 
+    // Ảnh mới chỉ thành bìa khi sản phẩm chưa có ảnh chính (server chỉ thăng bìa trong trường hợp
+    // đó), nên nếu tin đã có bìa đã lưu thì không gắn nhãn "Ảnh bìa" cho ảnh xem trước.
+    const daCoAnhBia = () => !!(luoiDaLuu && luoiDaLuu.querySelector('.rm-anh-item.is-bia'));
+
     const taoItem = (f, i) => {
         const item = document.createElement('figure');
-        item.className = 'rm-anh-item' + (i === 0 ? ' is-bia' : '');
+        item.className = 'rm-anh-item' + (i === 0 && !daCoAnhBia() ? ' is-bia' : '');
         item.draggable = coTheSapXep;
         item.dataset.index = String(i);
 
@@ -225,6 +229,9 @@
                     item.classList.add('is-bia');
                     luoiDaLuu.insertBefore(item, luoiDaLuu.firstElementChild);
                 }
+
+                // Ảnh bìa có thể vừa đổi/không còn: vẽ lại preview để nhãn "Ảnh bìa" đúng.
+                veDanhSach();
 
                 soLuongToiDa = docCaiConLai();
                 input.dataset.anhConLai = String(soLuongToiDa);

@@ -442,16 +442,18 @@
         }
     });
 
-    if (csrf) {
-        window.addEventListener('load', async () => {
-            if (!document.querySelector('.rm-card-favorite-btn')) return;
-            try {
-                const res = await fetch(idsUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                const ids = await res.json();
-                ids.forEach(id => danhDau(id, true));
-            } catch { /* chưa đăng nhập hoặc lỗi mạng: bỏ qua */ }
-        });
-    }
+    const napTrangThaiYeuThich = async () => {
+        if (!csrf || !document.querySelector('.rm-card-favorite-btn')) return;
+        try {
+            const res = await fetch(idsUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const ids = await res.json();
+            ids.forEach(id => danhDau(id, true));
+        } catch { /* chưa đăng nhập hoặc lỗi mạng: bỏ qua */ }
+    };
+
+    window.addEventListener('load', napTrangThaiYeuThich);
+    // B-04: lưới kết quả thay bằng AJAX không phát sự kiện load, nên bo-loc-nhanh.js phát sự kiện này.
+    document.addEventListener('rm:ket-qua-da-thay', napTrangThaiYeuThich);
 })();
 
 
@@ -600,7 +602,7 @@
             else t.removeAttribute('aria-current');
         });
         if (dem) dem.textContent = `${viTri + 1} / ${danhSach.length}`;
-        if (giuThumbTrongMat) thumbs[viTri].scrollIntoView({ behavior: kiemChuyenDong ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' });
+        if (giuThumbTrongMat) thumbs[viTri].scrollIntoView?.({ behavior: kiemChuyenDong ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' });
     };
 
     gallery.addEventListener('click', (e) => {

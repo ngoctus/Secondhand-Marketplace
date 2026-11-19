@@ -198,6 +198,28 @@ public class ProductService : IProductService
             : imageUrl;
     }
 
+    // Xóa file ảnh + thumbnail trên đĩa sau khi bản ghi đã bị xóa (best effort).
+    // Chỉ đụng tới thư mục upload của người dùng, ảnh seed nằm ngoài nên không bị xóa nhầm.
+    private void XoaFileAnh(string? duongDan)
+    {
+        if (_environment?.WebRootPath is null || string.IsNullOrWhiteSpace(duongDan)) return;
+
+        var goc = Path.GetFullPath(Path.Combine(_environment.WebRootPath, "uploads", "products"));
+        var tuongDoi = duongDan.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var duongDanDia = Path.GetFullPath(Path.Combine(_environment.WebRootPath, tuongDoi));
+        if (!duongDanDia.StartsWith(goc + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return;
+
+        var thumbPath = Path.Combine(Path.GetDirectoryName(duongDanDia)!,
+            Path.GetFileNameWithoutExtension(duongDanDia) + "-thumb.webp");
+        try
+        {
+            if (System.IO.File.Exists(duongDanDia)) System.IO.File.Delete(duongDanDia);
+            if (System.IO.File.Exists(thumbPath)) System.IO.File.Delete(thumbPath);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
     public async Task<ProductDetailVm?> GetDetailAsync(int id)
     {
         // Giống view vw_SanPhamChiTietCongKhai: xem được ACTIVE, RESERVED, SOLD.
@@ -225,7 +247,7 @@ public class ProductService : IProductService
                 ShopDescription = p.CuaHang.MoTa,
                 ShopLogo = p.CuaHang.Logo,
                 ShopKhuVuc = p.CuaHang.KhuVucHienThi,
-                ImageUrls = p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()
+                ImageUrls = p.Anh.OrderByDescending(a => a.LaAnhChinh).ThenBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()
             })
             .FirstOrDefaultAsync();
 
@@ -404,10 +426,13 @@ public class ProductService : IProductService
         sp.Gia = form.Gia;
         sp.NgayCapNhat = DateTime.UtcNow;
 
-        var thuTu = sp.Anh.Count;
-        if (thuTu < SoAnhToiDa)
+        // Đếm theo số ảnh để giới hạn 10, nhưng thứ tự mới phải nối sau ThuTu lớn nhất:
+        // xóa một ảnh ở giữa để lại khoảng trống (2,3,4) nên Count+1 sẽ trùng unique key.
+        var soAnhHienCo = sp.Anh.Count;
+        var thuTu = soAnhHienCo == 0 ? 0 : sp.Anh.Max(a => a.ThuTu);
+        if (soAnhHienCo < SoAnhToiDa)
         {
-            foreach (var a in anhMoi.Take(SoAnhToiDa - thuTu))
+            foreach (var a in anhMoi.Take(SoAnhToiDa - soAnhHienCo))
             {
                 thuTu++;
                 sp.Anh.Add(new AnhSanPham
@@ -596,8 +621,10 @@ public class ProductService : IProductService
         if (loiTrangThai is not null) return (false, loiTrangThai, null);
 
         var wasMain = anh.LaAnhChinh;
+        var duongDanAnh = anh.DuongDan;
         _db.AnhSanPhams.Remove(anh);
         await _db.SaveChangesAsync(cancellationToken);
+        XoaFileAnh(duongDanAnh);
 
         int? maAnhChinhMoi = null;
         if (wasMain)
