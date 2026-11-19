@@ -1,14 +1,94 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Models;
+using SecondHandMarketplace.Web.Models.ViewModels.Home;
+using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Banners;
+using SecondHandMarketplace.Web.Services.Categories;
+using SecondHandMarketplace.Web.Services.Products;
+using SecondHandMarketplace.Web.Services.Reviews;
 using System.Diagnostics;
 
 namespace SecondHandMarketplace.Web.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController(
+        IProductService products,
+        ICategoryService categories,
+        IBannerService banners,
+        IReviewService reviews,
+        IMemoryCache cache) : Controller
     {
-        public IActionResult Index()
+        private const string CacheKey = "home:catalog";
+        private static readonly TimeSpan CacheTrangChu = TimeSpan.FromMinutes(5);
+
+        private const int SoTinDuocVeMotLan = 60;
+        private const int SoTinNoiBat = 4;
+        private const int SoTinMotTab = 4;
+        private const int SoTabToiDa = 6;
+
+        public async Task<IActionResult> Index()
         {
-            return View();
+            // Trang chủ hiển thị giống nhau cho mọi khách nên dùng chung một bản cache 5 phút.
+            // Cố ý không truyền HttpContext.RequestAborted: nếu người dùng đóng tab giữa chừng,
+            // truy vấn bị hủy và kết quả dở dang sẽ bị cache lại cho các request sau.
+            if (!cache.TryGetValue(CacheKey, out HomeIndexVm? duLieu) || duLieu is null)
+            {
+                duLieu = await NapTrangChuAsync();
+
+                // Chỉ cache khi lấy được sản phẩm: DB đang lỗi thì lần tải lại phải được thử thật,
+                // không bị khóa một trang trống suốt 5 phút.
+                if (duLieu.SanPhamNoiBat.Count > 0)
+                    cache.Set(CacheKey, duLieu, CacheTrangChu);
+            }
+
+            return View(duLieu);
+        }
+
+        private async Task<HomeIndexVm> NapTrangChuAsync()
+        {
+            var danhMuc = await MocAnToan(() => categories.GetCategoriesAsync());
+            var anhBanner = await MocAnToan(() => banners.LayBannerHienThiAsync());
+            var danhGia = await MocAnToan(() => reviews.LayDanhGiaNoiBatAsync(SoTinNoiBat));
+
+            // Một query duy nhất lấy 60 tin mới nhất, mọi khối còn lại tách trong bộ nhớ.
+            // Trước đây view gọi SearchAsync rồi lặp theo từng danh mục nên sinh N+1.
+            var tatCaTin = await MocAnToan(async () =>
+                (await products.SearchAsync(new ProductSearchVm { PageSize = SoTinDuocVeMotLan })).Items);
+
+            var tabs = tatCaTin
+                .GroupBy(t => t.CategoryId)
+                .Where(nhom => nhom.Key is not null && nhom.Count() >= SoTinMotTab)
+                // GroupBy giữ thứ tự khóa xuất hiện đầu tiên và danh sách đã sắp theo tin mới nhất,
+                // nên tab đầu luôn là danh mục vừa có tin mới — không cần sắp thêm.
+                .Take(SoTabToiDa)
+                .Select(nhom => new HomeCategoryTabVm(
+                    nhom.Key!.Value,
+                    nhom.First().CategoryName ?? "Khác",
+                    nhom.Take(SoTinMotTab).ToList()))
+                .ToList();
+
+            return new HomeIndexVm
+            {
+                Banners = anhBanner,
+                DanhMucs = danhMuc,
+                SanPhamNoiBat = tatCaTin.Take(SoTinNoiBat).ToList(),
+                TabsDanhMuc = tabs,
+                DanhGiaNoiBat = danhGia
+            };
+        }
+
+        // Trang chủ phải mở được cả khi database chưa chạy đủ script (thiếu bảng Banner/DanhGia),
+        // nên mỗi khối lỗi thì chỉ khối đó trống, không làm cả trang nổ 500.
+        private static async Task<IReadOnlyList<T>> MocAnToan<T>(Func<Task<IReadOnlyList<T>>> hopThu)
+        {
+            try
+            {
+                return await hopThu();
+            }
+            catch
+            {
+                return [];
+            }
         }
 
         // Lỗi hệ thống bất ngờ (UseExceptionHandler)

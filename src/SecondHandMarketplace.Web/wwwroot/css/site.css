@@ -1105,6 +1105,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .detail-main-img {
+    position: relative; /* B-05: chỗ neo cho mũi tên đổi ảnh và bộ đếm ảnh */
     aspect-ratio: 4 / 5;
     width: 100%;
     border-radius: var(--radius-lg);
@@ -1112,19 +1113,38 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 12px;
 }
 
+/* B-05: dải thumbnail cuộn ngang thay cho lưới cắt cứng 5 ảnh. */
 .detail-thumbnails {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    display: flex;
     gap: 10px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
 }
 
 .thumbnail-item {
+    flex: 0 0 auto;
+    width: 76px;
     aspect-ratio: 1;
-    border-radius: var(--radius-md);
+    padding: 0;
     overflow: hidden;
     cursor: pointer;
     border: 1.5px solid transparent;
+    border-radius: var(--radius-md);
+    background-color: #eeeee7;
+    scroll-snap-align: start;
+    -webkit-appearance: none;
+    appearance: none;
 }
+
+    .thumbnail-item img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
 .thumbnail-item.active {
     border-color: var(--color-primary);
@@ -1627,8 +1647,10 @@ img.shop-snippet-avatar {
         font-size: 22px;
     }
     .detail-thumbnails {
-        grid-template-columns: repeat(5, 1fr);
         gap: 6px;
+    }
+    .thumbnail-item {
+        width: 58px;
     }
     .rm-footer-grid {
         grid-template-columns: 1fr;
@@ -3604,4 +3626,452 @@ a.smallbtn:hover {
     .help-section { grid-template-columns: 30px minmax(0,1fr); gap: 10px; }
     .help-security-grid { grid-template-columns: 1fr; }
 
+}
+
+/* ==========================================================================
+   TAB DANH MUC TRANG CHU (B-02)
+   Mot khoi tab thay cho N khoi danh muc trai dai; pill nam ngang va cuon
+   duoc tren mobile de not nan man hinh 375px.
+   ========================================================================== */
+.rm-cat-tabs {
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.rm-cat-tabs .nav-link {
+    flex: 0 0 auto;
+    padding: 7px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-white);
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.rm-cat-tabs .nav-link:hover,
+.rm-cat-tabs .nav-link:focus-visible {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background: var(--color-primary-subtle);
+}
+
+.rm-cat-tabs .nav-link.active,
+.rm-cat-tabs .nav-link.active:hover {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.rm-cat-contents {
+    margin-top: 16px;
+}
+
+.rm-cat-more {
+    text-align: center;
+    padding-top: 18px;
+}
+
+/* ==========================================================================
+   VUNG KEO THA ANH + LUOI ANH DANG TIN (B-03)
+   Input file that nam duoi vung keo tha (opacity 0) nen click va ban phim
+   cua trinh duyet van dung; luoi xem truoc chi la lop hinh.
+   ========================================================================== */
+.rm-dropzone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 22px 16px;
+    text-align: center;
+    color: var(--color-text-secondary);
+    background: var(--color-surface);
+    border: 1.5px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.rm-dropzone:hover,
+.rm-dropzone:focus-within {
+    border-color: var(--color-primary);
+    background: var(--color-primary-subtle);
+}
+
+.rm-dropzone.is-drag {
+    border-color: var(--color-primary);
+    border-style: solid;
+    background: var(--color-primary-subtle);
+}
+
+.rm-dropzone b { font-size: 14px; color: var(--color-text-primary); }
+.rm-dropzone small { font-size: 12px; color: var(--color-text-muted); }
+.rm-dropzone-hint { font-size: 22px; line-height: 1; color: var(--color-primary); }
+
+.rm-dropzone-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.rm-anh-loi {
+    margin-top: 8px;
+    padding: 7px 10px;
+    font-size: 12px;
+    color: var(--color-error);
+    background: var(--color-error-bg);
+    border-radius: var(--radius-sm);
+}
+
+.rm-anh-danh-sach { margin-top: 14px; }
+
+.rm-anh-danh-sach-nhan {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+}
+
+.rm-anh-luoi {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 10px;
+}
+
+.rm-anh-item {
+    position: relative;
+    margin: 0;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: grab;
+}
+
+.rm-anh-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.rm-anh-item.is-bia { border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-primary); }
+.rm-anh-item.is-dragging { opacity: .45; }
+
+.rm-anh-bia {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--color-primary);
+    border-radius: var(--radius-pill);
+}
+
+/* Anh da là bìa thì không cần nút "Đặt làm bìa", ngược lại thì ẩn nhãn. */
+.rm-anh-item:not(.is-bia) .rm-anh-bia,
+.rm-anh-item.is-bia [data-anh-dat-chinh] { display: none; }
+
+.rm-anh-so {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    background: rgba(255, 255, 255, .86);
+    border-radius: 50%;
+}
+
+.rm-anh-ten {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: #fff;
+    background: rgba(41, 35, 29, .62);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rm-anh-bo {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--color-text-primary);
+    background: rgba(255, 255, 255, .9);
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.rm-anh-item.is-bia .rm-anh-so { right: 30px; }
+
+.rm-anh-actions {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    padding: 4px;
+    background: rgba(255, 255, 255, .9);
+    border-top: 1px solid var(--color-border-subtle);
+}
+
+.rm-anh-btn {
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+}
+
+.rm-anh-btn:hover:not(:disabled) { border-color: var(--color-primary); background: var(--color-primary-subtle); }
+.rm-anh-btn:disabled { opacity: .55; cursor: progress; }
+.rm-anh-btn-xoa { color: var(--color-error); }
+.rm-anh-btn-xoa:hover:not(:disabled) { border-color: var(--color-error); background: var(--color-error-bg); }
+
+@media (max-width: 575.98px) {
+    .rm-anh-luoi { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+}
+
+/* ==========================================================================
+   THANH TRƯỢT GIÁ HAI ĐẦU + LỌC NHANH (B-04)
+   Hai input range trong suốt chồng lên một track giả; chỉ thumb nhận click
+   nên kéo đầu nào cũng được, và form vẫn POST/GET được hai giá trị thật.
+   ========================================================================== */
+.rm-gia-readout {
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.rm-gia-slider {
+    position: relative;
+    height: 34px;
+}
+
+.rm-gia-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 15px;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--color-border);
+}
+
+.rm-gia-band {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--color-primary);
+}
+
+.rm-gia-range {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 34px;
+    margin: 0;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    pointer-events: none;
+}
+
+.rm-gia-range-lo { z-index: 3; }
+.rm-gia-range-cao { z-index: 2; }
+
+.rm-gia-range::-webkit-slider-runnable-track { height: 34px; background: transparent; border: 0; }
+.rm-gia-range::-moz-range-track { height: 34px; background: transparent; border: 0; }
+
+.rm-gia-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 8px;
+    border: 2px solid var(--color-primary);
+    border-radius: 50%;
+    background: var(--color-surface);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .25);
+    cursor: grab;
+    pointer-events: auto;
+}
+
+.rm-gia-range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--color-primary);
+    border-radius: 50%;
+    background: var(--color-surface);
+    cursor: grab;
+    pointer-events: auto;
+}
+
+.rm-gia-range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.rm-gia-range:focus-visible::-moz-range-thumb { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+.rm-gia-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+}
+
+/* Khối kết quả đang được fetch: người mua vẫn thấy lưới cũ, chỉ mờ đi và khoá tương tác. */
+#ketQuaTimKiem.rm-kq-dang-tai {
+    opacity: .5;
+    pointer-events: none;
+    transition: opacity .18s ease;
+}
+
+/* =========================================================================
+   GALLERY ANH CHI TIET + LIGHTBOX DIEU HUONG (B-05)
+   ========================================================================= */
+.rm-anh-mui {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, .82);
+    color: var(--color-text);
+    font-size: 24px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: background-color .15s ease, transform .15s ease;
+}
+
+    .rm-anh-mui:hover {
+        background-color: #FFFFFF;
+        transform: translateY(-50%) scale(1.06);
+    }
+
+.rm-anh-mui-trai { left: 12px; }
+.rm-anh-mui-phai { right: 12px; }
+
+.rm-anh-dem {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background-color: rgba(18, 16, 14, .68);
+    color: #F8F5EE;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .4px;
+}
+
+.thumbnail-item:focus-visible,
+.rm-anh-mui:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Mũi tên + bộ đếm trong lightbox: ẩn khi bản tin chỉ có một ảnh. */
+.rm-lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, .18);
+    color: #FFFFFF;
+    font-size: 28px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color .15s ease;
+    z-index: 1;
+}
+
+    .rm-lightbox-nav:hover {
+        background-color: rgba(255, 255, 255, .38);
+    }
+
+.rm-lightbox-prev { left: -8px; }
+.rm-lightbox-next { right: -8px; }
+
+.rm-lightbox-mot-anh .rm-lightbox-nav {
+    display: none;
+}
+
+.rm-lightbox-counter {
+    margin-top: 6px;
+    color: rgba(248, 245, 238, .75);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .6px;
+}
+
+@media (max-width: 575.98px) {
+    .rm-lightbox-prev { left: 4px; }
+    .rm-lightbox-next { right: 4px; }
+    .rm-anh-mui { width: 32px; height: 32px; font-size: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rm-anh-mui,
+    .rm-anh-mui:hover,
+    .rm-lightbox-nav,
+    .rm-lightbox-nav:hover {
+        transition: none;
+    }
+
+    .rm-anh-mui:hover {
+        transform: translateY(-50%);
+    }
 }

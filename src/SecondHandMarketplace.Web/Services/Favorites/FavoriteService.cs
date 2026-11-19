@@ -79,7 +79,8 @@ public class FavoriteService : IFavoriteService
                 f.SanPham.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault()
                              ?? f.SanPham.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).FirstOrDefault(),
                 f.SanPham.TinhTrang != null ? f.SanPham.TinhTrang.Ten : null,
-                f.SanPham.DanhMuc != null ? f.SanPham.DanhMuc.Ten : null))
+                f.SanPham.DanhMuc != null ? f.SanPham.DanhMuc.Ten : null,
+                f.SanPham.MaDanhMuc))
             .ToListAsync(cancellationToken);
 
         var items = await ProductCardMapper.TaoDanhSachAsync(duLieuTho, _danhGia, cancellationToken);

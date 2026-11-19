@@ -73,36 +73,52 @@
 
     <div class="col-12">
         <label class="form-label">Ảnh sản phẩm (tối đa 10, bắt buộc ≥ 1 khi gửi duyệt)</label>
-        <input type="file" name="AnhMoi" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif" multiple />
-        <div class="form-text">Mỗi ảnh tối đa 5MB. Ảnh đầu tiên trong đợt tải lên sẽ là ảnh chính nếu sản phẩm chưa có ảnh chính.</div>
-    </div>
 
-    @if (Model.AnhHienTai.Count > 0)
-    {
-        <div class="col-12">
-            <div class="d-flex flex-wrap gap-2">
-                @foreach (var a in Model.AnhHienTai)
-                {
-                    <div class="border rounded-3 p-1 text-center" style="width:110px;">
-                        <img src="@a.DuongDan" alt="" class="rounded-2 w-100" style="height:84px; object-fit:cover;" />
-                        @if (a.LaAnhChinh)
-                        {
-                            <div class="small fw-semibold mt-1">Ảnh chính</div>
-                        }
-                        else
-                        {
-                            <button type="submit" class="btn btn-link btn-sm p-0" formaction="@Url.Action("DatAnhChinh", new { id = Model.Id, maAnh = a.MaAnh })">
-                                Đặt làm chính
-                            </button>
-                        }
-                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 d-block mx-auto"
-                                formaction="@Url.Action("XoaAnh", new { id = Model.Id, maAnh = a.MaAnh })"
-                                onclick="return confirm('Xóa ảnh này?');">Xóa</button>
-                    </div>
-                }
-            </div>
+        @* B-03: một input file thật (vẫn POST bình thường) nhưng người bán chọn bằng vùng kéo thả.
+           Thứ tự ảnh xem trước bên dưới chính là thứ tự gửi đi, nên ảnh đầu làm được ảnh bìa. *@
+        <div class="rm-dropzone" data-anh-vung>
+            <input type="file" name="AnhMoi" class="rm-dropzone-input" accept=".jpg,.jpeg,.png,.webp,.gif" multiple
+                   data-anh-input data-anh-con-lai="@(Math.Max(0, 10 - Model.AnhHienTai.Count))" />
+            <span class="rm-dropzone-hint" aria-hidden="true">＋</span>
+            <b>Kéo thả ảnh vào đây</b>
+            <small>hoặc bấm để chọn từ máy · JPG, PNG, WEBP, GIF · mỗi ảnh tối đa 5MB</small>
         </div>
-    }
+        <div class="rm-anh-loi" data-anh-loi role="alert" hidden></div>
+
+        @if (Model.AnhHienTai.Count > 0)
+        {
+            <div class="rm-anh-danh-sach" data-anh-da-luu>
+                <div class="rm-anh-danh-sach-nhan">Ảnh đã tải lên</div>
+                <div class="rm-anh-luoi">
+                    @foreach (var a in Model.AnhHienTai)
+                    {
+                        @* Luôn render cả nhãn "Ảnh bìa" lẫn hai nút; CSS ẩn theo class .is-bia
+                           để JavaScript chỉ cần bật/tắt một class khi gọi AJAX. *@
+                        <figure class="rm-anh-item @(a.LaAnhChinh ? "is-bia" : null)" data-ma-anh="@a.MaAnh">
+                            <img src="@a.DuongDan" alt="Ảnh sản phẩm đã tải lên" loading="lazy" />
+                            <span class="rm-anh-bia">Ảnh bìa</span>
+                            <figcaption class="rm-anh-actions">
+                                <button type="button" class="rm-anh-btn" data-anh-dat-chinh
+                                        data-url="@Url.Action("DatAnhChinh", new { id = Model.Id, maAnh = a.MaAnh })">Đặt làm bìa</button>
+                                <button type="button" class="rm-anh-btn rm-anh-btn-xoa" data-anh-xoa
+                                        data-url="@Url.Action("XoaAnh", new { id = Model.Id, maAnh = a.MaAnh })">Xóa</button>
+                            </figcaption>
+                        </figure>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="rm-anh-danh-sach" data-anh-preview hidden>
+            <div class="rm-anh-danh-sach-nhan">Ảnh mới chọn</div>
+            <div class="rm-anh-luoi"></div>
+        </div>
+
+        <div class="form-text">
+            Ảnh đứng đầu danh sách <b>Ảnh mới chọn</b> sẽ thành ảnh bìa nếu tin chưa có ảnh bìa.
+            Bấm vào một ảnh mới để đưa lên đầu, hoặc kéo ảnh này thả lên ảnh khác để đổi thứ tự.
+        </div>
+    </div>
 </div>
 
 <div class="rm-form-actions">

@@ -201,8 +201,11 @@ public class AiToolExecutorTests
         public Task<(bool Success, string? Error)> DatAnhChinhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
-        public Task<(bool Success, string? Error)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default) =>
+        public Task<(bool Success, string? Error, int? MaAnhChinhMoi)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+
+        public Task<(decimal Min, decimal Max)> LayBienGiaAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult((0m, 0m));
     }
 
     private sealed class FakeAiCategoryService : ICategoryService

@@ -11,6 +11,9 @@ public interface IProductService
     /// <summary>Chi tiết sản phẩm công khai (ACTIVE / RESERVED / SOLD). Không có hoặc không được xem thì trả về null.</summary>
     Task<ProductDetailVm?> GetDetailAsync(int id);
 
+    /// <summary>Biên giá thấp nhất/cao nhất của các tin đang bán; (0,0) khi chưa có tin nào. Dùng cho thanh trượt giá (B-04).</summary>
+    Task<(decimal Min, decimal Max)> LayBienGiaAsync(CancellationToken cancellationToken = default);
+
     // ===== B1 – Người bán =====
 
     /// <summary>Danh sách sản phẩm của người bán (mọi trạng thái, không gồm xóa mềm).</summary>
@@ -41,6 +44,9 @@ public interface IProductService
     /// <summary>Đặt một ảnh làm ảnh chính (unique theo sản phẩm).</summary>
     Task<(bool Success, string? Error)> DatAnhChinhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default);
 
-    /// <summary>Xóa một ảnh của sản phẩm; nếu là ảnh chính, ảnh còn lại đầu tiên được thăng làm chính.</summary>
-    Task<(bool Success, string? Error)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Xóa một ảnh của sản phẩm; nếu là ảnh chính, ảnh còn lại có ThuTu nhỏ nhất được thăng làm chính.
+    /// MaAnhChinhMoi trả về để lưới ảnh (B-03) tô đúng ảnh, vì thứ tự hiển thị có thể khác thứ tự ThuTu.
+    /// </summary>
+    Task<(bool Success, string? Error, int? MaAnhChinhMoi)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default);
 }

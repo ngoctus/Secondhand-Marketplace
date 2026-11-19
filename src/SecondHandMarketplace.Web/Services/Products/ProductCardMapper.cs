@@ -16,7 +16,8 @@ public sealed record ProductCardSource(
     string? KhuVuc,
     string? DuongDanAnh,
     string? ConditionName,
-    string? CategoryName);
+    string? CategoryName,
+    int? CategoryId);
 
 /// <summary>
 /// Dựng thẻ sản phẩm từ dữ liệu thô. Điểm sao của mọi shop trong trang lấy một lần qua
@@ -45,6 +46,7 @@ public static class ProductCardMapper
                 ShopLogoUrl = s.Logo,
                 ConditionName = s.ConditionName,
                 CategoryName = s.CategoryName,
+                CategoryId = s.CategoryId,
                 MoTaNgan = ProductCardVm.TaoMoTaNgan(s.MoTa),
                 Status = s.TrangThai,
                 DiemTrungBinh = coDanhGia ? shop!.DiemTrungBinh : null,

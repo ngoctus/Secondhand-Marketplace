@@ -49,7 +49,8 @@ public class ProductService : IProductService
                 p.CuaHang.KhuVucHienThi,
                 p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
                 p.TinhTrang != null ? p.TinhTrang.Ten : null,
-                p.DanhMuc != null ? p.DanhMuc.Ten : null))
+                p.DanhMuc != null ? p.DanhMuc.Ten : null,
+                p.MaDanhMuc))
             .ToListAsync();
 
         var items = await ProductCardMapper.TaoDanhSachAsync(duLieuTho, _danhGia);
@@ -68,10 +69,27 @@ public class ProductService : IProductService
         };
     }
 
+    /// <summary>
+    /// Hai đầu thanh trượt giá (B-04): biên thấp/cao nhất của tập tin đang hiển thị công khai.
+    /// Cố ý không áp các bộ lọc khác để slider không đổi thang mỗi lần người mua đổi danh mục hay khu vực.
+    /// </summary>
+    public async Task<(decimal Min, decimal Max)> LayBienGiaAsync(CancellationToken cancellationToken = default)
+    {
+        var bien = await _db.SanPhams.AsNoTracking()
+            .Where(p => p.TrangThai == "ACTIVE" && !p.DaXoa
+                        && p.CuaHang.TrangThai == "ACTIVE"
+                        && p.CuaHang.NguoiDung.TrangThai == "ACTIVE"
+                        && p.Gia != null)
+            .GroupBy(p => 1)
+            .Select(g => new { Min = g.Min(p => p.Gia), Max = g.Max(p => p.Gia) })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return bien is null ? (0m, 0m) : (bien.Min ?? 0m, bien.Max ?? 0m);
+    }
+
     // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
     // cửa hàng và chủ cửa hàng đều đang hoạt động.
-    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f)
-    {
+    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f)    {
         var query = _db.SanPhams
             .AsNoTracking()
             .Include(p => p.CuaHang)
@@ -512,23 +530,24 @@ public class ProductService : IProductService
         return (true, null);
     }
 
-    public async Task<(bool Success, string? Error)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default)
+    public async Task<(bool Success, string? Error, int? MaAnhChinhMoi)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default)
     {
         var (loi, shop) = await KiemTraTruDangBanAsync(maNguoiDung, cancellationToken);
-        if (loi is not null) return (false, loi);
+        if (loi is not null) return (false, loi, null);
 
         var anh = await _db.AnhSanPhams
             .Include(a => a.SanPham)
             .FirstOrDefaultAsync(a => a.MaAnhSP == maAnh && a.MaSanPham == maSanPham
                                       && a.SanPham.MaCuaHang == shop!.MaCuaHang && !a.SanPham.DaXoa, cancellationToken);
-        if (anh is null) return (false, "Không tìm thấy ảnh.");
+        if (anh is null) return (false, "Không tìm thấy ảnh.", null);
         var loiTrangThai = LoiTrangThaiKhongChoSuaAnh(anh.SanPham.TrangThai);
-        if (loiTrangThai is not null) return (false, loiTrangThai);
+        if (loiTrangThai is not null) return (false, loiTrangThai, null);
 
         var wasMain = anh.LaAnhChinh;
         _db.AnhSanPhams.Remove(anh);
         await _db.SaveChangesAsync(cancellationToken);
 
+        int? maAnhChinhMoi = null;
         if (wasMain)
         {
             var keo = await _db.AnhSanPhams
@@ -539,9 +558,10 @@ public class ProductService : IProductService
             {
                 keo.LaAnhChinh = true;
                 await _db.SaveChangesAsync(cancellationToken);
+                maAnhChinhMoi = keo.MaAnhSP;
             }
         }
-        return (true, null);
+        return (true, null, maAnhChinhMoi);
     }
 
     private static string? LoiTrangThaiKhongChoSuaAnh(string trangThai) => trangThai switch

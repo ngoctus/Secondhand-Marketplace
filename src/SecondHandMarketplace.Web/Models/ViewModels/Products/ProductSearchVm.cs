@@ -32,11 +32,12 @@ public class ProductSearchVm
         new(5_000_000, null, "Trên 5.000.000đ")
     ];
 
-    /// <summary>Áp phân khúc giá đã chọn vào MinPrice/MaxPrice (giữ nguyên nếu tự nhập).</summary>
+    /// <summary>Áp phân khúc giá đã chọn vào MinPrice/MaxPrice; bỏ nếu người mua tự kéo slider (B-04).</summary>
     public void GiaiPhanGia()
     {
         if (PriceRange is null or 0) return;
         if (PriceRange.Value < 0 || PriceRange.Value >= KhoPhanGia.Length) return;
+        if (MinPrice != null || MaxPrice != null) return;
         MinPrice = KhoPhanGia[PriceRange.Value].Min;
         MaxPrice = KhoPhanGia[PriceRange.Value].Max;
     }
@@ -68,4 +69,8 @@ public sealed class ProductSearchResultVm
 
     /// <summary>Tên tỉnh/xã đang lọc, hiển thị trên chip bộ lọc; null khi chưa có hoặc chưa chọn.</summary>
     public string? KhuVucDaChon { get; init; }
+
+    /// <summary>Hai đầu của thanh trượt giá (B-04) lấy từ giá thật thấp/cao nhất đang bán; null khi chưa có tin.</summary>
+    public decimal? BienGiaMin { get; init; }
+    public decimal? BienGiaMax { get; init; }
 }

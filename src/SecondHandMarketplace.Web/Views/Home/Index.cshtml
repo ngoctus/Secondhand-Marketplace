@@ -1,44 +1,7 @@
-@using SecondHandMarketplace.Web.Services.Products
-@using SecondHandMarketplace.Web.Services.Banners
-@using SecondHandMarketplace.Web.Services.Categories
-@using SecondHandMarketplace.Web.Services.Reviews
 @using SecondHandMarketplace.Web.Models.ViewModels.Reviews
-@inject IProductService ProductService
-@inject IBannerService BannerService
-@inject ICategoryService CategoryService
-@inject IReviewService Reviews
+@model SecondHandMarketplace.Web.Models.ViewModels.Home.HomeIndexVm
 @{
     ViewData["Title"] = "Trang chủ";
-
-    List<SecondHandMarketplace.Web.Models.Entities.DanhMuc> danhMuc = new();
-    try
-    {
-        danhMuc = (await CategoryService.GetCategoriesAsync()).ToList();
-    }
-    catch { }
-
-    List<SecondHandMarketplace.Web.Models.Entities.Banner> banners = new();
-    try
-    {
-        banners = (await BannerService.LayBannerHienThiAsync()).ToList();
-    }
-    catch { }
-
-    // Lấy sản phẩm thật từ database nếu có, nếu chưa có thì dùng danh sách mẫu chuẩn theo Wireframe
-    List<ProductCardVm> sanPhams = new();
-    try
-    {
-        sanPhams = (await ProductService.SearchAsync(new ProductSearchVm())).Items.ToList();
-    }
-    catch { }
-
-    // Đánh giá thật từ đơn đã hoàn tất cho khối "Người dùng nói gì"
-    List<DanhGiaNoiBatVm> danhGiaNoiBat = new();
-    try
-    {
-        danhGiaNoiBat = (await Reviews.LayDanhGiaNoiBatAsync(3)).ToList();
-    }
-    catch { }
 
     // Thẻ đánh giá theo wireframe chỉ tối đa 3 dòng.
     string TomTacDanhGia(string noiDung)
@@ -80,24 +43,24 @@
     </div>
 </section>
 
-@if (banners.Count > 0)
+@if (Model.Banners.Count > 0)
 {
 <!-- 1b. BANNER (B5) -->
 <section class="landing-section" style="padding-top:0">
     <div id="rmBannerCarousel" class="carousel slide rounded-4 overflow-hidden shadow-sm" data-bs-ride="carousel">
-        @if (banners.Count > 1)
+        @if (Model.Banners.Count > 1)
         {
             <div class="carousel-indicators">
-                @for (var i = 0; i < banners.Count; i++)
+                @for (var i = 0; i < Model.Banners.Count; i++)
                 {
                     <button type="button" data-bs-target="#rmBannerCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : null)" aria-label="Banner @(i + 1)"></button>
                 }
             </div>
         }
         <div class="carousel-inner">
-            @for (var i = 0; i < banners.Count; i++)
+            @for (var i = 0; i < Model.Banners.Count; i++)
             {
-                var b = banners[i];
+                var b = Model.Banners[i];
                 <div class="carousel-item @(i == 0 ? "active" : null)">
                     @if (!string.IsNullOrWhiteSpace(b.LienKet))
                     {
@@ -121,7 +84,7 @@
                 </div>
             }
         </div>
-        @if (banners.Count > 1)
+        @if (Model.Banners.Count > 1)
         {
             <button class="carousel-control-prev" type="button" data-bs-target="#rmBannerCarousel" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Trước</span>
@@ -145,7 +108,7 @@
     </div>
 
     <div class="category-grid" data-rm-stagger>
-        @foreach (var c in danhMuc.Take(6))
+        @foreach (var c in Model.DanhMucs.Take(6))
         {
             <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" class="category-card">
                 <div class="cat-circle"></div>
@@ -155,7 +118,7 @@
     </div>
 </section>
 
-<!-- 3. SẢN PHẨM NỔI BẬT (Ảnh 2) -->
+<!-- 3. SẢN PHẨM THEO DANH MỤC: một khối tab thay cho N khối danh mục trải dài (B-02) -->
 <section class="landing-section" data-rm-reveal>
     <div class="landing-section-header">
         <div>
@@ -163,23 +126,58 @@
             <h2 class="section-title">Có thể bạn sẽ thích</h2>
         </div>
         <div class="d-flex gap-2 landing-header-actions">
-            <span class="btn-rm-primary" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Mới đăng</span>
             <a asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tốt</a>
-            <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Được quan tâm</a>
+            <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Xem tất cả</a>
         </div>
     </div>
 
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 mb-4" data-rm-stagger data-rm-featured>
-        @foreach (var p in sanPhams.Take(4))
+    <ul class="nav nav-pills rm-cat-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="rm-tab-moi" type="button" role="tab"
+                    data-bs-toggle="pill" data-bs-target="#rm-pane-moi"
+                    aria-controls="rm-pane-moi" aria-selected="true">Mới đăng</button>
+        </li>
+        @foreach (var tab in Model.TabsDanhMuc)
         {
-            <div class="col">
-                <partial name="_ProductCard" model="p" />
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rm-tab-@tab.MaDanhMuc" type="button" role="tab"
+                        data-bs-toggle="pill" data-bs-target="#rm-pane-@tab.MaDanhMuc"
+                        aria-controls="rm-pane-@tab.MaDanhMuc" aria-selected="false">@tab.TenDanhMuc</button>
+            </li>
+        }
+    </ul>
+
+    <div class="tab-content rm-cat-contents">
+        <div class="tab-pane fade show active pane-cat" id="rm-pane-moi" role="tabpanel" aria-labelledby="rm-tab-moi">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3" data-rm-stagger data-rm-featured>
+                @foreach (var p in Model.SanPhamNoiBat)
+                {
+                    <div class="col">
+                        <partial name="_ProductCard" model="p" />
+                    </div>
+                }
+            </div>
+            <div class="rm-cat-more">
+                <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">Xem thêm sản phẩm</a>
+            </div>
+        </div>
+
+        @foreach (var tab in Model.TabsDanhMuc)
+        {
+            <div class="tab-pane fade pane-cat" id="rm-pane-@tab.MaDanhMuc" role="tabpanel" aria-labelledby="rm-tab-@tab.MaDanhMuc">
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3" data-rm-stagger>
+                    @foreach (var p in tab.SanPhams)
+                    {
+                        <div class="col">
+                            <partial name="_ProductCard" model="p" />
+                        </div>
+                    }
+                </div>
+                <div class="rm-cat-more">
+                    <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@tab.MaDanhMuc" class="btn-rm-outline">Xem tất cả @tab.TenDanhMuc</a>
+                </div>
             </div>
         }
-    </div>
-
-    <div class="text-center pt-2">
-        <a asp-controller="Products" asp-action="Index" class="btn-rm-outline" style="padding: 10px 24px;">Xem thêm sản phẩm</a>
     </div>
 </section>
 
@@ -277,14 +275,14 @@
     <h2 class="section-title">Người dùng nói gì</h2>
     <p style="color: var(--color-text-muted); font-size: 13px; margin: 4px 0 20px;">Chỉ hiển thị đánh giá thật từ giao dịch đã hoàn tất</p>
 
-    @if (danhGiaNoiBat.Count == 0)
+    @if (Model.DanhGiaNoiBat.Count == 0)
     {
         <p class="reviews-empty">Sàn chưa có đánh giá nào từ giao dịch đã hoàn tất. Đánh giá sẽ hiện ở đây ngay khi người mua xác nhận đơn.</p>
     }
     else
     {
         <div class="reviews-grid" data-rm-stagger>
-            @foreach (var dg in danhGiaNoiBat)
+            @foreach (var dg in Model.DanhGiaNoiBat)
             {
                 <div class="review-card">
                     <div class="review-stars" aria-label="@dg.SoSao/5 sao">
