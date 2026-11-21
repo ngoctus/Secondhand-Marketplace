@@ -38,12 +38,18 @@
 
 <!-- PHẦN TRÊN: Ảnh gallery & Thông tin sản phẩm (Ảnh 5) -->
 <div class="detail-top-grid">
-    <!-- CỘT ẢNH SẢN PHẨM -->
-    <div>
+    <!-- CỘT ẢNH SẢN PHẨM (B-05) -->
+    <div class="rm-gallery" data-anh-bo-suu>
         <div class="detail-main-img" title="Nhấn để phóng to ảnh">
             @if (Model.Images.Count > 0)
             {
                 <img id="mainProductImg" src="@Model.Images[0]" alt="@Model.Name" style="width: 100%; height: 100%; object-fit: cover; cursor: zoom-in;" data-fallback data-zoomable />
+                @if (Model.Images.Count > 1)
+                {
+                    <button type="button" class="rm-anh-mui rm-anh-mui-trai" data-anh-bac="-1" aria-label="Ảnh trước">&#8249;</button>
+                    <button type="button" class="rm-anh-mui rm-anh-mui-phai" data-anh-bac="1" aria-label="Ảnh tiếp theo">&#8250;</button>
+                    <span class="rm-anh-dem" data-anh-dem>1 / @Model.Images.Count</span>
+                }
             }
             else
             {
@@ -53,15 +59,21 @@
             }
         </div>
 
-        <!-- Thumbnail nhỏ -->
-        <div class="detail-thumbnails">
-            @for (int i = 0; i < Math.Min(Model.Images.Count, 5); i++)
-            {
-                <div class="thumbnail-item @(i == 0 ? "active" : "")" title="Xem ảnh @(i + 1)">
-                    <img src="@Model.Images[i]" alt="Ảnh @(i + 1)" style="width: 100%; height: 100%; object-fit: cover;" data-fallback />
-                </div>
-            }
-        </div>
+        @* B-05: dải thumbnail cuộn ngang, giữ đủ số ảnh của tin thay vì cắt cứng 5 như trước.
+           Thumbnail là <button> nên bàn phím Tab tới từng ảnh được; người dùng tắt JS vẫn xem
+           ảnh chính và tự cuộn dải bằng chuột cảm ứng. *@
+        @if (Model.Images.Count > 1)
+        {
+            <div class="detail-thumbnails">
+                @for (int i = 0; i < Model.Images.Count; i++)
+                {
+                    <button type="button" class="thumbnail-item @(i == 0 ? "active" : "")" data-anh-index="@i"
+                            aria-label="Xem ảnh @(i + 1) / @Model.Images.Count" aria-current="@(i == 0 ? "true" : null)">
+                        <img src="@Model.Images[i]" alt="Ảnh @(i + 1)" loading="lazy" data-fallback />
+                    </button>
+                }
+            </div>
+        }
     </div>
 
     <!-- CỘT THÔNG TIN MUA HÀNG -->

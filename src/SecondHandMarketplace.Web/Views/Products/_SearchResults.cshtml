@@ -1,0 +1,106 @@
+@model ProductSearchResultVm
+@{
+    var f = Model.Filter;
+    var ketQua = Model.Result;
+    var keyword = f.Keyword?.Trim() ?? "";
+    var tieuDe = string.IsNullOrWhiteSpace(keyword) ? "Tất cả sản phẩm" : $"Kết quả cho “{keyword}”";
+
+    string LocUrl(string key, string? value)
+    {
+        var pairs = Context.Request.Query
+            .Where(k => !k.Key.Equals(key, StringComparison.OrdinalIgnoreCase))
+            .SelectMany(k => k.Value, (k, v) => new KeyValuePair<string, string?>(k.Key, v))
+            .ToList();
+        if (!string.IsNullOrEmpty(value)) pairs.Add(new KeyValuePair<string, string?>(key, value));
+        return Context.Request.Path + QueryString.Create(pairs);
+    }
+
+    var chips = new List<string>();
+    if (f.CategoryId is int maDanhMuc)
+        chips.Add(Model.DanhSachDanhMuc.FirstOrDefault(c => c.MaDanhMuc == maDanhMuc)?.Ten ?? "Danh mục");
+    if (!string.IsNullOrWhiteSpace(f.TenPhanGia)) chips.Add(f.TenPhanGia);
+    else if (f.MinPrice is not null || f.MaxPrice is not null)
+        chips.Add((f.MinPrice, f.MaxPrice) switch
+        {
+            (not null, not null) => $"Giá {HienThi.Tien(f.MinPrice.Value)} – {HienThi.Tien(f.MaxPrice.Value)}",
+            (not null, _) => $"Từ {HienThi.Tien(f.MinPrice.Value)}",
+            (_, not null) => $"Đến {HienThi.Tien(f.MaxPrice.Value)}",
+            _ => "Khoảng giá"
+        });
+    if (f.ConditionId is int maTinhTrang)
+        chips.Add(Model.DanhSachTinhTrang.FirstOrDefault(t => t.MaTinhTrang == maTinhTrang)?.Ten ?? "Tình trạng");
+    if (!string.IsNullOrWhiteSpace(Model.KhuVucDaChon)) chips.Add(Model.KhuVucDaChon);
+}
+
+<div class="search-results-header">
+    <div>
+        <h2>@tieuDe</h2>
+        <span class="count-label">@ketQua.TotalItems sản phẩm</span>
+    </div>
+    @* Form GET thật để không có JS vẫn đổi được cách sắp xếp; JS bắt sự kiện change và nạp lại bằng fetch.
+       Các tham số hiện hành gửi kèm hidden để đổi sắp xếp không rơi bộ lọc đang chọn.
+       Sort đổi thì về trang 1, nên page bị loại khỏi danh sách hidden. *@
+    <form class="sort-select-box" method="get" action="@Url.Action("Index")">
+        @foreach (var k in Context.Request.Query.Where(k => !k.Key.Equals("sort", StringComparison.OrdinalIgnoreCase) && !k.Key.Equals("page", StringComparison.OrdinalIgnoreCase)))
+        {
+            @foreach (var v in k.Value)
+            {
+                <input type="hidden" name="@k.Key" value="@v" />
+            }
+        }
+        <label for="sortOrder">Sắp xếp:</label>
+        <select id="sortOrder" name="sort">
+            @foreach (var (key, label) in ProductSearchVm.KhoSapXep)
+            {
+                <option value="@key" data-url="@LocUrl("sort", key)" selected="@((f.Sort ?? "newest") == key)">@label</option>
+            }
+        </select>
+        <noscript><button type="submit" class="btn-rm-outline btn-sm">Xem</button></noscript>
+    </form>
+</div>
+
+@if (chips.Count > 0)
+{
+    <div class="rm-active-filters">
+        @foreach (var chip in chips)
+        {
+            <span class="rm-filter-chip">@chip</span>
+        }
+        <a asp-action="Index" asp-route-Keyword="@keyword" class="rm-filter-clear">Xóa bộ lọc</a>
+    </div>
+}
+
+@if (ketQua.Items.Count == 0)
+{
+    <div class="rm-empty-state">
+        <h3>Chưa có sản phẩm nào khớp</h3>
+        <p>Bộ lọc hiện đang quá chặt hoặc khu vực bạn chọn chưa có người bán nào đăng tin.</p>
+        <ol>
+            <li>Bỏ bớt bộ lọc danh mục, khoảng giá hoặc tình trạng.</li>
+            <li>Thử từ khóa ngắn hơn, ví dụ "áo khoác" thay vì "áo khoác jeans nữ form rộng".</li>
+            <li>Chuyển sang khu vực khác hoặc để "Tất cả khu vực".</li>
+            <li>Chưa tìm được món bạn cần? Bấm "Đăng bán" để người khác hỏi mua món của bạn.</li>
+        </ol>
+        <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap">
+            <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-rm-outline">Xóa bộ lọc giá và tình trạng</a>
+            <a asp-action="Index" class="btn-rm-primary">Xem tất cả sản phẩm</a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Lưới 3 cột chuẩn Ảnh 4 -->
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4" data-rm-stagger>
+        @foreach (var p in ketQua.Items)
+        {
+            <div class="col">
+                <partial name="_ProductCard" model="p" />
+            </div>
+        }
+    </div>
+
+    @if (ketQua.TotalPages > 1)
+    {
+        <partial name="_Pager" model="new PagerVm(ketQua.Page, ketQua.TotalPages)" />
+    }
+}

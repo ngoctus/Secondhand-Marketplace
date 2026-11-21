@@ -442,26 +442,42 @@
         }
     });
 
-    if (csrf) {
-        window.addEventListener('load', async () => {
-            if (!document.querySelector('.rm-card-favorite-btn')) return;
-            try {
-                const res = await fetch(idsUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                const ids = await res.json();
-                ids.forEach(id => danhDau(id, true));
-            } catch { /* chưa đăng nhập hoặc lỗi mạng: bỏ qua */ }
-        });
-    }
+    const napTrangThaiYeuThich = async () => {
+        if (!csrf || !document.querySelector('.rm-card-favorite-btn')) return;
+        try {
+            const res = await fetch(idsUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const ids = await res.json();
+            ids.forEach(id => danhDau(id, true));
+        } catch { /* chưa đăng nhập hoặc lỗi mạng: bỏ qua */ }
+    };
+
+    window.addEventListener('load', napTrangThaiYeuThich);
+    // B-04: lưới kết quả thay bằng AJAX không phát sự kiện load, nên bo-loc-nhanh.js phát sự kiện này.
+    document.addEventListener('rm:ket-qua-da-thay', napTrangThaiYeuThich);
 })();
 
 
 // =========================================================================
-// Lightbox Modal phóng to ảnh không tràn viền & Chuyển ảnh Thumbnail
+// Lightbox Modal phóng to ảnh (B-05) + Gallery dải thumbnail cuộn ngang
 // =========================================================================
 (() => {
     let modal = null;
     let imgEl = null;
     let capEl = null;
+    let demEl = null;
+    let danhSach = [];
+    let viTri = 0;
+    let chuThich = '';
+    let nguonMo = null;
+
+    const hienAnh = () => {
+        if (!danhSach.length) return;
+        viTri = (viTri + danhSach.length) % danhSach.length;
+        imgEl.src = danhSach[viTri];
+        capEl.textContent = chuThich;
+        demEl.textContent = danhSach.length > 1 ? `${viTri + 1} / ${danhSach.length}` : '';
+        modal.classList.toggle('rm-lightbox-mot-anh', danhSach.length < 2);
+    };
 
     const createModal = () => {
         if (modal) return;
@@ -469,12 +485,18 @@
         modal.id = 'rmImageLightbox';
         modal.className = 'rm-lightbox-overlay';
         modal.hidden = true;
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', 'Ảnh phóng to');
         modal.innerHTML = `
             <div class="rm-lightbox-container">
                 <button type="button" class="rm-lightbox-close" aria-label="Đóng">&times;</button>
+                <button type="button" class="rm-lightbox-nav rm-lightbox-prev" aria-label="Ảnh trước">&#8249;</button>
+                <button type="button" class="rm-lightbox-nav rm-lightbox-next" aria-label="Ảnh tiếp theo">&#8250;</button>
                 <div class="rm-lightbox-body">
                     <img class="rm-lightbox-img" src="" alt="Ảnh phóng to" />
                     <div class="rm-lightbox-caption"></div>
+                    <div class="rm-lightbox-counter" aria-live="polite"></div>
                 </div>
             </div>
         `;
@@ -482,61 +504,122 @@
 
         imgEl = modal.querySelector('.rm-lightbox-img');
         capEl = modal.querySelector('.rm-lightbox-caption');
-        const closeBtn = modal.querySelector('.rm-lightbox-close');
+        demEl = modal.querySelector('.rm-lightbox-counter');
 
         const closeLightbox = () => {
             modal.hidden = true;
-            if (imgEl) imgEl.src = '';
+            imgEl.src = '';
             document.body.classList.remove('rm-modal-open');
+            nguonMo?.focus();
+            nguonMo = null;
+        };
+        const chuyen = (bac) => {
+            viTri += bac;
+            hienAnh();
         };
 
-        closeBtn.addEventListener('click', closeLightbox);
+        modal.querySelector('.rm-lightbox-close').addEventListener('click', closeLightbox);
+        modal.querySelector('.rm-lightbox-prev').addEventListener('click', () => chuyen(-1));
+        modal.querySelector('.rm-lightbox-next').addEventListener('click', () => chuyen(1));
         modal.addEventListener('click', (e) => {
-            if (!e.target.closest('.rm-lightbox-img')) {
+            if (!e.target.closest('.rm-lightbox-img') && !e.target.closest('.rm-lightbox-nav')) {
                 closeLightbox();
             }
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal && !modal.hidden) {
-                closeLightbox();
-            }
+            if (!modal || modal.hidden) return;
+            if (e.key === 'Escape') closeLightbox();
+            else if (e.key === 'ArrowLeft') chuyen(-1);
+            else if (e.key === 'ArrowRight') chuyen(1);
         });
     };
 
-    const openLightbox = (src, caption) => {
-        if (!src) return;
+    const moLightbox = (anh, index, caption, nguon) => {
+        if (!anh.length) return;
         createModal();
-        imgEl.src = src;
-        capEl.textContent = caption || '';
+        danhSach = anh;
+        viTri = index;
+        chuThich = caption || '';
+        nguonMo = nguon || null;
+        hienAnh();
         modal.hidden = false;
         document.body.classList.add('rm-modal-open');
+        modal.querySelector('.rm-lightbox-close').focus();
     };
 
-    // Bắt sự kiện click vào ảnh phóng to
+    window.rmPhongToAnh = moLightbox;
+
+    // Trang đấu giá và mọi ảnh đánh dấu data-zoomable ngoài gallery: phóng to đơn lẻ.
     document.addEventListener('click', (e) => {
-        const zoomImg = e.target.closest('.detail-main-img img, .auction-main-img, img[data-zoomable]');
-        if (zoomImg) {
+        const zoomImg = e.target.closest('.auction-main-img, img[data-zoomable]');
+        if (!zoomImg || zoomImg.closest('[data-anh-bo-suu]')) return;
+        e.preventDefault();
+        const caption = zoomImg.alt || zoomImg.title || document.querySelector('.detail-title, .bid-title')?.textContent?.trim() || '';
+        moLightbox([zoomImg.src], 0, caption, zoomImg);
+    });
+
+    // Click thumbnail ngoài gallery (trang đấu giá) vẫn đổi ảnh chính như trước.
+    document.addEventListener('click', (e) => {
+        const thumb = e.target.closest('.auction-thumbs img');
+        if (!thumb) return;
+        const mainImg = document.querySelector('#mainImage, .auction-main-img');
+        if (mainImg) mainImg.src = thumb.src;
+    });
+})();
+
+// =========================================================================
+// Gallery trang chi tiết sản phẩm (B-05): thumbnail cuộn ngang, mũi tên đổi
+// ảnh chính và đồng vị "3 / 12". Bấm ảnh chính hoặc ảnh đang xem sẽ mở lightbox.
+// =========================================================================
+(() => {
+    const gallery = document.querySelector('[data-anh-bo-suu]');
+    if (!gallery) return;
+
+    const mainImg = gallery.querySelector('.detail-main-img img');
+    if (!mainImg) return;
+
+    const thumbs = Array.from(gallery.querySelectorAll('.thumbnail-item'));
+    const danhSach = thumbs.map(t => t.querySelector('img')?.src).filter(Boolean);
+    const dem = gallery.querySelector('[data-anh-dem]');
+    const kiemChuyenDong = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    let viTri = 0;
+
+    // Không đủ ảnh để điều hướng thì chỉ còn đường dẫn mở lightbox.
+    if (danhSach.length < 2) {
+        mainImg.addEventListener('click', () => {
+            window.rmPhongToAnh([mainImg.src], 0, mainImg.alt, mainImg);
+        });
+        return;
+    }
+
+    const chuyenAnh = (index, giuThumbTrongMat) => {
+        viTri = (index + danhSach.length) % danhSach.length;
+        mainImg.src = danhSach[viTri];
+        thumbs.forEach((t, i) => {
+            t.classList.toggle('active', i === viTri);
+            if (i === viTri) t.setAttribute('aria-current', 'true');
+            else t.removeAttribute('aria-current');
+        });
+        if (dem) dem.textContent = `${viTri + 1} / ${danhSach.length}`;
+        if (giuThumbTrongMat) thumbs[viTri].scrollIntoView?.({ behavior: kiemChuyenDong ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' });
+    };
+
+    gallery.addEventListener('click', (e) => {
+        const bac = e.target.closest('[data-anh-bac]');
+        if (bac) {
             e.preventDefault();
-            const caption = zoomImg.alt || zoomImg.title || document.querySelector('.detail-title, .bid-title')?.textContent?.trim() || '';
-            openLightbox(zoomImg.src, caption);
+            chuyenAnh(viTri + Number(bac.dataset.anhBac), true);
+            return;
+        }
+        const thumb = e.target.closest('.thumbnail-item');
+        if (thumb && thumb.dataset.anhIndex !== undefined) {
+            chuyenAnh(Number(thumb.dataset.anhIndex), false);
         }
     });
 
-    // Bắt sự kiện click vào thumbnail để đổi ảnh chính
-    document.addEventListener('click', (e) => {
-        const thumb = e.target.closest('.detail-thumbnails .thumbnail-item, .auction-thumbs img');
-        if (!thumb) return;
-
-        const thumbImg = thumb.tagName === 'IMG' ? thumb : thumb.querySelector('img');
-        if (!thumbImg) return;
-
-        const mainImg = document.querySelector('#mainProductImg, .detail-main-img img, #mainImage, .auction-main-img');
-        if (mainImg) {
-            mainImg.src = thumbImg.src;
-            document.querySelectorAll('.detail-thumbnails .thumbnail-item, .auction-thumbs img').forEach(t => t.classList.remove('active'));
-            thumb.classList.add('active');
-        }
+    mainImg.addEventListener('click', () => {
+        window.rmPhongToAnh(danhSach, viTri, mainImg.alt, mainImg);
     });
 })();
 

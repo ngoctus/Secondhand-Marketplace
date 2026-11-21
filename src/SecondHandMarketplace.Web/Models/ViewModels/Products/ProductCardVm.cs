@@ -15,6 +15,7 @@ public class ProductCardVm
     public string? ShopLogoUrl { get; set; }
     public string? ConditionName { get; set; }
     public string? CategoryName { get; set; }
+    public int? CategoryId { get; set; }
     public string? MoTaNgan { get; set; }
 
     /// <summary>ACTIVE | RESERVED | SOLD (xem PUBLIC, RESERVED, SOLD).</summary>
