@@ -7,6 +7,18 @@
 
 ---
 
+## Tóm tắt nhanh Logic Nghiệp vụ
+
+1. **Tầng 1 (Từ khóa cứng — `TuKhoaCam`):** Chạy ngay khi người bán bấm *Gửi duyệt*. Dính từ khóa **`HIGH`** → vào **Làn Đỏ**, hệ thống tự từ chối ngay (`AUTO_HIGH`) + ghi 1 vi phạm (đủ 3 tự khóa tài khoản), **không gọi AI (0 token)**.
+2. **Tầng 2 (AI Multimodal — `gemini-3.1-flash-lite`):** Chỉ chạy khi Tầng 1 ra `NONE` hoặc `LOW`, **độc lập với Chatbox AI** (tách API key riêng + 1 key dự phòng tự chuyển mạch khi `429`). Gửi `Tên`, `Mô tả`, `Giá`, `Danh mục`, `Tình trạng`, từ khóa `LOW` + **tối đa 2 ảnh đại diện** để bắt 4 nhóm lỗi: *lách luật từ ngữ*, *kéo giao dịch ngoài sàn*, *bất thường giá/mô tả*, và *ảnh không khớp/ảnh stock/nhạy cảm*.
+3. **Ranh giới an toàn:** AI Tầng 2 **chỉ cảnh báo & khuyến nghị** cho Admin, **không tự từ chối / không tự ghi vi phạm**, và **không được hạ nhẹ** cảnh báo từ khóa `LOW` của Tầng 1.
+4. **Phân làn trên hàng chờ Admin (Human-in-the-Loop):**
+   - **Làn Xanh** (`NONE` + AI thật trả `LOW` & `APPROVE`): Admin có thể bấm **"Duyệt nhanh Làn Xanh"** một lượt (server tự xác minh lại từng tin).
+   - **Làn Vàng** (dính `LOW`, AI cảnh báo `MEDIUM`/`HIGH`/`NEEDS_REVIEW`/`REJECT`, hoặc Fallback): khóa duyệt hàng loạt, buộc Admin mở chi tiết xem dấu hiệu AI + đủ ảnh để Duyệt (không vi phạm) hoặc Từ chối (lý do ≥ 10 ký tự → +1 vi phạm).
+5. **Fallback an toàn:** Mất mạng / timeout / hết quota cả key chính lẫn key dự phòng → tự hạ về kết quả Tầng 1 (`keyword-v1-fallback`, `TrangThai = DONE`, đẩy vào Làn Vàng) để **không bao giờ lỗi web hay chặn Admin duyệt bài**.
+
+---
+
 ## 1. Mục tiêu Nghiệp vụ
 
 Hiện tại `ModerationService` (`ModelVersion = "keyword-v1"`) mới chỉ chạy **Tầng 1 (quét từ khóa cấm cứng `TuKhoaCam`)**:
