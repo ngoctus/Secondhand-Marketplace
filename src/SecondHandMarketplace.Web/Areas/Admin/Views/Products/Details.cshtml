@@ -4,6 +4,10 @@
     ViewData["Title"] = "Chi tiết kiểm duyệt";
     var review = Model.Review;
     var badge = ReviewDisplay.Describe(review?.AnalysisStatus, review?.Level);
+    var lane = ReviewDisplay.DescribeLane(review?.AnalysisStatus, review?.Level, review?.RiskLevel, review?.Recommendation, review?.ModelVersion);
+    var risk = ReviewDisplay.DescribeRisk(review?.RiskLevel);
+    var rec = ReviewDisplay.DescribeRecommendation(review?.Recommendation);
+    var aiSignals = review?.AiSignals ?? Array.Empty<SecondHandMarketplace.Web.Services.Moderation.AiModerationSignal>();
 }
 <div class="container-fluid py-4">
     <a asp-action="Index" class="small">&larr; Quay lại danh sách</a>
@@ -39,17 +43,50 @@
     @if (review is not null)
     {
         <hr />
-        <h4>Phân tích cảnh báo <span class="badge @badge.BadgeClass">@badge.Text</span></h4>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <h4 class="mb-0">Phân tích kiểm duyệt Hybrid</h4>
+            <span class="badge @lane.BadgeClass">@lane.Text</span>
+            @if (badge.Text != lane.Text) { <span class="badge @badge.BadgeClass">@badge.Text</span> }
+            @if (!string.IsNullOrWhiteSpace(review.RiskLevel)) { <span class="badge @risk.BadgeClass">@risk.Text</span> }
+            @if (!string.IsNullOrWhiteSpace(review.Recommendation)) { <span class="badge @rec.BadgeClass">@rec.Text</span> }
+            @if (!string.IsNullOrWhiteSpace(review.ModelVersion)) { <span class="badge bg-light text-dark border">Mô hình: @review.ModelVersion</span> }
+        </div>
+        @if (review.IsFallback)
+        {
+            <div class="alert alert-warning py-2">
+                AI ngữ cảnh (Tầng 2) tạm không phản hồi trong lượt phân tích này — hệ thống đã tự động fallback về kết quả quét từ khóa Tầng 1. Quản trị viên vẫn có thể xem kỹ ảnh/mô tả và duyệt thủ công.
+            </div>
+        }
         @if (!string.IsNullOrWhiteSpace(review.Explanation)) { <p>@review.Explanation</p> }
         @if (review.AnalysisStatus == "FAILED" && !string.IsNullOrWhiteSpace(review.ErrorMessage)) { <div class="alert alert-danger">Lỗi phân tích: @review.ErrorMessage</div> }
         @if (review.Matches.Count > 0)
         {
+            <h6 class="mt-3">Tầng 1 — Từ khóa cấm phát hiện</h6>
             <table class="table table-sm w-auto">
                 <thead><tr><th>Từ khóa</th><th>Mức độ</th><th>Trường</th><th>Vị trí</th></tr></thead>
                 <tbody>
                 @foreach (var m in review.Matches)
                 {
-                    <tr><td>@m.Phrase</td><td><span class="badge @(m.Level == "HIGH" ? "bg-danger" : "bg-warning text-dark")">@m.Level</span></td><td>@(m.Field == "Ten" ? "Tên" : "Mô tả")</td><td>@m.Position</td></tr>
+                    <tr><td>@m.Phrase</td><td><span class="badge @(m.Level == "HIGH" ? "bg-danger" : "bg-warning text-dark")">@m.Level</span></td><td>@ReviewDisplay.DescribeField(m.Field)</td><td>@m.Position</td></tr>
+                }
+                </tbody>
+            </table>
+        }
+        @if (aiSignals.Count > 0)
+        {
+            <h6 class="mt-3">Tầng 2 — Dấu hiệu rủi ro từ AI</h6>
+            <table class="table table-sm">
+                <thead><tr><th>Nhóm rủi ro</th><th>Mức độ</th><th>Trường</th><th>Bằng chứng / Nhận xét AI</th></tr></thead>
+                <tbody>
+                @foreach (var s in aiSignals)
+                {
+                    var sClass = s.Level == "HIGH" ? "bg-danger" : s.Level == "MEDIUM" ? "bg-warning text-dark" : "bg-info text-dark";
+                    <tr>
+                        <td>@ReviewDisplay.DescribeAiSignalGroup(s.Group)</td>
+                        <td><span class="badge @sClass">@s.Level</span></td>
+                        <td>@ReviewDisplay.DescribeField(s.Field)</td>
+                        <td>@s.Evidence</td>
+                    </tr>
                 }
                 </tbody>
             </table>
@@ -96,11 +133,16 @@
             <tbody>
             @foreach (var t in Model.Turns)
             {
-                var b = ReviewDisplay.Describe(t.AnalysisStatus, t.Level);
+                var b = ReviewDisplay.DescribeLane(t.AnalysisStatus, t.Level, t.RiskLevel, t.Recommendation, t.ModelVersion);
                 <tr>
                     <td>#@t.MaLuotKiemDuyet</td>
                     <td>@HienThi.NgayGio(t.ThoiGianGui)</td>
-                    <td><span class="badge @b.BadgeClass">@b.Text</span>@if (t.Matches.Count > 0) { <div class="small text-muted">@string.Join(", ", t.Matches.Select(m => $"{m.Phrase} ({m.Level})"))</div> }</td>
+                    <td>
+                        <span class="badge @b.BadgeClass">@b.Text</span>
+                        @if (!string.IsNullOrWhiteSpace(t.ModelVersion)) { <div class="small text-muted">@t.ModelVersion</div> }
+                        @if (t.Matches.Count > 0) { <div class="small text-muted">Từ khóa: @string.Join(", ", t.Matches.Select(m => $"{m.Phrase} ({m.Level})"))</div> }
+                        @if (t.AiSignals is { Count: > 0 }) { <div class="small text-muted">AI: @string.Join("; ", t.AiSignals.Select(s => $"{ReviewDisplay.DescribeAiSignalGroup(s.Group)} ({s.Level})"))</div> }
+                    </td>
                     <td>@(t.QuyetDinh ?? "Đang chờ") @if (t.ThoiGianQuyetDinh is not null) { <div class="small text-muted">@HienThi.NgayGio(t.ThoiGianQuyetDinh.Value)</div> }</td>
                     <td>@if (t.QuyetDinhTuDong) { <span class="badge bg-info text-dark">Hệ thống (tự động)</span> } else { @t.TenQuanTriVien }</td>
                     <td>@t.LyDo</td>

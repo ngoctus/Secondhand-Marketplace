@@ -67,18 +67,27 @@ public class ProductReviewService(
 
         var turnIds = rows.Select(r => r.MaLuotKiemDuyet).ToList();
         var analyses = turnIds.Count == 0
-            ? new Dictionary<int, (string Status, string? Level)>()
+            ? new Dictionary<int, (string Status, string? Level, string? Risk, string? Advice, string? Model)>()
             : (await db.PhanTichAIs.AsNoTracking()
                 .Where(a => turnIds.Contains(a.MaLuotKiemDuyet))
-                .Select(a => new { a.MaLuotKiemDuyet, a.TrangThai, a.MucDoTuKhoa })
-                .ToListAsync(ct)).ToDictionary(a => a.MaLuotKiemDuyet, a => (Status: a.TrangThai, Level: a.MucDoTuKhoa));
+                .Select(a => new { a.MaLuotKiemDuyet, a.TrangThai, a.MucDoTuKhoa, a.MucRuiRo, a.DeXuat, a.PhienBanMoHinh })
+                .ToListAsync(ct))
+                .ToDictionary(
+                    a => a.MaLuotKiemDuyet,
+                    a => (Status: a.TrangThai, Level: a.MucDoTuKhoa, Risk: a.MucRuiRo, Advice: a.DeXuat, Model: a.PhienBanMoHinh));
 
         var items = rows.Select(r =>
         {
             var has = analyses.TryGetValue(r.MaLuotKiemDuyet, out var a);
+            var status = has ? a.Status : ModerationPolicy.AnalysisMissing;
+            var level = has ? a.Level : null;
+            var risk = has ? a.Risk : null;
+            var advice = has ? a.Advice : null;
+            var model = has ? a.Model : null;
+            var isGreen = ModerationPolicy.IsGreenLane(status, level, risk, advice, model);
             return new ProductListItem(r.MaSanPham, r.MaLuotKiemDuyet, r.Ten, r.Gia, r.TenDanhMuc, r.Anh, r.TrangThai,
                 r.MaCuaHang, r.TenShop, r.MaNguoiBan, r.TenNguoiBan, r.EmailNguoiBan, r.ThoiGianGui,
-                has ? a.Status : ModerationPolicy.AnalysisMissing, has ? a.Level : null);
+                status, level, risk, advice, model, isGreen);
         }).ToList();
 
         return new ProductListPage(ProductReviewTabs.Pending, items, page, total, TotalPages(total));
@@ -156,7 +165,8 @@ public class ProductReviewService(
             return new ReviewTurnRow(t.MaLuotKiemDuyet, t.ThoiGianGui, t.QuyetDinh, t.LyDo, t.MaQuanTriVien, NameOf(t.MaQuanTriVien),
                 t.ThoiGianQuyetDinh, t.QuyetDinhTuDong, a?.TrangThai ?? ModerationPolicy.AnalysisMissing, a?.MucDoTuKhoa,
                 a?.GiaiThich, a?.LoiXuLy, violationTurns.Contains(t.MaLuotKiemDuyet),
-                ModerationDecision.ParseEvidence(a?.DauHieu));
+                ModerationDecision.ParseEvidence(a?.DauHieu),
+                a?.MucRuiRo, a?.DeXuat, a?.PhienBanMoHinh, ModerationDecision.ParseAiSignals(a?.DauHieu));
         }).ToList();
 
         var historyRows = history.Select(h => new StatusHistoryRow(h.TrangThaiCu, h.TrangThaiMoi, h.LoaiNguoiThucHien,
@@ -202,6 +212,39 @@ public class ProductReviewService(
             return DecisionFailure(ex);
         }
         return await AfterDecisionAsync(adminId, maSanPham, review.MaNguoiBan, "ACTIVE", approve: true, reason: null, cancellationToken);
+    }
+
+    public async Task<BulkApproveResult> ApproveGreenLaneAsync(int adminId, IReadOnlyCollection<int> productIds, CancellationToken cancellationToken = default)
+    {
+        var denied = await RequireAdminAsync(adminId, cancellationToken);
+        if (denied is not null) return BulkApproveResult.Fail(denied.Error ?? "Không có quyền quản trị viên.");
+
+        var ids = (productIds ?? Array.Empty<int>()).Where(id => id > 0).Distinct().ToList();
+        if (ids.Count == 0)
+            return BulkApproveResult.Fail("Không có sản phẩm Làn Xanh nào để duyệt nhanh.");
+
+        var approved = 0;
+        var skipped = 0;
+
+        foreach (var id in ids)
+        {
+            // Kiểm tra lại phía server: chỉ cho phép duyệt nhanh nếu đúng chuẩn Làn Xanh (không tin danh sách client).
+            var review = await moderation.GetReviewAsync(id, cancellationToken);
+            if (review is null || !review.CanApprove || !review.IsGreenLane)
+            {
+                skipped++;
+                continue;
+            }
+
+            var res = await ApproveAsync(adminId, id, cancellationToken);
+            if (res.Success) approved++;
+            else skipped++;
+        }
+
+        if (approved == 0)
+            return new BulkApproveResult(false, "Không có sản phẩm nào đủ điều kiện Làn Xanh để duyệt nhanh.", 0, skipped);
+
+        return new BulkApproveResult(true, null, approved, skipped);
     }
 
     public async Task<ProductDecisionResult> RejectAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default)

@@ -32,6 +32,26 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveGreenLane(int[] productIds, CancellationToken cancellationToken)
+    {
+        if (!TryGetAdminId(out var adminId)) return Forbid();
+
+        var result = await reviews.ApproveGreenLaneAsync(adminId, productIds ?? Array.Empty<int>(), cancellationToken);
+        if (!result.Success)
+        {
+            TempData["Loi"] = result.Error ?? "Không duyệt nhanh được các sản phẩm Làn Xanh.";
+        }
+        else
+        {
+            var msg = $"Đã duyệt nhanh {result.ApprovedCount} sản phẩm Làn Xanh.";
+            if (result.SkippedCount > 0)
+                msg += $" Bỏ qua {result.SkippedCount} sản phẩm không còn đủ điều kiện Làn Xanh.";
+            TempData["ThanhCong"] = msg;
+        }
+        return RedirectToAction(nameof(Index), new { tab = ProductReviewTabs.Pending });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(int id, ReviewReasonVm input, CancellationToken cancellationToken)
     {
         if (id <= 0) return NotFound();

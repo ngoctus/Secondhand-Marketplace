@@ -46,6 +46,23 @@ public class ModerationServiceTests
         }
     }
 
+    private sealed class ScriptedAiAnalyzer : IAiModerationAnalyzer
+    {
+        public AiModerationResult Result { get; set; } = AiModerationResult.Ok(
+            "LOW", "APPROVE", "Sản phẩm đồ cũ hợp lệ.", Array.Empty<AiModerationSignal>(), "gemini-3.1-flash-lite");
+        public bool Throw { get; set; }
+        public int Calls { get; private set; }
+        public AiModerationInput? LastInput { get; private set; }
+
+        public Task<AiModerationResult> AnalyzeAsync(AiModerationInput input, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            LastInput = input;
+            if (Throw) throw new InvalidOperationException("Mất kết nối AI");
+            return Task.FromResult(Result);
+        }
+    }
+
     private sealed class Host
     {
         public required string Store { get; init; }
@@ -54,6 +71,7 @@ public class ModerationServiceTests
         public required FakeAudit Audit { get; init; }
         public required ModerationService Service { get; init; }
         public required UserAdminService UserAdmin { get; init; }
+        public ScriptedAiAnalyzer? Ai { get; init; }
     }
 
     private static DbContextOptions<AppDbContext> Options(string store) =>
@@ -62,7 +80,7 @@ public class ModerationServiceTests
             .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
-    private static Host NewHost(string? sharedStore = null, ScriptedScanner? scanner = null)
+    private static Host NewHost(string? sharedStore = null, ScriptedScanner? scanner = null, ScriptedAiAnalyzer? ai = null)
     {
         var store = sharedStore ?? Guid.NewGuid().ToString();
         var db = new AppDbContext(Options(store));
@@ -70,14 +88,14 @@ public class ModerationServiceTests
         scanner ??= new ScriptedScanner();
         var userAdmin = new UserAdminService(db, audit);
         var service = new ModerationService(db, scanner, userAdmin, new NotificationService(db), audit,
-            NullLogger<ModerationService>.Instance);
-        return new Host { Store = store, Db = db, Scanner = scanner, Audit = audit, Service = service, UserAdmin = userAdmin };
+            NullLogger<ModerationService>.Instance, ai);
+        return new Host { Store = store, Db = db, Scanner = scanner, Audit = audit, Service = service, UserAdmin = userAdmin, Ai = ai };
     }
 
     /// <summary>Người dùng, shop, và một sản phẩm PENDING_REVIEW giống kết quả của sp_GuiDuyetSanPham (lượt mở + PhanTichAI QUEUED).</summary>
-    private static Host Seed(string sellerRole = "USER", bool queuedAiRow = true, string name = "Điện thoại cũ", string? desc = "Máy dùng ổn định, còn bảo hành")
+    private static Host Seed(string sellerRole = "USER", bool queuedAiRow = true, string name = "Điện thoại cũ", string? desc = "Máy dùng ổn định, còn bảo hành", ScriptedAiAnalyzer? ai = null)
     {
-        var h = NewHost();
+        var h = NewHost(ai: ai);
         h.Db.NguoiDungs.AddRange(
             new NguoiDung { MaNguoiDung = AdminId, HoTen = "Admin", Email = "admin@t.local", VaiTro = "ADMIN", TrangThai = "ACTIVE" },
             new NguoiDung { MaNguoiDung = SellerId, HoTen = "Seller", Email = "seller@t.local", VaiTro = sellerRole, TrangThai = "ACTIVE" });
@@ -504,5 +522,88 @@ public class ModerationServiceTests
         AddViolations(h.Db, 999, 5);
         Assert.Equal(0, await h.Service.GetViolationCountAsync(SellerId));
         Assert.False(await h.Service.EnforceViolationThresholdAsync(SellerId));
+    }
+
+    // ---------------------------------------------------------------- C-01 Hybrid 2 tầng & Fallback
+    [Fact]
+    public async Task Hybrid_HighKeyword_SkipsAiAnalyzerCompletely()
+    {
+        var ai = new ScriptedAiAnalyzer();
+        var h = Seed(ai: ai);
+        h.Scanner.Hits = new() { High(1) };
+
+        await h.Service.PhanTichSanPhamAsync(100);
+
+        Assert.Equal(0, ai.Calls);
+        var row = await h.Db.PhanTichAIs.SingleAsync();
+        Assert.Equal(ModerationPolicy.ModelVersion, row.PhienBanMoHinh);
+        Assert.Equal("REJECTED", (await h.Db.SanPhams.SingleAsync()).TrangThai);
+    }
+
+    [Fact]
+    public async Task Hybrid_NoneAndAiApprove_MarksGreenLaneAndSavesHybridModel()
+    {
+        var ai = new ScriptedAiAnalyzer();
+        var h = Seed(ai: ai);
+
+        await h.Service.PhanTichSanPhamAsync(100);
+
+        Assert.Equal(1, ai.Calls);
+        Assert.Equal(1000m, ai.LastInput!.Price);
+        var row = await h.Db.PhanTichAIs.SingleAsync();
+        Assert.Equal("DONE", row.TrangThai);
+        Assert.Equal("NONE", row.MucDoTuKhoa);
+        Assert.Equal("LOW", row.MucRuiRo);
+        Assert.Equal("APPROVE", row.DeXuat);
+        Assert.Equal("hybrid:gemini-3.1-flash-lite", row.PhienBanMoHinh);
+
+        var review = await h.Service.GetReviewAsync(100);
+        Assert.True(review!.IsGreenLane);
+        Assert.False(review.IsFallback);
+        Assert.True(review.CanApprove);
+    }
+
+    [Fact]
+    public async Task Hybrid_NoneAndAiHighRisk_DoesNotAutoReject_ExposesAiSignals()
+    {
+        var ai = new ScriptedAiAnalyzer
+        {
+            Result = AiModerationResult.Ok("HIGH", "REJECT", "Phát hiện lách luật s.ú.n.g và chèn Zalo.",
+                new[] { new AiModerationSignal("LACH_LUAT", "HIGH", "MoTa", "Chứa từ lách luật s.ú.n.g") },
+                "gemini-3.1-flash-lite")
+        };
+        var h = Seed(name: "Đồ sưu tầm", desc: "Bán s.ú.n.g liên hệ Zalo", ai: ai);
+
+        await h.Service.PhanTichSanPhamAsync(100);
+
+        Assert.Equal("PENDING_REVIEW", (await h.Db.SanPhams.SingleAsync()).TrangThai);  // KHÔNG tự từ chối
+        Assert.Empty(h.Db.LichSuViPhams);                                               // KHÔNG tự ghi vi phạm
+
+        var review = await h.Service.GetReviewAsync(100);
+        Assert.Equal("NONE", review!.Level);
+        Assert.Equal("HIGH", review.RiskLevel);
+        Assert.Equal("REJECT", review.Recommendation);
+        Assert.False(review.IsGreenLane);
+        Assert.True(review.CanApprove);                                                 // Admin vẫn có quyền quyết định
+        Assert.Single(review.AiSignals!);
+    }
+
+    [Fact]
+    public async Task Hybrid_AiThrowsOrFails_FallsBackToDoneKeywordV1Fallback_StillApprovable()
+    {
+        var ai = new ScriptedAiAnalyzer { Throw = true };
+        var h = Seed(ai: ai);
+
+        await h.Service.PhanTichSanPhamAsync(100);
+
+        var row = await h.Db.PhanTichAIs.SingleAsync();
+        Assert.Equal("DONE", row.TrangThai);                                            // KHÔNG hạ xuống FAILED
+        Assert.Equal("NONE", row.MucDoTuKhoa);
+        Assert.Equal(ModerationPolicy.ModelVersionFallback, row.PhienBanMoHinh);
+
+        var review = await h.Service.GetReviewAsync(100);
+        Assert.True(review!.CanApprove);                                                // Trigger DB không chặn duyệt
+        Assert.True(review.IsFallback);
+        Assert.False(review.IsGreenLane);                                               // Fallback không được duyệt nhanh Làn Xanh
     }
 }

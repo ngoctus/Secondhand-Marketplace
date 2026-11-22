@@ -24,12 +24,53 @@ public static class ModerationPolicy
     public const string AnalysisFailed = "FAILED";
     public const string AnalysisMissing = "NONE";
 
+    // Mức rủi ro tổng hợp (PhanTichAI.MucRuiRo)
+    public const string RiskLow = "LOW";
+    public const string RiskMedium = "MEDIUM";
+    public const string RiskHigh = "HIGH";
+
+    // Đề xuất xử lý (PhanTichAI.DeXuat)
+    public const string AdviceApprove = "APPROVE";
+    public const string AdviceNeedsReview = "NEEDS_REVIEW";
+    public const string AdviceReject = "REJECT";
+
+    // Loại phần tử trong JSON PhanTichAI.DauHieu
+    public const string EvidenceTypeKeyword = "TU_KHOA_CAM";
+    public const string EvidenceTypeAi = "AI_CANH_BAO";
+
     // LichSuViPham.NguonGhiNhan
     public const string SourceAutoHigh = "AUTO_HIGH";
     public const string SourceAdminRejectLow = "ADMIN_TU_CHOI_LOW";
 
     public const string ModelVersion = "keyword-v1";
+    public const string ModelVersionFallback = "keyword-v1-fallback";
+    public const string HybridModelPrefix = "hybrid:";
+    public const int MaxModelVersionLength = 50;
 
     public const string ProductPending = "PENDING_REVIEW";
     public const string ProductRejected = "REJECTED";
+
+    public static bool IsHybridModel(string? modelVersion) =>
+        !string.IsNullOrWhiteSpace(modelVersion)
+        && modelVersion.StartsWith(HybridModelPrefix, StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsFallbackModel(string? modelVersion) =>
+        string.Equals(modelVersion, ModelVersionFallback, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Làn Xanh (đủ điều kiện duyệt nhanh):
+    /// Đã phân tích DONE + Tầng 1 NONE + Tầng 2 AI thật (hybrid:...) đánh giá rủi ro LOW và đề xuất APPROVE.
+    /// Bản ghi fallback (keyword-v1-fallback) hoặc chỉ chạy từ khóa (keyword-v1) KHÔNG thuộc Làn Xanh.
+    /// </summary>
+    public static bool IsGreenLane(
+        string? analysisStatus,
+        string? keywordLevel,
+        string? riskLevel,
+        string? recommendation,
+        string? modelVersion) =>
+        analysisStatus == AnalysisDone
+        && keywordLevel == LevelNone
+        && riskLevel == RiskLow
+        && recommendation == AdviceApprove
+        && IsHybridModel(modelVersion);
 }

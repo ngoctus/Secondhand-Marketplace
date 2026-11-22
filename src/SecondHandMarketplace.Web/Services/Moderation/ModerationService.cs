@@ -1,10 +1,13 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SecondHandMarketplace.Web.Common.Constants;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Services.Accounts;
+using SecondHandMarketplace.Web.Services.Ai;
 using SecondHandMarketplace.Web.Services.AuditLogs;
 using SecondHandMarketplace.Web.Services.Notifications;
 
@@ -16,9 +19,22 @@ public sealed class ModerationService(
     IUserAdminService userAdmin,
     INotificationService notifications,
     IAuditLogService auditLog,
-    ILogger<ModerationService> logger) : IModerationService
+    ILogger<ModerationService> logger,
+    IAiModerationAnalyzer? aiAnalyzer = null,
+    IWebHostEnvironment? webHostEnvironment = null,
+    IConfiguration? configuration = null) : IModerationService
 {
-    private sealed record OpenTurn(int LuotId, int ProductId, string Name, string? Description, int SellerId);
+    private const long MaxImageBytesForAi = 2 * 1024 * 1024; // 2 MB mỗi ảnh đại diện gửi lên LLM
+
+    private sealed record OpenTurn(
+        int LuotId,
+        int ProductId,
+        string Name,
+        string? Description,
+        decimal? Price,
+        string? CategoryName,
+        string? ConditionName,
+        int SellerId);
 
     /// <summary>Việc cần làm SAU khi transaction đã commit (khóa tài khoản, thông báo, nhật ký).</summary>
     private sealed class PostCommit
@@ -33,7 +49,7 @@ public sealed class ModerationService(
     }
 
     // =====================================================================
-    // PHÂN TÍCH
+    // PHÂN TÍCH (HYBRID 2 TẦNG: TỪ KHÓA CỨNG + LLM NGỮ CẢNH/ẢNH)
     // =====================================================================
     public async Task PhanTichSanPhamAsync(int maSanPham, CancellationToken cancellationToken = default)
     {
@@ -60,12 +76,124 @@ public sealed class ModerationService(
             await MarkFailedAsync(turn.LuotId, ex.Message, cancellationToken);
             return;
         }
-        clock.Stop();
 
         var outcome = ModerationDecision.Evaluate(matches);
+
+        // Tầng 2 (C-01): chỉ chạy khi Tầng 1 KHÔNG phải HIGH và có cấu hình IAiModerationAnalyzer.
+        // Nếu Tầng 2 lỗi/timeout/thiếu key -> MergeWithAi fallback sạch về keyword-v1-fallback (TrangThai = DONE).
+        if (outcome.Level != ModerationPolicy.LevelHigh && aiAnalyzer is not null)
+        {
+            var aiResult = await RunAiTierSafelyAsync(turn, outcome, cancellationToken);
+            outcome = ModerationDecision.MergeWithAi(outcome, aiResult, aiAttempted: true);
+        }
+
+        clock.Stop();
+
         var post = await ApplyAnalysisAsync(turn.LuotId, outcome, (int)clock.ElapsedMilliseconds, cancellationToken);
         if (post is not null) await RunPostCommitAsync(post, cancellationToken);
     }
+
+    private async Task<AiModerationResult> RunAiTierSafelyAsync(
+        OpenTurn turn,
+        ModerationOutcome keywordOutcome,
+        CancellationToken ct)
+    {
+        try
+        {
+            var maxImages = configuration is null
+                ? 2
+                : AiOptions.FromConfiguration(configuration).ModerationMaxImages;
+            var images = await LoadProductImagesForAiAsync(turn.ProductId, maxImages, ct);
+
+            var input = new AiModerationInput(
+                turn.ProductId,
+                turn.Name,
+                turn.Description,
+                turn.Price,
+                turn.CategoryName,
+                turn.ConditionName,
+                keywordOutcome.Level,
+                keywordOutcome.Matches,
+                images);
+
+            return await aiAnalyzer!.AnalyzeAsync(input, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Tầng 2 AI kiểm duyệt gặp ngoại lệ cho sản phẩm {ProductId}; fallback về keyword-v1.", turn.ProductId);
+            return AiModerationResult.Fail(ex.Message);
+        }
+    }
+
+    /// <summary>Đọc tối đa maxImages ảnh đại diện cục bộ trong wwwroot/uploads/ (ưu tiên thumbnail nhẹ, <= 2MB).</summary>
+    private async Task<IReadOnlyList<AiModerationImage>> LoadProductImagesForAiAsync(int productId, int maxImages, CancellationToken ct)
+    {
+        if (maxImages <= 0 || webHostEnvironment is null || string.IsNullOrWhiteSpace(webHostEnvironment.WebRootPath))
+            return Array.Empty<AiModerationImage>();
+
+        var paths = await db.AnhSanPhams.AsNoTracking()
+            .Where(a => a.MaSanPham == productId)
+            .OrderByDescending(a => a.LaAnhChinh)
+            .ThenBy(a => a.ThuTu)
+            .Select(a => a.DuongDan)
+            .Take(maxImages)
+            .ToListAsync(ct);
+
+        if (paths.Count == 0) return Array.Empty<AiModerationImage>();
+
+        var uploadsRoot = Path.GetFullPath(Path.Combine(webHostEnvironment.WebRootPath, "uploads"));
+        var images = new List<AiModerationImage>(paths.Count);
+
+        foreach (var rawPath in paths)
+        {
+            if (string.IsNullOrWhiteSpace(rawPath) || !rawPath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var relative = rawPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var fullPath = Path.GetFullPath(Path.Combine(webHostEnvironment.WebRootPath, relative));
+            if (!fullPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            // Ưu tiên bản -thumb.webp (nhẹ token hơn nhiều) nếu tồn tại cùng thư mục
+            var dir = Path.GetDirectoryName(fullPath);
+            var thumbPath = dir is null
+                ? null
+                : Path.Combine(dir, Path.GetFileNameWithoutExtension(fullPath) + "-thumb.webp");
+
+            var chosenPath = thumbPath is not null && File.Exists(thumbPath) ? thumbPath : fullPath;
+            if (!File.Exists(chosenPath)) continue;
+
+            var mime = GetSupportedImageMime(chosenPath);
+            if (mime is null) continue;
+
+            try
+            {
+                var info = new FileInfo(chosenPath);
+                if (info.Length == 0 || info.Length > MaxImageBytesForAi) continue;
+
+                var bytes = await File.ReadAllBytesAsync(chosenPath, ct);
+                images.Add(new AiModerationImage(mime, Convert.ToBase64String(bytes)));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogDebug(ex, "Không đọc được ảnh {Path} cho AI kiểm duyệt SP {ProductId}.", chosenPath, productId);
+            }
+        }
+
+        return images;
+    }
+
+    private static string? GetSupportedImageMime(string filePath) => Path.GetExtension(filePath).ToLowerInvariant() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".webp" => "image/webp",
+        _ => null
+    };
 
     private async Task<PostCommit?> ApplyAnalysisAsync(int turnId, ModerationOutcome outcome, int elapsedMs, CancellationToken ct)
     {
@@ -119,7 +247,7 @@ public sealed class ModerationService(
         ai.DauHieu = outcome.DauHieuJson;
         ai.GiaiThich = outcome.GiaiThich;
         ai.MaBamDauVao = outcome.FindingsHash;
-        ai.PhienBanMoHinh = ModerationPolicy.ModelVersion;
+        ai.PhienBanMoHinh = outcome.ModelVersion;
         ai.ThoiGianXuLyMs = Math.Max(0, elapsedMs);
         ai.LoiXuLy = null;
         ai.ThoiGianHoanThanh = now;
@@ -325,12 +453,22 @@ public sealed class ModerationService(
         var status = ai?.TrangThai ?? ModerationPolicy.AnalysisMissing;
         var (canApprove, blocked) = ModerationDecision.CanApprove(isOpen, ai?.TrangThai, ai?.MucDoTuKhoa, violation);
         var rejectionCounts = isOpen && !violation && ai is { TrangThai: ModerationPolicy.AnalysisDone, MucDoTuKhoa: ModerationPolicy.LevelLow };
+        var aiSignals = ModerationDecision.ParseAiSignals(ai?.DauHieu);
+        var isGreenLane = isOpen && canApprove
+            && ModerationPolicy.IsGreenLane(status, ai?.MucDoTuKhoa, ai?.MucRuiRo, ai?.DeXuat, ai?.PhienBanMoHinh);
+        var isFallback = ModerationPolicy.IsFallbackModel(ai?.PhienBanMoHinh);
 
         return new ModerationReview(
             turn.MaLuotKiemDuyet, turn.MaSanPham, turn.SellerId, isOpen, status, ai?.MucDoTuKhoa,
             ModerationDecision.ParseEvidence(ai?.DauHieu), ai?.GiaiThich, ai?.LoiXuLy, ai?.SoLanThu ?? 0,
             violation, count, ModerationPolicy.ViolationLockThreshold,
-            canApprove, blocked, rejectionCounts, CanReanalyze: isOpen);
+            canApprove, blocked, rejectionCounts, CanReanalyze: isOpen,
+            RiskLevel: ai?.MucRuiRo,
+            Recommendation: ai?.DeXuat,
+            ModelVersion: ai?.PhienBanMoHinh,
+            AiSignals: aiSignals,
+            IsGreenLane: isGreenLane,
+            IsFallback: isFallback);
     }
 
     // =====================================================================
@@ -340,7 +478,15 @@ public sealed class ModerationService(
         db.LuotKiemDuyets.AsNoTracking()
             .Where(l => l.MaSanPham == maSanPham && l.QuyetDinh == null
                         && l.SanPham.TrangThai == ModerationPolicy.ProductPending && !l.SanPham.DaXoa)
-            .Select(l => new OpenTurn(l.MaLuotKiemDuyet, l.MaSanPham, l.SanPham.Ten, l.SanPham.MoTa, l.SanPham.CuaHang.MaNguoiDung))
+            .Select(l => new OpenTurn(
+                l.MaLuotKiemDuyet,
+                l.MaSanPham,
+                l.SanPham.Ten,
+                l.SanPham.MoTa,
+                l.SanPham.Gia,
+                l.SanPham.DanhMuc != null ? l.SanPham.DanhMuc.Ten : null,
+                l.SanPham.TinhTrang != null ? l.SanPham.TinhTrang.Ten : null,
+                l.SanPham.CuaHang.MaNguoiDung))
             .FirstOrDefaultAsync(ct);
 
     /// <summary>Đọc lượt kèm khóa dòng (UPDLOCK) khi dùng SQL Server; luôn nạp lại để không dùng bản cũ trong context.</summary>

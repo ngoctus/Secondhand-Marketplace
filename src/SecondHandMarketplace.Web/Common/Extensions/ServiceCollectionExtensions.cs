@@ -52,6 +52,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationService, NotificationService>();
         services.AddAiChat();   // C3: IAiChatService (typed HttpClient), IAiSettingsService, IAiRequestThrottle
         services.AddScoped<IKeywordScanner, SqlKeywordScanner>();
+        services.AddHttpClient<IAiModerationAnalyzer, AiModerationAnalyzer>()
+            .ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
         services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<IForbiddenKeywordService, ForbiddenKeywordService>();
         services.AddScoped<IProductReviewService, ProductReviewService>();
