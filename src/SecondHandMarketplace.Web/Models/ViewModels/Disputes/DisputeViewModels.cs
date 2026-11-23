@@ -41,6 +41,7 @@ public class TranhChapDetailViewModel
     public string LyDo { get; set; } = string.Empty;
     public string? BangChungAnh { get; set; }
     public string? PhanHoiNguoiBan { get; set; }
+    public string? AnhPhanHoi { get; set; }
     public DateTime? NgayPhanHoi { get; set; }
     public string TrangThai { get; set; } = "OPEN";
     public string? PhanQuyet { get; set; }

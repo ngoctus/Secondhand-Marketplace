@@ -356,6 +356,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.LyDo).HasMaxLength(500);
             e.Property(x => x.BangChungAnh).HasMaxLength(500);
             e.Property(x => x.PhanHoiNguoiBan).HasMaxLength(1000);
+            e.Property(x => x.AnhPhanHoi).HasMaxLength(500);
             e.Property(x => x.TrangThai).IsUnicode(false).HasMaxLength(20);
             e.Property(x => x.PhanQuyet).HasMaxLength(500);
             e.Property(x => x.GhiChuAdmin).HasMaxLength(1000);

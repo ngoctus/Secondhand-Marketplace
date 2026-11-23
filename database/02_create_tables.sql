@@ -1,4 +1,4 @@
-﻿SET ANSI_NULLS ON;
+SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 SET ARITHABORT ON;
 GO
@@ -345,6 +345,7 @@ BEGIN
         LyDo              nvarchar(500)  NOT NULL,
         BangChungAnh      nvarchar(500)  NULL,
         PhanHoiNguoiBan   nvarchar(1000) NULL,
+        AnhPhanHoi        nvarchar(500)  NULL,
         TrangThai         varchar(20)    NOT NULL CONSTRAINT DF_TranhChap_TrangThai DEFAULT ('OPEN'),
         PhanQuyet         nvarchar(500)  NULL,
         GhiChuAdmin       nvarchar(1000) NULL,

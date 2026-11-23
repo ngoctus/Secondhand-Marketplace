@@ -12,6 +12,7 @@ public class TranhChap
     public string LyDo { get; set; } = string.Empty;
     public string? BangChungAnh { get; set; }
     public string? PhanHoiNguoiBan { get; set; }
+    public string? AnhPhanHoi { get; set; }
     public string TrangThai { get; set; } = "OPEN";
     public string? PhanQuyet { get; set; }
     public string? GhiChuAdmin { get; set; }
