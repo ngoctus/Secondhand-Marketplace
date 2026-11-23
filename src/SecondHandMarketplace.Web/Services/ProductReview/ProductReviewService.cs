@@ -1,6 +1,8 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Common.Constants;
+using SecondHandMarketplace.Web.Controllers;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Services.AuditLogs;
@@ -20,7 +22,8 @@ public class ProductReviewService(
     IModerationService moderation,
     INotificationService notifications,
     IAuditLogService auditLog,
-    ILogger<ProductReviewService> logger) : IProductReviewService
+    ILogger<ProductReviewService> logger,
+    IMemoryCache? cache = null) : IProductReviewService
 {
     // Số lỗi SQL đã biết (06_procedures.sql, 15_kiemduyet_tukhoa.sql)
     private const int ErrNotPending = 50022;
@@ -211,6 +214,7 @@ public class ProductReviewService(
         {
             return DecisionFailure(ex);
         }
+        cache?.Remove(HomeController.CatalogCacheKey);
         return await AfterDecisionAsync(adminId, maSanPham, review.MaNguoiBan, "ACTIVE", approve: true, reason: null, cancellationToken);
     }
 
@@ -296,6 +300,7 @@ public class ProductReviewService(
         {
             return DecisionFailure(ex);
         }
+        cache?.Remove(HomeController.CatalogCacheKey);
 
         await TryAuditAsync(adminId, "REMOVE_PRODUCT", maSanPham, cleanReason, cancellationToken);
         await TryNotifyAsync(product.SellerId, "Sản phẩm của bạn đã bị gỡ",
@@ -382,13 +387,22 @@ public class ProductReviewService(
         page = Math.Clamp(page, 1, 10000);
         var query = db.LichSuViPhams.AsNoTracking().AsQueryable();
         string? sellerName = null;
+        int? sellerEffectiveViolations = null;
+        int? sellerTotalViolations = null;
+        DateTime? sellerViolationResetAt = null;
         if (sellerId is not null)
         {
             query = query.Where(v => v.MaNguoiBan == sellerId);
-            sellerName = await db.NguoiDungs.AsNoTracking().Where(u => u.MaNguoiDung == sellerId)
-                .Select(u => u.HoTen).SingleOrDefaultAsync(cancellationToken);
+            var filteredSeller = await db.NguoiDungs.AsNoTracking()
+                .Where(u => u.MaNguoiDung == sellerId)
+                .Select(u => new { u.HoTen, u.MocTinhViPham })
+                .SingleOrDefaultAsync(cancellationToken);
+            sellerName = filteredSeller?.HoTen;
+            sellerViolationResetAt = filteredSeller?.MocTinhViPham;
+            sellerEffectiveViolations = await moderation.GetViolationCountAsync(sellerId.Value, cancellationToken);
         }
         var total = await query.CountAsync(cancellationToken);
+        if (sellerId is not null) sellerTotalViolations = total;
 
         var rows = await query
             .OrderByDescending(v => v.ThoiGian).ThenByDescending(v => v.MaViPham)
@@ -405,23 +419,45 @@ public class ProductReviewService(
         var products = productIds.Count == 0 ? new Dictionary<int, string>()
             : await db.SanPhams.AsNoTracking().Where(p => productIds.Contains(p.MaSanPham))
                 .ToDictionaryAsync(p => p.MaSanPham, p => p.Ten, cancellationToken);
-        // Bộ đếm chung của C2: số dòng LichSuViPham theo người bán (không tạo bộ đếm riêng).
-        var counts = sellerIds.Count == 0 ? new Dictionary<int, int>()
-            : (await db.LichSuViPhams.AsNoTracking().Where(v => sellerIds.Contains(v.MaNguoiBan))
-                .GroupBy(v => v.MaNguoiBan).Select(g => new { Id = g.Key, N = g.Count() })
-                .ToListAsync(cancellationToken)).ToDictionary(x => x.Id, x => x.N);
+
+        // KN-02: phân biệt rõ vi phạm hiệu lực (ThoiGian > MocTinhViPham) so với tổng lịch sử toàn thời gian.
+        var sellerViolations = sellerIds.Count == 0
+            ? new List<(int MaNguoiBan, DateTime ThoiGian)>()
+            : (await db.LichSuViPhams.AsNoTracking()
+                .Where(v => sellerIds.Contains(v.MaNguoiBan))
+                .Select(v => new { v.MaNguoiBan, v.ThoiGian })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.MaNguoiBan, x.ThoiGian))
+                .ToList();
+
+        var totalCounts = new Dictionary<int, int>();
+        var effectiveCounts = new Dictionary<int, int>();
+        foreach (var group in sellerViolations.GroupBy(x => x.MaNguoiBan))
+        {
+            var moc = users.TryGetValue(group.Key, out var u) ? u.MocTinhViPham : null;
+            totalCounts[group.Key] = group.Count();
+            effectiveCounts[group.Key] = moc is null
+                ? group.Count()
+                : group.Count(x => x.ThoiGian > moc.Value);
+        }
 
         var items = rows.Select(v =>
         {
             users.TryGetValue(v.MaNguoiBan, out var seller);
             var admin = v.MaQuanTriVien is { } aid && users.TryGetValue(aid, out var a) ? a.HoTen : null;
-            return new ViolationRow(v.MaViPham, v.MaNguoiBan, seller?.HoTen ?? "", seller?.Email ?? "", seller?.TrangThai ?? "",
-                seller?.VaiTro ?? "", counts.GetValueOrDefault(v.MaNguoiBan), v.MaSanPham,
+            var moc = seller?.MocTinhViPham;
+            var isEffective = moc is null || v.ThoiGian > moc.Value;
+            return new ViolationRow(
+                v.MaViPham, v.MaNguoiBan, seller?.HoTen ?? "", seller?.Email ?? "", seller?.TrangThai ?? "",
+                seller?.VaiTro ?? "", totalCounts.GetValueOrDefault(v.MaNguoiBan), v.MaSanPham,
                 products.GetValueOrDefault(v.MaSanPham) ?? "", v.MaLuotKiemDuyet, v.MucDo, v.NguonGhiNhan, v.ThoiGian,
-                v.MaQuanTriVien, admin, ModerationDecision.ParseEvidence(v.ChiTietTuKhoa));
+                v.MaQuanTriVien, admin, ModerationDecision.ParseEvidence(v.ChiTietTuKhoa),
+                effectiveCounts.GetValueOrDefault(v.MaNguoiBan), isEffective, moc);
         }).ToList();
 
-        return new ViolationPage(sellerId, sellerName, items, page, total, TotalPages(total), ModerationPolicy.ViolationLockThreshold);
+        return new ViolationPage(
+            sellerId, sellerName, items, page, total, TotalPages(total), ModerationPolicy.ViolationLockThreshold,
+            sellerEffectiveViolations, sellerTotalViolations, sellerViolationResetAt);
     }
 
     // =====================================================================

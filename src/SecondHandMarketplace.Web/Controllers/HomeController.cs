@@ -20,7 +20,7 @@ namespace SecondHandMarketplace.Web.Controllers
         IMemoryCache cache,
         SecondHandMarketplace.Web.Data.AppDbContext db) : Controller
     {
-        private const string CacheKey = "home:catalog";
+        public const string CatalogCacheKey = "home:catalog";
         private static readonly TimeSpan CacheTrangChu = TimeSpan.FromMinutes(5);
 
         private const int SoTinDuocVeMotLan = 60;
@@ -33,14 +33,14 @@ namespace SecondHandMarketplace.Web.Controllers
             // Trang chủ hiển thị giống nhau cho mọi khách nên dùng chung một bản cache 5 phút.
             // Cố ý không truyền HttpContext.RequestAborted: nếu người dùng đóng tab giữa chừng,
             // truy vấn bị hủy và kết quả dở dang sẽ bị cache lại cho các request sau.
-            if (!cache.TryGetValue(CacheKey, out HomeIndexVm? duLieu) || duLieu is null)
+            if (!cache.TryGetValue(CatalogCacheKey, out HomeIndexVm? duLieu) || duLieu is null)
             {
                 duLieu = await NapTrangChuAsync();
 
                 // Chỉ cache khi lấy được sản phẩm: DB đang lỗi thì lần tải lại phải được thử thật,
                 // không bị khóa một trang trống suốt 5 phút.
                 if (duLieu.SanPhamNoiBat.Count > 0)
-                    cache.Set(CacheKey, duLieu, CacheTrangChu);
+                    cache.Set(CatalogCacheKey, duLieu, CacheTrangChu);
             }
 
             return View(duLieu);

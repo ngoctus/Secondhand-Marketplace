@@ -85,9 +85,12 @@ public sealed record BulkApproveResult(bool Success, string? Error, int Approved
 public sealed record ViolationRow(
     int MaViPham, int MaNguoiBan, string TenNguoiBan, string EmailNguoiBan, string TrangThaiNguoiBan, string VaiTroNguoiBan,
     int TongViPham, int MaSanPham, string TenSanPham, int MaLuotKiemDuyet, string MucDo, string NguonGhiNhan,
-    DateTime ThoiGian, int? MaQuanTriVien, string? TenQuanTriVien, IReadOnlyList<KeywordMatch> Matches);
+    DateTime ThoiGian, int? MaQuanTriVien, string? TenQuanTriVien, IReadOnlyList<KeywordMatch> Matches,
+    int ViPhamHieuLuc = 0, bool LaViPhamHieuLuc = true, DateTime? MocTinhViPham = null);
 
-public sealed record ViolationPage(int? SellerId, string? SellerName, IReadOnlyList<ViolationRow> Items, int Page, int TotalItems, int TotalPages, int Threshold);
+public sealed record ViolationPage(
+    int? SellerId, string? SellerName, IReadOnlyList<ViolationRow> Items, int Page, int TotalItems, int TotalPages, int Threshold,
+    int? SellerEffectiveViolations = null, int? SellerTotalViolations = null, DateTime? SellerViolationResetAt = null);
 
 /// <summary>
 /// C1: kiểm duyệt sản phẩm và quản lý vi phạm (Admin). Chỉ gọi stored procedure có sẵn (sp_DuyetSanPham, sp_TuChoiSanPham,

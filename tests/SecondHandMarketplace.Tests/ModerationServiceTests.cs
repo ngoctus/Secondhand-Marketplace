@@ -512,7 +512,7 @@ public class ModerationServiceTests
         Assert.True(ok);
         Assert.Equal("ACTIVE", (await h.Db.NguoiDungs.AsNoTracking().SingleAsync(u => u.MaNguoiDung == SellerId)).TrangThai);
         Assert.Equal(3, await h.Db.LichSuViPhams.CountAsync());                   // mở khóa không xóa lịch sử
-        Assert.Equal(3, await h.Service.GetViolationCountAsync(SellerId));
+        Assert.Equal(0, await h.Service.GetViolationCountAsync(SellerId));        // KN-02: mở khóa reset bộ đếm hiệu lực về 0 nhờ MocTinhViPham
     }
 
     [Fact]

@@ -372,15 +372,28 @@ public sealed class ModerationService(
         if (turn is null) return null;
 
         var recorded = await db.LichSuViPhams.AsNoTracking().AnyAsync(v => v.MaLuotKiemDuyet == turn.MaLuotKiemDuyet, cancellationToken);
-        var lockedNow = await EnforceViolationThresholdAsync(turn.SellerId, cancellationToken);
+        // KN-02: chỉ kiểm tra ngưỡng khóa khi lượt vừa quyết định thực sự phát sinh vi phạm mới
+        // (tránh trường hợp duyệt sản phẩm hợp lệ lại vô tình kích hoạt khóa lại).
+        var lockedNow = recorded && await EnforceViolationThresholdAsync(turn.SellerId, cancellationToken);
         var count = await GetViolationCountAsync(turn.SellerId, cancellationToken);
         var status = await db.NguoiDungs.AsNoTracking().Where(u => u.MaNguoiDung == turn.SellerId)
             .Select(u => u.TrangThai).SingleOrDefaultAsync(cancellationToken);
         return new AdminDecisionFollowUp(recorded, count, lockedNow, status == "LOCKED");
     }
 
-    public Task<int> GetViolationCountAsync(int sellerUserId, CancellationToken cancellationToken = default) =>
-        db.LichSuViPhams.AsNoTracking().CountAsync(v => v.MaNguoiBan == sellerUserId, cancellationToken);
+    public async Task<int> GetViolationCountAsync(int sellerUserId, CancellationToken cancellationToken = default)
+    {
+        var mocTinhViPham = await db.NguoiDungs.AsNoTracking()
+            .Where(u => u.MaNguoiDung == sellerUserId)
+            .Select(u => u.MocTinhViPham)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        var query = db.LichSuViPhams.AsNoTracking().Where(v => v.MaNguoiBan == sellerUserId);
+        if (mocTinhViPham is not null)
+            query = query.Where(v => v.ThoiGian > mocTinhViPham.Value);
+
+        return await query.CountAsync(cancellationToken);
+    }
 
     public async Task<bool> EnforceViolationThresholdAsync(int sellerUserId, CancellationToken cancellationToken = default)
     {
