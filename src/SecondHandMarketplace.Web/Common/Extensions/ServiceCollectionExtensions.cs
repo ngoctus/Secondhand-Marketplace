@@ -46,7 +46,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRegistrationOtpService, RegistrationOtpService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
         // Khiếu nại & Mở khóa tài khoản:
-        // KN-03 (Người C): đăng ký IAccountAppealAdminService tại đây
+        services.AddScoped<IAccountAppealAdminService, AccountAppealAdminService>();
         services.AddScoped<IAccountAppealUserService, AccountAppealUserService>();
         services.AddScoped<IShopService, ShopService>();
         services.AddScoped<IKhuVucService, KhuVucService>();
