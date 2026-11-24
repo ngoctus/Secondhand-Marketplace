@@ -351,11 +351,16 @@ public class ReportService : IReportService
                     }
                     catch { /* Best-effort: lỗi thông báo không làm hỏng giao dịch gỡ sản phẩm */ }
 
-                    // Đếm số vi phạm chuẩn xác: các sản phẩm vi phạm khác nhau (distinct) + vi phạm kiểm duyệt
-                    var countViPhamKiemDuyet = await _db.LichSuViPhams.CountAsync(v => v.MaNguoiBan == chuShopId);
+                    // KN-06: Đếm số vi phạm hiệu lực sau mốc mở khóa gần nhất (MocTinhViPham) để reset 0/3 sau khi mở khóa
+                    var chuShop = await _db.NguoiDungs.FindAsync(chuShopId);
+                    var mocTinh = chuShop?.MocTinhViPham;
+
+                    var countViPhamKiemDuyet = await _db.LichSuViPhams
+                        .CountAsync(v => v.MaNguoiBan == chuShopId && (mocTinh == null || v.ThoiGian > mocTinh.Value));
                     
                     var countSpBiBaoCao = await _db.BaoCaos
                         .Where(b => b.TrangThai == "RESOLVED" && b.LoaiDoiTuong == "PRODUCT" &&
+                                    (mocTinh == null || (b.NgayXuLy != null && b.NgayXuLy > mocTinh.Value)) &&
                                     _db.SanPhams.Any(p => p.MaSanPham == b.MaDoiTuong && p.CuaHang.MaNguoiDung == chuShopId && p.MaSanPham != bc.MaDoiTuong))
                         .Select(b => b.MaDoiTuong)
                         .Distinct()
@@ -363,6 +368,7 @@ public class ReportService : IReportService
 
                     var countBaoCaoNguoiDungShop = await _db.BaoCaos
                         .Where(b => b.TrangThai == "RESOLVED" &&
+                                    (mocTinh == null || (b.NgayXuLy != null && b.NgayXuLy > mocTinh.Value)) &&
                                     ((b.LoaiDoiTuong == "USER" && b.MaDoiTuong == chuShopId) ||
                                      (b.LoaiDoiTuong == "SHOP" && _db.CuaHangs.Any(c => c.MaCuaHang == b.MaDoiTuong && c.MaNguoiDung == chuShopId))))
                         .CountAsync();

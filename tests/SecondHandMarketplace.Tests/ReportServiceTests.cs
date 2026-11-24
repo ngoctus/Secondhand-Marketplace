@@ -441,4 +441,76 @@ public class ReportServiceTests
         Assert.Empty(fakeUserAdmin.LockedUsers);
         Assert.Empty(fakeShop.LockedShops);
     }
+
+    [Fact]
+    public async Task XuLyBaoCaoAdminAsync_ViPhamTruocMocTinhViPham_KhongTinhVaoSoGayKhoa()
+    {
+        using var db = GetInMemoryDbContext("ReportTest_MocTinhViPhamResetGay");
+        var fakeUserAdmin = new FakeUserAdminService();
+        var fakeShop = new FakeShopService();
+        var fakeAudit = new FakeAuditLogService();
+        var fakeNotify = new FakeNotificationService();
+        var service = new ReportService(db, fakeUserAdmin, fakeShop, fakeAudit, fakeNotify);
+
+        const int sellerId = 120;
+        const int shopId = 120;
+        var mocTinh = DateTime.UtcNow.AddDays(-1);
+
+        // User từng được mở khóa và có mốc tính vi phạm
+        db.NguoiDungs.Add(new NguoiDung
+        {
+            MaNguoiDung = sellerId,
+            HoTen = "Seller Reset Gay",
+            Email = "seller_reset@demo.local",
+            VaiTro = "SELLER",
+            TrangThai = "ACTIVE",
+            MocTinhViPham = mocTinh,
+            SoLanBiKhoa = 1
+        });
+        db.CuaHangs.Add(new CuaHang { MaCuaHang = shopId, MaNguoiDung = sellerId, TenShop = "Shop Reset Gay", TrangThai = "ACTIVE" });
+        db.SanPhams.Add(new SanPham { MaSanPham = 201, MaCuaHang = shopId, Ten = "SP Cu 1", TrangThai = "ACTIVE", DaXoa = false });
+        db.SanPhams.Add(new SanPham { MaSanPham = 202, MaCuaHang = shopId, Ten = "SP Cu 2", TrangThai = "ACTIVE", DaXoa = false });
+        db.SanPhams.Add(new SanPham { MaSanPham = 203, MaCuaHang = shopId, Ten = "SP Moi", TrangThai = "ACTIVE", DaXoa = false });
+
+        // 2 vi phạm cũ xảy ra trước MocTinhViPham (ví dụ 5 ngày trước)
+        db.BaoCaos.Add(new BaoCao
+        {
+            MaBaoCao = 10,
+            LoaiDoiTuong = "PRODUCT",
+            MaDoiTuong = 201,
+            TrangThai = "RESOLVED",
+            LyDo = "Vi phạm cũ 1",
+            NgayTao = DateTime.UtcNow.AddDays(-6),
+            NgayXuLy = DateTime.UtcNow.AddDays(-5)
+        });
+        db.BaoCaos.Add(new BaoCao
+        {
+            MaBaoCao = 11,
+            LoaiDoiTuong = "PRODUCT",
+            MaDoiTuong = 202,
+            TrangThai = "RESOLVED",
+            LyDo = "Vi phạm cũ 2",
+            NgayTao = DateTime.UtcNow.AddDays(-4),
+            NgayXuLy = DateTime.UtcNow.AddDays(-3)
+        });
+
+        // 1 vi phạm mới đang xử lý xảy ra sau MocTinhViPham
+        db.BaoCaos.Add(new BaoCao
+        {
+            MaBaoCao = 12,
+            LoaiDoiTuong = "PRODUCT",
+            MaDoiTuong = 203,
+            TrangThai = "PENDING",
+            LyDo = "Vi phạm mới",
+            NgayTao = DateTime.UtcNow.AddHours(-2)
+        });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, _) = await service.XuLyBaoCaoAdminAsync(12, 999, "RESOLVE", "Xử lý gỡ sản phẩm vi phạm mới");
+        Assert.True(thanhCong);
+
+        // Do 2 vi phạm cũ trước MocTinhViPham bị loại trừ, sau khi xử lý chỉ có 1 vi phạm mới => tổng vi phạm = 1 < 3 => CHƯA bị khóa lại
+        Assert.Empty(fakeUserAdmin.LockedUsers);
+        Assert.Empty(fakeShop.LockedShops);
+    }
 }

@@ -29,9 +29,10 @@ DECLARE @Now datetime2(3) = SYSUTCDATETIME();
 DECLARE @AdminId int;
 BEGIN TRANSACTION;
 
-INSERT NguoiDung (HoTen, Email, SoDienThoai, MatKhauBam, VaiTro, TrangThai, LyDoKhoa, ThoiGianKhoa, DiaChiMacDinh)
+INSERT NguoiDung (HoTen, Email, SoDienThoai, MatKhauBam, VaiTro, TrangThai, LyDoKhoa, ThoiGianKhoa, DiaChiMacDinh, SoLanBiKhoa)
 SELECT v.HoTen, v.Email, v.SoDienThoai, @MatKhauHash, v.VaiTro, v.TrangThai, v.LyDoKhoa,
-       CASE WHEN v.TrangThai = 'LOCKED' THEN @Now END, v.DiaChi
+       CASE WHEN v.TrangThai = 'LOCKED' THEN @Now END, v.DiaChi,
+       CASE WHEN v.TrangThai = 'LOCKED' THEN 1 ELSE 0 END
 FROM (VALUES
     (N'Quản trị viên',   'admin@secondhand.local',   NULL,         'ADMIN', 'ACTIVE', NULL, NULL),
     (N'Nguyễn Văn An',   'an.seller@demo.local',      '0901000001', 'USER',  'ACTIVE', NULL, N'25 Lê Lợi, Quận 1, TP. Hồ Chí Minh'),
@@ -1374,6 +1375,26 @@ BEGIN
     IF @ShopId3 IS NOT NULL AND @ReporterId8 IS NOT NULL
         INSERT BaoCao (LoaiDoiTuong, MaDoiTuong, MaNguoiBaoCao, LyDo, MoTa, TrangThai, NguoiXuLyId, GhiChuXuLy, NgayTao, NgayXuLy)
         VALUES ('SHOP', @ShopId3, @ReporterId8, N'Địa chỉ cửa hàng không đúng', N'Tìm đến địa chỉ shop không thấy biển hiệu.', 'DISMISSED', @AdminId, N'Cửa hàng online cá nhân bán tại nhà trọ, không bắt buộc biển hiệu.', DATEADD(DAY, -5, @Now), DATEADD(DAY, -4, @Now));
+END;
+
+-- Đơn khiếu nại tài khoản mẫu (KN-08 demo)
+IF NOT EXISTS (SELECT 1 FROM KhieuNaiTaiKhoan WHERE MaNguoiDung = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'locked@demo.local'))
+BEGIN
+    DECLARE @LockedUserId int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'locked@demo.local');
+    IF @LockedUserId IS NOT NULL
+    BEGIN
+        INSERT KhieuNaiTaiKhoan (
+            MaNguoiDung, LoaiYeuCau, LanKhoaThu, LyDoKhoaLucGui, NoiDung,
+            BangChungAnh, YeuCauPhi, SoTienPhi, MaGiaoDichThamChieu, TrangThai,
+            GhiChuAdmin, NguoiXuLyId, NgayTao, NgayXuLy
+        )
+        VALUES (
+            @LockedUserId, 'APPEAL', 1, N'Vi phạm quy định: đăng bán hàng giả nhiều lần.',
+            N'Tôi xin giải trình rằng các sản phẩm đăng bán là đồ thanh lý của gia đình, có hóa đơn mua hàng chính hãng từ trước, không phải hàng giả. Kính mong Ban quản trị xem xét mở lại tài khoản.',
+            NULL, 0, 0, NULL, 'PENDING',
+            NULL, NULL, DATEADD(HOUR, -2, @Now), NULL
+        );
+    END;
 END;
 
 COMMIT TRANSACTION;

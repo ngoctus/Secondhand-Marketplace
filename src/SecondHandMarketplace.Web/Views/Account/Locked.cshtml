@@ -1,0 +1,405 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Account.LockedAccountVm
+@using SecondHandMarketplace.Web.Common
+@using SecondHandMarketplace.Web.Services.Accounts
+@{
+    ViewData["Title"] = "Khiếu nại & Mở khóa tài khoản";
+    var overview = Model.Overview;
+}
+
+<div class="container py-4" style="max-width: 920px;">
+    @if (Model.RequiresTokenVerification || overview == null)
+    {
+        <div class="card shadow-sm border-0 my-5 text-center p-4 p-md-5">
+            <div class="mb-3">
+                <i class="bi bi-shield-lock text-danger" style="font-size: 3.5rem;"></i>
+            </div>
+            <h3 class="fw-bold mb-2">Xác minh tài khoản bị khóa</h3>
+            <p class="text-muted mx-auto mb-4" style="max-width: 540px;">
+                Để xem lý do khóa, lịch sử vi phạm và gửi đơn khiếu nại hoặc cam kết mở khóa, vui lòng đăng nhập bằng tài khoản bị khóa của bạn tại trang Đăng nhập để hệ thống xác thực an toàn.
+            </p>
+            <div>
+                <a asp-action="Login" class="btn btn-primary px-4 py-2 fw-semibold">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Đến trang Đăng nhập
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Header Banner -->
+        <div class="card shadow-sm border-0 mb-4 bg-danger bg-opacity-10 border-start border-danger border-4">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-danger fs-6 px-3 py-2">
+                                <i class="bi bi-lock-fill me-1"></i> TÀI KHOẢN ĐANG BỊ KHÓA
+                            </span>
+                            @if (overview.LanKhoaHienTai == 1)
+                            {
+                                <span class="badge bg-warning text-dark fs-6 px-3 py-2">Lần khóa: 1 / 3</span>
+                            }
+                            else if (overview.LanKhoaHienTai == 2)
+                            {
+                                <span class="badge bg-danger fs-6 px-3 py-2">Lần khóa: 2 / 3 (Tái phạm)</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-dark fs-6 px-3 py-2">Lần khóa: @overview.LanKhoaHienTai (Mức cao nhất)</span>
+                            }
+                        </div>
+                        <h4 class="fw-bold text-dark mb-1">@overview.HoTen (@overview.Email)</h4>
+                        <div class="text-muted small">
+                            Thời điểm khóa: @(overview.ThoiGianKhoa.HasValue ? HienThi.NgayGio(overview.ThoiGianKhoa) : "N/A")
+                        </div>
+                    </div>
+                    <div>
+                        <a asp-action="Login" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i> Trang đăng nhập
+                        </a>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(overview.LyDoKhoa))
+                {
+                    <div class="mt-3 p-3 bg-white rounded border">
+                        <div class="fw-semibold text-danger small mb-1"><i class="bi bi-info-circle me-1"></i> Lý do khóa tài khoản:</div>
+                        <div class="text-dark">@overview.LyDoKhoa</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Cột trái: Lịch sử gậy & Thông tin -->
+            <div class="col-12 col-lg-5">
+                <!-- Thẻ Vi phạm hiệu lực -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark"><i class="bi bi-exclamation-octagon text-danger me-1"></i> Gậy vi phạm hiệu lực</span>
+                        <span class="badge @(overview.SoViPhamHieuLuc >= overview.NguongKhoa ? "bg-danger" : "bg-warning text-dark")">
+                            @overview.SoViPhamHieuLuc / @overview.NguongKhoa gậy
+                        </span>
+                    </div>
+                    <div class="card-body p-3">
+                        @if (overview.ViPhamHieuLuc.Count == 0)
+                        {
+                            <div class="text-muted small text-center py-3">Không có vi phạm mới ghi nhận sau lần mở khóa gần nhất.</div>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var v in overview.ViPhamHieuLuc)
+                                {
+                                    <div class="list-group-item px-0 py-2">
+                                        <div class="d-flex justify-content-between small text-muted">
+                                            <span class="fw-semibold text-dark">[@v.Nguon]</span>
+                                            <span>@HienThi.NgayGio(v.ThoiGian)</span>
+                                        </div>
+                                        <div class="small mt-1 text-secondary">@v.MoTa</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Thẻ Hướng dẫn chính sách 3 lần khóa -->
+                <div class="card shadow-sm border-0 mb-4 bg-light">
+                    <div class="card-body p-3 small">
+                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-shield-check text-primary me-1"></i> Quy định xử lý mở khóa</h6>
+                        <ul class="ps-3 mb-0 text-muted">
+                            <li class="mb-1"><strong>Khóa lần 1:</strong> Mở khóa miễn phí qua giải trình hoặc cam kết.</li>
+                            <li class="mb-1"><strong>Khóa lần 2:</strong> Khiếu nại khóa nhầm miễn phí; Cam kết mở khóa yêu cầu ký quỹ 200.000đ qua VietQR và gửi kèm ảnh biên lai.</li>
+                            <li><strong>Khóa lần 3+:</strong> Đóng cam kết mở khóa; chỉ tiếp nhận Khiếu nại nếu bị hệ thống quét nhầm.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Form khiếu nại / cam kết -->
+            <div class="col-12 col-lg-7">
+                <!-- Thông báo chu kỳ / Cooldown -->
+                @if (overview.CoDonDangCho)
+                {
+                    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+                        <i class="bi bi-clock-history fs-4"></i>
+                        <div>
+                            <strong>Đang chờ duyệt:</strong> Bạn đang có một đơn khiếu nại / yêu cầu mở khóa đang chờ Ban quản trị xử lý (Gửi lúc @HienThi.NgayGio(overview.DonGanNhat?.NgayTao)). Vui lòng kiên nhẫn chờ phản hồi.
+                        </div>
+                    </div>
+                }
+                else if (overview.DangTrongCooldown)
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
+                        <i class="bi bi-hourglass-split fs-4"></i>
+                        <div>
+                            <strong>Tạm khóa lượt gửi:</strong> Bạn đã gửi đủ @overview.SoLuotToiDaChuKy lượt trong chu kỳ hiện tại. Bạn có thể gửi lại sau: <strong><span id="cooldownTimer" data-ends-at="@(overview.CooldownKetThucUtc.HasValue ? HienThi.Iso(overview.CooldownKetThucUtc.Value) : "")">@(overview.CooldownKetThucUtc.HasValue && overview.CooldownKetThucUtc.Value > DateTime.UtcNow ? AccountAppealRules.FormatRemainingTime(overview.CooldownKetThucUtc.Value - DateTime.UtcNow) : "0 phút")</span></strong>.
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info d-flex align-items-center justify-content-between mb-4 small py-2 px-3">
+                        <span><i class="bi bi-info-circle me-1"></i> Lượt gửi còn lại trong chu kỳ: <strong>@overview.SoLuotConLaiChuKy / @overview.SoLuotToiDaChuKy</strong> lượt.</span>
+                    </div>
+                }
+
+                @if (overview.CoTheGuiDonMoi)
+                {
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-send text-primary me-1"></i> Gửi yêu cầu xem xét mở khóa</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <form asp-action="SubmitAppeal" method="post" enctype="multipart/form-data" id="appealForm">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="Token" value="@Model.Token" />
+
+                                <!-- Chọn loại yêu cầu -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Loại yêu cầu <span class="text-danger">*</span></label>
+                                    <div class="d-flex flex-column gap-2">
+                                        <div class="form-check p-3 border rounded bg-light">
+                                            <input class="form-check-input" type="radio" name="LoaiYeuCau" id="radioAppeal" value="@AccountAppealRules.TypeAppeal" checked />
+                                            <label class="form-check-label fw-semibold text-dark" for="radioAppeal">
+                                                Khiếu nại khóa nhầm / Bị oan (Miễn phí)
+                                            </label>
+                                            <div class="text-muted small mt-1">
+                                                Dành cho trường hợp hệ thống hoặc người khác báo cáo nhầm. Nếu được duyệt, hệ thống sẽ xóa tiền án đợt khóa này.
+                                            </div>
+                                        </div>
+
+                                        @if (overview.ChoPhepCamKetMoKhoa)
+                                        {
+                                            <div class="form-check p-3 border rounded bg-light">
+                                                <input class="form-check-input" type="radio" name="LoaiYeuCau" id="radioUnlock" value="@AccountAppealRules.TypeUnlockRequest" />
+                                                <label class="form-check-label fw-semibold text-dark" for="radioUnlock">
+                                                    Cam kết không tái phạm & Xin mở khóa
+                                                    @if (overview.YeuCauPhiLan2)
+                                                    {
+                                                        <span class="badge bg-danger ms-1">Yêu cầu phí ký quỹ 200.000đ</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success ms-1">Miễn phí</span>
+                                                    }
+                                                </label>
+                                                <div class="text-muted small mt-1">
+                                                    Dành cho trường hợp bạn nhận lỗi và cam kết tuân thủ chính sách sàn.
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="p-3 border rounded bg-light opacity-50">
+                                                <div class="fw-semibold text-muted">
+                                                    <i class="bi bi-slash-circle me-1"></i> Cam kết mở khóa (Đã đóng)
+                                                </div>
+                                                <div class="text-muted small mt-1">
+                                                    Tài khoản bị khóa từ lần thứ 3 trở lên không áp dụng hình thức cam kết mở khóa.
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Hộp VietQR (Chỉ hiển thị khi chọn Cam kết mở khóa ở lần 2) -->
+                                @if (overview.YeuCauPhiLan2 && overview.ThongTinPhiQr != null)
+                                {
+                                    <div id="vietQrSection" class="p-3 border rounded bg-light mb-3 d-none">
+                                        <h6 class="fw-bold text-danger mb-2">
+                                            <i class="bi bi-qr-code-scan me-1"></i> Thanh toán phí ký quỹ cam kết (200.000đ)
+                                        </h6>
+                                        <p class="small text-muted mb-3">
+                                            Vui lòng quét mã VietQR bên dưới hoặc chuyển khoản chính xác nội dung để hệ thống đối soát. Sau khi hoàn tất, vui lòng tải ảnh chụp màn hình chuyển khoản thành công vào ô đính kèm bên dưới.
+                                        </p>
+                                        <div class="row align-items-center">
+                                            <div class="col-12 col-md-5 text-center mb-3 mb-md-0">
+                                                <img src="@overview.ThongTinPhiQr.QrDataUrl" alt="VietQR Mở Khóa" class="img-fluid rounded border bg-white p-2 shadow-sm" style="max-width: 180px;" />
+                                            </div>
+                                            <div class="col-12 col-md-7 small">
+                                                <div class="mb-1"><strong>Ngân hàng:</strong> @overview.ThongTinPhiQr.TenNganHang (@overview.ThongTinPhiQr.MaNganHang)</div>
+                                                <div class="mb-1"><strong>Số tài khoản:</strong> <span class="font-monospace fw-bold text-dark">@overview.ThongTinPhiQr.SoTaiKhoan</span></div>
+                                                <div class="mb-1"><strong>Chủ tài khoản:</strong> @overview.ThongTinPhiQr.ChuTaiKhoan</div>
+                                                <div class="mb-1"><strong>Số tiền:</strong> <span class="text-danger fw-bold fs-6">200.000 VNĐ</span></div>
+                                                <div class="mt-2 p-2 bg-white rounded border">
+                                                    <div class="text-muted small">Nội dung chuyển khoản (bắt buộc):</div>
+                                                    <div class="d-flex align-items-center justify-content-between mt-1">
+                                                        <span class="font-monospace fw-bold text-primary" id="qrTransferContent">@overview.ThongTinPhiQr.NoiDungChuyenKhoan</span>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="navigator.clipboard.writeText(document.getElementById('qrTransferContent').innerText); alert('Đã sao chép nội dung chuyển khoản!');">
+                                                            <i class="bi bi-copy"></i> Sao chép
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Nội dung giải trình / cam kết -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold" for="NoiDung">
+                                        Nội dung giải trình / Cam kết <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea name="NoiDung" id="NoiDung" class="form-control" rows="4" placeholder="Nhập chi tiết lý do giải trình hoặc nội dung cam kết (tối thiểu 20 ký tự)..." required minlength="20" maxlength="2000">@Model.NoiDung</textarea>
+                                    <div class="form-text small">Tối thiểu 20 ký tự, tối đa 2000 ký tự.</div>
+                                </div>
+
+                                <!-- Ảnh bằng chứng / biên lai -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold" for="FileDinhKem" id="evidenceLabel">
+                                        Ảnh minh chứng (Tùy chọn)
+                                    </label>
+                                    <input type="file" name="FileDinhKem" id="FileDinhKem" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                                    <div class="form-text small" id="evidenceHelp">
+                                        Hỗ trợ định dạng JPG, PNG, WEBP. Tối đa 5MB.
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                                    <i class="bi bi-send me-1"></i> Gửi yêu cầu tới Ban quản trị
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+
+                <!-- Lịch sử các đơn trong đợt khóa này -->
+                @if (overview.LichSuDonDotNay.Count > 0)
+                {
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-journal-text me-1"></i> Lịch sử yêu cầu đợt khóa này</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Ngày gửi</th>
+                                            <th>Loại</th>
+                                            <th>Trạng thái</th>
+                                            <th>Phản hồi quản trị</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var don in overview.LichSuDonDotNay)
+                                        {
+                                            <tr>
+                                                <td>@HienThi.NgayGio(don.NgayTao)</td>
+                                                <td>
+                                                    @if (don.LoaiYeuCau == AccountAppealRules.TypeAppeal)
+                                                    {
+                                                        <span class="badge bg-secondary">Khiếu nại</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-info text-dark">Cam kết</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (don.TrangThai == AccountAppealRules.StatusPending)
+                                                    {
+                                                        <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                                    }
+                                                    else if (don.TrangThai == AccountAppealRules.StatusApproved)
+                                                    {
+                                                        <span class="badge bg-success">Đã duyệt</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">Bị từ chối</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrWhiteSpace(don.GhiChuAdmin))
+                                                    {
+                                                        <div class="text-dark">@don.GhiChuAdmin</div>
+                                                        @if (don.NgayXuLy.HasValue)
+                                                        {
+                                                            <div class="text-muted" style="font-size: 0.75rem;">(@HienThi.NgayGio(don.NgayXuLy))</div>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">—</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            const isTier2 = @(overview != null && overview.YeuCauPhiLan2 ? "true" : "false");
+            const vietQrSection = $('#vietQrSection');
+            const evidenceLabel = $('#evidenceLabel');
+            const evidenceInput = $('#FileDinhKem');
+            const evidenceHelp = $('#evidenceHelp');
+
+            function updateFormState() {
+                const selectedType = $('input[name="LoaiYeuCau"]:checked').val();
+                if (selectedType === '@AccountAppealRules.TypeUnlockRequest' && isTier2) {
+                    vietQrSection.removeClass('d-none');
+                    evidenceLabel.html('Ảnh biên lai chuyển khoản <span class="text-danger">*</span>');
+                    evidenceInput.attr('required', true);
+                    evidenceHelp.text('Bắt buộc tải ảnh chụp biên lai chuyển khoản phí mở khóa 200.000đ.');
+                } else {
+                    vietQrSection.addClass('d-none');
+                    evidenceLabel.text('Ảnh minh chứng (Tùy chọn)');
+                    evidenceInput.removeAttr('required');
+                    evidenceHelp.text('Hỗ trợ định dạng JPG, PNG, WEBP. Tối đa 5MB.');
+                }
+            }
+
+            $('input[name="LoaiYeuCau"]').on('change', updateFormState);
+            updateFormState();
+
+            $('#appealForm').on('submit', function () {
+                const noiDung = $('#NoiDung').val().trim();
+                if (noiDung.length < 20) {
+                    alert('Nội dung giải trình / cam kết phải có ít nhất 20 ký tự.');
+                    return false;
+                }
+                const btn = $(this).find('button[type="submit"]');
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...');
+            });
+
+            // 3.12: Đếm ngược thời gian Cooldown realtime
+            const timerEl = document.getElementById('cooldownTimer');
+            if (timerEl && timerEl.dataset.endsAt) {
+                const endsAt = new Date(timerEl.dataset.endsAt).getTime();
+                const interval = setInterval(function () {
+                    const diffMs = endsAt - Date.now();
+                    if (diffMs <= 0) {
+                        clearInterval(interval);
+                        timerEl.innerText = "0 phút (Chu kỳ mới đã mở)";
+                        setTimeout(function () { location.reload(); }, 1500);
+                    } else {
+                        const totalMinutes = Math.ceil(diffMs / 60000);
+                        const days = Math.floor(totalMinutes / (24 * 60));
+                        const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+                        const minutes = totalMinutes % 60;
+                        const parts = [];
+                        if (days > 0) parts.push(days + ' ngày');
+                        if (hours > 0) parts.push(hours + ' giờ');
+                        if (minutes > 0 || parts.length === 0) parts.push(minutes + ' phút');
+                        timerEl.innerText = parts.join(' ');
+                    }
+                }, 10000);
+            }
+        });
+    </script>
+}
