@@ -1,44 +1,31 @@
 @model PagedResult<MyProductVm>
 @{
-    ViewData["Title"] = "Sản phẩm của tôi";
-
-    static string TrangThaiSp(string s) => s switch
-    {
-        "DRAFT" => "Bản nháp",
-        "PENDING_REVIEW" => "Đang chờ duyệt",
-        "ACTIVE" => "Đang bán",
-        "REJECTED" => "Bị từ chối",
-        "HIDDEN" => "Đang ẩn",
-        "RESERVED" => "Đã có đơn",
-        "SOLD" => "Đã bán",
-        "REMOVED" => "Đã gỡ",
-        _ => s
-    };
+    ViewData["Title"] = L["Seller_Title"];
 }
 
 <div class="rm-main-content" style="padding-top:8px">
     <div class="d-flex align-items-center justify-content-between mb-3">
         <div>
-            <h2 style="font-family:'Playfair Display',serif; font-size:24px;">Sản phẩm của tôi</h2>
-            <p class="text-muted mb-0" style="font-size:13.5px;">Quản lý danh sách sản phẩm của cửa hàng bạn.</p>
+            <h2 style="font-family:'Playfair Display',serif; font-size:24px;">@L["Seller_Title"]</h2>
+            <p class="text-muted mb-0" style="font-size:13.5px;">@L["Seller_Desc"]</p>
         </div>
-        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">+ Đăng bán</a>
+        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">+ @L["Nav_SellNow"]</a>
     </div>
 
     @if (Model.Items.Count == 0)
     {
         <div class="rm-empty-state">
-            <h3>Bạn chưa có sản phẩm nào</h3>
-            <p>Cửa hàng là bắt buộc trước khi đăng tin, và tin chỉ hiển thị công khai sau khi kiểm duyệt đạt.</p>
+            <h3>@L["Seller_EmptyTitle"]</h3>
+            <p>@L["Seller_EmptyDesc"]</p>
             <ol>
-                <li>Vào Thiết lập cửa hàng, đặt tên shop và chọn khu vực sinh sống để người mua gần bạn tìm thấy tin của bạn.</li>
-                <li>Đăng bán món đầu tiên với ảnh thật, giá rõ và mô tả đủ các ý hệ thống yêu cầu.</li>
-                <li>Bấm "Lưu và gửi duyệt"; tin sẽ chuyển sang "Đang chờ duyệt".</li>
-                <li>Theo dõi danh sách này — nếu bị từ chối, sửa theo lý do rồi gửi lại.</li>
+                <li>@L["Seller_EmptyTip1"]</li>
+                <li>@L["Seller_EmptyTip2"]</li>
+                <li>@L["Seller_EmptyTip3"]</li>
+                <li>@L["Seller_EmptyTip4"]</li>
             </ol>
             <div class="d-flex justify-content-center gap-2 mt-4 flex-wrap">
-                <a asp-area="User" asp-controller="Shop" asp-action="Index" class="btn-rm-outline">Thiết lập cửa hàng</a>
-                <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">Đăng bán</a>
+                <a asp-area="User" asp-controller="Shop" asp-action="Index" class="btn-rm-outline">@L["Seller_ShopSetup"]</a>
+                <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">@L["Nav_SellNow"]</a>
             </div>
         </div>
     }
@@ -49,11 +36,11 @@
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>SẢN PHẨM</th>
-                            <th>GIÁ</th>
-                            <th>TRẠNG THÁI</th>
-                            <th>CẬP NHẬT</th>
-                            <th class="text-end">THAO TÁC</th>
+                            <th>@L["Seller_ColProduct"]</th>
+                            <th>@L["Seller_ColPrice"]</th>
+                            <th>@L["Seller_ColStatus"]</th>
+                            <th>@L["Seller_ColUpdated"]</th>
+                            <th class="text-end">@L["Seller_ColActions"]</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,16 +59,16 @@
                                         }
                                         <div>
                                             <b>@p.Ten</b>
-                                            <div class="text-muted small">@p.SoLuongAnh ảnh</div>
+                                            <div class="text-muted small">@L["Seller_PhotoCount", p.SoLuongAnh]</div>
                                             @if (p.TrangThai == "REJECTED" && !string.IsNullOrWhiteSpace(p.LyDoTuChoiGanNhat))
                                             {
-                                                <div class="small text-danger mt-1"><strong>Lý do từ chối:</strong> @p.LyDoTuChoiGanNhat</div>
+                                                <div class="small text-danger mt-1"><strong>@L["Seller_RejectReason"]</strong> @p.LyDoTuChoiGanNhat</div>
                                             }
                                         </div>
                                     </div>
                                 </td>
                                 <td>@(p.Gia is null ? "—" : HienThi.Tien(p.Gia.Value))</td>
-                                <td><span class="st st-@p.TrangThai.ToLowerInvariant()">@TrangThaiSp(p.TrangThai)</span></td>
+                                <td><span class="st st-@p.TrangThai.ToLowerInvariant()">@HienThi.TrangThaiSanPham(p.TrangThai)</span></td>
                                 <td class="small text-muted">@HienThi.NgayGio(p.NgayCapNhat)</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
@@ -90,29 +77,29 @@
                                         {
                                             <form asp-action="GuiDuyet" method="post" class="d-inline">
                                                 <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit" class="btn-rm-outline btn-sm">@(p.TrangThai == "PENDING_REVIEW" ? "Phân tích lại" : "Gửi duyệt")</button>
+                                                <button type="submit" class="btn-rm-outline btn-sm">@(p.TrangThai == "PENDING_REVIEW" ? (string)L["Seller_Reanalyze"] : (string)L["Seller_SubmitReview"])</button>
                                             </form>
                                         }
                                         @if (p.TrangThai == "ACTIVE")
                                         {
-                                            <form asp-action="An" method="post" class="d-inline" onsubmit="return confirm('Ẩn sản phẩm này khỏi trang bán?');">
+                                            <form asp-action="An" method="post" class="d-inline" onsubmit="return confirm('@L["Seller_ConfirmHide"]');">
                                                 <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit" class="btn-rm-secondary btn-sm">Ẩn</button>
+                                                <button type="submit" class="btn-rm-secondary btn-sm">@L["Seller_Hide"]</button>
                                             </form>
                                         }
                                         @if (p.TrangThai != "PENDING_REVIEW" && p.TrangThai != "RESERVED" && p.TrangThai != "SOLD")
                                         {
-                                            <a asp-action="Edit" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">Sửa</a>
+                                            <a asp-action="Edit" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">@L["Seller_EditShort"]</a>
                                         }
                                         @if (p.TrangThai is "ACTIVE" or "RESERVED" or "SOLD")
                                         {
-                                            <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">Xem trang bán</a>
+                                            <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">@L["Seller_ViewListing"]</a>
                                         }
                                         @if (p.TrangThai != "RESERVED" && p.TrangThai != "SOLD")
                                         {
-                                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này không? Thao tác này không thể hoàn tác.');">
+                                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('@L["Seller_ConfirmDelete"]');">
                                                 <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit" class="btn btn-outline-danger btn-sm" style="padding: 4px 10px; font-size: 13px; border-radius: 6px;">Xóa</button>
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" style="padding: 4px 10px; font-size: 13px; border-radius: 6px;">@L["Btn_Delete"]</button>
                                             </form>
                                         }
                                     </div>

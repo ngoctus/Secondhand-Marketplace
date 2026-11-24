@@ -35,9 +35,9 @@
 
     const soSanh = () => {
         const thieu = [];
-        if (inputTen.value.trim().length < 5) thieu.push('tên sản phẩm (từ 5 ký tự)');
-        if (!tenCua(selDanhMuc)) thieu.push('danh mục');
-        if (!tenCua(selTinhTrang)) thieu.push('tình trạng');
+        if (inputTen.value.trim().length < 5) thieu.push(window.rmT('Js_AiMissingName', 'tên sản phẩm (từ 5 ký tự)'));
+        if (!tenCua(selDanhMuc)) thieu.push(window.rmT('Js_AiMissingCategory', 'danh mục'));
+        if (!tenCua(selTinhTrang)) thieu.push(window.rmT('Js_AiMissingCondition', 'tình trạng'));
         return thieu;
     };
 
@@ -65,13 +65,13 @@
 
         const thieu = soSanh();
         if (thieu.length > 0) {
-            hienLoi(`Cần có ${thieu.join(', ')} trước khi nhờ AI gợi ý.`);
+            hienLoi(window.rmT('Js_AiNeedFields', `Cần có ${thieu.join(', ')} trước khi nhờ AI gợi ý.`, thieu.join(', ')));
             return;
         }
 
         dangGoi = true;
         btnGoi.disabled = true;
-        TrangThai.textContent = 'Đang soạn mô tả...';
+        TrangThai.textContent = window.rmT('Js_AiDrafting', 'Đang soạn mô tả...');
 
         try {
             const resp = await fetch(chatUrl, {
@@ -87,16 +87,16 @@
             }
             if (!resp.ok) {
                 if (resp.status === 429 && ketQua && ketQua.data && ketQua.data.retryAfterSeconds) {
-                    hienLoi(`${ketQua.message || 'Bạn gửi hơi nhanh.'} Thử lại sau ${ketQua.data.retryAfterSeconds} giây.`);
+                    hienLoi(`${ketQua.message || window.rmT('Js_AiRateLimited', 'Bạn gửi hơi nhanh.')} ${window.rmT('Js_AiRetryAfter', 'Thử lại sau {0} giây.', ketQua.data.retryAfterSeconds)}`);
                 } else {
-                    hienLoi(ketQua && ketQua.message ? ketQua.message : 'AI tạm thời không phản hồi, bạn thử lại sau nhé.');
+                    hienLoi(ketQua && ketQua.message ? ketQua.message : window.rmT('Js_AiNoResponse', 'AI tạm thời không phản hồi, bạn thử lại sau nhé.'));
                 }
                 return;
             }
 
             const traLoi = ketQua && ketQua.data ? (ketQua.data.reply || '').trim() : '';
             if (!traLoi) {
-                hienLoi('AI chưa trả về nội dung nào, bạn thử lại lần nữa nhé.');
+                hienLoi(window.rmT('Js_AiEmptyReply', 'AI chưa trả về nội dung nào, bạn thử lại lần nữa nhé.'));
                 return;
             }
 
@@ -104,7 +104,7 @@
             XemTruoc.hidden = false;
             TrangThai.textContent = '';
         } catch (e) {
-            hienLoi('Không kết nối được tới trợ lý AI, kiểm tra mạng rồi thử lại.');
+            hienLoi(window.rmT('Js_AiOffline', 'Không kết nối được tới trợ lý AI, kiểm tra mạng rồi thử lại.'));
         } finally {
             dangGoi = false;
             btnGoi.disabled = false;
@@ -121,12 +121,12 @@
     btnDien.addEventListener('click', () => {
         const noiDungMoi = NoiDung.textContent.trim();
         if (!noiDungMoi) return;
-        if (textarea.value.trim().length > 0 && !confirm('Đè lên mô tả đang có bằng bản nháp của AI?')) return;
+        if (textarea.value.trim().length > 0 && !confirm(window.rmT('Js_AiOverwriteConfirm', 'Đè lên mô tả đang có bằng bản nháp của AI?'))) return;
 
         textarea.value = noiDungMoi;
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
         XemTruoc.hidden = true;
-        TrangThai.textContent = 'Đã điền bản nháp. Bạn bổ sung thông tin còn thiếu rồi hãy gửi duyệt.';
+        TrangThai.textContent = window.rmT('Js_AiFilled', 'Đã điền bản nháp. Bạn bổ sung thông tin còn thiếu rồi hãy gửi duyệt.');
     });
 
     if (!statusUrl) {

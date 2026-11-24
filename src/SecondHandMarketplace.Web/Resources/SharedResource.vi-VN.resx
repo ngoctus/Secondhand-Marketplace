@@ -238,4 +238,379 @@
   <data name="Footer_Terms" xml:space="preserve"><value>Điều khoản sử dụng</value></data>
   <data name="Footer_Privacy" xml:space="preserve"><value>Chính sách bảo mật</value></data>
   <data name="Footer_Copyright" xml:space="preserve"><value>Bảo lưu mọi quyền.</value></data>
+  <!-- B-04: Layout (header, drawer mobile, Kênh Người Bán, modal giỏ hàng, footer) -->
+  <data name="Layout_MetaDescription" xml:space="preserve"><value>Re:Market - Chợ đồ cũ thông minh, kết nối người mua và người bán, bảo vệ môi trường và tối ưu chi phí.</value></data>
+  <data name="Layout_OpenMenu" xml:space="preserve"><value>Mở menu</value></data>
+  <data name="Layout_SearchProductAria" xml:space="preserve"><value>Tìm sản phẩm</value></data>
+  <data name="Layout_KeywordAria" xml:space="preserve"><value>Từ khóa sản phẩm</value></data>
+  <data name="Layout_MainNavAria" xml:space="preserve"><value>Điều hướng chính</value></data>
+  <data name="Layout_SellerChannelTip" xml:space="preserve"><value>Quản lý cửa hàng, sản phẩm và đơn bán</value></data>
+  <data name="Layout_Account" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="Layout_ShopStats" xml:space="preserve"><value>Thống kê cửa hàng</value></data>
+  <data name="Layout_PostProduct" xml:space="preserve"><value>Đăng sản phẩm</value></data>
+  <data name="Layout_MyOrdersShort" xml:space="preserve"><value>Đơn mua</value></data>
+  <data name="Layout_AppealUnlock" xml:space="preserve"><value>Khiếu nại / Mở khóa tài khoản</value></data>
+  <data name="Layout_IncidentRules" xml:space="preserve"><value>Quy tắc xử lý sự cố</value></data>
+  <data name="Layout_Social" xml:space="preserve"><value>Mạng xã hội</value></data>
+  <data name="Layout_OrderCodeNote" xml:space="preserve"><value>Với vấn đề về đơn hàng, vui lòng chuẩn bị mã đơn để được hỗ trợ nhanh hơn.</value></data>
+  <data name="Layout_SellerChannelNavAria" xml:space="preserve"><value>Điều hướng Kênh Người Bán</value></data>
+  <data name="Layout_Close" xml:space="preserve"><value>Đóng</value></data>
+  <data name="Layout_CartAdded" xml:space="preserve"><value>Đã thêm vào giỏ hàng!</value></data>
+  <data name="Layout_CartAddedDesc" xml:space="preserve"><value>Sản phẩm đã sẵn sàng trong giỏ của bạn.</value></data>
+  <data name="Layout_ProductImage" xml:space="preserve"><value>Ảnh sản phẩm</value></data>
+  <data name="Layout_KeepShopping" xml:space="preserve"><value>Tiếp tục mua sắm</value></data>
+  <data name="Layout_ViewCart" xml:space="preserve"><value>Xem giỏ hàng</value></data>
+  <data name="Pager_AriaLabel" xml:space="preserve"><value>Phân trang sản phẩm</value></data>
+  <!-- B-04: Trang chủ -->
+  <data name="Home_Sublabel" xml:space="preserve"><value>SECONDHAND - TÁI SỬ DỤNG</value></data>
+  <data name="Home_HeroLine1" xml:space="preserve"><value>Món đồ cũ,</value></data>
+  <data name="Home_HeroLine2" xml:space="preserve"><value>giá trị mới.</value></data>
+  <data name="Home_HeroDesc" xml:space="preserve"><value>Mua bán đồ đã qua sử dụng an toàn, tiết kiệm và thân thiện với môi trường. Mọi tin đăng đều được kiểm duyệt.</value></data>
+  <data name="Home_CtaExplore" xml:space="preserve"><value>Khám phá ngay</value></data>
+  <data name="Home_CtaSell" xml:space="preserve"><value>Đăng bán sản phẩm</value></data>
+  <data name="Home_HeroImageAlt" xml:space="preserve"><value>Đồ dùng secondhand được tái sử dụng: laptop, máy ảnh, tai nghe và quần áo</value></data>
+  <data name="Home_StatProducts" xml:space="preserve"><value>Sản phẩm</value></data>
+  <data name="Home_StatSellers" xml:space="preserve"><value>Người bán</value></data>
+  <data name="Home_StatModerated" xml:space="preserve"><value>Kiểm duyệt</value></data>
+  <data name="Home_BannerAria" xml:space="preserve"><value>Banner {0}</value></data>
+  <data name="Home_CatLabel" xml:space="preserve"><value>DANH MỤC</value></data>
+  <data name="Home_CatTitle" xml:space="preserve"><value>Tìm nhanh theo danh mục</value></data>
+  <data name="Home_FeatLabel" xml:space="preserve"><value>SẢN PHẨM NỔI BẬT</value></data>
+  <data name="Home_FeatTitle" xml:space="preserve"><value>Có thể bạn sẽ thích</value></data>
+  <data name="Home_BargainPrices" xml:space="preserve"><value>Giá tiết kiệm</value></data>
+  <data name="Home_MoreProducts" xml:space="preserve"><value>Xem thêm sản phẩm</value></data>
+  <data name="Home_ViewAllIn" xml:space="preserve"><value>Xem tất cả {0}</value></data>
+  <data name="Home_HowLabel" xml:space="preserve"><value>CÁCH THỨC HOẠT ĐỘNG</value></data>
+  <data name="Home_HowTitle" xml:space="preserve"><value>3 bước đơn giản</value></data>
+  <data name="Home_Step1Title" xml:space="preserve"><value>Tìm sản phẩm</value></data>
+  <data name="Home_Step1Desc" xml:space="preserve"><value>Duyệt danh mục hoặc dùng thanh tìm kiếm và bộ lọc.</value></data>
+  <data name="Home_Step2Title" xml:space="preserve"><value>Liên hệ người bán</value></data>
+  <data name="Home_Step2Desc" xml:space="preserve"><value>Trao đổi, hỏi thêm ảnh và tình trạng thực tế.</value></data>
+  <data name="Home_Step3Title" xml:space="preserve"><value>Giao dịch</value></data>
+  <data name="Home_Step3Desc" xml:space="preserve"><value>Gặp mặt hoặc vận chuyển, nhận hàng và đánh giá.</value></data>
+  <data name="Home_SellerNote" xml:space="preserve"><value>Dành cho người bán: Đăng sản phẩm → Kiểm duyệt → Tiếp cận người mua</value></data>
+  <data name="Home_ValueLabel" xml:space="preserve"><value>GIÁ TRỊ BỀN VỮNG</value></data>
+  <data name="Home_ValueTitle" xml:space="preserve"><value>Mỗi món đồ được dùng lại là một lần giảm lãng phí.</value></data>
+  <data name="Home_ValueDesc" xml:space="preserve"><value>Tái sử dụng giúp tiết kiệm chi phí và giảm rác thải ra môi trường.</value></data>
+  <data name="Home_ValueImageAlt" xml:space="preserve"><value>Lối sống bền vững qua việc tái sử dụng đồ cũ</value></data>
+  <data name="Home_SustWaste" xml:space="preserve"><value>Rác thải giảm</value></data>
+  <data name="Home_SustCycled" xml:space="preserve"><value>Món đồ đã tuần hoàn</value></data>
+  <data name="Home_SustActive" xml:space="preserve"><value>Sản phẩm đang bán</value></data>
+  <data name="Home_TrustLabel" xml:space="preserve"><value>ĐỘ TIN CẬY</value></data>
+  <data name="Home_TrustTitle" xml:space="preserve"><value>Mua bán an tâm hơn</value></data>
+  <data name="Home_Trust1Title" xml:space="preserve"><value>Kiểm duyệt sản phẩm</value></data>
+  <data name="Home_Trust1Desc" xml:space="preserve"><value>Mọi tin đăng được duyệt trước khi hiển thị.</value></data>
+  <data name="Home_Trust2Title" xml:space="preserve"><value>Giao dịch an toàn</value></data>
+  <data name="Home_Trust2Desc" xml:space="preserve"><value>Hướng dẫn gặp mặt, thanh toán, kiểm hàng.</value></data>
+  <data name="Home_Trust3Title" xml:space="preserve"><value>Quy định cộng đồng</value></data>
+  <data name="Home_Trust3Desc" xml:space="preserve"><value>Nguyên tắc đăng bán và ứng xử rõ ràng.</value></data>
+  <data name="Home_Trust4Title" xml:space="preserve"><value>Báo cáo vi phạm</value></data>
+  <data name="Home_Trust4Desc" xml:space="preserve"><value>Gửi báo cáo nhanh, có đội ngũ xử lý.</value></data>
+  <data name="Home_RevLabel" xml:space="preserve"><value>ĐÁNH GIÁ</value></data>
+  <data name="Home_RevTitle" xml:space="preserve"><value>Người dùng nói gì</value></data>
+  <data name="Home_RevNote" xml:space="preserve"><value>Chỉ hiển thị đánh giá thật từ giao dịch đã hoàn tất</value></data>
+  <data name="Home_RevEmpty" xml:space="preserve"><value>Sàn chưa có đánh giá nào từ giao dịch đã hoàn tất. Đánh giá sẽ hiện ở đây ngay khi người mua xác nhận đơn.</value></data>
+  <data name="Home_StarOutOf" xml:space="preserve"><value>{0}/5 sao</value></data>
+  <data name="Home_AvatarAlt" xml:space="preserve"><value>Ảnh đại diện {0}</value></data>
+  <data name="Home_BoughtLabel" xml:space="preserve"><value>Đã mua:</value></data>
+  <data name="Home_CtaTitle" xml:space="preserve"><value>Có món đồ không còn dùng? Đăng bán ngay!</value></data>
+  <data name="Home_CtaDesc" xml:space="preserve"><value>Đăng tin miễn phí, được kiểm duyệt trong thời gian ngắn.</value></data>
+  <data name="Home_CtaBtn" xml:space="preserve"><value>Đăng bán ngay</value></data>
+  <!-- B-04: Trang tìm kiếm và khối kết quả -->
+  <data name="Search_ResultsBreadcrumb" xml:space="preserve"><value>Kết quả tìm kiếm</value></data>
+  <data name="Search_PanelTitle" xml:space="preserve"><value>Bộ lọc</value></data>
+  <data name="Search_ClearShort" xml:space="preserve"><value>Xóa</value></data>
+  <data name="Search_ShowFilters" xml:space="preserve"><value>Hiện bộ lọc</value></data>
+  <data name="Search_KeywordTitle" xml:space="preserve"><value>Từ khóa</value></data>
+  <data name="Search_KeywordPlaceholder" xml:space="preserve"><value>VD: xe đạp, laptop, áo khoác...</value></data>
+  <data name="Search_AreaTitle" xml:space="preserve"><value>Khu vực sinh sống</value></data>
+  <data name="Search_AreaHint" xml:space="preserve"><value>Lọc theo nơi người bán sinh sống, không phải khoảng cách tới bạn.</value></data>
+  <data name="Search_CategoryTitle" xml:space="preserve"><value>Danh mục</value></data>
+  <data name="Search_All" xml:space="preserve"><value>Tất cả</value></data>
+  <data name="Search_PriceTitle" xml:space="preserve"><value>Khoảng giá</value></data>
+  <data name="Search_AllPrices" xml:space="preserve"><value>Tất cả mức giá</value></data>
+  <data name="KhuVuc_AllProvinces" xml:space="preserve"><value>Tất cả tỉnh/thành</value></data>
+  <data name="KhuVuc_PickProvince" xml:space="preserve"><value>-- Chọn tỉnh/thành --</value></data>
+  <data name="KhuVuc_AllWards" xml:space="preserve"><value>Tất cả phường/xã</value></data>
+  <data name="KhuVuc_PickWard" xml:space="preserve"><value>-- Chọn phường/xã --</value></data>
+  <data name="KhuVuc_Loading" xml:space="preserve"><value>Đang tải...</value></data>
+  <data name="KhuVuc_LoadFailed" xml:space="preserve"><value>Không tải được danh sách, thử lại</value></data>
+  <data name="Search_PriceMinAria" xml:space="preserve"><value>Giá thấp nhất</value></data>
+  <data name="Search_PriceMaxAria" xml:space="preserve"><value>Giá cao nhất</value></data>
+  <data name="Search_NoPriceScale" xml:space="preserve"><value>Gian hàng chưa có mức giá nào để lọc.</value></data>
+  <data name="Search_ConditionTitle" xml:space="preserve"><value>Tình trạng</value></data>
+  <data name="Search_Apply" xml:space="preserve"><value>Áp dụng bộ lọc</value></data>
+  <data name="Search_AllProductsTitle" xml:space="preserve"><value>Tất cả sản phẩm</value></data>
+  <data name="Search_ResultsFor" xml:space="preserve"><value>Kết quả cho “{0}”</value></data>
+  <data name="Search_ProductCount" xml:space="preserve"><value>{0} sản phẩm</value></data>
+  <data name="Search_SortLabel" xml:space="preserve"><value>Sắp xếp:</value></data>
+  <data name="Search_SortSubmit" xml:space="preserve"><value>Xem</value></data>
+  <data name="Search_PriceChip" xml:space="preserve"><value>Giá {0} – {1}</value></data>
+  <data name="Search_PriceFrom" xml:space="preserve"><value>Từ {0}</value></data>
+  <data name="Search_PriceTo" xml:space="preserve"><value>Đến {0}</value></data>
+  <data name="Search_ClearFilters" xml:space="preserve"><value>Xóa bộ lọc</value></data>
+  <data name="Search_EmptyTitle" xml:space="preserve"><value>Chưa có sản phẩm nào khớp</value></data>
+  <data name="Search_EmptyDesc" xml:space="preserve"><value>Bộ lọc hiện đang quá chặt hoặc khu vực bạn chọn chưa có người bán nào đăng tin.</value></data>
+  <data name="Search_EmptyTip1" xml:space="preserve"><value>Bỏ bớt bộ lọc danh mục, khoảng giá hoặc tình trạng.</value></data>
+  <data name="Search_EmptyTip2" xml:space="preserve"><value>Thử từ khóa ngắn hơn, ví dụ "áo khoác" thay vì "áo khoác jeans nữ form rộng".</value></data>
+  <data name="Search_EmptyTip3" xml:space="preserve"><value>Chuyển sang khu vực khác hoặc để "Tất cả khu vực".</value></data>
+  <data name="Search_EmptyTip4" xml:space="preserve"><value>Chưa tìm được món bạn cần? Bấm "Đăng bán" để người khác hỏi mua món của bạn.</value></data>
+  <data name="Search_ClearPriceCond" xml:space="preserve"><value>Xóa bộ lọc giá và tình trạng</value></data>
+  <data name="Search_ViewAllProducts" xml:space="preserve"><value>Xem tất cả sản phẩm</value></data>
+  <!-- B-04: Thẻ sản phẩm -->
+  <data name="Card_ImagePlaceholder" xml:space="preserve"><value>Ảnh sản phẩm 4:5</value></data>
+  <data name="Card_FavoriteAria" xml:space="preserve"><value>Thêm vào yêu thích</value></data>
+  <data name="Card_UnfavoriteAria" xml:space="preserve"><value>Bỏ yêu thích</value></data>
+  <data name="Card_SellerFallback" xml:space="preserve"><value>Cửa hàng</value></data>
+  <!-- B-04: Trang chi tiết sản phẩm -->
+  <data name="Detail_BreadcrumbAria" xml:space="preserve"><value>Đường dẫn trang</value></data>
+  <data name="Detail_Uncategorized" xml:space="preserve"><value>Chưa phân loại</value></data>
+  <data name="Detail_ZoomHint" xml:space="preserve"><value>Nhấn để phóng to ảnh</value></data>
+  <data name="Detail_NoImages" xml:space="preserve"><value>Người bán chưa tải ảnh lên</value></data>
+  <data name="Detail_PrevImage" xml:space="preserve"><value>Ảnh trước</value></data>
+  <data name="Detail_NextImage" xml:space="preserve"><value>Ảnh tiếp theo</value></data>
+  <data name="Detail_ImageAria" xml:space="preserve"><value>Xem ảnh {0} / {1}</value></data>
+  <data name="Detail_ImageAlt" xml:space="preserve"><value>Ảnh {0}</value></data>
+  <data name="Detail_ConditionUnknown" xml:space="preserve"><value>Chưa ghi tình trạng</value></data>
+  <data name="Detail_PostedAt" xml:space="preserve"><value>Đăng {0}</value></data>
+  <data name="Detail_AreaUnknown" xml:space="preserve"><value>Chưa cập nhật khu vực</value></data>
+  <data name="Detail_NoShortDesc" xml:space="preserve"><value>Người bán chưa viết mô tả cho tin đăng này.</value></data>
+  <data name="Detail_ManageListing" xml:space="preserve"><value>Quản lý tin đăng</value></data>
+  <data name="Detail_MyProductList" xml:space="preserve"><value>Danh sách sản phẩm của tôi</value></data>
+  <data name="Detail_LoginToBuy" xml:space="preserve"><value>Đăng nhập để mua</value></data>
+  <data name="Detail_BuyerAccountOnly" xml:space="preserve"><value>Hãy dùng tài khoản người mua để đặt hàng.</value></data>
+  <data name="Detail_CannotOrder" xml:space="preserve"><value>Sản phẩm này hiện không thể đặt mua ({0}).</value></data>
+  <data name="Detail_ViewShop" xml:space="preserve"><value>Xem shop</value></data>
+  <data name="Detail_ReportListing" xml:space="preserve"><value>Báo cáo tin đăng vi phạm</value></data>
+  <data name="Detail_Transparency" xml:space="preserve"><value>Cam kết giao dịch minh bạch</value></data>
+  <data name="Detail_DescriptionTitle" xml:space="preserve"><value>Mô tả chi tiết</value></data>
+  <data name="Detail_NoDescription" xml:space="preserve"><value>Người bán chưa mô tả chi tiết món này. Bạn nên bấm Chat để hỏi về chất liệu, thời gian đã sử dụng và lỗi còn lại trước khi mua.</value></data>
+  <data name="Detail_SellerInfo" xml:space="preserve"><value>Thông tin người bán</value></data>
+  <data name="Detail_CompletedOrders" xml:space="preserve"><value>{0} đơn đã hoàn tất</value></data>
+  <data name="Detail_NoCompletedOrders" xml:space="preserve"><value>Chưa có đơn hoàn tất</value></data>
+  <data name="Detail_TrustScore" xml:space="preserve"><value>Điểm uy tín</value></data>
+  <data name="Detail_ReviewCount" xml:space="preserve"><value>{0} đánh giá</value></data>
+  <data name="Detail_NewShop" xml:space="preserve"><value>Cửa hàng mới</value></data>
+  <data name="Detail_NoReviewYet" xml:space="preserve"><value>Chưa có lượt đánh giá</value></data>
+  <data name="Detail_SafetyTitle" xml:space="preserve"><value>Mẹo giao dịch an toàn</value></data>
+  <data name="Detail_SafetyTip1" xml:space="preserve"><value>Chỉ nhắn tin và đặt đơn ngay trên Re:Market; không chuyển khoản ngoài hệ thống.</value></data>
+  <data name="Detail_SafetyTip2" xml:space="preserve"><value>Yêu cầu ảnh thật hoặc video món đồ, hỏi rõ lỗi còn lại trước khi chốt giá.</value></data>
+  <data name="Detail_SafetyTip3" xml:space="preserve"><value>Khi nhận hàng: kiểm tra kỹ rồi mới bấm xác nhận hoàn tất đơn.</value></data>
+  <data name="Detail_SafetyTip4" xml:space="preserve"><value>Thấy tin đăng nghi vấn? Dùng nút "Báo cáo tin đăng vi phạm" để ban kiểm duyệt xử lý.</value></data>
+  <data name="Detail_BuyerReviews" xml:space="preserve"><value>Đánh giá từ người mua</value></data>
+  <data name="Detail_ReviewsEmpty" xml:space="preserve"><value>Shop chưa có đánh giá nào. Nhận xét đầu tiên sẽ xuất hiện sau khi người mua xác nhận hoàn tất đơn hàng.</value></data>
+  <data name="Detail_ReviewsFromBuyers" xml:space="preserve"><value>{0} đánh giá từ người mua đã hoàn tất đơn</value></data>
+  <data name="Detail_ViewAllReviews" xml:space="preserve"><value>Xem tất cả đánh giá</value></data>
+  <data name="Detail_NoReviewContent" xml:space="preserve"><value>Khách không để lại nội dung.</value></data>
+  <data name="Detail_ShopReply" xml:space="preserve"><value>Phản hồi từ shop:</value></data>
+  <data name="Detail_RelatedProducts" xml:space="preserve"><value>Sản phẩm liên quan</value></data>
+  <data name="Detail_ChatPrefill" xml:space="preserve"><value>Chào shop, mình quan tâm sản phẩm "{0}" ạ.</value></data>
+  <!-- B-04: Trang công khai của cửa hàng -->
+  <data name="Shop_InfoAria" xml:space="preserve"><value>Thông tin cửa hàng</value></data>
+  <data name="Shop_LogoAlt" xml:space="preserve"><value>Logo {0}</value></data>
+  <data name="Shop_NoRating" xml:space="preserve"><value>Chưa có đánh giá</value></data>
+  <data name="Shop_SuccessOrders" xml:space="preserve"><value>{0} đơn thành công</value></data>
+  <data name="Shop_JoinedFrom" xml:space="preserve"><value>Tham gia từ {0}</value></data>
+  <data name="Shop_ReviewCount" xml:space="preserve"><value>{0} đánh giá</value></data>
+  <data name="Shop_OnSaleAria" xml:space="preserve"><value>Sản phẩm đang bán</value></data>
+  <data name="Shop_OnSaleTitle" xml:space="preserve"><value>Sản phẩm đang bán ({0})</value></data>
+  <data name="Shop_NoProducts" xml:space="preserve"><value>Cửa hàng chưa có sản phẩm nào đang bán.</value></data>
+  <!-- B-04: Kênh Người Bán - danh sách sản phẩm -->
+  <data name="Seller_Title" xml:space="preserve"><value>Sản phẩm của tôi</value></data>
+  <data name="Seller_Desc" xml:space="preserve"><value>Quản lý danh sách sản phẩm của cửa hàng bạn.</value></data>
+  <data name="Seller_EmptyTitle" xml:space="preserve"><value>Bạn chưa có sản phẩm nào</value></data>
+  <data name="Seller_EmptyDesc" xml:space="preserve"><value>Cửa hàng là bắt buộc trước khi đăng tin, và tin chỉ hiển thị công khai sau khi kiểm duyệt đạt.</value></data>
+  <data name="Seller_EmptyTip1" xml:space="preserve"><value>Vào Thiết lập cửa hàng, đặt tên shop và chọn khu vực sinh sống để người mua gần bạn tìm thấy tin của bạn.</value></data>
+  <data name="Seller_EmptyTip2" xml:space="preserve"><value>Đăng bán món đầu tiên với ảnh thật, giá rõ và mô tả đủ các ý hệ thống yêu cầu.</value></data>
+  <data name="Seller_EmptyTip3" xml:space="preserve"><value>Bấm "Lưu và gửi duyệt"; tin sẽ chuyển sang "Đang chờ duyệt".</value></data>
+  <data name="Seller_EmptyTip4" xml:space="preserve"><value>Theo dõi danh sách này — nếu bị từ chối, sửa theo lý do rồi gửi lại.</value></data>
+  <data name="Seller_ShopSetup" xml:space="preserve"><value>Thiết lập cửa hàng</value></data>
+  <data name="Seller_ColProduct" xml:space="preserve"><value>SẢN PHẨM</value></data>
+  <data name="Seller_ColPrice" xml:space="preserve"><value>GIÁ</value></data>
+  <data name="Seller_ColStatus" xml:space="preserve"><value>TRẠNG THÁI</value></data>
+  <data name="Seller_ColUpdated" xml:space="preserve"><value>CẬP NHẬT</value></data>
+  <data name="Seller_ColActions" xml:space="preserve"><value>THAO TÁC</value></data>
+  <data name="Seller_PhotoCount" xml:space="preserve"><value>{0} ảnh</value></data>
+  <data name="Seller_RejectReason" xml:space="preserve"><value>Lý do từ chối:</value></data>
+  <data name="Seller_Reanalyze" xml:space="preserve"><value>Phân tích lại</value></data>
+  <data name="Seller_SubmitReview" xml:space="preserve"><value>Gửi duyệt</value></data>
+  <data name="Seller_ConfirmHide" xml:space="preserve"><value>Ẩn sản phẩm này khỏi trang bán?</value></data>
+  <data name="Seller_EditShort" xml:space="preserve"><value>Sửa</value></data>
+  <data name="Seller_Hide" xml:space="preserve"><value>Ẩn</value></data>
+  <data name="Seller_ViewListing" xml:space="preserve"><value>Xem trang bán</value></data>
+  <data name="Seller_ConfirmDelete" xml:space="preserve"><value>Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này không? Thao tác này không thể hoàn tác.</value></data>
+  <!-- B-04: Kênh Người Bán - form Đăng/Sửa sản phẩm -->
+  <data name="Form_CreateTitle" xml:space="preserve"><value>Đăng bán sản phẩm</value></data>
+  <data name="Form_EditTitle" xml:space="preserve"><value>Sửa sản phẩm</value></data>
+  <data name="Form_BackToList" xml:space="preserve"><value>Quay lại danh sách</value></data>
+  <data name="Form_DeleteThis" xml:space="preserve"><value>Xóa sản phẩm này</value></data>
+  <data name="Form_ConfirmDeleteThis" xml:space="preserve"><value>Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này?</value></data>
+  <data name="Form_Name" xml:space="preserve"><value>Tên sản phẩm</value></data>
+  <data name="Form_NamePlaceholder" xml:space="preserve"><value>VD: Áo khoác denim nam size L</value></data>
+  <data name="Form_Price" xml:space="preserve"><value>Giá (đồng)</value></data>
+  <data name="Form_PricePlaceholder" xml:space="preserve"><value>VD: 250000</value></data>
+  <data name="Form_Category" xml:space="preserve"><value>Danh mục</value></data>
+  <data name="Form_ChooseCategory" xml:space="preserve"><value>— Chọn danh mục —</value></data>
+  <data name="Form_Condition" xml:space="preserve"><value>Tình trạng</value></data>
+  <data name="Form_ChooseCondition" xml:space="preserve"><value>— Chọn tình trạng —</value></data>
+  <data name="Form_Description" xml:space="preserve"><value>Mô tả</value></data>
+  <data name="Form_DescriptionPlaceholder" xml:space="preserve"><value>Ví dụ: Áo khoác denim mua 2023, mặc khoảng 10 lần, không phai màu, không rách. Còn thiếu 1 cúc tay áo. Giao kèm móc treo, không hộp. Bán vì đổi phong cách.</value></data>
+  <data name="Form_AiSuggest" xml:space="preserve"><value>Nhờ AI gợi ý mô tả</value></data>
+  <data name="Form_AiDraftLabel" xml:space="preserve"><value>Bản nháp AI gợi ý (kiểm tra lại thông tin trước khi dùng)</value></data>
+  <data name="Form_AiFill" xml:space="preserve"><value>Điền vào ô mô tả</value></data>
+  <data name="Form_AiSkip" xml:space="preserve"><value>Bỏ qua</value></data>
+  <data name="Form_HintTitle" xml:space="preserve"><value>Mô tả nên có đủ 5 ý</value></data>
+  <data name="Form_Hint1" xml:space="preserve"><value>Tình trạng thực tế: còn mới khoảng bao nhiêu %, đã sửa chữa gì chưa.</value></data>
+  <data name="Form_Hint2" xml:space="preserve"><value>Thời gian đã sử dụng và nguồn gốc (mua khi nào, ở đâu).</value></data>
+  <data name="Form_Hint3" xml:space="preserve"><value>Phụ kiện đi kèm: hộp, sạc, remote, hóa đơn... (nếu không có thì ghi rõ).</value></data>
+  <data name="Form_Hint4" xml:space="preserve"><value>Lỗi/hư hại còn lại: trầy, phai, thiếu cúc, tróc da... để người mua không bị bất ngờ.</value></data>
+  <data name="Form_Hint5" xml:space="preserve"><value>Lý do bán và cách giao hàng bạn chấp nhận (gặp trực tiếp hay gửi chuyển phát).</value></data>
+  <data name="Form_ImagesLabel" xml:space="preserve"><value>Ảnh sản phẩm (tối đa 10, bắt buộc ≥ 1 khi gửi duyệt)</value></data>
+  <data name="Form_DropTitle" xml:space="preserve"><value>Kéo thả ảnh vào đây</value></data>
+  <data name="Form_DropHint" xml:space="preserve"><value>hoặc bấm để chọn từ máy · JPG, PNG, WEBP, GIF · mỗi ảnh tối đa 5MB</value></data>
+  <data name="Form_UploadedPhotos" xml:space="preserve"><value>Ảnh đã tải lên</value></data>
+  <data name="Form_NewPhotos" xml:space="preserve"><value>Ảnh mới chọn</value></data>
+  <data name="Form_Cover" xml:space="preserve"><value>Ảnh bìa</value></data>
+  <data name="Form_SetCover" xml:space="preserve"><value>Đặt làm bìa</value></data>
+  <data name="Form_UploadedImageAlt" xml:space="preserve"><value>Ảnh sản phẩm đã tải lên</value></data>
+  <data name="Form_ImageNote" xml:space="preserve"><value>Ảnh đứng đầu danh sách &lt;b&gt;Ảnh mới chọn&lt;/b&gt; sẽ thành ảnh bìa nếu tin chưa có ảnh bìa. Bấm vào một ảnh mới để đưa lên đầu, hoặc kéo ảnh này thả lên ảnh khác để đổi thứ tự.</value></data>
+  <data name="Form_SaveDraft" xml:space="preserve"><value>Lưu nháp</value></data>
+  <data name="Form_SaveAndSubmit" xml:space="preserve"><value>Lưu và gửi duyệt</value></data>
+  <data name="Form_ApproveTitle" xml:space="preserve"><value>Điều kiện để tin đăng được duyệt</value></data>
+  <data name="Form_ApproveRule1" xml:space="preserve"><value>Tên từ 5 ký tự, giá lớn hơn 0.</value></data>
+  <data name="Form_ApproveRule2" xml:space="preserve"><value>Mô tả từ 20 ký tự và có đủ các ý ở trên.</value></data>
+  <data name="Form_ApproveRule3" xml:space="preserve"><value>Có ít nhất 1 ảnh thật của món đồ (tối đa 10 ảnh).</value></data>
+  <data name="Form_ApproveRule4" xml:space="preserve"><value>Đã chọn danh mục và tình trạng còn hiệu lực.</value></data>
+  <data name="Form_ApproveNote" xml:space="preserve"><value>Lưu nháp khi chưa xong; hệ thống chỉ kiểm duyệt khi bạn bấm "Lưu và gửi duyệt".</value></data>
+  <!-- B-04: Trang yêu thích -->
+  <data name="Fav_Title" xml:space="preserve"><value>Sản phẩm yêu thích</value></data>
+  <data name="Fav_Continue" xml:space="preserve"><value>Tiếp tục khám phá</value></data>
+  <data name="Fav_EmptyTitle" xml:space="preserve"><value>Bạn chưa lưu sản phẩm nào</value></data>
+  <data name="Fav_EmptyDesc" xml:space="preserve"><value>Lưu món đồ bạn quan tâm để quay lại xem trạng thái, giá và thông tin cửa hàng bất cứ lúc nào.</value></data>
+  <data name="Fav_Tip1" xml:space="preserve"><value>Mở "Tất cả sản phẩm", lọc theo danh mục, khoảng giá hoặc khu vực.</value></data>
+  <data name="Fav_Tip2" xml:space="preserve"><value>Bấm nút tim trên tin bạn quan tâm để thêm vào danh sách này.</value></data>
+  <data name="Fav_Tip3" xml:space="preserve"><value>Bỏ lưu món không còn phù hợp bằng nút tim ngay trên thẻ sản phẩm.</value></data>
+  <data name="Fav_FindProducts" xml:space="preserve"><value>Tìm sản phẩm</value></data>
+  <!-- B-05: chuỗi hiển thị sinh bởi JavaScript (cầu nối #rm-i18n trong _Layout) -->
+  <data name="Js_ImageMissing" xml:space="preserve"><value>Chưa có ảnh sản phẩm</value></data>
+  <data name="Js_ConfirmTitle" xml:space="preserve"><value>Xác nhận thao tác</value></data>
+  <data name="Js_ConfirmBtn" xml:space="preserve"><value>Xác nhận</value></data>
+  <data name="Js_CancelBtn" xml:space="preserve"><value>Hủy bỏ</value></data>
+  <data name="Js_FavSavedTitle" xml:space="preserve"><value>Đã lưu yêu thích</value></data>
+  <data name="Js_Error" xml:space="preserve"><value>Lỗi</value></data>
+  <data name="Js_Notice" xml:space="preserve"><value>Thông báo</value></data>
+  <data name="Js_FavListNotUpdated" xml:space="preserve"><value>Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.</value></data>
+  <data name="Js_Note" xml:space="preserve"><value>Cần lưu ý</value></data>
+  <data name="Js_FavSaveFailed" xml:space="preserve"><value>Không thể lưu sản phẩm yêu thích này.</value></data>
+  <data name="Js_FavFailedTitle" xml:space="preserve"><value>Không thành công</value></data>
+  <data name="Js_FavAddedMsg" xml:space="preserve"><value>Sản phẩm đã được thêm vào danh sách yêu thích của bạn!</value></data>
+  <data name="Js_FavRemovedMsg" xml:space="preserve"><value>Đã bỏ sản phẩm khỏi danh sách yêu thích.</value></data>
+  <data name="Js_FavRemovedTitle" xml:space="preserve"><value>Đã bỏ yêu thích</value></data>
+  <data name="Js_NetworkInterrupt" xml:space="preserve"><value>Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.</value></data>
+  <data name="Js_ConnectionError" xml:space="preserve"><value>Lỗi kết nối</value></data>
+  <data name="Js_LightboxAria" xml:space="preserve"><value>Ảnh phóng to</value></data>
+  <data name="Js_CharCount" xml:space="preserve"><value>{0}/{1} ký tự</value></data>
+  <data name="Js_NoDescriptionYet" xml:space="preserve"><value>Chưa có mô tả</value></data>
+  <data name="Js_DescriptionShortBy" xml:space="preserve"><value>Còn thiếu {0} ký tự để gửi duyệt</value></data>
+  <data name="Js_DescriptionLongEnough" xml:space="preserve"><value>Đủ độ dài để gửi duyệt</value></data>
+  <data name="Js_FiltersCount" xml:space="preserve"><value>bộ lọc ({0})</value></data>
+  <data name="Js_Filters" xml:space="preserve"><value>bộ lọc</value></data>
+  <data name="Js_Product" xml:space="preserve"><value>Sản phẩm</value></data>
+  <data name="Js_CartAddedMsg" xml:space="preserve"><value>Đã thêm "{0}" vào giỏ hàng thành công.</value></data>
+  <data name="Js_Ok" xml:space="preserve"><value>Đồng ý</value></data>
+  <data name="Js_CartNotice" xml:space="preserve"><value>Thông báo giỏ hàng</value></data>
+  <data name="Js_CartAddFailed" xml:space="preserve"><value>Không thể thêm sản phẩm vào giỏ hàng.</value></data>
+  <data name="Js_GotIt" xml:space="preserve"><value>Đã hiểu</value></data>
+  <data name="Js_CannotConnect" xml:space="preserve"><value>Không thể kết nối máy chủ. Vui lòng thử lại sau.</value></data>
+  <data name="Js_Success" xml:space="preserve"><value>Thành công!</value></data>
+  <data name="Js_ErrorOccurred" xml:space="preserve"><value>Đã xảy ra lỗi</value></data>
+  <data name="Js_BannerOnlyFormats" xml:space="preserve"><value>Chỉ nhận ảnh JPG, PNG hoặc WEBP.</value></data>
+  <data name="Js_BannerTooLarge" xml:space="preserve"><value>Ảnh banner tối đa 5MB.</value></data>
+  <data name="Js_BannerPreview" xml:space="preserve"><value>Xem trước banner</value></data>
+  <data name="Js_UnsupportedFormat" xml:space="preserve"><value>định dạng không hỗ trợ</value></data>
+  <data name="Js_UnfavoritePhotoAria" xml:space="preserve"><value>Bỏ ảnh {0}</value></data>
+  <data name="Js_MaxPhotos" xml:space="preserve"><value>chỉ thêm được {0} ảnh mới</value></data>
+  <data name="Js_SkippedPrefix" xml:space="preserve"><value>Bỏ qua: {0}</value></data>
+  <data name="Js_ConfirmDeletePhoto" xml:space="preserve"><value>Xóa ảnh này?</value></data>
+  <data name="Js_ServerErrorStatus" xml:space="preserve"><value>máy chủ trả về lỗi {0}</value></data>
+  <data name="Js_ActionFailed" xml:space="preserve"><value>thao tác không thành công</value></data>
+  <data name="Js_TrimmedPhotos" xml:space="preserve"><value>Đã bỏ bớt ảnh mới vì tin vượt quá 10 ảnh.</value></data>
+  <data name="Js_PhotoSaveFailed" xml:space="preserve"><value>Không lưu được thay đổi ({0}). Ảnh trên màn hình vẫn là ảnh cũ.</value></data>
+  <data name="Js_PhotoTooLarge" xml:space="preserve"><value>lớn hơn 5MB</value></data>
+  <data name="Js_AiMissingName" xml:space="preserve"><value>tên sản phẩm (từ 5 ký tự)</value></data>
+  <data name="Js_AiMissingCategory" xml:space="preserve"><value>danh mục</value></data>
+  <data name="Js_AiMissingCondition" xml:space="preserve"><value>tình trạng</value></data>
+  <data name="Js_AiNeedFields" xml:space="preserve"><value>Cần có {0} trước khi nhờ AI gợi ý.</value></data>
+  <data name="Js_AiDrafting" xml:space="preserve"><value>Đang soạn mô tả...</value></data>
+  <data name="Js_AiRateLimited" xml:space="preserve"><value>Bạn gửi hơi nhanh.</value></data>
+  <data name="Js_AiRetryAfter" xml:space="preserve"><value>Thử lại sau {0} giây.</value></data>
+  <data name="Js_AiNoResponse" xml:space="preserve"><value>AI tạm thời không phản hồi, bạn thử lại sau nhé.</value></data>
+  <data name="Js_AiEmptyReply" xml:space="preserve"><value>AI chưa trả về nội dung nào, bạn thử lại lần nữa nhé.</value></data>
+  <data name="Js_AiOffline" xml:space="preserve"><value>Không kết nối được tới trợ lý AI, kiểm tra mạng rồi thử lại.</value></data>
+  <data name="Js_AiOverwriteConfirm" xml:space="preserve"><value>Đè lên mô tả đang có bằng bản nháp của AI?</value></data>
+  <data name="Js_AiFilled" xml:space="preserve"><value>Đã điền bản nháp. Bạn bổ sung thông tin còn thiếu rồi hãy gửi duyệt.</value></data>
+  <!-- B-04 sweep: mấy key A/D dùng ở trang Quản trị nhưng thiếu trong resx nên in thô tên key -->
+  <data name="Btn_Close" xml:space="preserve"><value>Đóng</value></data>
+  <data name="Pager_Previous" xml:space="preserve"><value>Trước</value></data>
+  <data name="Pager_Next" xml:space="preserve"><value>Sau</value></data>
+  <data name="Pager_Page" xml:space="preserve"><value>Trang</value></data>
+  <data name="Admin_Status" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="Admin_Time" xml:space="preserve"><value>Thời gian</value></data>
+  <data name="Admin_Details" xml:space="preserve"><value>Chi tiết</value></data>
+  <data name="Admin_ShopName" xml:space="preserve"><value>Tên shop</value></data>
+  <data name="Admin_Actions" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="Modal_Warning" xml:space="preserve"><value>Cần lưu ý</value></data>
+  <data name="Modal_CriticalTitle" xml:space="preserve"><value>Cảnh báo nghiêm trọng</value></data>
+  <data name="Modal_Understood" xml:space="preserve"><value>Đã hiểu</value></data>
+  <data name="Notify_Title" xml:space="preserve"><value>Thông báo</value></data>
+  <data name="Notify_AriaLabel" xml:space="preserve"><value>Thông báo ({0} chưa đọc)</value></data>
+  <data name="Notify_NewCount" xml:space="preserve"><value>({0} mới)</value></data>
+  <data name="Notify_MarkAllRead" xml:space="preserve"><value>Đánh dấu tất cả là đã đọc</value></data>
+  <data name="Notify_MarkAll" xml:space="preserve"><value>Đã đọc tất cả</value></data>
+  <data name="Notify_Empty" xml:space="preserve"><value>Bạn chưa có thông báo nào</value></data>
+  <data name="Notify_New" xml:space="preserve"><value>MỚI</value></data>
+  <data name="Notify_Unread" xml:space="preserve"><value>Chưa đọc</value></data>
+  <data name="Notify_AdminLink" xml:space="preserve"><value>Quản trị thông báo hệ thống</value></data>
+  <data name="Notify_ViewAll" xml:space="preserve"><value>Xem tất cả thông báo</value></data>
+  <data name="Notify_TypeOrder" xml:space="preserve"><value>Đơn hàng</value></data>
+  <data name="Notify_TypeProduct" xml:space="preserve"><value>Sản phẩm</value></data>
+  <data name="Notify_TypeSystem" xml:space="preserve"><value>Hệ thống</value></data>
+  <data name="Admin_SiteTitle" xml:space="preserve"><value>Quản trị Re:Market</value></data>
+  <data name="Admin_MetaDescription" xml:space="preserve"><value>Bảng điều hành và quản trị sàn Re:Market</value></data>
+  <data name="Admin_MenuAria" xml:space="preserve"><value>Menu quản trị</value></data>
+  <data name="Admin_FooterCopy" xml:space="preserve"><value>Hệ thống Quản trị &amp; Điều hành Sàn</value></data>
+  <data name="Admin_Version" xml:space="preserve"><value>Phiên bản 2.0 (Bảo mật &amp; Kiểm duyệt)</value></data>
+  <data name="Banner_Title" xml:space="preserve"><value>Quản lý banner</value></data>
+  <data name="Banner_Heading" xml:space="preserve"><value>Quản lý Banner trang chủ</value></data>
+  <data name="Banner_Subtitle" xml:space="preserve"><value>Cấu hình các banner quảng cáo và chiến dịch khuyến mãi xuất hiện tại slider trang chủ.</value></data>
+  <data name="Banner_AddNew" xml:space="preserve"><value>Thêm banner mới</value></data>
+  <data name="Banner_FieldTitle" xml:space="preserve"><value>Tiêu đề banner</value></data>
+  <data name="Banner_TitlePlaceholder" xml:space="preserve"><value>Ví dụ: Tuần lễ đồ cũ — giá tốt</value></data>
+  <data name="Banner_Upload" xml:space="preserve"><value>Tải ảnh lên</value></data>
+  <data name="Banner_FormatHint" xml:space="preserve"><value>(JPG/PNG/WEBP, tối đa 5MB)</value></data>
+  <data name="Banner_Url" xml:space="preserve"><value>Đường dẫn ảnh</value></data>
+  <data name="Banner_UrlHint" xml:space="preserve"><value>(dùng khi không tải file)</value></data>
+  <data name="Banner_UrlPlaceholder" xml:space="preserve"><value>/uploads/banners/banner-1.svg hoặc URL ảnh</value></data>
+  <data name="Banner_Subdesc" xml:space="preserve"><value>Mô tả phụ</value></data>
+  <data name="Banner_SubdescPlaceholder" xml:space="preserve"><value>Mô tả ngắn gọn về chương trình (tùy chọn)</value></data>
+  <data name="Banner_Link" xml:space="preserve"><value>Liên kết khi click (URL)</value></data>
+  <data name="Banner_LinkPlaceholder" xml:space="preserve"><value>/Products hoặc liên kết trang đích</value></data>
+  <data name="Banner_Order" xml:space="preserve"><value>Thứ tự hiển thị</value></data>
+  <data name="Banner_Show" xml:space="preserve"><value>Hiển thị</value></data>
+  <data name="Banner_Hide" xml:space="preserve"><value>Tạm ẩn</value></data>
+  <data name="Banner_StartAt" xml:space="preserve"><value>Bắt đầu từ</value></data>
+  <data name="Banner_EndAt" xml:space="preserve"><value>Kết thúc lúc</value></data>
+  <data name="Banner_AddBtn" xml:space="preserve"><value>Thêm banner</value></data>
+  <data name="Banner_ListTitle" xml:space="preserve"><value>Danh sách banner đang có ({0})</value></data>
+  <data name="Banner_Empty" xml:space="preserve"><value>Chưa có banner nào.</value></data>
+  <data name="Banner_ActiveBadge" xml:space="preserve"><value>Đang hiển thị</value></data>
+  <data name="Banner_HiddenBadge" xml:space="preserve"><value>Đang ẩn</value></data>
+  <data name="Banner_ColTitle" xml:space="preserve"><value>Tiêu đề</value></data>
+  <data name="Banner_OrderStatus" xml:space="preserve"><value>Thứ tự và trạng thái</value></data>
+  <data name="Banner_UploadNew" xml:space="preserve"><value>Hoặc tải ảnh mới (JPG/PNG/WEBP, tối đa 5MB)</value></data>
+  <data name="Banner_TargetLink" xml:space="preserve"><value>Liên kết đích</value></data>
+  <data name="Banner_OptShow" xml:space="preserve"><value>Hiện</value></data>
+  <data name="Banner_OptHide" xml:space="preserve"><value>Ẩn</value></data>
+  <data name="Banner_SaveChanges" xml:space="preserve"><value>Lưu thay đổi</value></data>
+  <data name="Banner_ConfirmDelete" xml:space="preserve"><value>Bạn có chắc muốn xóa banner này?</value></data>
 </root>

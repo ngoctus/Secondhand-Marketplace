@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models;
 using SecondHandMarketplace.Web.Models.ViewModels.Home;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
@@ -20,8 +21,8 @@ namespace SecondHandMarketplace.Web.Controllers
         IMemoryCache cache,
         SecondHandMarketplace.Web.Data.AppDbContext db) : Controller
     {
-        public const string CatalogCacheKey = "home:catalog";
-        private static readonly TimeSpan CacheTrangChu = TimeSpan.FromMinutes(5);
+        public const string CatalogCacheKey = HomeCacheHelper.CatalogCacheKey;
+        private static readonly TimeSpan CacheTrangChu = HomeCacheHelper.CacheTrangChu;
 
         private const int SoTinDuocVeMotLan = 60;
         private const int SoTinNoiBat = 4;

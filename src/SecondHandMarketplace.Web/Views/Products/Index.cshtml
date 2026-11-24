@@ -1,6 +1,6 @@
 @model ProductSearchResultVm
 @{
-    ViewData["Title"] = "Kết quả tìm kiếm";
+    ViewData["Title"] = L["Search_ResultsBreadcrumb"];
     var f = Model.Filter;
     var keyword = f.Keyword?.Trim() ?? "";
 
@@ -21,10 +21,10 @@
 }
 
 <!-- Breadcrumb (Ảnh 4) -->
-<nav class="rm-breadcrumb" aria-label="Đường dẫn trang">
-    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+<nav class="rm-breadcrumb" aria-label="@L["Detail_BreadcrumbAria"]">
+    <a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a>
     <span class="sep">/</span>
-    <span>Kết quả tìm kiếm</span>
+    <span>@L["Search_ResultsBreadcrumb"]</span>
 </nav>
 
 <!-- Layout 2 cột: Bộ lọc + Danh sách sản phẩm (Ảnh 4) -->
@@ -32,13 +32,13 @@
     <!-- CỘT BỘ LỌC (Sidebar) -->
     <aside class="filter-sidebar" data-rm-reveal="left">
         <div class="filter-header">
-            <h3>Bộ lọc</h3>
+            <h3>@L["Search_PanelTitle"]</h3>
             <div class="d-flex align-items-center gap-2">
-                <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-reset">Xóa</a>
+                <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-reset">@L["Search_ClearShort"]</a>
                 @* Điện thoại: để gọn bảng lọc dưới nút này người mua thấy kết quả trước khi phải cuộn qua bộ lọc. *@
                 <button type="button" class="filter-toggle d-lg-none" data-bs-toggle="collapse" data-bs-target="#filterPanel"
                         data-so-bo-loc="@soBoLocDangChon" aria-controls="filterPanel" aria-expanded="false">
-                    Hiện bộ lọc@(soBoLocDangChon > 0 ? $" ({soBoLocDangChon})" : "")
+                    @L["Search_ShowFilters"]@(soBoLocDangChon > 0 ? $" ({soBoLocDangChon})" : "")
                 </button>
             </div>
         </div>
@@ -51,31 +51,31 @@
 
             <!-- Tìm trong kết quả: trên điện thoại ô search của header có thể bị thu gọn -->
             <div class="filter-group">
-                <div class="filter-title">Từ khóa</div>
+                <div class="filter-title">@L["Search_KeywordTitle"]</div>
                 <input type="search" name="Keyword" value="@keyword" class="filter-keyword-input"
-                       placeholder="VD: xe đạp, laptop, áo khoác..." />
+                       placeholder="@L["Search_KeywordPlaceholder"]" />
             </div>
 
             <!-- Khu vực sinh sống (thành phần chọn khu vực của A, mục A4) -->
             <div class="filter-group filter-khu-vuc">
-                <div class="filter-title">Khu vực sinh sống</div>
+                <div class="filter-title">@L["Search_AreaTitle"]</div>
                 <partial name="_ChonKhuVuc" model="Model.KhuVuc" />
-                <div class="form-text">Lọc theo nơi người bán sinh sống, không phải khoảng cách tới bạn.</div>
+                <div class="form-text">@L["Search_AreaHint"]</div>
             </div>
 
             <!-- Danh mục -->
             <div class="filter-group">
-                <div class="filter-title">Danh mục</div>
+                <div class="filter-title">@L["Search_CategoryTitle"]</div>
                 <div class="filter-radio-list">
                     <label class="filter-label">
                         <input type="radio" name="CategoryId" value="" checked="@(f.CategoryId == null)" />
-                        <span>Tất cả</span>
+                        <span>@L["Search_All"]</span>
                     </label>
                     @foreach (var c in Model.DanhSachDanhMuc)
                     {
                         <label class="filter-label">
                             <input type="radio" name="CategoryId" value="@c.MaDanhMuc" checked="@(f.CategoryId == c.MaDanhMuc)" />
-                            <span>@c.Ten</span>
+                            <span>@HienThi.TenDanhMuc(c.Ten)</span>
                         </label>
                     }
                 </div>
@@ -85,19 +85,19 @@
                của form GET nên tắt JS người mua vẫn kéo được từng đầu; JS chỉ chồng chúng thành một dải.
                Kéo hết cỡ hai đầu = không lọc giá, vì MinPrice/MaxPrice khi đó bằng đúng biên của thang. *@
             <div class="filter-group" data-gia-slider>
-                <div class="filter-title">Khoảng giá</div>
+                <div class="filter-title">@L["Search_PriceTitle"]</div>
                 @if (keoGiaDuoc)
                 {
                     var nguyenBo = giaToiThieuKe <= giaMin && giaToiDaKe >= giaMax;
-                    <div class="rm-gia-readout" data-gia-readout>@(nguyenBo ? "Tất cả mức giá" : $"{HienThi.Tien(giaToiThieuKe)} – {HienThi.Tien(giaToiDaKe)}")</div>
+                    <div class="rm-gia-readout" data-gia-readout>@(nguyenBo ? (string)L["Search_AllPrices"] : $"{HienThi.Tien(giaToiThieuKe)} – {HienThi.Tien(giaToiDaKe)}")</div>
                     <div class="rm-gia-slider">
                         <div class="rm-gia-track" aria-hidden="true"><span class="rm-gia-band" data-gia-band></span></div>
                         <input type="range" class="rm-gia-range rm-gia-range-lo" name="MinPrice" data-gia-lo
                                min="@giaMin" max="@giaMax" step="@buocGia" value="@giaToiThieuKe"
-                               aria-label="Giá thấp nhất" />
+                               aria-label="@L["Search_PriceMinAria"]" />
                         <input type="range" class="rm-gia-range rm-gia-range-cao" name="MaxPrice" data-gia-cao
                                min="@giaMin" max="@giaMax" step="@buocGia" value="@giaToiDaKe"
-                               aria-label="Giá cao nhất" />
+                               aria-label="@L["Search_PriceMaxAria"]" />
                     </div>
                     <div class="rm-gia-scale">
                         <span>@HienThi.Tien(giaMin)</span>
@@ -106,29 +106,29 @@
                 }
                 else
                 {
-                    <div class="form-text">Gian hàng chưa có mức giá nào để lọc.</div>
+                    <div class="form-text">@L["Search_NoPriceScale"]</div>
                 }
             </div>
 
             <!-- Tình trạng -->
             <div class="filter-group">
-                <div class="filter-title">Tình trạng</div>
+                <div class="filter-title">@L["Search_ConditionTitle"]</div>
                 <div class="filter-radio-list">
                     <label class="filter-label">
                         <input type="radio" name="ConditionId" value="" checked="@(f.ConditionId == null)" />
-                        <span>Tất cả</span>
+                        <span>@L["Search_All"]</span>
                     </label>
                     @foreach (var t in Model.DanhSachTinhTrang)
                     {
                         <label class="filter-label">
                             <input type="radio" name="ConditionId" value="@t.MaTinhTrang" checked="@(f.ConditionId == t.MaTinhTrang)" />
-                            <span>@t.Ten</span>
+                            <span>@HienThi.TenTinhTrang(t.Ten)</span>
                         </label>
                     }
                 </div>
             </div>
 
-            <button type="submit" class="btn-rm-primary w-100" style="padding: 10px;">Áp dụng bộ lọc</button>
+            <button type="submit" class="btn-rm-primary w-100" style="padding: 10px;">@L["Search_Apply"]</button>
         </form>
     </aside>
 

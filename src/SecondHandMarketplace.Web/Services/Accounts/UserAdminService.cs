@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using SecondHandMarketplace.Web.Controllers;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Services.AuditLogs;
 
@@ -35,7 +34,7 @@ public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog,
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        cache?.Remove(HomeController.CatalogCacheKey);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         await auditLog.LogAsync(actorId, "LOCK_USER", "NguoiDung", userId, "SUCCESS", reason);
         return (true, null);
     }
@@ -81,7 +80,7 @@ public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog,
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        cache?.Remove(HomeController.CatalogCacheKey);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         await auditLog.LogAsync(actorId, "UNLOCK_USER", "NguoiDung", userId);
         return (true, null);
     }

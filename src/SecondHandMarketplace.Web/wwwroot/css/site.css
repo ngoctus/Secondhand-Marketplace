@@ -37,12 +37,25 @@
     --color-disabled: #D9D3C7;
     --color-disabled-text: #777166;
 
+    /* Khung Admin (B-05): lấy đúng nền tối của .rm-footer để Public và Admin cùng một bảng màu */
+    --color-admin-surface: #29231D;
+    --color-admin-surface-hover: #332B24;
+    --color-admin-border: #3B322A;
+    --color-admin-text: #C9BCA8;
+    --color-admin-text-strong: #FFFFFF;
+
     /* Legacy mapping */
     --green: var(--color-primary);
     --ink: var(--color-text-primary);
     --paper: var(--color-bg);
     --line: var(--color-border);
     --muted: var(--color-text-secondary);
+    /* B-05: bon bien duoc tham chieu that (site.css .kpi.warn/.leader-badge, ai-chat.css, About/Faq)
+       nhung chua bao gio duoc dinh nghia nen rule cua no bi bo qua im lang. */
+    --lime: var(--color-primary-subtle);
+    --orange: var(--color-warning);
+    --font-heading: var(--font-serif);
+    --color-border-light: var(--color-border-subtle);
 
     /* Fonts (Dùng Playfair Display chuẩn 100% tiếng Việt, không bị lỗi dấu như DM Serif Display) */
     --font-main: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -268,6 +281,12 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
     gap: 10px;
     margin-left: auto;
+}
+
+/* B-03: chỗ đứng của nút chuyển VI | EN trong header, cao bằng các nút bên cạnh. */
+.rm-lang-slot {
+    display: inline-flex;
+    align-items: center;
 }
 
 .rm-user-trigger {
@@ -1348,39 +1367,68 @@ img.shop-snippet-avatar {
     margin: 0;
 }
 
-/* 10. PAGINATION (Ảnh 4) */
+/* 10. PAGINATION (Ảnh 4) — class thật mà _Pager.cshtml render; <style> inline trong partial đã bỏ (B-03) */
 .rm-pagination {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 6px;
-    margin-top: 36px;
+    margin: 32px 0 16px;
 }
 
-.rm-page-item {
-    min-width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    color: var(--color-text-primary);
-    font-size: 13px;
-    font-weight: 500;
-    text-decoration: none;
+.rm-page-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface-white);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease;
 }
 
-.rm-page-item.is-active {
+.rm-page-btn:hover {
+    background-color: var(--color-surface);
+    border-color: var(--color-text-muted);
+    color: var(--color-text-primary);
+}
+
+.rm-page-active {
     background-color: var(--color-primary);
-    color: #FFFFFF;
     border-color: var(--color-primary);
+    color: var(--color-surface-white);
+    cursor: default;
 }
 
-.rm-page-ellipsis {
-    border: none;
-    background: transparent;
+.rm-page-dots {
+    color: var(--color-text-muted);
+    padding: 0 4px;
+    font-weight: 700;
+}
+
+.rm-page-prev,
+.rm-page-next {
+    padding: 0 16px;
+}
+
+@media (max-width: 375px) {
+    .rm-page-btn {
+        min-width: 34px;
+        height: 34px;
+        font-size: 13px;
+    }
+
+    .rm-page-prev,
+    .rm-page-next {
+        padding: 0 10px;
+    }
 }
 
 /* 11. FOOTER (Dark Slate Theme từ Wireframe) */
@@ -4954,4 +5002,290 @@ body.rmc-open {
     .rm-anh-mui:hover {
         transform: translateY(-50%);
     }
+}
+
+/* =====================================================================
+   13. KHUNG TRANG QUAN TRI (B-05) — chuyển từ <style> inline trong
+   _LayoutAdmin.cshtml về Design System, đổi màu Slate sang token của sàn.
+   ===================================================================== */
+.admin-layout-wrapper {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--color-surface);
+    font-family: var(--font-main);
+}
+
+.admin-sidebar {
+    width: 250px;
+    background-color: var(--color-admin-surface);
+    color: var(--color-admin-text);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.admin-sidebar-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--color-admin-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-sidebar-header a {
+    text-decoration: none;
+    color: var(--color-admin-text-strong);
+    font-weight: 700;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-sidebar-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    background-color: var(--color-error);
+    color: var(--color-admin-text-strong);
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+}
+
+.admin-nav {
+    padding: 10px 0;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.admin-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    color: var(--color-admin-text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color .15s ease, color .15s ease;
+    border-left: 3px solid transparent;
+}
+
+.admin-nav-item:hover {
+    color: var(--color-admin-text-strong);
+    background-color: var(--color-admin-surface-hover);
+}
+
+.admin-nav-item.active {
+    color: var(--color-admin-text-strong);
+    background-color: var(--color-admin-surface-hover);
+    border-left-color: var(--color-primary);
+    font-weight: 600;
+}
+
+.admin-nav-item i {
+    font-size: 15px;
+    width: 18px;
+    text-align: center;
+}
+
+.admin-content-wrap {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.admin-topbar {
+    height: 58px;
+    background-color: var(--color-surface-white);
+    border-bottom: 1px solid var(--color-border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.admin-main {
+    padding: 24px;
+    flex-grow: 1;
+}
+
+.admin-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--color-border-subtle);
+    background-color: var(--color-surface-white);
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+
+/* Mobile: sidebar dồn thành thanh nằm ngang cuộn dọc, nội dung chiếm hết chiều ngang. */
+@media (max-width: 767.98px) {
+    .admin-layout-wrapper {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        flex-shrink: 1;
+    }
+
+    .admin-nav {
+        max-height: 260px;
+    }
+
+    .admin-topbar {
+        padding: 0 14px;
+    }
+
+    .admin-main {
+        padding: 14px;
+    }
+}
+
+/* =====================================================================
+   14. SOT FE TOAN SITE (B-05) — class đã dùng trong view nhưng chưa từng
+   có rule, và mấy tiện ích Tailwind-ism đồng nghiệp viết mà Bootstrap 5
+   không có (không sửa file của họ, bù rule ở đây cho khớp).
+   ===================================================================== */
+.hero-image-box {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-md);
+}
+
+.hero-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cta-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.rm-footer-contact-note {
+    margin-top: 14px;
+    font-size: 12px;
+    line-height: 1.65;
+    color: rgba(237, 229, 213, .62);
+}
+
+.rm-gallery,
+.detail-info-panel {
+    min-width: 0;
+}
+
+.rm-add-to-cart-form {
+    display: inline-block;
+}
+
+/* Nút chuyển VI | EN (A-01) — trước đây mọi thứ đều nằm trong style="" của partial. */
+.rm-lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface-white);
+    font-size: 12px;
+    line-height: 1;
+}
+
+.rm-lang-switcher form {
+    margin: 0;
+}
+
+.rm-lang-btn {
+    border: 0;
+    border-radius: var(--radius-pill);
+    padding: 5px 9px;
+    font-weight: 600;
+    background-color: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.rm-lang-btn:hover {
+    color: var(--color-primary);
+}
+
+.rm-lang-btn.is-active {
+    background-color: var(--color-primary);
+    color: var(--color-surface-white);
+}
+
+.rm-lang-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.filter-keyword-input {
+    width: 100%;
+    padding: 9px 12px;
+    font-size: 14px;
+    color: var(--color-text-primary);
+    background-color: var(--color-surface-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.filter-keyword-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+/* Tiện ích bù: Bootstrap 5.3 không có các tên này nên element hiển thị trơ. */
+.min-w-0 {
+    min-width: 0;
+}
+
+.tracking-widest {
+    letter-spacing: .12em;
+}
+
+.mt-2\.5 {
+    margin-top: .625rem !important;
+}
+
+.p-2\.5 {
+    padding: .625rem !important;
+}
+
+.border-start-3 {
+    border-left-width: 3px !important;
+}
+
+.border-start-4 {
+    border-left-width: 4px !important;
+}
+
+.border-start-success {
+    border-left-color: var(--color-success) !important;
+}
+
+/* Nút CTA hero Trang chủ mang class rm-cta-pulse từ 11-14 nhưng chưa từng có style — bù vào, tắc khi máy dùng hạn chế chuyển động. */
+@media (prefers-reduced-motion: no-preference) {
+    .rm-cta-pulse {
+        animation: rm-cta-pulse 2.6s ease-in-out infinite;
+    }
+}
+
+@keyframes rm-cta-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(104, 112, 90, .38); }
+    55% { box-shadow: 0 0 0 12px rgba(104, 112, 90, 0); }
+}
+
+/* Nhãn loại thông báo trong chuông chỉ cần đậm hơn chút so với thời gian dùng chung .rm-notify-item-meta. */
+.rm-notify-meta-type {
+    font-weight: 600;
 }

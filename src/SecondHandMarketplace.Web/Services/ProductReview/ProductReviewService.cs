@@ -2,7 +2,6 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Common.Constants;
-using SecondHandMarketplace.Web.Controllers;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Services.AuditLogs;
@@ -214,7 +213,7 @@ public class ProductReviewService(
         {
             return DecisionFailure(ex);
         }
-        cache?.Remove(HomeController.CatalogCacheKey);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         return await AfterDecisionAsync(adminId, maSanPham, review.MaNguoiBan, "ACTIVE", approve: true, reason: null, cancellationToken);
     }
 
@@ -300,7 +299,7 @@ public class ProductReviewService(
         {
             return DecisionFailure(ex);
         }
-        cache?.Remove(HomeController.CatalogCacheKey);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
 
         await TryAuditAsync(adminId, "REMOVE_PRODUCT", maSanPham, cleanReason, cancellationToken);
         await TryNotifyAsync(product.SellerId, "Sản phẩm của bạn đã bị gỡ",

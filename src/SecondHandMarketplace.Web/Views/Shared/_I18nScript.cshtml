@@ -1,0 +1,29 @@
+@using System.Text.Json
+@*
+    B-04/B-05: site.js và các script của người bán sinh chuỗi hiển thị bằng JavaScript, nên không qua
+    Razor localizer được. Layout render đúng một khối JSON theo ngôn ngữ hiện tại để JS lấy qua window.rmT().
+*@
+@{
+    var rmI18nKeys = new[]
+    {
+        "Js_ImageMissing", "Card_ImagePlaceholder", "Js_ConfirmTitle", "Js_ConfirmBtn", "Js_CancelBtn",
+        "Js_FavSavedTitle", "Js_Error", "Js_Notice", "Js_FavListNotUpdated", "Js_Note", "Js_FavSaveFailed",
+        "Js_FavFailedTitle", "Js_FavAddedMsg", "Js_FavRemovedMsg", "Js_FavRemovedTitle", "Nav_Favorites",
+        "Js_NetworkInterrupt", "Js_ConnectionError", "Js_LightboxAria", "Detail_PrevImage", "Detail_NextImage",
+        "Js_CharCount", "Js_NoDescriptionYet", "Js_DescriptionShortBy", "Js_DescriptionLongEnough",
+        "Js_FiltersCount", "Js_Filters", "Common_Show", "Common_Hide", "Search_ShowFilters", "Js_Product",
+        "Layout_CartAdded", "Js_CartAddedMsg", "Js_Ok", "Js_CartNotice", "Js_CartAddFailed", "Js_GotIt",
+        "Js_CannotConnect", "Js_Success", "Js_ErrorOccurred", "Js_BannerOnlyFormats", "Js_BannerTooLarge",
+        "Js_BannerPreview", "Js_UnsupportedFormat", "Js_UnfavoritePhotoAria", "Js_MaxPhotos", "Js_SkippedPrefix",
+        "Js_ConfirmDeletePhoto", "Js_ServerErrorStatus", "Js_ActionFailed", "Js_TrimmedPhotos", "Js_PhotoSaveFailed",
+        "Search_AllPrices", "Layout_Close",
+        "Js_AiMissingName", "Js_AiMissingCategory", "Js_AiMissingCondition", "Js_AiNeedFields", "Js_AiDrafting",
+        "Js_AiRateLimited", "Js_AiRetryAfter", "Js_AiNoResponse", "Js_AiEmptyReply", "Js_AiOffline",
+        "Js_AiOverwriteConfirm", "Js_AiFilled",
+        "Card_FavoriteAria", "Card_UnfavoriteAria", "Form_Cover", "Js_PhotoTooLarge",
+        "KhuVuc_PickWard", "KhuVuc_Loading", "KhuVuc_LoadFailed"
+    };
+    var rmI18n = rmI18nKeys.ToDictionary(k => k, k => (string)L[k]);
+}
+<script id="rm-i18n" type="application/json">@Html.Raw(JsonSerializer.Serialize(rmI18n))</script>
+<script src="~/js/site.js" asp-append-version="true"></script>

@@ -1,3 +1,5 @@
+using SecondHandMarketplace.Web.Common;
+
 namespace SecondHandMarketplace.Web.Models.ViewModels.Products;
 
 /// <summary>Dữ liệu hiển thị 1 sản phẩm trong danh sách.</summary>
@@ -30,17 +32,14 @@ public class ProductCardVm
 
     public bool ConHang => Status == "ACTIVE";
 
-    public string TrangThaiHienThi => Status switch
-    {
-        "RESERVED" => "Đã giữ",
-        "SOLD" => "Đã bán",
-        _ => "Còn hàng"
-    };
+    public string TrangThaiHienThi => HienThi.TrangThaiSanPhamCongKhai(Status);
 
     public bool CoDanhGia => DiemTrungBinh.HasValue && SoDanhGia > 0;
 
-    public string DanhGiaHienThi => CoDanhGia ? $"{DiemTrungBinh:0.0} · {SoDanhGia} đánh giá" : "Chưa có đánh giá";
-    public string KhuVucHienThi => string.IsNullOrWhiteSpace(KhuVuc) ? "Chưa cập nhật khu vực" : KhuVuc;
+    public string DanhGiaHienThi => CoDanhGia
+        ? HienThi.Chon($"{DiemTrungBinh:0.0} · {SoDanhGia} đánh giá", $"{DiemTrungBinh:0.0} · {SoDanhGia} reviews")
+        : HienThi.Chon("Chưa có đánh giá", "No reviews yet");
+    public string KhuVucHienThi => string.IsNullOrWhiteSpace(KhuVuc) ? HienThi.Chon("Chưa cập nhật khu vực", "Area not updated") : KhuVuc;
 
     /// <summary>Cắt ~100 ký tự đầu, dùng chung cho mọi nơi dựng thẻ (kể cả giỏ hàng, yêu thích).</summary>
     public static string? TaoMoTaNgan(string? moTa)

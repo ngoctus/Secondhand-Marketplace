@@ -12,7 +12,7 @@
     var canhBao = (TempData["CanhBao"] ?? TempData["Warning"]) as string;
     var thongTin = (TempData["ThongBao"] ?? TempData["Info"] ?? TempData["OtpSent"] ?? TempData["Message"]) as string;
     var modalLoi = (TempData["ModalLoi"] ?? TempData["CriticalError"]) as string;
-    var modalTieuDe = (TempData["ModalTieuDe"] ?? TempData["ModalTitle"] ?? "Cảnh báo nghiêm trọng") as string;
+    var modalTieuDe = (TempData["ModalTieuDe"] ?? TempData["ModalTitle"] ?? (string)L["Modal_CriticalTitle"]) as string;
 
     var coThongBao = !string.IsNullOrWhiteSpace(thanhCong)
                      || !string.IsNullOrWhiteSpace(loi)
@@ -20,31 +20,31 @@
                      || !string.IsNullOrWhiteSpace(thongTin);
 
     string boxType = "success";
-    string boxTitle = "Thành công!";
+    string boxTitle = (string)L["Js_Success"];
     string boxMessage = "";
 
     if (!string.IsNullOrWhiteSpace(loi))
     {
         boxType = "error";
-        boxTitle = "Đã xảy ra lỗi";
+        boxTitle = (string)L["Js_ErrorOccurred"];
         boxMessage = loi;
     }
     else if (!string.IsNullOrWhiteSpace(canhBao))
     {
         boxType = "warning";
-        boxTitle = "Cần lưu ý";
+        boxTitle = (string)L["Modal_Warning"];
         boxMessage = canhBao;
     }
     else if (!string.IsNullOrWhiteSpace(thanhCong))
     {
         boxType = "success";
-        boxTitle = "Thành công!";
+        boxTitle = (string)L["Js_Success"];
         boxMessage = thanhCong;
     }
     else if (!string.IsNullOrWhiteSpace(thongTin))
     {
         boxType = "info";
-        boxTitle = "Thông báo";
+        boxTitle = (string)L["Js_Notice"];
         boxMessage = thongTin;
     }
 }
@@ -69,7 +69,7 @@
             </div>
             <div class="rm-modal-footer">
                 <button type="button" class="btn btn-secondary rounded-pill px-4 py-1" onclick="this.closest('.rm-modal-overlay').remove(); document.body.classList.remove('rm-modal-open');">
-                    Đã hiểu
+                    @L["Modal_Understood"]
                 </button>
             </div>
         </div>
@@ -79,7 +79,7 @@
 @* 2. Hộp thoại thông báo Modal Box nổi bật ở giữa màn hình (Pop-up Dialog Box) chống chìm vào web *@
 <div id="rmNotifyModal" class="rm-notify-backdrop @(coThongBao ? "is-active" : "")" role="dialog" aria-modal="true" aria-labelledby="rmNotifyTitle" aria-describedby="rmNotifyDesc" style="@(coThongBao ? "" : "display:none;")">
     <div class="rm-notify-box rm-notify-box-@boxType">
-        <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="Đóng">&times;</button>
+        <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="@L["Btn_Close"]">&times;</button>
         <div class="rm-notify-icon-wrap">
             <div class="rm-notify-icon rm-notify-icon-@boxType" id="rmNotifyIcon">
                 @if (boxType == "success")
@@ -105,7 +105,7 @@
             <div class="rm-notify-message" id="rmNotifyDesc">@boxMessage</div>
         </div>
         <div class="rm-notify-actions">
-            <button type="button" class="rm-notify-btn rm-notify-btn-@boxType" id="rmNotifyBtn">Đồng ý</button>
+            <button type="button" class="rm-notify-btn rm-notify-btn-@boxType" id="rmNotifyBtn">@L["Js_Ok"]</button>
         </div>
     </div>
 </div>

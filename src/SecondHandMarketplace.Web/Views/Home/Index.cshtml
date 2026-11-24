@@ -1,7 +1,7 @@
 @using SecondHandMarketplace.Web.Models.ViewModels.Reviews
 @model SecondHandMarketplace.Web.Models.ViewModels.Home.HomeIndexVm
 @{
-    ViewData["Title"] = "Trang chủ";
+    ViewData["Title"] = L["Nav_Home"];
 
     // Icon cho ô danh mục: bảng DanhMuc không có cột icon nên suy theo từ khóa trong tên.
     string LayIconDanhMuc(string tenDanhMuc)
@@ -27,43 +27,43 @@
 <!-- 1. HERO SECTION (Ảnh 2) -->
 <section class="landing-hero">
     <div data-rm-reveal="left">
-        <div class="hero-sublabel">SECONDHAND - TÁI SỬ DỤNG</div>
-        <h1 class="hero-heading">Món đồ cũ,<br />giá trị mới.</h1>
+        <div class="hero-sublabel">@L["Home_Sublabel"]</div>
+        <h1 class="hero-heading">@L["Home_HeroLine1"]<br />@L["Home_HeroLine2"]</h1>
         <p class="hero-desc">
-            Mua bán đồ đã qua sử dụng an toàn, tiết kiệm và thân thiện với môi trường. Mọi tin đăng đều được kiểm duyệt.
+            @L["Home_HeroDesc"]
         </p>
         <div class="hero-actions">
-            <a asp-controller="Products" asp-action="Index" class="btn-rm-primary rm-cta-pulse">Khám phá ngay</a>
+            <a asp-controller="Products" asp-action="Index" class="btn-rm-primary rm-cta-pulse">@L["Home_CtaExplore"]</a>
             @if (User.Identity?.IsAuthenticated == true)
             {
                 @if (User.IsInRole("USER"))
                 {
-                    <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-secondary">Đăng bán sản phẩm</a>
+                    <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-secondary">@L["Home_CtaSell"]</a>
                 }
             }
             else
             {
-                <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-rm-secondary">Đăng bán sản phẩm</a>
+                <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-rm-secondary">@L["Home_CtaSell"]</a>
             }
         </div>
         <div class="hero-stats">
             <div class="hero-stat-item">
                 <b data-rm-count="@(Model.TongSanPham > 0 ? Model.TongSanPham : 100)" data-rm-suffix="+">@(Model.TongSanPham > 0 ? Model.TongSanPham.ToString("N0") + "+" : "100+")</b>
-                <span>Sản phẩm</span>
+                <span>@L["Home_StatProducts"]</span>
             </div>
             <div class="hero-stat-item">
                 <b data-rm-count="@(Model.TongNguoiBan > 0 ? Model.TongNguoiBan : 50)" data-rm-suffix="+">@(Model.TongNguoiBan > 0 ? Model.TongNguoiBan.ToString("N0") + "+" : "50+")</b>
-                <span>Người bán</span>
+                <span>@L["Home_StatSellers"]</span>
             </div>
             <div class="hero-stat-item">
                 <b data-rm-count="100" data-rm-suffix="%">100%</b>
-                <span>Kiểm duyệt</span>
+                <span>@L["Home_StatModerated"]</span>
             </div>
         </div>
     </div>
     <div class="hero-image-box" data-rm-reveal="pop" data-rm-media>
         <img src="~/images/hero-marketplace.jpg"
-             alt="Đồ dùng secondhand được tái sử dụng: laptop, máy ảnh, tai nghe và quần áo"
+             alt="@L["Home_HeroImageAlt"]"
              class="hero-image"
              asp-append-version="true" />
     </div>
@@ -79,7 +79,7 @@
             <div class="carousel-indicators">
                 @for (var i = 0; i < Model.Banners.Count; i++)
                 {
-                    <button type="button" data-bs-target="#rmBannerCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : null)" aria-label="Banner @(i + 1)"></button>
+                    <button type="button" data-bs-target="#rmBannerCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : null)" aria-label="@L["Home_BannerAria", i + 1]"></button>
                 }
             </div>
         }
@@ -106,10 +106,10 @@
         @if (Model.Banners.Count > 1)
         {
             <button class="carousel-control-prev" type="button" data-bs-target="#rmBannerCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Trước</span>
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">@L["Btn_Prev"]</span>
             </button>
             <button class="carousel-control-next" type="button" data-bs-target="#rmBannerCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Sau</span>
+                <span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">@L["Btn_Next"]</span>
             </button>
         }
     </div>
@@ -120,10 +120,10 @@
 <section class="landing-section" data-rm-reveal>
     <div class="landing-section-header">
         <div>
-            <div class="section-label">DANH MỤC</div>
-            <h2 class="section-title">Tìm nhanh theo danh mục</h2>
+            <div class="section-label">@L["Home_CatLabel"]</div>
+            <h2 class="section-title">@L["Home_CatTitle"]</h2>
         </div>
-        <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">Xem tất cả</a>
+        <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">@L["Nav_ViewAll"]</a>
     </div>
 
     <div class="category-grid" data-rm-stagger>
@@ -131,7 +131,7 @@
         {
             <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@c.MaDanhMuc" class="category-card">
                 <div class="cat-circle cat-icon"><i class="bi @LayIconDanhMuc(c.Ten)"></i></div>
-                <span class="cat-name">@c.Ten</span>
+                <span class="cat-name">@HienThi.TenDanhMuc(c.Ten)</span>
             </a>
         }
     </div>
@@ -141,13 +141,13 @@
 <section class="landing-section" data-rm-reveal>
     <div class="landing-section-header">
         <div>
-            <div class="section-label">SẢN PHẨM NỔI BẬT</div>
-            <h2 class="section-title">Có thể bạn sẽ thích</h2>
+            <div class="section-label">@L["Home_FeatLabel"]</div>
+            <h2 class="section-title">@L["Home_FeatTitle"]</h2>
         </div>
         <div class="d-flex gap-2 landing-header-actions">
-            <a asp-controller="Products" asp-action="Index" asp-route-Sort="newest" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Mới đăng</a>
-            <a asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tốt</a>
-            <a asp-controller="Products" asp-action="Index" asp-route-Sort="price_asc" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">Giá tiết kiệm</a>
+            <a asp-controller="Products" asp-action="Index" asp-route-Sort="newest" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">@L["Nav_Newest"]</a>
+            <a asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">@L["Nav_BestPrice"]</a>
+            <a asp-controller="Products" asp-action="Index" asp-route-Sort="price_asc" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">@L["Home_BargainPrices"]</a>
         </div>
     </div>
 
@@ -155,14 +155,14 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="rm-tab-moi" type="button" role="tab"
                     data-bs-toggle="pill" data-bs-target="#rm-pane-moi"
-                    aria-controls="rm-pane-moi" aria-selected="true">Mới đăng</button>
+                    aria-controls="rm-pane-moi" aria-selected="true">@L["Nav_Newest"]</button>
         </li>
         @foreach (var tab in Model.TabsDanhMuc)
         {
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="rm-tab-@tab.MaDanhMuc" type="button" role="tab"
                         data-bs-toggle="pill" data-bs-target="#rm-pane-@tab.MaDanhMuc"
-                        aria-controls="rm-pane-@tab.MaDanhMuc" aria-selected="false"><i class="bi @LayIconDanhMuc(tab.TenDanhMuc)" aria-hidden="true"></i> @tab.TenDanhMuc</button>
+                        aria-controls="rm-pane-@tab.MaDanhMuc" aria-selected="false"><i class="bi @LayIconDanhMuc(tab.TenDanhMuc)" aria-hidden="true"></i> @HienThi.TenDanhMuc(tab.TenDanhMuc)</button>
             </li>
         }
     </ul>
@@ -178,7 +178,7 @@
                 }
             </div>
             <div class="rm-cat-more">
-                <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">Xem thêm sản phẩm</a>
+                <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">@L["Home_MoreProducts"]</a>
             </div>
         </div>
 
@@ -194,7 +194,7 @@
                     }
                 </div>
                 <div class="rm-cat-more">
-                    <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@tab.MaDanhMuc" class="btn-rm-outline">Xem tất cả @tab.TenDanhMuc</a>
+                    <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@tab.MaDanhMuc" class="btn-rm-outline">@L["Home_ViewAllIn", HienThi.TenDanhMuc(tab.TenDanhMuc)]</a>
                 </div>
             </div>
         }
@@ -203,28 +203,28 @@
 
 <!-- 4. CÁCH THỨC HOẠT ĐỘNG (Ảnh 3) -->
 <section class="landing-section" data-rm-reveal>
-    <div class="section-label">CÁCH THỨC HOẠT ĐỘNG</div>
-    <h2 class="section-title">3 bước đơn giản</h2>
+    <div class="section-label">@L["Home_HowLabel"]</div>
+    <h2 class="section-title">@L["Home_HowTitle"]</h2>
 
     <div class="steps-grid" data-rm-stagger>
         <div class="step-card">
             <div class="step-num">1</div>
-            <h3 class="step-title">Tìm sản phẩm</h3>
-            <p class="step-desc">Duyệt danh mục hoặc dùng thanh tìm kiếm và bộ lọc.</p>
+            <h3 class="step-title">@L["Home_Step1Title"]</h3>
+            <p class="step-desc">@L["Home_Step1Desc"]</p>
         </div>
         <div class="step-card">
             <div class="step-num">2</div>
-            <h3 class="step-title">Liên hệ người bán</h3>
-            <p class="step-desc">Trao đổi, hỏi thêm ảnh và tình trạng thực tế.</p>
+            <h3 class="step-title">@L["Home_Step2Title"]</h3>
+            <p class="step-desc">@L["Home_Step2Desc"]</p>
         </div>
         <div class="step-card">
             <div class="step-num">3</div>
-            <h3 class="step-title">Giao dịch</h3>
-            <p class="step-desc">Gặp mặt hoặc vận chuyển, nhận hàng và đánh giá.</p>
+            <h3 class="step-title">@L["Home_Step3Title"]</h3>
+            <p class="step-desc">@L["Home_Step3Desc"]</p>
         </div>
     </div>
     <div class="step-seller-note">
-        Dành cho người bán: Đăng sản phẩm → Kiểm duyệt → Tiếp cận người mua
+        @L["Home_SellerNote"]
     </div>
 </section>
 
@@ -232,28 +232,28 @@
 <section class="landing-section" data-rm-reveal>
     <div class="sustainability-row">
         <div class="sustainability-image-wrap" data-rm-media>
-            <img src="~/images/sustainable-shopping.jpg" alt="Lối sống bền vững qua việc tái sử dụng đồ cũ" class="sustainability-image" style="object-fit: cover;" asp-append-version="true" />
+            <img src="~/images/sustainable-shopping.jpg" alt="@L["Home_ValueImageAlt"]" class="sustainability-image" style="object-fit: cover;" asp-append-version="true" />
         </div>
         <div>
-            <div class="section-label">GIÁ TRỊ BỀN VỮNG</div>
+            <div class="section-label">@L["Home_ValueLabel"]</div>
             <h2 class="section-title" style="font-size: 26px; line-height: 1.25; margin-bottom: 12px;">
-                Mỗi món đồ được dùng lại là một lần giảm lãng phí.
+                @L["Home_ValueTitle"]
             </h2>
             <p style="color: var(--color-text-secondary); font-size: 14px; margin-bottom: 20px;">
-                Tái sử dụng giúp tiết kiệm chi phí và giảm rác thải ra môi trường.
+                @L["Home_ValueDesc"]
             </p>
             <div class="sustainability-stats" data-rm-stagger>
                 <div class="sust-stat-card">
                     <b>@(Model.TongDonHoanTat > 0 ? (Model.TongDonHoanTat * 2).ToString("N0") + " kg" : "100+ kg")</b>
-                    <span>Rác thải giảm</span>
+                    <span>@L["Home_SustWaste"]</span>
                 </div>
                 <div class="sust-stat-card">
                     <b>@(Model.TongDonHoanTat > 0 ? Model.TongDonHoanTat.ToString("N0") : "50+")</b>
-                    <span>Món đồ đã tuần hoàn</span>
+                    <span>@L["Home_SustCycled"]</span>
                 </div>
                 <div class="sust-stat-card">
                     <b>@(Model.TongSanPham > 0 ? Model.TongSanPham.ToString("N0") : "100+")</b>
-                    <span>Sản phẩm đang bán</span>
+                    <span>@L["Home_SustActive"]</span>
                 </div>
             </div>
         </div>
@@ -262,42 +262,42 @@
 
 <!-- 6. ĐỘ TIN CẬY (Ảnh 3) -->
 <section class="landing-section" data-rm-reveal>
-    <div class="section-label">ĐỘ TIN CẬY</div>
-    <h2 class="section-title">Mua bán an tâm hơn</h2>
+    <div class="section-label">@L["Home_TrustLabel"]</div>
+    <h2 class="section-title">@L["Home_TrustTitle"]</h2>
 
     <div class="trust-grid" data-rm-stagger>
         <div class="trust-card">
             <div class="trust-dot" aria-hidden="true">✓</div>
-            <h4>Kiểm duyệt sản phẩm</h4>
-            <p>Mọi tin đăng được duyệt trước khi hiển thị.</p>
+            <h4>@L["Home_Trust1Title"]</h4>
+            <p>@L["Home_Trust1Desc"]</p>
         </div>
         <div class="trust-card">
             <div class="trust-dot" aria-hidden="true">↔</div>
-            <h4>Giao dịch an toàn</h4>
-            <p>Hướng dẫn gặp mặt, thanh toán, kiểm hàng.</p>
+            <h4>@L["Home_Trust2Title"]</h4>
+            <p>@L["Home_Trust2Desc"]</p>
         </div>
         <div class="trust-card">
             <div class="trust-dot" aria-hidden="true">♡</div>
-            <h4>Quy định cộng đồng</h4>
-            <p>Nguyên tắc đăng bán và ứng xử rõ ràng.</p>
+            <h4>@L["Home_Trust3Title"]</h4>
+            <p>@L["Home_Trust3Desc"]</p>
         </div>
         <div class="trust-card">
             <div class="trust-dot" aria-hidden="true">!</div>
-            <h4>Báo cáo vi phạm</h4>
-            <p>Gửi báo cáo nhanh, có đội ngũ xử lý.</p>
+            <h4>@L["Home_Trust4Title"]</h4>
+            <p>@L["Home_Trust4Desc"]</p>
         </div>
     </div>
 </section>
 
 <!-- 7. ĐÁNH GIÁ (Ảnh 3) -->
 <section class="landing-section" data-rm-reveal>
-    <div class="section-label">ĐÁNH GIÁ</div>
-    <h2 class="section-title">Người dùng nói gì</h2>
-    <p style="color: var(--color-text-muted); font-size: 13px; margin: 4px 0 20px;">Chỉ hiển thị đánh giá thật từ giao dịch đã hoàn tất</p>
+    <div class="section-label">@L["Home_RevLabel"]</div>
+    <h2 class="section-title">@L["Home_RevTitle"]</h2>
+    <p style="color: var(--color-text-muted); font-size: 13px; margin: 4px 0 20px;">@L["Home_RevNote"]</p>
 
     @if (Model.DanhGiaNoiBat.Count == 0)
     {
-        <p class="reviews-empty">Sàn chưa có đánh giá nào từ giao dịch đã hoàn tất. Đánh giá sẽ hiện ở đây ngay khi người mua xác nhận đơn.</p>
+        <p class="reviews-empty">@L["Home_RevEmpty"]</p>
     }
     else
     {
@@ -305,7 +305,7 @@
             @foreach (var dg in Model.DanhGiaNoiBat)
             {
                 <div class="review-card">
-                    <div class="review-stars" aria-label="@dg.SoSao/5 sao">
+                    <div class="review-stars" aria-label="@L["Home_StarOutOf", dg.SoSao]">
                         @for (byte s = 1; s <= 5; s++)
                         {
                             <span class="@(s <= dg.SoSao ? "star-on" : "star-off")">★</span>
@@ -313,11 +313,11 @@
                     </div>
                     <p class="review-text">@TomTacDanhGia(dg.NoiDung)</p>
                     <div class="review-author">
-                        <img class="author-circle" src="@(string.IsNullOrWhiteSpace(dg.AnhDaiDienNguoiMua) ? Url.Content("~/images/avatar-default.png") : dg.AnhDaiDienNguoiMua)" alt="Ảnh đại diện @dg.TenNguoiMua" />
+                        <img class="author-circle" src="@(string.IsNullOrWhiteSpace(dg.AnhDaiDienNguoiMua) ? Url.Content("~/images/avatar-default.png") : dg.AnhDaiDienNguoiMua)" alt="@L["Home_AvatarAlt", dg.TenNguoiMua]" />
                         <div class="author-info">
                             <b>@dg.TenNguoiMua</b>
                             <span>
-                                Đã mua:
+                                @L["Home_BoughtLabel"]
                                 @if (dg.MaSanPham.HasValue)
                                 {
                                     <a asp-controller="Products" asp-action="Details" asp-route-id="@dg.MaSanPham.Value">@dg.TenSanPham</a>
@@ -338,17 +338,17 @@
 <!-- 8. BANNER CTA CUỐI TRANG (Ảnh 3) -->
 <div class="landing-cta-banner">
     <div class="cta-banner-text">
-        <h3>Có món đồ không còn dùng? Đăng bán ngay!</h3>
-        <p>Đăng tin miễn phí, được kiểm duyệt trong thời gian ngắn.</p>
+        <h3>@L["Home_CtaTitle"]</h3>
+        <p>@L["Home_CtaDesc"]</p>
     </div>
     <div class="cta-banner-actions">
     @if (User.Identity?.IsAuthenticated == true)
     {
-        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-cta-white">Đăng bán ngay</a>
+        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-cta-white">@L["Home_CtaBtn"]</a>
     }
     else
     {
-        <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-cta-white">Đăng bán ngay</a>
+        <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-cta-white">@L["Home_CtaBtn"]</a>
     }
     </div>
 </div>
