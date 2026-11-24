@@ -133,12 +133,6 @@
 </div>
 
 <script>
-function copyVietQr(elementId, btn) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    const text = el.innerText.trim();
-    copyTextToClipboard(text, btn);
-}
 function copyVietQrRaw(text, btn) {
     copyTextToClipboard(text, btn);
 }

@@ -50,7 +50,7 @@ public sealed class UsersController(AppDbContext db, IUserAdminService userAdmin
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Lock(int id, string reason, CancellationToken cancellationToken)
     {
-        var result = await userAdmin.LockUserAsync(ParseCurrentUserId(), id, reason, cancellationToken);
+        var result = await userAdmin.LockUserAsync(User.LayNguoiDungId(), id, reason, cancellationToken);
         if (result.Success) TempData["ThanhCong"] = "Đã khóa tài khoản.";
         else TempData["Loi"] = result.Error;
         return RedirectToAction(nameof(Index));
@@ -60,11 +60,9 @@ public sealed class UsersController(AppDbContext db, IUserAdminService userAdmin
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Unlock(int id, CancellationToken cancellationToken)
     {
-        var result = await userAdmin.UnlockUserAsync(ParseCurrentUserId(), id, cancellationToken);
+        var result = await userAdmin.UnlockUserAsync(User.LayNguoiDungId(), id, cancellationToken);
         if (result.Success) TempData["ThanhCong"] = "Đã mở khóa tài khoản.";
         else TempData["Loi"] = result.Error;
         return RedirectToAction(nameof(Index));
     }
-
-    private int? ParseCurrentUserId() => int.TryParse(User.GetUserId(), out var id) ? id : null;
 }

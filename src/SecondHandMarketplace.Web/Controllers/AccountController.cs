@@ -724,7 +724,7 @@ public sealed class AccountController(
     [HttpGet]
     public async Task<IActionResult> Profile(CancellationToken cancellationToken)
     {
-        if (!int.TryParse(User.GetUserId(), out var userId)) return Challenge();
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
         var user = await authService.GetUserAsync(userId, cancellationToken);
         if (user is null) return NotFound();
         return View(new ProfileVm { HoTen = user.HoTen, Email = user.Email, SoDienThoai = user.SoDienThoai ?? string.Empty, DiaChiMacDinh = user.DiaChiMacDinh, AnhDaiDien = user.AnhDaiDien });
@@ -735,7 +735,7 @@ public sealed class AccountController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Profile(ProfileVm model, CancellationToken cancellationToken)
     {
-        if (!int.TryParse(User.GetUserId(), out var userId)) return Challenge();
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
         if (!ModelState.IsValid) return View(model);
         var result = await authService.UpdateProfileAsync(userId, model.HoTen, model.SoDienThoai, model.DiaChiMacDinh, model.AnhDaiDien, cancellationToken);
         if (!result.Success)
@@ -763,7 +763,7 @@ public sealed class AccountController(
     public async Task<IActionResult> ChangePassword(ChangePasswordVm model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return View(model);
-        if (!int.TryParse(User.GetUserId(), out var userId)) return Challenge();
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
         var result = await authService.ChangePasswordAsync(userId, model.CurrentPassword, model.NewPassword, cancellationToken);
         if (!result.Success)
         {
@@ -783,23 +783,9 @@ public sealed class AccountController(
         return RedirectToAction("Index", "Home");
     }
 
-    private async Task SignInUserAsync(int id, string email, string fullName, string role, bool persistent, string? avatar = null, string? securityStamp = null)
-    {
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, id.ToString()), new(ClaimTypes.Name, fullName),
-            new(ClaimTypes.Email, email), new(ClaimTypes.Role, role)
-        };
-        if (!string.IsNullOrWhiteSpace(avatar))
-        {
-            claims.Add(new("avatar", avatar));
-        }
-        if (!string.IsNullOrWhiteSpace(securityStamp))
-        {
-            claims.Add(new("sec_stamp", securityStamp));
-        }
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity),
+    private Task SignInUserAsync(int id, string email, string fullName, string role, bool persistent, string? avatar = null, string? securityStamp = null) =>
+        HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            DangNhapHelper.TaoPrincipal(id, email, fullName, role, avatar, securityStamp),
             new AuthenticationProperties { IsPersistent = persistent, ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7) });
-    }
 }

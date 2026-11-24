@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- Navigation & Header -->
+  <data name="Nav_Categories" xml:space="preserve"><value>Danh mục</value></data>
+  <data name="Nav_ViewAll" xml:space="preserve"><value>Xem tất cả</value></data>
+  <data name="Nav_Newest" xml:space="preserve"><value>Mới đăng</value></data>
+  <data name="Nav_BestPrice" xml:space="preserve"><value>Giá tốt</value></data>
+  <data name="Nav_Auctions" xml:space="preserve"><value>Đấu giá</value></data>
+  <data name="Nav_Admin" xml:space="preserve"><value>Quản trị</value></data>
+  <data name="Nav_SellerChannel" xml:space="preserve"><value>Kênh Người Bán</value></data>
+  <data name="Nav_Favorites" xml:space="preserve"><value>Yêu thích</value></data>
+  <data name="Nav_Cart" xml:space="preserve"><value>Giỏ hàng</value></data>
+  <data name="Nav_SellNow" xml:space="preserve"><value>Đăng bán</value></data>
+  <data name="Nav_Login" xml:space="preserve"><value>Đăng nhập</value></data>
+  <data name="Nav_Register" xml:space="preserve"><value>Đăng ký</value></data>
+  <data name="Nav_Logout" xml:space="preserve"><value>Đăng xuất</value></data>
+  <data name="Nav_Profile" xml:space="preserve"><value>Hồ sơ cá nhân</value></data>
+  <data name="Nav_ChangePassword" xml:space="preserve"><value>Đổi mật khẩu</value></data>
+  <data name="Nav_MyOrders" xml:space="preserve"><value>Đơn mua của tôi</value></data>
+  <data name="Nav_MyReviews" xml:space="preserve"><value>Đánh giá của tôi</value></data>
+  <data name="Nav_SellerOrders" xml:space="preserve"><value>Đơn bán (Shop)</value></data>
+  <data name="Nav_ShopReviews" xml:space="preserve"><value>Đánh giá cửa hàng</value></data>
+  <data name="Nav_RevenueStats" xml:space="preserve"><value>Thống kê doanh thu</value></data>
+  <data name="Nav_MyShop" xml:space="preserve"><value>Cửa hàng của tôi</value></data>
+  <data name="Nav_ManageProducts" xml:space="preserve"><value>Quản lý sản phẩm</value></data>
+  <data name="Nav_Disputes" xml:space="preserve"><value>Khiếu nại / Tranh chấp</value></data>
+  <data name="Nav_ReportHistory" xml:space="preserve"><value>Lịch sử báo cáo</value></data>
+  <data name="Search_Placeholder" xml:space="preserve"><value>Tìm món đồ bạn cần...</value></data>
+  <!-- Admin Navigation -->
+  <data name="Admin_Dashboard" xml:space="preserve"><value>Thống kê hệ thống</value></data>
+  <data name="Admin_Orders" xml:space="preserve"><value>Quản lý đơn hàng</value></data>
+  <data name="Admin_Users" xml:space="preserve"><value>Người dùng</value></data>
+  <data name="Admin_Sellers" xml:space="preserve"><value>Cửa hàng</value></data>
+  <data name="Admin_Reviews" xml:space="preserve"><value>Rà soát đánh giá shop</value></data>
+  <data name="Admin_Products" xml:space="preserve"><value>Duyệt sản phẩm</value></data>
+  <data name="Admin_Auctions" xml:space="preserve"><value>Quản lý đấu giá</value></data>
+  <data name="Admin_Categories" xml:space="preserve"><value>Danh mục</value></data>
+  <data name="Admin_Banners" xml:space="preserve"><value>Banner</value></data>
+  <data name="Admin_Disputes" xml:space="preserve"><value>Tranh chấp</value></data>
+  <data name="Admin_Reports" xml:space="preserve"><value>Báo cáo vi phạm</value></data>
+  <data name="Admin_Violations" xml:space="preserve"><value>Lịch sử vi phạm</value></data>
+  <data name="Admin_Notifications" xml:space="preserve"><value>Thông báo hệ thống</value></data>
+  <data name="Admin_ForbiddenKeywords" xml:space="preserve"><value>Từ khóa cấm</value></data>
+  <data name="Admin_AuditLogs" xml:space="preserve"><value>Nhật ký hệ thống</value></data>
+  <data name="Admin_AiSettings" xml:space="preserve"><value>Cấu hình AI</value></data>
+  <data name="Admin_BackToMarketplace" xml:space="preserve"><value>Về Marketplace</value></data>
+  <data name="Admin_PageLabel" xml:space="preserve"><value>Trang quản trị:</value></data>
+  <!-- Common Buttons & Actions -->
+  <data name="Btn_Save" xml:space="preserve"><value>Lưu thay đổi</value></data>
+  <data name="Btn_Cancel" xml:space="preserve"><value>Hủy</value></data>
+  <data name="Btn_Delete" xml:space="preserve"><value>Xóa</value></data>
+  <data name="Btn_Edit" xml:space="preserve"><value>Chỉnh sửa</value></data>
+  <data name="Btn_Search" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="Btn_Filter" xml:space="preserve"><value>Lọc</value></data>
+  <data name="Btn_Reset" xml:space="preserve"><value>Đặt lại</value></data>
+  <data name="Btn_Back" xml:space="preserve"><value>Quay lại</value></data>
+  <data name="Btn_ViewDetails" xml:space="preserve"><value>Xem chi tiết</value></data>
+  <data name="Btn_BuyNow" xml:space="preserve"><value>Mua ngay</value></data>
+  <data name="Btn_AddToCart" xml:space="preserve"><value>Thêm vào giỏ</value></data>
+  <!-- Account -->
+  <data name="Account_Login_Title" xml:space="preserve"><value>Đăng nhập</value></data>
+  <data name="Account_Register_Title" xml:space="preserve"><value>Đăng ký tài khoản</value></data>
+  <data name="Account_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Account_Password" xml:space="preserve"><value>Mật khẩu</value></data>
+  <data name="Account_ConfirmPassword" xml:space="preserve"><value>Xác nhận mật khẩu</value></data>
+  <data name="Account_FullName" xml:space="preserve"><value>Họ và tên</value></data>
+  <data name="Account_Phone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="Account_ForgotPassword" xml:space="preserve"><value>Quên mật khẩu?</value></data>
+  <!-- Footer -->
+  <data name="Footer_Slogan" xml:space="preserve"><value>Chợ đồ cũ giúp món đồ có thêm một vòng đời mới.</value></data>
+  <data name="Footer_AboutUs" xml:space="preserve"><value>Về chúng tôi</value></data>
+  <data name="Footer_About" xml:space="preserve"><value>Giới thiệu</value></data>
+  <data name="Footer_Contact" xml:space="preserve"><value>Liên hệ</value></data>
+  <data name="Footer_HelpCenter" xml:space="preserve"><value>Trung tâm trợ giúp</value></data>
+  <data name="Footer_Support" xml:space="preserve"><value>Hỗ trợ</value></data>
+  <data name="Footer_Faq" xml:space="preserve"><value>Câu hỏi thường gặp</value></data>
+  <data name="Footer_SafeTrading" xml:space="preserve"><value>Hướng dẫn giao dịch an toàn</value></data>
+  <data name="Footer_ReportViolation" xml:space="preserve"><value>Báo cáo vi phạm</value></data>
+  <data name="Footer_Policy" xml:space="preserve"><value>Chính sách</value></data>
+  <data name="Footer_Terms" xml:space="preserve"><value>Điều khoản sử dụng</value></data>
+  <data name="Footer_Privacy" xml:space="preserve"><value>Chính sách bảo mật</value></data>
+  <data name="Footer_Copyright" xml:space="preserve"><value>Bảo lưu mọi quyền.</value></data>
+</root>

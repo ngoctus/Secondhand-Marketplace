@@ -171,49 +171,6 @@
     };
 
     /**
-     * Hiển thị Modal Dialog trung tâm cho các lỗi nghiêm trọng
-     */
-    window.showErrorModal = (title, message) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'rm-modal-overlay';
-        overlay.setAttribute('role', 'dialog');
-        overlay.setAttribute('aria-modal', 'true');
-        overlay.innerHTML = `
-            <div class="rm-modal-card">
-                <div class="rm-modal-header">
-                    <div class="rm-modal-icon-badge danger" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                    </div>
-                    <h5 class="rm-modal-title">${escapeHtml(title || 'Cảnh báo nghiêm trọng')}</h5>
-                </div>
-                <div class="rm-modal-body">
-                    <p class="mb-0">${escapeHtml(message)}</p>
-                </div>
-                <div class="rm-modal-footer">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4 py-1 btn-modal-close" style="font-size:13.5px;">Đã hiểu</button>
-                </div>
-            </div>
-        `;
-
-        const close = () => {
-            overlay.remove();
-            document.body.classList.remove('rm-modal-open');
-        };
-
-        overlay.querySelector('.btn-modal-close').addEventListener('click', close);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) close();
-        });
-
-        document.body.appendChild(overlay);
-        document.body.classList.add('rm-modal-open');
-    };
-
-    /**
      * Hiển thị Modal Dialog xác nhận xóa / hủy thay thế confirm() mặc định của trình duyệt
      * @returns {Promise<boolean>}
      */
@@ -267,29 +224,6 @@
         });
     };
 
-    // Tự động gán sự kiện tắt và timeout cho các Toast được render sẵn từ Razor Server-side (_ThongBao.cshtml)
-    window.addEventListener('DOMContentLoaded', () => {
-        const toasts = document.querySelectorAll('.rm-toasts .rm-toast');
-        toasts.forEach(toast => {
-            const dismiss = () => {
-                if (toast.dataset.dismissing) return;
-                toast.dataset.dismissing = 'true';
-                toast.classList.add('rm-toast-hiding');
-                setTimeout(() => toast.remove(), 250);
-            };
-
-            const closeBtn = toast.querySelector('.rm-toast-close');
-            if (closeBtn) closeBtn.addEventListener('click', dismiss);
-
-            // Toast thành công / cảnh báo tự ẩn sau 4 giây
-            if (toast.classList.contains('rm-toast-success') || toast.classList.contains('rm-toast-warning')) {
-                setTimeout(dismiss, 4000);
-            } else if (toast.classList.contains('rm-toast-error')) {
-                setTimeout(dismiss, 6000);
-            }
-        });
-    });
-
     // Bắt sự kiện submit form có attribute data-confirm
     document.addEventListener('submit', async (e) => {
         const form = e.target;
@@ -306,62 +240,6 @@
         if (ok) {
             form.removeAttribute('data-confirm');
             form.submit();
-        }
-    });
-
-    // Thêm vào giỏ hàng qua AJAX: mượt mà, không giật trang, hiển thị Toast ngay lập tức
-    document.addEventListener('submit', async (e) => {
-        const form = e.target;
-        if (!form.matches || !form.matches('form[action*="/User/Cart/Them"], form[action*="/Cart/Them"]')) return;
-
-        const btn = form.querySelector('button[type="submit"]');
-        if (!btn) return;
-
-        e.preventDefault();
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang thêm...';
-
-        try {
-            const formData = new FormData(form);
-            const res = await fetch(form.action, {
-                method: 'POST',
-                body: new URLSearchParams(formData),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            if (res.redirected) {
-                window.location.href = res.url;
-                return;
-            }
-
-            const data = await res.json();
-            if (data.success) {
-                window.showToast(data.message || 'Đã thêm vào giỏ hàng!', 'success');
-                // Cập nhật số lượng giỏ hàng trên thanh điều hướng (header desktop + mobile)
-                const badges = document.querySelectorAll('.rm-cart-badge, #rmCartBadge, .rm-cart-badge-mobile');
-                badges.forEach(cartBadge => {
-                    let newCount = (typeof data.cartCount === 'number' && data.cartCount > 0)
-                        ? data.cartCount
-                        : (parseInt(cartBadge.textContent, 10) || 0) + 1;
-                    cartBadge.textContent = newCount > 99 ? '99+' : newCount;
-                    cartBadge.style.display = cartBadge.classList.contains('rm-cart-badge-mobile') ? 'inline-block' : 'inline-flex';
-                    cartBadge.hidden = false;
-                    cartBadge.style.animation = 'none';
-                    cartBadge.offsetHeight; /* trigger reflow */
-                    cartBadge.style.animation = 'rmBadgePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                });
-            } else {
-                window.showToast(data.message || 'Không thể thêm vào giỏ hàng.', 'error');
-            }
-        } catch {
-            // Nếu có sự cố fetch thì submit bình thường theo luồng mặc định
-            form.submit();
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
         }
     });
 })();
@@ -747,28 +625,34 @@
         }
     });
 
-    const updateCartCount = async () => {
-        const cartBadge = document.getElementById('rmCartBadge');
+    const updateCartCount = async (exactCount) => {
+        const applyCount = (c) => {
+            document.querySelectorAll('.rm-cart-badge, #rmCartBadge, .rm-cart-badge-mobile').forEach(badge => {
+                if (c > 0) {
+                    badge.textContent = c > 99 ? '99+' : String(c);
+                    badge.style.display = badge.classList.contains('rm-cart-badge-mobile') ? 'inline-block' : 'inline-flex';
+                    badge.hidden = false;
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        };
+
+        if (typeof exactCount === 'number') {
+            applyCount(exactCount);
+            return;
+        }
+
         try {
             const res = await fetch('/User/Cart/DemSoLuong');
             if (res.ok) {
                 const data = await res.json();
-                if (cartBadge) {
-                    if (data.count > 0) {
-                        cartBadge.textContent = data.count > 99 ? '99+' : data.count;
-                        cartBadge.style.display = 'inline-block';
-                    } else {
-                        cartBadge.style.display = 'none';
-                    }
+                if (typeof data.count === 'number') {
+                    applyCount(data.count);
                 }
             }
         } catch { }
     };
-
-    // Tự động load số lượng giỏ hàng khi có đăng nhập
-    if (document.querySelector('meta[name="rm-csrf"]')) {
-        updateCartCount();
-    }
 
     // Bắt sự kiện submit form Thêm vào giỏ
     document.addEventListener('submit', async (e) => {
@@ -838,7 +722,7 @@
                     });
                 }
 
-                updateCartCount();
+                updateCartCount(typeof data.cartCount === 'number' ? data.cartCount : undefined);
             } else {
                 window.showNotifyBox({
                     title: 'Thông báo giỏ hàng',

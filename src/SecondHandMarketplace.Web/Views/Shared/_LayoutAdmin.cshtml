@@ -50,43 +50,52 @@
             </div>
             <nav class="admin-nav" aria-label="Menu Quản Trị">
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                    <i class="bi bi-speedometer2"></i> <span>Thống kê hệ thống</span>
+                    <i class="bi bi-speedometer2"></i> <span>@L["Admin_Dashboard"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Orders" asp-action="Index">
-                    <i class="bi bi-box-seam"></i> <span>Quản lý đơn hàng</span>
+                    <i class="bi bi-box-seam"></i> <span>@L["Admin_Orders"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Users" asp-action="Index">
-                    <i class="bi bi-people"></i> <span>Người dùng</span>
+                    <i class="bi bi-people"></i> <span>@L["Admin_Users"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Sellers" asp-action="Index">
-                    <i class="bi bi-shop"></i> <span>Cửa hàng</span>
+                    <i class="bi bi-shop"></i> <span>@L["Admin_Sellers"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Reviews" asp-action="Index">
-                    <i class="bi bi-star"></i> <span>Rà soát đánh giá shop</span>
+                    <i class="bi bi-star"></i> <span>@L["Admin_Reviews"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Products" asp-action="Index">
-                    <i class="bi bi-check2-circle"></i> <span>Duyệt sản phẩm</span>
+                    <i class="bi bi-check2-circle"></i> <span>@L["Admin_Products"]</span>
+                </a>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="Auctions" asp-action="Index">
+                    <i class="bi bi-hammer"></i> <span>@L["Admin_Auctions"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Categories" asp-action="Index">
-                    <i class="bi bi-grid"></i> <span>Danh mục</span>
+                    <i class="bi bi-grid"></i> <span>@L["Admin_Categories"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Banners" asp-action="Index">
-                    <i class="bi bi-images"></i> <span>Banner</span>
+                    <i class="bi bi-images"></i> <span>@L["Admin_Banners"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Disputes" asp-action="Index">
-                    <i class="bi bi-exclamation-octagon"></i> <span>Tranh chấp</span>
+                    <i class="bi bi-exclamation-octagon"></i> <span>@L["Admin_Disputes"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Reports" asp-action="Index">
-                    <i class="bi bi-flag"></i> <span>Báo cáo vi phạm</span>
+                    <i class="bi bi-flag"></i> <span>@L["Admin_Reports"]</span>
+                </a>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="Violations" asp-action="Index">
+                    <i class="bi bi-shield-exclamation"></i> <span>@L["Admin_Violations"]</span>
+                </a>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="Notifications" asp-action="Index">
+                    <i class="bi bi-megaphone"></i> <span>@L["Admin_Notifications"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="ForbiddenKeywords" asp-action="Index">
-                    <i class="bi bi-slash-circle"></i> <span>Từ khóa cấm</span>
+                    <i class="bi bi-slash-circle"></i> <span>@L["Admin_ForbiddenKeywords"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">
-                    <i class="bi bi-journal-text"></i> <span>Nhật ký hệ thống</span>
+                    <i class="bi bi-journal-text"></i> <span>@L["Admin_AuditLogs"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="AiSettings" asp-action="Index">
-                    <i class="bi bi-robot"></i> <span>Cấu hình AI</span>
+                    <i class="bi bi-robot"></i> <span>@L["Admin_AiSettings"]</span>
                 </a>
             </nav>
         </aside>
@@ -96,19 +105,20 @@
             <!-- Topbar -->
             <header class="admin-topbar">
                 <div class="d-flex align-items-center gap-2">
-                    <span class="text-secondary small">Trang quản trị:</span>
+                    <span class="text-secondary small">@L["Admin_PageLabel"]</span>
                     <strong class="text-dark small">@ViewData["Title"]</strong>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                    <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" target="_blank" title="Mở trang chủ khách hàng">
+                    <partial name="_LanguageSwitcher" />
+                    <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" target="_blank" title="@L["Admin_BackToMarketplace"]">
                         <i class="bi bi-box-arrow-up-right"></i>
-                        <span>Về Marketplace</span>
+                        <span>@L["Admin_BackToMarketplace"]</span>
                     </a>
                     <div class="d-flex align-items-center gap-2 border-start ps-3">
                         <span class="badge bg-danger">ADMIN</span>
                         <span class="small fw-semibold text-dark">@User.Identity?.Name</span>
                         <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="m-0 p-0">
-                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-2 text-decoration-none" title="Đăng xuất">
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-2 text-decoration-none" title="@L["Nav_Logout"]">
                                 <i class="bi bi-box-arrow-right"></i>
                             </button>
                         </form>

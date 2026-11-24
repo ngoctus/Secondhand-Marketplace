@@ -46,7 +46,7 @@ public sealed class AiSettingsController : AdminBaseController
 
         if (ModelState.IsValid)
         {
-            int? adminId = int.TryParse(User.GetUserId(), out var id) ? id : null;
+            var adminId = User.LayNguoiDungId();
             var (success, error) = await _settings.SaveAsync(vm.Enabled, vm.ModelName, vm.SystemPrompt, adminId, cancellationToken);
             if (success)
             {

@@ -25,7 +25,7 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
     public async Task<IActionResult> Approve(int id, CancellationToken cancellationToken)
     {
         if (id <= 0) return NotFound();
-        if (!TryGetAdminId(out var adminId)) return Forbid();
+        if (User.LayNguoiDungId() is not int adminId) return Forbid();
 
         var result = await reviews.ApproveAsync(adminId, id, cancellationToken);
         return Report(result, id, "Đã duyệt sản phẩm.", ProductReviewTabs.Pending);
@@ -34,7 +34,7 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> ApproveGreenLane(int[] productIds, CancellationToken cancellationToken)
     {
-        if (!TryGetAdminId(out var adminId)) return Forbid();
+        if (User.LayNguoiDungId() is not int adminId) return Forbid();
 
         var result = await reviews.ApproveGreenLaneAsync(adminId, productIds ?? Array.Empty<int>(), cancellationToken);
         if (!result.Success)
@@ -55,7 +55,7 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
     public async Task<IActionResult> Reject(int id, ReviewReasonVm input, CancellationToken cancellationToken)
     {
         if (id <= 0) return NotFound();
-        if (!TryGetAdminId(out var adminId)) return Forbid();
+        if (User.LayNguoiDungId() is not int adminId) return Forbid();
         if (!ModelState.IsValid) return InvalidInput(id);
 
         var result = await reviews.RejectAsync(adminId, id, input.Reason, cancellationToken);
@@ -66,7 +66,7 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
     public async Task<IActionResult> Remove(int id, ReviewReasonVm input, CancellationToken cancellationToken)
     {
         if (id <= 0) return NotFound();
-        if (!TryGetAdminId(out var adminId)) return Forbid();
+        if (User.LayNguoiDungId() is not int adminId) return Forbid();
         if (!ModelState.IsValid) return InvalidInput(id);
 
         var result = await reviews.RemoveProductAsync(adminId, id, input.Reason, cancellationToken);
@@ -94,6 +94,4 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
         TempData["ThanhCong"] = message;
         return RedirectToAction(nameof(Index), new { tab });
     }
-
-    private bool TryGetAdminId(out int adminId) => int.TryParse(User.GetUserId(), out adminId) && adminId > 0;
 }

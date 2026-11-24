@@ -16,13 +16,4 @@ public static class ControllerExtensions
 
     public static void ThongBaoCanhBao(this Controller controller, string noiDung) =>
         controller.TempData["CanhBao"] = noiDung;
-
-    /// <summary>
-    /// Hiển thị Modal Dialog trung tâm cho các lỗi hoặc cảnh báo nghiêm trọng (Task C-01).
-    /// </summary>
-    public static void ThongBaoModalLoi(this Controller controller, string noiDung, string tieuDe = "Cảnh báo nghiêm trọng")
-    {
-        controller.TempData["ModalLoi"] = noiDung;
-        controller.TempData["ModalTieuDe"] = tieuDe;
-    }
 }

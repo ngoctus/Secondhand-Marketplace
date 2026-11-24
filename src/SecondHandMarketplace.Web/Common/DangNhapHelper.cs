@@ -43,10 +43,4 @@ public static class DangNhapHelper
         var giaTri = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(giaTri, out var id) ? id : null;
     }
-
-    public static string? LayVaiTro(this ClaimsPrincipal user) =>
-        user.FindFirst(ClaimTypes.Role)?.Value;
-
-    public static bool LaAdmin(this ClaimsPrincipal user) =>
-        user.IsInRole("ADMIN");
 }

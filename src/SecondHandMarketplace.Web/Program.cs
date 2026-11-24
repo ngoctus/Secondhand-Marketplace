@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -22,7 +24,30 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddControllersWithViews();
+        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+        builder.Services.AddControllersWithViews()
+            .AddViewLocalization()
+            .AddDataAnnotationsLocalization(options =>
+            {
+                options.DataAnnotationLocalizerProvider = (_, factory) =>
+                    factory.Create(typeof(SharedResource));
+            });
+        builder.Services.Configure<RequestLocalizationOptions>(options =>
+        {
+            var supportedCultures = new[]
+            {
+                new CultureInfo("vi-VN"),
+                new CultureInfo("en-US")
+            };
+            options.DefaultRequestCulture = new RequestCulture("vi-VN");
+            options.SupportedCultures = supportedCultures;
+            options.SupportedUICultures = supportedCultures;
+            options.RequestCultureProviders = new IRequestCultureProvider[]
+            {
+                new CookieRequestCultureProvider(),
+                new QueryStringRequestCultureProvider()
+            };
+        });
         builder.Services.AddMemoryCache();
         builder.Services.AddDataProtection();
         builder.Services.AddRateLimiter(options =>
@@ -275,6 +300,7 @@ public class Program
             branch => branch.UseStatusCodePagesWithReExecute("/Home/TrangLoi", "?ma={0}"));
         app.UseHttpsRedirection();
         app.UseStaticFiles();   // Phục vụ file trong wwwroot (ảnh seed, css, js...)
+        app.UseRequestLocalization();
         app.UseRouting();
         app.UseRateLimiter();
         app.UseAuthentication();

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- Navigation & Header -->
+  <data name="Nav_Categories" xml:space="preserve"><value>Categories</value></data>
+  <data name="Nav_ViewAll" xml:space="preserve"><value>View All</value></data>
+  <data name="Nav_Newest" xml:space="preserve"><value>New Arrivals</value></data>
+  <data name="Nav_BestPrice" xml:space="preserve"><value>Best Deals</value></data>
+  <data name="Nav_Auctions" xml:space="preserve"><value>Auctions</value></data>
+  <data name="Nav_Admin" xml:space="preserve"><value>Admin</value></data>
+  <data name="Nav_SellerChannel" xml:space="preserve"><value>Seller Center</value></data>
+  <data name="Nav_Favorites" xml:space="preserve"><value>Favorites</value></data>
+  <data name="Nav_Cart" xml:space="preserve"><value>Cart</value></data>
+  <data name="Nav_SellNow" xml:space="preserve"><value>Sell Now</value></data>
+  <data name="Nav_Login" xml:space="preserve"><value>Sign In</value></data>
+  <data name="Nav_Register" xml:space="preserve"><value>Sign Up</value></data>
+  <data name="Nav_Logout" xml:space="preserve"><value>Sign Out</value></data>
+  <data name="Nav_Profile" xml:space="preserve"><value>My Profile</value></data>
+  <data name="Nav_ChangePassword" xml:space="preserve"><value>Change Password</value></data>
+  <data name="Nav_MyOrders" xml:space="preserve"><value>My Purchases</value></data>
+  <data name="Nav_MyReviews" xml:space="preserve"><value>My Reviews</value></data>
+  <data name="Nav_SellerOrders" xml:space="preserve"><value>Shop Orders</value></data>
+  <data name="Nav_ShopReviews" xml:space="preserve"><value>Shop Reviews</value></data>
+  <data name="Nav_RevenueStats" xml:space="preserve"><value>Revenue Analytics</value></data>
+  <data name="Nav_MyShop" xml:space="preserve"><value>My Shop</value></data>
+  <data name="Nav_ManageProducts" xml:space="preserve"><value>Manage Products</value></data>
+  <data name="Nav_Disputes" xml:space="preserve"><value>Disputes &amp; Claims</value></data>
+  <data name="Nav_ReportHistory" xml:space="preserve"><value>Report History</value></data>
+  <data name="Search_Placeholder" xml:space="preserve"><value>Search for second-hand items...</value></data>
+  <!-- Admin Navigation -->
+  <data name="Admin_Dashboard" xml:space="preserve"><value>System Dashboard</value></data>
+  <data name="Admin_Orders" xml:space="preserve"><value>Order Management</value></data>
+  <data name="Admin_Users" xml:space="preserve"><value>Users</value></data>
+  <data name="Admin_Sellers" xml:space="preserve"><value>Shops</value></data>
+  <data name="Admin_Reviews" xml:space="preserve"><value>Low-Rated Shops Review</value></data>
+  <data name="Admin_Products" xml:space="preserve"><value>Product Moderation</value></data>
+  <data name="Admin_Auctions" xml:space="preserve"><value>Auction Management</value></data>
+  <data name="Admin_Categories" xml:space="preserve"><value>Categories</value></data>
+  <data name="Admin_Banners" xml:space="preserve"><value>Banners</value></data>
+  <data name="Admin_Disputes" xml:space="preserve"><value>Disputes</value></data>
+  <data name="Admin_Reports" xml:space="preserve"><value>Violation Reports</value></data>
+  <data name="Admin_Violations" xml:space="preserve"><value>Violation History</value></data>
+  <data name="Admin_Notifications" xml:space="preserve"><value>System Notifications</value></data>
+  <data name="Admin_ForbiddenKeywords" xml:space="preserve"><value>Forbidden Keywords</value></data>
+  <data name="Admin_AuditLogs" xml:space="preserve"><value>Audit Logs</value></data>
+  <data name="Admin_AiSettings" xml:space="preserve"><value>AI Settings</value></data>
+  <data name="Admin_BackToMarketplace" xml:space="preserve"><value>Back to Marketplace</value></data>
+  <data name="Admin_PageLabel" xml:space="preserve"><value>Admin Panel:</value></data>
+  <!-- Common Buttons & Actions -->
+  <data name="Btn_Save" xml:space="preserve"><value>Save Changes</value></data>
+  <data name="Btn_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Btn_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Btn_Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Btn_Search" xml:space="preserve"><value>Search</value></data>
+  <data name="Btn_Filter" xml:space="preserve"><value>Filter</value></data>
+  <data name="Btn_Reset" xml:space="preserve"><value>Reset</value></data>
+  <data name="Btn_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Btn_ViewDetails" xml:space="preserve"><value>View Details</value></data>
+  <data name="Btn_BuyNow" xml:space="preserve"><value>Buy Now</value></data>
+  <data name="Btn_AddToCart" xml:space="preserve"><value>Add to Cart</value></data>
+  <!-- Account -->
+  <data name="Account_Login_Title" xml:space="preserve"><value>Sign In</value></data>
+  <data name="Account_Register_Title" xml:space="preserve"><value>Create an Account</value></data>
+  <data name="Account_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Account_Password" xml:space="preserve"><value>Password</value></data>
+  <data name="Account_ConfirmPassword" xml:space="preserve"><value>Confirm Password</value></data>
+  <data name="Account_FullName" xml:space="preserve"><value>Full Name</value></data>
+  <data name="Account_Phone" xml:space="preserve"><value>Phone Number</value></data>
+  <data name="Account_ForgotPassword" xml:space="preserve"><value>Forgot password?</value></data>
+  <!-- Footer -->
+  <data name="Footer_Slogan" xml:space="preserve"><value>Smart second-hand marketplace giving pre-loved items a second life.</value></data>
+  <data name="Footer_AboutUs" xml:space="preserve"><value>About Us</value></data>
+  <data name="Footer_About" xml:space="preserve"><value>About Re:Market</value></data>
+  <data name="Footer_Contact" xml:space="preserve"><value>Contact</value></data>
+  <data name="Footer_HelpCenter" xml:space="preserve"><value>Help Center</value></data>
+  <data name="Footer_Support" xml:space="preserve"><value>Support</value></data>
+  <data name="Footer_Faq" xml:space="preserve"><value>FAQ</value></data>
+  <data name="Footer_SafeTrading" xml:space="preserve"><value>Safe Trading Guide</value></data>
+  <data name="Footer_ReportViolation" xml:space="preserve"><value>Report a Violation</value></data>
+  <data name="Footer_Policy" xml:space="preserve"><value>Policies</value></data>
+  <data name="Footer_Terms" xml:space="preserve"><value>Terms of Service</value></data>
+  <data name="Footer_Privacy" xml:space="preserve"><value>Privacy Policy</value></data>
+  <data name="Footer_Copyright" xml:space="preserve"><value>All rights reserved.</value></data>
+</root>

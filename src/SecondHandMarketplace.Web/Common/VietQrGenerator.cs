@@ -68,15 +68,6 @@ public static class VietQrGenerator
     }
 
     /// <summary>
-    /// Sinh trọn gói ảnh mã QR giả định / VietQR chuẩn trực tiếp thành Data URL.
-    /// </summary>
-    public static string GenerateMockQrDataUrl(string bankCode, string accountNumber, decimal amount, string message)
-    {
-        string payload = GeneratePayload(bankCode, accountNumber, amount, message);
-        return GenerateQrBase64(payload);
-    }
-
-    /// <summary>
     /// Tính toán CRC16 checksum theo chuẩn ISO/IEC 13239 (Đúng theo bài giảng của thầy).
     /// </summary>
     public static string GenerateCheckSum(string text)
