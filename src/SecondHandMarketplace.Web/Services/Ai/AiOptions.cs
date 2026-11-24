@@ -15,7 +15,7 @@ public sealed class AiOptions
     public const string DefaultEndpoint = "https://generativelanguage.googleapis.com/v1beta/models";
 
     public static readonly IReadOnlyList<string> DefaultAllowedModels =
-        new[] { "gemini-3.1-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash" };
+        new[] { "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash" };
 
     /// <summary>System Prompt mặc định khi database chưa có cấu hình; giữ đồng bộ với database/20_cauhinh_ai.sql.</summary>
     public const string DefaultSystemPromptText =
@@ -74,7 +74,25 @@ public sealed class AiOptions
     public int ModerationMaxImages { get; init; } = 2;
 
     /// <summary>
-    /// Danh sách key theo thứ tự ưu tiên cho AI kiểm duyệt:
+    /// Danh sách key theo thứ tự ưu tiên cho Chatbox AI / Gợi ý giá (C-03):
+    /// Ưu tiên ApiKey, sau đó auto-failover sang FallbackApiKey (tái sử dụng từ C-01).
+    /// </summary>
+    public IReadOnlyList<string> GetChatApiKeys()
+    {
+        var keys = new List<string>(2);
+        if (!string.IsNullOrWhiteSpace(ApiKey))
+            keys.Add(ApiKey.Trim());
+        if (!string.IsNullOrWhiteSpace(FallbackApiKey))
+        {
+            var fallback = FallbackApiKey.Trim();
+            if (!keys.Any(k => string.Equals(k, fallback, StringComparison.Ordinal)))
+                keys.Add(fallback);
+        }
+        return keys;
+    }
+
+    /// <summary>
+    /// Danh sách key theo thứ tự ưu tiên cho AI kiểm duyệt sản phẩm:
     /// Ưu tiên ModerationApiKey (nếu có, nếu trống thì dùng ApiKey), sau đó auto-failover sang FallbackApiKey.
     /// </summary>
     public IReadOnlyList<string> GetModerationApiKeys()

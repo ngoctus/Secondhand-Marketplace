@@ -12,5 +12,6 @@
     <script src="~/js/ai-chat.js" asp-append-version="true" defer
             data-chat-url="@Url.Content("~/api/ai/chat")"
             data-status-url="@Url.Content("~/api/ai/status")"
-            data-csrf-token="@csrfToken"></script>
+            data-csrf-token="@csrfToken"
+            data-lang="@(HienThi.LaTiengAnh ? "en" : "vi")"></script>
 }

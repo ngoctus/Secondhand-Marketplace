@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Common.Constants;
+using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Services.Areas;
 using SecondHandMarketplace.Web.Services.Categories;
@@ -96,25 +97,33 @@ public sealed class AiToolExecutor
         return result;
     }
 
-    public async Task<AiToolResult> ExecuteAsync(string role, string toolName, JsonElement input, CancellationToken cancellationToken)
+    public Task<AiToolResult> ExecuteAsync(string role, string toolName, JsonElement input, CancellationToken cancellationToken) =>
+        ExecuteAsync(role, toolName, input, language: AiLanguage.Vietnamese, cancellationToken);
+
+    public async Task<AiToolResult> ExecuteAsync(string role, string toolName, JsonElement input, string? language, CancellationToken cancellationToken)
     {
+        var lang = AiLanguage.Normalize(language);
         if (!IsAllowed(role, toolName))
-            return AiToolResult.Error("Công cụ không tồn tại hoặc không được phép sử dụng.");
+            return AiToolResult.Error(AiLanguage.Choose(lang,
+                "Công cụ không tồn tại hoặc không được phép sử dụng.",
+                "Tool does not exist or is not allowed for your role."));
 
         return toolName switch
         {
-            SearchProducts => await SearchAsync(input, cancellationToken),
-            RecommendProducts => await RecommendAsync(input, cancellationToken),
-            DraftProductDescription => DraftDescription(input),
-            _ => AiToolResult.Error("Công cụ không tồn tại hoặc không được phép sử dụng.")
+            SearchProducts => await SearchAsync(input, lang, cancellationToken),
+            RecommendProducts => await RecommendAsync(input, lang, cancellationToken),
+            DraftProductDescription => DraftDescription(input, lang),
+            _ => AiToolResult.Error(AiLanguage.Choose(lang,
+                "Công cụ không tồn tại hoặc không được phép sử dụng.",
+                "Tool does not exist or is not allowed for your role."))
         };
     }
 
     // ------------------------------------------------------------------ 1. Tìm kiếm sản phẩm
 
-    private async Task<AiToolResult> SearchAsync(JsonElement args, CancellationToken ct)
+    private async Task<AiToolResult> SearchAsync(JsonElement args, string lang, CancellationToken ct)
     {
-        var (filter, error) = await BuildFilterAsync(args, ct);
+        var (filter, error) = await BuildFilterAsync(args, lang, ct);
         if (filter is null) return AiToolResult.Error(error!);
 
         var limit = ReadLimit(args, defaultValue: 6, max: 10);
@@ -128,16 +137,18 @@ public sealed class AiToolExecutor
             shownCount = shown.Count,
             products = shown,
             note = found.TotalItems == 0
-                ? "Không có sản phẩm nào khớp. Hãy báo rõ điều này; có thể thử từ khóa khác hoặc nới bộ lọc."
+                ? AiLanguage.Choose(lang,
+                    "Không có sản phẩm nào khớp. Hãy báo rõ điều này; có thể thử từ khóa khác hoặc nới bộ lọc.",
+                    "No matching products found. Clearly inform the user; you may try broader keywords or relaxed filters.")
                 : null
         });
     }
 
     // ------------------------------------------------------------------ 2. Gợi ý sản phẩm
 
-    private async Task<AiToolResult> RecommendAsync(JsonElement args, CancellationToken ct)
+    private async Task<AiToolResult> RecommendAsync(JsonElement args, string lang, CancellationToken ct)
     {
-        var (filter, error) = await BuildFilterAsync(args, ct);
+        var (filter, error) = await BuildFilterAsync(args, lang, ct);
         if (filter is null) return AiToolResult.Error(error!);
 
         var limit = ReadLimit(args, defaultValue: 5, max: 8);
@@ -168,8 +179,12 @@ public sealed class AiToolExecutor
             candidateCount = candidates.Count,
             candidates,
             note = candidates.Count == 0
-                ? "Hiện chưa có sản phẩm phù hợp trong hệ thống. Hãy nói rõ điều này, không tự nghĩ ra sản phẩm."
-                : "Chỉ được gợi ý trong danh sách candidates, nêu đúng giá và thông tin như trên."
+                ? AiLanguage.Choose(lang,
+                    "Hiện chưa có sản phẩm phù hợp trong hệ thống. Hãy nói rõ điều này, không tự nghĩ ra sản phẩm.",
+                    "There are currently no matching products in the marketplace. Clearly tell the user and do not invent products.")
+                : AiLanguage.Choose(lang,
+                    "Chỉ được gợi ý trong danh sách candidates, nêu đúng giá và thông tin như trên.",
+                    "Recommend ONLY from the candidates list above, stating exact prices in VND and accurate details.")
         });
     }
 
@@ -179,11 +194,13 @@ public sealed class AiToolExecutor
     /// Không truy cập database và không ghi gì. Công cụ kiểm tra thông tin người dùng cung cấp rồi trả lại đúng các thông tin đó
     /// kèm quy tắc, để AI soạn mô tả mà không thêm dữ kiện nào ngoài dữ liệu đầu vào.
     /// </summary>
-    private static AiToolResult DraftDescription(JsonElement args)
+    private static AiToolResult DraftDescription(JsonElement args, string lang)
     {
         var name = ReadString(args, "name", NameMaxLength);
         if (string.IsNullOrEmpty(name))
-            return AiToolResult.Error("Thiếu tên sản phẩm. Hãy hỏi người dùng tên sản phẩm cần viết mô tả.");
+            return AiToolResult.Error(AiLanguage.Choose(lang,
+                "Thiếu tên sản phẩm. Hãy hỏi người dùng tên sản phẩm cần viết mô tả.",
+                "Missing product name. Please ask the user for the product name."));
 
         var category = ReadString(args, "category", KeywordMaxLength);
         var condition = ReadString(args, "condition", KeywordMaxLength);
@@ -194,7 +211,9 @@ public sealed class AiToolExecutor
             return AiToolResult.Error(priceError!);
 
         if (category is null && condition is null && details is null && currentDescription is null && price is null)
-            return AiToolResult.Error("Chưa có đủ thông tin để viết mô tả. Hãy hỏi người dùng thêm tình trạng, đặc điểm hoặc mô tả hiện có.");
+            return AiToolResult.Error(AiLanguage.Choose(lang,
+                "Chưa có đủ thông tin để viết mô tả. Hãy hỏi người dùng thêm tình trạng, đặc điểm hoặc mô tả hiện có.",
+                "Not enough information to draft a description. Ask the user for condition, details, or an existing description."));
 
         var provided = new Dictionary<string, object>();
         provided["name"] = name;
@@ -204,29 +223,42 @@ public sealed class AiToolExecutor
         if (details is not null) provided["details"] = details;
         if (currentDescription is not null) provided["currentDescription"] = currentDescription;
 
-        return Ok(new
-        {
-            provided,
-            instructions = new[]
+        var instructions = AiLanguage.IsEnglish(lang)
+            ? new[]
+            {
+                "Write a clear, easy-to-read secondhand product listing description in English based ONLY on the information in 'provided'.",
+                "Do not add any specs, condition claims, accessories, warranty, reason for selling, or guarantees that are not in 'provided'.",
+                "If important details are missing, briefly note what the seller should fill in instead of making things up.",
+                "This is only a draft for the user to review and post; you do not create or edit listings."
+            }
+            : new[]
             {
                 "Viết mô tả đăng bán bằng tiếng Việt, rõ ràng, dễ đọc, dựa CHỈ trên các thông tin trong 'provided'.",
                 "Không thêm bất kỳ thông số, tình trạng, phụ kiện, bảo hành, lý do bán hay cam kết nào không có trong 'provided'.",
                 "Nếu thiếu thông tin quan trọng, nêu ngắn gọn cần bổ sung gì thay vì tự bịa.",
                 "Đây chỉ là bản nháp để người dùng tự chỉnh và tự đăng; bạn không đăng hay sửa sản phẩm."
-            }
+            };
+
+        return Ok(new
+        {
+            provided,
+            language = lang,
+            instructions
         });
     }
 
     // ------------------------------------------------------------------ Bộ lọc dùng chung (tìm kiếm / gợi ý)
 
-    private async Task<(ProductSearchVm? Filter, string? Error)> BuildFilterAsync(JsonElement args, CancellationToken ct)
+    private async Task<(ProductSearchVm? Filter, string? Error)> BuildFilterAsync(JsonElement args, string lang, CancellationToken ct)
     {
         var filter = new ProductSearchVm { Keyword = ReadString(args, "keyword", KeywordMaxLength) };
 
         if (!TryReadDecimal(args, "min_price", out var min, out var minError)) return (null, minError);
         if (!TryReadDecimal(args, "max_price", out var max, out var maxError)) return (null, maxError);
         if (min is not null && max is not null && min > max)
-            return (null, "min_price không được lớn hơn max_price.");
+            return (null, AiLanguage.Choose(lang,
+                "min_price không được lớn hơn max_price.",
+                "min_price cannot be greater than max_price."));
         filter.MinPrice = min;
         filter.MaxPrice = max;
 
@@ -234,7 +266,7 @@ public sealed class AiToolExecutor
         if (categoryName is not null)
         {
             var categories = (await _categories.GetCategoriesAsync(ct)).Where(c => c.DangHienThi).ToList();
-            var match = FindByName(categories, c => c.Ten, categoryName);
+            var match = FindCategoryByName(categories, categoryName);
             if (match is null)
                 return (null, $"Không có danh mục '{categoryName}'. Danh mục hiện có: {string.Join(", ", categories.Select(c => c.Ten))}.");
             filter.CategoryId = match.MaDanhMuc;
@@ -244,7 +276,7 @@ public sealed class AiToolExecutor
         if (conditionName is not null)
         {
             var conditions = (await _categories.GetConditionsAsync(ct)).Where(c => c.DangSuDung).ToList();
-            var match = FindByName(conditions, c => c.Ten, conditionName);
+            var match = FindConditionByName(conditions, conditionName);
             if (match is null)
                 return (null, $"Không có tình trạng '{conditionName}'. Tình trạng hiện có: {string.Join(", ", conditions.Select(c => c.Ten))}.");
             filter.ConditionId = match.MaTinhTrang;
@@ -342,6 +374,84 @@ public sealed class AiToolExecutor
             var n = keyOf(nameOf(x));
             return n.Length > 0 && (n.Contains(key, StringComparison.Ordinal) || key.Contains(n, StringComparison.Ordinal));
         });
+    }
+
+    // Ánh xạ tên tiếng Anh (từ HienThi.cs + từ đồng nghĩa phổ biến) về khóa danh mục/tình trạng tiếng Việt trong DB.
+    private static readonly IReadOnlyDictionary<string, string> CategoryEnglishAliases =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["fashion"] = "thoi trang",
+            ["clothing"] = "thoi trang",
+            ["clothes"] = "thoi trang",
+            ["apparel"] = "thoi trang",
+            ["electronics"] = "do dien tu",
+            ["electronic"] = "do dien tu",
+            ["home appliances"] = "do gia dung",
+            ["appliances"] = "do gia dung",
+            ["books & stationery"] = "sach & van phong pham",
+            ["books and stationery"] = "sach & van phong pham",
+            ["books"] = "sach & van phong pham",
+            ["stationery"] = "sach & van phong pham",
+            ["vehicles & accessories"] = "xe co & phu kien",
+            ["vehicles and accessories"] = "xe co & phu kien",
+            ["vehicles"] = "xe co & phu kien",
+            ["toys, mom & baby"] = "do choi & me be",
+            ["toys"] = "do choi & me be",
+            ["mom & baby"] = "do choi & me be",
+            ["baby"] = "do choi & me be",
+            ["sports & outdoors"] = "the thao & da ngoai",
+            ["sports and outdoors"] = "the thao & da ngoai",
+            ["sports"] = "the thao & da ngoai",
+            ["outdoors"] = "the thao & da ngoai",
+            ["furniture"] = "noi that",
+            ["others"] = "khac",
+            ["other"] = "khac"
+        };
+
+    private static readonly IReadOnlyDictionary<string, string> ConditionEnglishAliases =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["new"] = "NEW",
+            ["brand new"] = "NEW",
+            ["brand new (100%)"] = "NEW",
+            ["brand new 100%"] = "NEW",
+            ["like new"] = "LIKE_NEW",
+            ["like_new"] = "LIKE_NEW",
+            ["almost new"] = "LIKE_NEW",
+            ["good"] = "GOOD",
+            ["fair"] = "FAIR",
+            ["well worn"] = "WORN",
+            ["worn"] = "WORN",
+            ["used"] = "WORN",
+            ["old"] = "WORN"
+        };
+
+    internal static DanhMuc? FindCategoryByName(IReadOnlyList<DanhMuc> categories, string wanted)
+    {
+        var direct = FindByName(categories, c => c.Ten, wanted);
+        if (direct is not null) return direct;
+
+        var key = TextHelper.ChuanHoa(wanted);
+        if (CategoryEnglishAliases.TryGetValue(key, out var mappedVi))
+            return FindByName(categories, c => c.Ten, mappedVi);
+
+        return null;
+    }
+
+    internal static TinhTrangSanPham? FindConditionByName(IReadOnlyList<TinhTrangSanPham> conditions, string wanted)
+    {
+        var direct = FindByName(conditions, c => c.Ten, wanted);
+        if (direct is not null) return direct;
+
+        var trimmed = wanted.Trim();
+        var byCode = conditions.FirstOrDefault(c => string.Equals(c.Ma, trimmed, StringComparison.OrdinalIgnoreCase));
+        if (byCode is not null) return byCode;
+
+        var key = TextHelper.ChuanHoa(wanted);
+        if (ConditionEnglishAliases.TryGetValue(key, out var mappedCode))
+            return conditions.FirstOrDefault(c => string.Equals(c.Ma, mappedCode, StringComparison.OrdinalIgnoreCase));
+
+        return null;
     }
 
     /// <summary>So khớp tên không phân biệt hoa thường và dấu tiếng Việt: khớp đúng trước, rồi khớp chứa nhau.</summary>
