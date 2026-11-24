@@ -1,0 +1,206 @@
+@using SecondHandMarketplace.Web.Services.Accounts
+@model AdminAccountAppealPageDto
+@{
+    ViewData["Title"] = "Khiếu nại & Mở khóa tài khoản";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h2 class="mb-1">Khiếu nại &amp; Mở khóa tài khoản</h2>
+            <p class="text-muted mb-0">
+                Xử lý đơn khiếu nại khóa nhầm (<code>APPEAL</code>) và cam kết mở khóa (<code>UNLOCK_REQUEST</code>) của tài khoản bị khóa.
+            </p>
+        </div>
+        <a asp-action="Settings" class="btn btn-outline-primary">
+            <i class="bi bi-sliders me-1"></i> Cấu hình Cooldown &amp; VietQR
+        </a>
+    </div>
+
+    <!-- Bộ lọc nhanh theo trạng thái -->
+    <ul class="nav nav-pills mb-3 gap-1">
+        <li class="nav-item">
+            <a class="nav-link @(Model.TrangThai is null ? "active" : "")"
+               asp-action="Index" asp-route-loaiYeuCau="@Model.LoaiYeuCau" asp-route-tuKhoa="@Model.TuKhoa">
+                Tất cả
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Model.TrangThai == AccountAppealRules.StatusPending ? "active" : "")"
+               asp-action="Index" asp-route-trangThai="@AccountAppealRules.StatusPending" asp-route-loaiYeuCau="@Model.LoaiYeuCau" asp-route-tuKhoa="@Model.TuKhoa">
+                Chờ duyệt
+                @if (Model.PendingCount > 0)
+                {
+                    <span class="badge bg-danger ms-1">@Model.PendingCount</span>
+                }
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Model.TrangThai == AccountAppealRules.StatusApproved ? "active" : "")"
+               asp-action="Index" asp-route-trangThai="@AccountAppealRules.StatusApproved" asp-route-loaiYeuCau="@Model.LoaiYeuCau" asp-route-tuKhoa="@Model.TuKhoa">
+                Đã chấp thuận
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Model.TrangThai == AccountAppealRules.StatusRejected ? "active" : "")"
+               asp-action="Index" asp-route-trangThai="@AccountAppealRules.StatusRejected" asp-route-loaiYeuCau="@Model.LoaiYeuCau" asp-route-tuKhoa="@Model.TuKhoa">
+                Đã từ chối
+            </a>
+        </li>
+    </ul>
+
+    <!-- Form lọc chi tiết -->
+    <form method="get" class="row g-2 mb-3">
+        @if (!string.IsNullOrEmpty(Model.TrangThai))
+        {
+            <input type="hidden" name="trangThai" value="@Model.TrangThai" />
+        }
+        <div class="col-md-5">
+            <input name="tuKhoa" value="@Model.TuKhoa" class="form-control"
+                   placeholder="Tìm theo họ tên, email, mã đơn (#12) hoặc mã CK (MOKHOA...)" />
+        </div>
+        <div class="col-md-3">
+            <select name="loaiYeuCau" class="form-select">
+                <option value="">Tất cả loại yêu cầu</option>
+                <option value="@AccountAppealRules.TypeAppeal" selected="@(Model.LoaiYeuCau == AccountAppealRules.TypeAppeal)">
+                    Khiếu nại khóa nhầm
+                </option>
+                <option value="@AccountAppealRules.TypeUnlockRequest" selected="@(Model.LoaiYeuCau == AccountAppealRules.TypeUnlockRequest)">
+                    Cam kết mở khóa
+                </option>
+            </select>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i> Lọc
+            </button>
+            @if (!string.IsNullOrEmpty(Model.TrangThai) || !string.IsNullOrEmpty(Model.LoaiYeuCau) || !string.IsNullOrEmpty(Model.TuKhoa))
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
+            }
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Người gửi</th>
+                    <th>Loại yêu cầu</th>
+                    <th>Lần khóa</th>
+                    <th>Phí / Bằng chứng</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày gửi</th>
+                    <th>Xử lý</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    var statusBadge = item.TrangThai switch
+                    {
+                        AccountAppealRules.StatusPending => "bg-warning text-dark",
+                        AccountAppealRules.StatusApproved => "bg-success",
+                        AccountAppealRules.StatusRejected => "bg-danger",
+                        _ => "bg-secondary"
+                    };
+                    var typeBadge = item.LoaiYeuCau == AccountAppealRules.TypeAppeal
+                        ? "bg-info text-dark"
+                        : "bg-primary";
+                    <tr>
+                        <td><strong>#@item.MaKhieuNai</strong></td>
+                        <td>
+                            <div class="fw-semibold">@item.HoTen</div>
+                            <div class="small text-muted">@item.Email</div>
+                            <span class="badge @(item.TrangThaiTaiKhoan == "ACTIVE" ? "bg-success" : "bg-secondary")">
+                                TK: @item.TrangThaiTaiKhoan
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge @typeBadge">
+                                @AccountAppealRules.RequestTypeLabel(item.LoaiYeuCau, item.LanKhoaThu)
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge @(item.LanKhoaThu >= AccountAppealRules.PermanentLockThreshold ? "bg-danger" : item.LanKhoaThu == AccountAppealRules.FeeLockTier ? "bg-warning text-dark" : "bg-secondary")">
+                                Lần @item.LanKhoaThu
+                            </span>
+                            @if (item.SoLanBiKhoaHienTai != item.LanKhoaThu)
+                            {
+                                <div class="small text-muted">Hiện tại: @item.SoLanBiKhoaHienTai</div>
+                            }
+                        </td>
+                        <td>
+                            @if (item.YeuCauPhi)
+                            {
+                                <div class="small fw-semibold text-danger">
+                                    <i class="bi bi-qr-code me-1"></i>Phí @item.SoTienPhi.ToString("N0")đ
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="small text-muted">Miễn phí</div>
+                            }
+                            @if (item.CoBangChungAnh)
+                            {
+                                <span class="badge bg-light text-dark border mt-1">
+                                    <i class="bi bi-image me-1"></i>Có ảnh đính kèm
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge @statusBadge">@AccountAppealRules.StatusLabel(item.TrangThai)</span>
+                            @if (item.NgayXuLy is not null)
+                            {
+                                <div class="small text-muted mt-1">@HienThi.NgayGio(item.NgayXuLy.Value)</div>
+                                @if (!string.IsNullOrWhiteSpace(item.TenNguoiXuLy))
+                                {
+                                    <div class="small text-muted">Bởi: @item.TenNguoiXuLy</div>
+                                }
+                            }
+                        </td>
+                        <td>@HienThi.NgayGio(item.NgayTao)</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.MaKhieuNai"
+                               class="btn btn-sm @(item.TrangThai == AccountAppealRules.StatusPending ? "btn-primary" : "btn-outline-secondary")">
+                                @(item.TrangThai == AccountAppealRules.StatusPending ? "Xem & Xử lý" : "Xem chi tiết")
+                            </a>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Không có đơn khiếu nại nào phù hợp.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <span class="text-muted small">Tổng @Model.TotalItems đơn</span>
+        <div class="d-flex gap-2 align-items-center">
+            @if (Model.Page > 1)
+            {
+                <a class="btn btn-sm btn-outline-secondary"
+                   asp-action="Index"
+                   asp-route-trangThai="@Model.TrangThai"
+                   asp-route-loaiYeuCau="@Model.LoaiYeuCau"
+                   asp-route-tuKhoa="@Model.TuKhoa"
+                   asp-route-page="@(Model.Page - 1)">Trước</a>
+            }
+            <span class="small">Trang @Model.Page / @Math.Max(1, Model.TotalPages)</span>
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a class="btn btn-sm btn-outline-secondary"
+                   asp-action="Index"
+                   asp-route-trangThai="@Model.TrangThai"
+                   asp-route-loaiYeuCau="@Model.LoaiYeuCau"
+                   asp-route-tuKhoa="@Model.TuKhoa"
+                   asp-route-page="@(Model.Page + 1)">Sau</a>
+            }
+        </div>
+    </div>
+</div>

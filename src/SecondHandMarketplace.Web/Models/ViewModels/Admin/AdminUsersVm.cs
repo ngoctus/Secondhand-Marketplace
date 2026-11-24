@@ -19,5 +19,7 @@ public sealed class AdminUserRowVm
     public string VaiTro { get; set; } = string.Empty;
     public string TrangThai { get; set; } = string.Empty;
     public string? LyDoKhoa { get; set; }
+    public int SoLanBiKhoa { get; set; }
+    public int? PendingAppealId { get; set; }
     public DateTime NgayTao { get; set; }
 }

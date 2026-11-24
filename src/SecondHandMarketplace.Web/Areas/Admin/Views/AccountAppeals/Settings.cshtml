@@ -1,0 +1,224 @@
+@using SecondHandMarketplace.Web.Models.ViewModels.Admin
+@using SecondHandMarketplace.Web.Services.Accounts
+@model AccountAppealSettingsVm
+@{
+    ViewData["Title"] = "Cấu hình Khiếu nại & Mở khóa tài khoản";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-action="Index">Khiếu nại tài khoản</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Cấu hình</li>
+                </ol>
+            </nav>
+            <h2 class="mb-1">Cấu hình Khiếu nại &amp; Mở khóa tài khoản</h2>
+            <p class="text-muted mb-0">
+                Thay đổi có hiệu lực ngay lập tức trên trang <code>/Account/Locked</code> của người dùng bị khóa.
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại hàng chờ
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <form asp-action="Settings" method="post" class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <h5 class="fw-bold mb-3 border-bottom pb-2">1. Giới hạn gửi &amp; Thời gian chờ (Cooldown)</h5>
+
+                    <div class="mb-3">
+                        <label asp-for="SoLanGuiMoiChuKy" class="form-label fw-semibold">Số lượt gửi tối đa mỗi chu kỳ</label>
+                        <input asp-for="SoLanGuiMoiChuKy" type="number" min="1" max="20" class="form-control" style="max-width: 180px;" />
+                        <div class="form-text">
+                            Mặc định <strong>2 lượt</strong>. Khi bị từ chối đủ số lượt này liên tiếp trong một đợt khóa, người dùng phải đợi hết Cooldown mới gửi tiếp được.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Thời gian Cooldown (tách Ngày / Giờ / Phút)</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="input-group">
+                                    <input asp-for="CooldownNgay" type="number" min="0" max="365" class="form-control cooldown-part" />
+                                    <span class="input-group-text">Ngày</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group">
+                                    <input asp-for="CooldownGio" type="number" min="0" max="23" class="form-control cooldown-part" />
+                                    <span class="input-group-text">Giờ</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group">
+                                    <input asp-for="CooldownPhutLe" type="number" min="0" max="59" class="form-control cooldown-part" />
+                                    <span class="input-group-text">Phút</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                            <span class="small text-muted">Chọn nhanh:</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="0" data-h="0" data-m="1">1 phút (Test/Demo)</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="0" data-h="1" data-m="0">1 giờ</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="1" data-h="0" data-m="0">1 ngày</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="3" data-h="0" data-m="0">3 ngày (Mặc định)</button>
+                        </div>
+                        <div class="form-text" id="cooldownSummary">
+                            Tổng Cooldown hiện đang nhập: <strong>@AccountAppealRules.FormatCooldownDuration(Math.Max(1, AccountAppealRules.CombineCooldownMinutes(Model.CooldownNgay, Model.CooldownGio, Model.CooldownPhutLe)))</strong>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold mt-4 mb-3 border-bottom pb-2">2. Phí Cam kết mở khóa lần 2 &amp; VietQR của sàn</h5>
+
+                    <div class="mb-3">
+                        <label asp-for="PhiMoKhoaLan2" class="form-label fw-semibold">Mức phí mở khóa lần 2 (VNĐ)</label>
+                        <input asp-for="PhiMoKhoaLan2" type="number" step="1000" min="0" max="100000000" class="form-control" style="max-width: 240px;" />
+                        <div class="form-text">Áp dụng cho đơn <strong>Cam kết mở khóa</strong> ở lần khóa thứ 2 (mặc định 200.000 đ). Khiếu nại khóa nhầm luôn miễn phí.</div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="TenNganHang" class="form-label fw-semibold">Tên ngân hàng</label>
+                            <input asp-for="TenNganHang" class="form-control" maxlength="100" placeholder="VD: MB Bank" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="MaNganHang" class="form-label fw-semibold">Mã ngân hàng (VietQR)</label>
+                            <input asp-for="MaNganHang" list="vietqrBankCodes" class="form-control" maxlength="20" placeholder="VD: MB, VCB, TCB, BIDV" required />
+                            <datalist id="vietqrBankCodes">
+                                <option value="MB">MB Bank</option>
+                                <option value="VCB">Vietcombank</option>
+                                <option value="ICB">VietinBank</option>
+                                <option value="BIDV">BIDV</option>
+                                <option value="TCB">Techcombank</option>
+                                <option value="ACB">ACB</option>
+                                <option value="VPB">VPBank</option>
+                                <option value="TPB">TPBank</option>
+                                <option value="STB">Sacombank</option>
+                                <option value="HDB">HDBank</option>
+                                <option value="VBA">Agribank</option>
+                                <option value="OCB">OCB</option>
+                                <option value="SHB">SHB</option>
+                                <option value="VIB">VIB</option>
+                                <option value="MSB">MSB</option>
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="SoTaiKhoan" class="form-label fw-semibold">Số tài khoản nhận phí</label>
+                            <input asp-for="SoTaiKhoan" class="form-control" maxlength="30" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ChuTaiKhoan" class="form-label fw-semibold">Chủ tài khoản</label>
+                            <input asp-for="ChuTaiKhoan" class="form-control" maxlength="100" required />
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-1"></i> Lưu cấu hình
+                        </button>
+                        @if (Model.NgayCapNhat is not null)
+                        {
+                            <span class="small text-muted">
+                                Cập nhật gần nhất: @HienThi.NgayGio(Model.NgayCapNhat.Value)
+                                @if (!string.IsNullOrWhiteSpace(Model.TenNguoiCapNhat))
+                                {
+                                    <span>bởi <strong>@Model.TenNguoiCapNhat</strong></span>
+                                }
+                            </span>
+                        }
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 text-center">
+                    <h5 class="fw-bold mb-1">Xem trước mã VietQR sàn</h5>
+                    <p class="small text-muted mb-3">
+                        Mẫu hiển thị cho tài khoản khóa lần 2 khi chọn <em>Cam kết mở khóa</em> (cập nhật sau khi bấm Lưu).
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(Model.PreviewQrDataUrl))
+                    {
+                        <img src="@Model.PreviewQrDataUrl" alt="Preview VietQR sàn" class="img-fluid border rounded-3 p-2 bg-white mb-3" style="max-width: 240px;" />
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">Không thể tạo ảnh preview QR với thông tin hiện tại.</div>
+                    }
+
+                    <div class="text-start bg-light rounded-3 p-3 small">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Ngân hàng:</span>
+                            <strong>@Model.TenNganHang (@Model.MaNganHang)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Số tài khoản:</span>
+                            <strong class="font-monospace">@Model.SoTaiKhoan</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Chủ tài khoản:</span>
+                            <strong>@Model.ChuTaiKhoan</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Số tiền phí:</span>
+                            <strong class="text-danger">@Model.PhiMoKhoaLan2.ToString("N0") đ</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Nội dung CK mẫu:</span>
+                            <code>@Model.PreviewTransferContent</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const dInput = document.getElementById('CooldownNgay');
+            const hInput = document.getElementById('CooldownGio');
+            const mInput = document.getElementById('CooldownPhutLe');
+            const summary = document.getElementById('cooldownSummary');
+
+            function refreshSummary() {
+                const d = Math.max(0, parseInt(dInput?.value || '0', 10) || 0);
+                const h = Math.max(0, parseInt(hInput?.value || '0', 10) || 0);
+                const m = Math.max(0, parseInt(mInput?.value || '0', 10) || 0);
+                const total = d * 1440 + h * 60 + m;
+                const parts = [];
+                if (d > 0) parts.push(`${d} ngày`);
+                if (h > 0) parts.push(`${h} giờ`);
+                if (m > 0 || parts.length === 0) parts.push(`${m} phút`);
+                if (summary) {
+                    summary.innerHTML = total < 1
+                        ? '<span class="text-danger">Tổng Cooldown phải từ 1 phút trở lên.</span>'
+                        : `Tổng Cooldown hiện đang nhập: <strong>${parts.join(' ')}</strong> (${total.toLocaleString('vi-VN')} phút)`;
+                }
+            }
+
+            document.querySelectorAll('.cooldown-part').forEach(el => el.addEventListener('input', refreshSummary));
+            document.querySelectorAll('.cooldown-preset').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (dInput) dInput.value = btn.dataset.d || '0';
+                    if (hInput) hInput.value = btn.dataset.h || '0';
+                    if (mInput) mInput.value = btn.dataset.m || '0';
+                    refreshSummary();
+                });
+            });
+            refreshSummary();
+        })();
+    </script>
+}

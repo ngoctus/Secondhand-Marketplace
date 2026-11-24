@@ -33,8 +33,29 @@ public sealed class UsersController(AppDbContext db, IUserAdminService userAdmin
                 VaiTro = x.VaiTro,
                 TrangThai = x.TrangThai,
                 LyDoKhoa = x.LyDoKhoa,
+                SoLanBiKhoa = x.SoLanBiKhoa,
                 NgayTao = x.NgayTao
             }).ToListAsync(cancellationToken);
+
+        if (rows.Count > 0)
+        {
+            var userIds = rows.Select(r => r.Id).ToList();
+            var pendingAppeals = await db.KhieuNaiTaiKhoans.AsNoTracking()
+                .Where(k => userIds.Contains(k.MaNguoiDung) && k.TrangThai == AccountAppealRules.StatusPending)
+                .Select(k => new { k.MaNguoiDung, k.MaKhieuNai })
+                .ToListAsync(cancellationToken);
+
+            var pendingByUser = pendingAppeals
+                .GroupBy(x => x.MaNguoiDung)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.MaKhieuNai).First().MaKhieuNai);
+
+            foreach (var r in rows)
+            {
+                if (pendingByUser.TryGetValue(r.Id, out var appealId))
+                    r.PendingAppealId = appealId;
+            }
+        }
+
         return View(new AdminUsersVm
         {
             Items = rows,
