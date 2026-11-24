@@ -2,7 +2,7 @@
 @using SecondHandMarketplace.Web.Services.Accounts
 @model AccountAppealSettingsVm
 @{
-    ViewData["Title"] = "Cấu hình Khiếu nại & Mở khóa tài khoản";
+    ViewData["Title"] = HienThi.Chon("Cấu hình Khiếu nại & Mở khóa tài khoản", "Account Appeal & Unlock Settings");
 }
 
 <div class="container-fluid py-4">
@@ -10,17 +10,19 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-1">
-                    <li class="breadcrumb-item"><a asp-action="Index">Khiếu nại tài khoản</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Cấu hình</li>
+                    <li class="breadcrumb-item"><a asp-action="Index">@HienThi.Chon("Khiếu nại tài khoản", "Account Appeals")</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@HienThi.Chon("Cấu hình", "Settings")</li>
                 </ol>
             </nav>
-            <h2 class="mb-1">Cấu hình Khiếu nại &amp; Mở khóa tài khoản</h2>
+            <h2 class="mb-1">@HienThi.Chon("Cấu hình Khiếu nại & Mở khóa tài khoản", "Account Appeal & Unlock Settings")</h2>
             <p class="text-muted mb-0">
-                Thay đổi có hiệu lực ngay lập tức trên trang <code>/Account/Locked</code> của người dùng bị khóa.
+                @Html.Raw(HienThi.Chon(
+                    "Thay đổi có hiệu lực ngay lập tức trên trang <code>/Account/Locked</code> của người dùng bị khóa.",
+                    "Changes take effect immediately on the <code>/Account/Locked</code> page for locked users."))
             </p>
         </div>
         <a asp-action="Index" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Quay lại hàng chờ
+            <i class="bi bi-arrow-left me-1"></i> @HienThi.Chon("Quay lại hàng chờ", "Back to queue")
         </a>
     </div>
 
@@ -30,65 +32,71 @@
                 <div class="card-body p-4">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-                    <h5 class="fw-bold mb-3 border-bottom pb-2">1. Giới hạn gửi &amp; Thời gian chờ (Cooldown)</h5>
+                    <h5 class="fw-bold mb-3 border-bottom pb-2">@HienThi.Chon("1. Giới hạn gửi & Thời gian chờ (Cooldown)", "1. Submission Limits & Cooldown")</h5>
 
                     <div class="mb-3">
-                        <label asp-for="SoLanGuiMoiChuKy" class="form-label fw-semibold">Số lượt gửi tối đa mỗi chu kỳ</label>
+                        <label asp-for="SoLanGuiMoiChuKy" class="form-label fw-semibold">@HienThi.Chon("Số lượt gửi tối đa mỗi chu kỳ", "Max submissions per cycle")</label>
                         <input asp-for="SoLanGuiMoiChuKy" type="number" min="1" max="20" class="form-control" style="max-width: 180px;" />
                         <div class="form-text">
-                            Mặc định <strong>2 lượt</strong>. Khi bị từ chối đủ số lượt này liên tiếp trong một đợt khóa, người dùng phải đợi hết Cooldown mới gửi tiếp được.
+                            @Html.Raw(HienThi.Chon(
+                                "Mặc định <strong>2 lượt</strong>. Khi bị từ chối đủ số lượt này liên tiếp trong một đợt khóa, người dùng phải đợi hết Cooldown mới gửi tiếp được.",
+                                "Default is <strong>2 attempts</strong>. Once rejected this many times consecutively in a lock period, the user must wait out the cooldown before submitting again."))
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Thời gian Cooldown (tách Ngày / Giờ / Phút)</label>
+                        <label class="form-label fw-semibold">@HienThi.Chon("Thời gian Cooldown (tách Ngày / Giờ / Phút)", "Cooldown Duration (Days / Hours / Minutes)")</label>
                         <div class="row g-2">
                             <div class="col-4">
                                 <div class="input-group">
                                     <input asp-for="CooldownNgay" type="number" min="0" max="365" class="form-control cooldown-part" />
-                                    <span class="input-group-text">Ngày</span>
+                                    <span class="input-group-text">@HienThi.Chon("Ngày", "Days")</span>
                                 </div>
                             </div>
                             <div class="col-4">
                                 <div class="input-group">
                                     <input asp-for="CooldownGio" type="number" min="0" max="23" class="form-control cooldown-part" />
-                                    <span class="input-group-text">Giờ</span>
+                                    <span class="input-group-text">@HienThi.Chon("Giờ", "Hours")</span>
                                 </div>
                             </div>
                             <div class="col-4">
                                 <div class="input-group">
                                     <input asp-for="CooldownPhutLe" type="number" min="0" max="59" class="form-control cooldown-part" />
-                                    <span class="input-group-text">Phút</span>
+                                    <span class="input-group-text">@HienThi.Chon("Phút", "Minutes")</span>
                                 </div>
                             </div>
                         </div>
                         <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
-                            <span class="small text-muted">Chọn nhanh:</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="0" data-h="0" data-m="1">1 phút (Test/Demo)</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="0" data-h="1" data-m="0">1 giờ</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="1" data-h="0" data-m="0">1 ngày</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="3" data-h="0" data-m="0">3 ngày (Mặc định)</button>
+                            <span class="small text-muted">@HienThi.Chon("Chọn nhanh:", "Quick presets:")</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="0" data-h="0" data-m="1">@HienThi.Chon("1 phút (Test/Demo)", "1 min (Test/Demo)")</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="0" data-h="1" data-m="0">@HienThi.Chon("1 giờ", "1 hour")</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="1" data-h="0" data-m="0">@HienThi.Chon("1 ngày", "1 day")</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cooldown-preset" data-d="3" data-h="0" data-m="0">@HienThi.Chon("3 ngày (Mặc định)", "3 days (Default)")</button>
                         </div>
                         <div class="form-text" id="cooldownSummary">
-                            Tổng Cooldown hiện đang nhập: <strong>@AccountAppealRules.FormatCooldownDuration(Math.Max(1, AccountAppealRules.CombineCooldownMinutes(Model.CooldownNgay, Model.CooldownGio, Model.CooldownPhutLe)))</strong>
+                            @HienThi.Chon("Tổng Cooldown hiện đang nhập:", "Total configured cooldown:") <strong>@AccountAppealRules.FormatCooldownDuration(Math.Max(1, AccountAppealRules.CombineCooldownMinutes(Model.CooldownNgay, Model.CooldownGio, Model.CooldownPhutLe)))</strong>
                         </div>
                     </div>
 
-                    <h5 class="fw-bold mt-4 mb-3 border-bottom pb-2">2. Phí Cam kết mở khóa lần 2 &amp; VietQR của sàn</h5>
+                    <h5 class="fw-bold mt-4 mb-3 border-bottom pb-2">@HienThi.Chon("2. Phí Cam kết mở khóa lần 2 & VietQR của sàn", "2. 2nd-Lock Unlock Commitment Fee & Marketplace VietQR")</h5>
 
                     <div class="mb-3">
-                        <label asp-for="PhiMoKhoaLan2" class="form-label fw-semibold">Mức phí mở khóa lần 2 (VNĐ)</label>
+                        <label asp-for="PhiMoKhoaLan2" class="form-label fw-semibold">@HienThi.Chon("Mức phí mở khóa lần 2 (VNĐ)", "2nd-lock unlock fee (VND)")</label>
                         <input asp-for="PhiMoKhoaLan2" type="number" step="1000" min="0" max="100000000" class="form-control" style="max-width: 240px;" />
-                        <div class="form-text">Áp dụng cho đơn <strong>Cam kết mở khóa</strong> ở lần khóa thứ 2 (mặc định 200.000 đ). Khiếu nại khóa nhầm luôn miễn phí.</div>
+                        <div class="form-text">
+                            @Html.Raw(HienThi.Chon(
+                                "Áp dụng cho đơn <strong>Cam kết mở khóa</strong> ở lần khóa thứ 2 (mặc định 200.000 đ). Khiếu nại khóa nhầm luôn miễn phí.",
+                                "Applies to <strong>Unlock Commitment</strong> requests on the 2nd lock (default 200,000 VND). Wrongful lock appeals are always free."))
+                        </div>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label asp-for="TenNganHang" class="form-label fw-semibold">Tên ngân hàng</label>
+                            <label asp-for="TenNganHang" class="form-label fw-semibold">@HienThi.Chon("Tên ngân hàng", "Bank name")</label>
                             <input asp-for="TenNganHang" class="form-control" maxlength="100" placeholder="VD: MB Bank" required />
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="MaNganHang" class="form-label fw-semibold">Mã ngân hàng (VietQR)</label>
+                            <label asp-for="MaNganHang" class="form-label fw-semibold">@HienThi.Chon("Mã ngân hàng (VietQR)", "Bank code (VietQR)")</label>
                             <input asp-for="MaNganHang" list="vietqrBankCodes" class="form-control" maxlength="20" placeholder="VD: MB, VCB, TCB, BIDV" required />
                             <datalist id="vietqrBankCodes">
                                 <option value="MB">MB Bank</option>
@@ -112,26 +120,26 @@
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label asp-for="SoTaiKhoan" class="form-label fw-semibold">Số tài khoản nhận phí</label>
+                            <label asp-for="SoTaiKhoan" class="form-label fw-semibold">@HienThi.Chon("Số tài khoản nhận phí", "Receiving account number")</label>
                             <input asp-for="SoTaiKhoan" class="form-control" maxlength="30" required />
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="ChuTaiKhoan" class="form-label fw-semibold">Chủ tài khoản</label>
+                            <label asp-for="ChuTaiKhoan" class="form-label fw-semibold">@HienThi.Chon("Chủ tài khoản", "Account holder")</label>
                             <input asp-for="ChuTaiKhoan" class="form-control" maxlength="100" required />
                         </div>
                     </div>
 
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top">
                         <button type="submit" class="btn btn-primary px-4">
-                            <i class="bi bi-save me-1"></i> Lưu cấu hình
+                            <i class="bi bi-save me-1"></i> @L["Btn_Save"]
                         </button>
                         @if (Model.NgayCapNhat is not null)
                         {
                             <span class="small text-muted">
-                                Cập nhật gần nhất: @HienThi.NgayGio(Model.NgayCapNhat.Value)
+                                @HienThi.Chon("Cập nhật gần nhất:", "Last updated:") @HienThi.NgayGio(Model.NgayCapNhat.Value)
                                 @if (!string.IsNullOrWhiteSpace(Model.TenNguoiCapNhat))
                                 {
-                                    <span>bởi <strong>@Model.TenNguoiCapNhat</strong></span>
+                                    <span>@HienThi.Chon("bởi", "by") <strong>@Model.TenNguoiCapNhat</strong></span>
                                 }
                             </span>
                         }
@@ -143,9 +151,11 @@
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4 text-center">
-                    <h5 class="fw-bold mb-1">Xem trước mã VietQR sàn</h5>
+                    <h5 class="fw-bold mb-1">@HienThi.Chon("Xem trước mã VietQR sàn", "Marketplace VietQR Preview")</h5>
                     <p class="small text-muted mb-3">
-                        Mẫu hiển thị cho tài khoản khóa lần 2 khi chọn <em>Cam kết mở khóa</em> (cập nhật sau khi bấm Lưu).
+                        @Html.Raw(HienThi.Chon(
+                            "Mẫu hiển thị cho tài khoản khóa lần 2 khi chọn <em>Cam kết mở khóa</em> (cập nhật sau khi bấm Lưu).",
+                            "Preview shown to 2nd-lock accounts selecting <em>Unlock Commitment</em> (updates after saving)."))
                     </p>
 
                     @if (!string.IsNullOrEmpty(Model.PreviewQrDataUrl))
@@ -154,28 +164,28 @@
                     }
                     else
                     {
-                        <div class="alert alert-warning">Không thể tạo ảnh preview QR với thông tin hiện tại.</div>
+                        <div class="alert alert-warning">@HienThi.Chon("Không thể tạo ảnh preview QR với thông tin hiện tại.", "Cannot generate QR preview with current details.")</div>
                     }
 
                     <div class="text-start bg-light rounded-3 p-3 small">
                         <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Ngân hàng:</span>
+                            <span class="text-muted">@HienThi.Chon("Ngân hàng:", "Bank:")</span>
                             <strong>@Model.TenNganHang (@Model.MaNganHang)</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Số tài khoản:</span>
+                            <span class="text-muted">@HienThi.Chon("Số tài khoản:", "Account No:")</span>
                             <strong class="font-monospace">@Model.SoTaiKhoan</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Chủ tài khoản:</span>
+                            <span class="text-muted">@HienThi.Chon("Chủ tài khoản:", "Account Holder:")</span>
                             <strong>@Model.ChuTaiKhoan</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Số tiền phí:</span>
+                            <span class="text-muted">@HienThi.Chon("Số tiền phí:", "Fee Amount:")</span>
                             <strong class="text-danger">@Model.PhiMoKhoaLan2.ToString("N0") đ</strong>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span class="text-muted">Nội dung CK mẫu:</span>
+                            <span class="text-muted">@HienThi.Chon("Nội dung CK mẫu:", "Sample Transfer Code:")</span>
                             <code>@Model.PreviewTransferContent</code>
                         </div>
                     </div>
@@ -199,13 +209,13 @@
                 const m = Math.max(0, parseInt(mInput?.value || '0', 10) || 0);
                 const total = d * 1440 + h * 60 + m;
                 const parts = [];
-                if (d > 0) parts.push(`${d} ngày`);
-                if (h > 0) parts.push(`${h} giờ`);
-                if (m > 0 || parts.length === 0) parts.push(`${m} phút`);
+                if (d > 0) parts.push(`${d} @Html.Raw(HienThi.Chon("ngày", "d"))`);
+                if (h > 0) parts.push(`${h} @Html.Raw(HienThi.Chon("giờ", "h"))`);
+                if (m > 0 || parts.length === 0) parts.push(`${m} @Html.Raw(HienThi.Chon("phút", "m"))`);
                 if (summary) {
                     summary.innerHTML = total < 1
-                        ? '<span class="text-danger">Tổng Cooldown phải từ 1 phút trở lên.</span>'
-                        : `Tổng Cooldown hiện đang nhập: <strong>${parts.join(' ')}</strong> (${total.toLocaleString('vi-VN')} phút)`;
+                        ? '<span class="text-danger">@Html.Raw(HienThi.Chon("Tổng Cooldown phải từ 1 phút trở lên.", "Total cooldown must be at least 1 minute."))</span>'
+                        : `@Html.Raw(HienThi.Chon("Tổng Cooldown hiện đang nhập:", "Total configured cooldown:")) <strong>${parts.join(' ')}</strong> (${total.toLocaleString('vi-VN')} @Html.Raw(HienThi.Chon("phút", "min")))`;
                 }
             }
 

@@ -1,6 +1,20 @@
 @{
-    ViewData["Title"] = "Không có quyền truy cập";
+    ViewData["Title"] = L["Account_AccessDenied_Title"].Value;
 }
 
-<h2 class="text-danger">Bạn không có quyền truy cập trang này</h2>
-<a asp-controller="Home" asp-action="Index">Về trang chủ</a>
+<div class="container py-5">
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 text-center mx-auto bg-white" style="max-width: 540px;">
+        <div class="mb-3 text-danger">
+            <i class="bi bi-shield-lock-fill" style="font-size: 3.2rem;"></i>
+        </div>
+        <h2 class="h4 fw-bold text-danger mb-2">@L["Account_AccessDenied_Heading"]</h2>
+        <p class="text-muted small mb-4">
+            @HienThi.Chon("Tài khoản của bạn không có quyền thực hiện thao tác hoặc truy cập khu vực này.", "Your account does not have permission to perform this action or access this area.")
+        </p>
+        <div>
+            <a asp-controller="Home" asp-action="Index" class="btn-rm-primary text-decoration-none d-inline-block">
+                @L["Btn_BackHome"]
+            </a>
+        </div>
+    </div>
+</div>

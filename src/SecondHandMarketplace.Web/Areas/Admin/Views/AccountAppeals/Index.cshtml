@@ -1,19 +1,19 @@
 @using SecondHandMarketplace.Web.Services.Accounts
 @model AdminAccountAppealPageDto
 @{
-    ViewData["Title"] = "Khiếu nại & Mở khóa tài khoản";
+    ViewData["Title"] = HienThi.Chon("Khiếu nại & Mở khóa tài khoản", "Account Appeals & Unlocks");
 }
 
 <div class="container-fluid py-4">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <div>
-            <h2 class="mb-1">Khiếu nại &amp; Mở khóa tài khoản</h2>
+            <h2 class="mb-1">@HienThi.Chon("Khiếu nại & Mở khóa tài khoản", "Account Appeals & Unlocks")</h2>
             <p class="text-muted mb-0">
-                Xử lý đơn khiếu nại khóa nhầm (<code>APPEAL</code>) và cam kết mở khóa (<code>UNLOCK_REQUEST</code>) của tài khoản bị khóa.
+                @HienThi.Chon("Xử lý đơn khiếu nại khóa nhầm", "Process wrongful lock appeals") (<code>APPEAL</code>) @HienThi.Chon("và cam kết mở khóa", "and unlock commitments") (<code>UNLOCK_REQUEST</code>) @HienThi.Chon("của tài khoản bị khóa.", "for locked accounts.")
             </p>
         </div>
         <a asp-action="Settings" class="btn btn-outline-primary">
-            <i class="bi bi-sliders me-1"></i> Cấu hình Cooldown &amp; VietQR
+            <i class="bi bi-sliders me-1"></i> @HienThi.Chon("Cấu hình Cooldown & VietQR", "Cooldown & VietQR Settings")
         </a>
     </div>
 
@@ -22,13 +22,13 @@
         <li class="nav-item">
             <a class="nav-link @(Model.TrangThai is null ? "active" : "")"
                asp-action="Index" asp-route-loaiYeuCau="@Model.LoaiYeuCau" asp-route-tuKhoa="@Model.TuKhoa">
-                Tất cả
+                @HienThi.Chon("Tất cả", "All")
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link @(Model.TrangThai == AccountAppealRules.StatusPending ? "active" : "")"
                asp-action="Index" asp-route-trangThai="@AccountAppealRules.StatusPending" asp-route-loaiYeuCau="@Model.LoaiYeuCau" asp-route-tuKhoa="@Model.TuKhoa">
-                Chờ duyệt
+                @HienThi.Chon("Chờ duyệt", "Pending")
                 @if (Model.PendingCount > 0)
                 {
                     <span class="badge bg-danger ms-1">@Model.PendingCount</span>
@@ -38,13 +38,13 @@
         <li class="nav-item">
             <a class="nav-link @(Model.TrangThai == AccountAppealRules.StatusApproved ? "active" : "")"
                asp-action="Index" asp-route-trangThai="@AccountAppealRules.StatusApproved" asp-route-loaiYeuCau="@Model.LoaiYeuCau" asp-route-tuKhoa="@Model.TuKhoa">
-                Đã chấp thuận
+                @HienThi.Chon("Đã chấp thuận", "Approved")
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link @(Model.TrangThai == AccountAppealRules.StatusRejected ? "active" : "")"
                asp-action="Index" asp-route-trangThai="@AccountAppealRules.StatusRejected" asp-route-loaiYeuCau="@Model.LoaiYeuCau" asp-route-tuKhoa="@Model.TuKhoa">
-                Đã từ chối
+                @HienThi.Chon("Đã từ chối", "Rejected")
             </a>
         </li>
     </ul>
@@ -57,26 +57,26 @@
         }
         <div class="col-md-5">
             <input name="tuKhoa" value="@Model.TuKhoa" class="form-control"
-                   placeholder="Tìm theo họ tên, email, mã đơn (#12) hoặc mã CK (MOKHOA...)" />
+                   placeholder="@HienThi.Chon("Tìm theo họ tên, email, mã đơn (#12) hoặc mã CK (MOKHOA...)", "Search by name, email, appeal ID (#12), or transfer code (MOKHOA...)")" />
         </div>
         <div class="col-md-3">
             <select name="loaiYeuCau" class="form-select">
-                <option value="">Tất cả loại yêu cầu</option>
+                <option value="">@HienThi.Chon("Tất cả loại yêu cầu", "All request types")</option>
                 <option value="@AccountAppealRules.TypeAppeal" selected="@(Model.LoaiYeuCau == AccountAppealRules.TypeAppeal)">
-                    Khiếu nại khóa nhầm
+                    @HienThi.Chon("Khiếu nại khóa nhầm", "Wrongful Lock Appeal")
                 </option>
                 <option value="@AccountAppealRules.TypeUnlockRequest" selected="@(Model.LoaiYeuCau == AccountAppealRules.TypeUnlockRequest)">
-                    Cam kết mở khóa
+                    @HienThi.Chon("Cam kết mở khóa", "Unlock Commitment")
                 </option>
             </select>
         </div>
         <div class="col-auto d-flex gap-2">
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-search me-1"></i> Lọc
+                <i class="bi bi-search me-1"></i> @L["Btn_Filter"]
             </button>
             @if (!string.IsNullOrEmpty(Model.TrangThai) || !string.IsNullOrEmpty(Model.LoaiYeuCau) || !string.IsNullOrEmpty(Model.TuKhoa))
             {
-                <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
+                <a asp-action="Index" class="btn btn-outline-secondary">@HienThi.Chon("Xóa lọc", "Clear")</a>
             }
         </div>
     </form>
@@ -85,14 +85,14 @@
         <table class="table table-striped align-middle">
             <thead>
                 <tr>
-                    <th>Mã đơn</th>
-                    <th>Người gửi</th>
-                    <th>Loại yêu cầu</th>
-                    <th>Lần khóa</th>
-                    <th>Phí / Bằng chứng</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày gửi</th>
-                    <th>Xử lý</th>
+                    <th>@HienThi.Chon("Mã đơn", "ID")</th>
+                    <th>@HienThi.Chon("Người gửi", "Sender")</th>
+                    <th>@HienThi.Chon("Loại yêu cầu", "Request Type")</th>
+                    <th>@HienThi.Chon("Lần khóa", "Lock Tier")</th>
+                    <th>@HienThi.Chon("Phí / Bằng chứng", "Fee / Evidence")</th>
+                    <th>@L["Admin_Status"]</th>
+                    <th>@HienThi.Chon("Ngày gửi", "Submitted")</th>
+                    <th>@L["Admin_Actions"]</th>
                 </tr>
             </thead>
             <tbody>
@@ -114,7 +114,7 @@
                             <div class="fw-semibold">@item.HoTen</div>
                             <div class="small text-muted">@item.Email</div>
                             <span class="badge @(item.TrangThaiTaiKhoan == "ACTIVE" ? "bg-success" : "bg-secondary")">
-                                TK: @item.TrangThaiTaiKhoan
+                                @HienThi.Chon("TK:", "Acc:") @HienThi.TrangThaiTaiKhoan(item.TrangThaiTaiKhoan)
                             </span>
                         </td>
                         <td>
@@ -124,28 +124,28 @@
                         </td>
                         <td>
                             <span class="badge @(item.LanKhoaThu >= AccountAppealRules.PermanentLockThreshold ? "bg-danger" : item.LanKhoaThu == AccountAppealRules.FeeLockTier ? "bg-warning text-dark" : "bg-secondary")">
-                                Lần @item.LanKhoaThu
+                                @HienThi.Chon($"Lần {item.LanKhoaThu}", $"Lock #{item.LanKhoaThu}")
                             </span>
                             @if (item.SoLanBiKhoaHienTai != item.LanKhoaThu)
                             {
-                                <div class="small text-muted">Hiện tại: @item.SoLanBiKhoaHienTai</div>
+                                <div class="small text-muted">@HienThi.Chon($"Hiện tại: {item.SoLanBiKhoaHienTai}", $"Current: {item.SoLanBiKhoaHienTai}")</div>
                             }
                         </td>
                         <td>
                             @if (item.YeuCauPhi)
                             {
                                 <div class="small fw-semibold text-danger">
-                                    <i class="bi bi-qr-code me-1"></i>Phí @item.SoTienPhi.ToString("N0")đ
+                                    <i class="bi bi-qr-code me-1"></i>@HienThi.Chon($"Phí {item.SoTienPhi:N0}đ", $"Fee {item.SoTienPhi:N0} VND")
                                 </div>
                             }
                             else
                             {
-                                <div class="small text-muted">Miễn phí</div>
+                                <div class="small text-muted">@HienThi.Chon("Miễn phí", "Free")</div>
                             }
                             @if (item.CoBangChungAnh)
                             {
                                 <span class="badge bg-light text-dark border mt-1">
-                                    <i class="bi bi-image me-1"></i>Có ảnh đính kèm
+                                    <i class="bi bi-image me-1"></i>@HienThi.Chon("Có ảnh đính kèm", "Has attachment")
                                 </span>
                             }
                         </td>
@@ -156,7 +156,7 @@
                                 <div class="small text-muted mt-1">@HienThi.NgayGio(item.NgayXuLy.Value)</div>
                                 @if (!string.IsNullOrWhiteSpace(item.TenNguoiXuLy))
                                 {
-                                    <div class="small text-muted">Bởi: @item.TenNguoiXuLy</div>
+                                    <div class="small text-muted">@HienThi.Chon("Bởi:", "By:") @item.TenNguoiXuLy</div>
                                 }
                             }
                         </td>
@@ -164,7 +164,7 @@
                         <td>
                             <a asp-action="Details" asp-route-id="@item.MaKhieuNai"
                                class="btn btn-sm @(item.TrangThai == AccountAppealRules.StatusPending ? "btn-primary" : "btn-outline-secondary")">
-                                @(item.TrangThai == AccountAppealRules.StatusPending ? "Xem & Xử lý" : "Xem chi tiết")
+                                @(item.TrangThai == AccountAppealRules.StatusPending ? HienThi.Chon("Xem & Xử lý", "Review") : HienThi.Chon("Xem chi tiết", "Details"))
                             </a>
                         </td>
                     </tr>
@@ -172,7 +172,7 @@
                 @if (Model.Items.Count == 0)
                 {
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">Không có đơn khiếu nại nào phù hợp.</td>
+                        <td colspan="8" class="text-center text-muted py-4">@HienThi.Chon("Không có đơn khiếu nại nào phù hợp.", "No matching appeal requests found.")</td>
                     </tr>
                 }
             </tbody>
@@ -180,7 +180,7 @@
     </div>
 
     <div class="d-flex justify-content-between align-items-center mt-2">
-        <span class="text-muted small">Tổng @Model.TotalItems đơn</span>
+        <span class="text-muted small">@HienThi.Chon($"Tổng {Model.TotalItems} đơn", $"Total {Model.TotalItems} requests")</span>
         <div class="d-flex gap-2 align-items-center">
             @if (Model.Page > 1)
             {
@@ -189,9 +189,9 @@
                    asp-route-trangThai="@Model.TrangThai"
                    asp-route-loaiYeuCau="@Model.LoaiYeuCau"
                    asp-route-tuKhoa="@Model.TuKhoa"
-                   asp-route-page="@(Model.Page - 1)">Trước</a>
+                   asp-route-page="@(Model.Page - 1)">@L["Pager_Previous"]</a>
             }
-            <span class="small">Trang @Model.Page / @Math.Max(1, Model.TotalPages)</span>
+            <span class="small">@L["Pager_Page"] @Model.Page / @Math.Max(1, Model.TotalPages)</span>
             @if (Model.Page < Model.TotalPages)
             {
                 <a class="btn btn-sm btn-outline-secondary"
@@ -199,7 +199,7 @@
                    asp-route-trangThai="@Model.TrangThai"
                    asp-route-loaiYeuCau="@Model.LoaiYeuCau"
                    asp-route-tuKhoa="@Model.TuKhoa"
-                   asp-route-page="@(Model.Page + 1)">Sau</a>
+                   asp-route-page="@(Model.Page + 1)">@L["Pager_Next"]</a>
             }
         </div>
     </div>

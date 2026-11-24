@@ -144,7 +144,7 @@ public sealed class AuthService(
         var user = await db.NguoiDungs.SingleOrDefaultAsync(x => x.MaNguoiDung == userId, cancellationToken);
         if (user is null) return (false, "Không tìm thấy tài khoản.");
         if (!string.IsNullOrWhiteSpace(avatar) && !UrlAnToan.HopLe(avatar))
-            return (false, "Ảnh đại diện phải là URL http/https.");
+            return (false, "Ảnh đại diện phải là URL http/https hoặc đường dẫn hợp lệ.");
         var normalizedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
         if (normalizedPhone is not null && await db.NguoiDungs.AnyAsync(x => x.MaNguoiDung != userId && x.SoDienThoai == normalizedPhone, cancellationToken))
             return (false, "Số điện thoại đã được sử dụng.");
@@ -152,7 +152,7 @@ public sealed class AuthService(
         user.HoTen = fullName.Trim();
         user.SoDienThoai = normalizedPhone;
         user.DiaChiMacDinh = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
-        if (!string.IsNullOrWhiteSpace(avatar)) user.AnhDaiDien = avatar.Trim();
+        user.AnhDaiDien = string.IsNullOrWhiteSpace(avatar) ? null : avatar.Trim();
         user.NgayCapNhat = DateTime.UtcNow;
         try { await db.SaveChangesAsync(cancellationToken); return (true, null); }
         catch (DbUpdateException) { return (false, "Thông tin cập nhật không hợp lệ hoặc số điện thoại đã được sử dụng."); }

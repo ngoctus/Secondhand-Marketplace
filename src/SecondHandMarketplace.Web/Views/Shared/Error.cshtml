@@ -1,16 +1,21 @@
+@model SecondHandMarketplace.Web.Models.ErrorViewModel
 @{
     ViewData["Title"] = Model.TieuDe;
 }
 
-<div class="text-center py-5">
-    <h1 class="display-4 text-danger">@Model.MaLoi</h1>
-    <h2>@Model.TieuDe</h2>
-    <p class="text-muted">@Model.ThongDiep</p>
+<div class="container py-5">
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 text-center mx-auto bg-white" style="max-width: 560px;">
+        <h1 class="display-3 fw-bold text-danger mb-2">@Model.MaLoi</h1>
+        <h2 class="h4 fw-bold text-dark mb-2">@Model.TieuDe</h2>
+        <p class="text-muted mb-4">@Model.ThongDiep</p>
 
-    @if (Model.ShowRequestId)
-    {
-        <p class="small text-muted">Mã yêu cầu: <code>@Model.RequestId</code></p>
-    }
+        @if (Model.ShowRequestId)
+        {
+            <p class="small text-muted mb-4">@L["Error_RequestId"] <code>@Model.RequestId</code></p>
+        }
 
-    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Về trang chủ</a>
+        <div>
+            <a class="btn-rm-primary text-decoration-none d-inline-block" asp-controller="Home" asp-action="Index">@L["Btn_BackHome"]</a>
+        </div>
+    </div>
 </div>

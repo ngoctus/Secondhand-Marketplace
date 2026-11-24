@@ -38,6 +38,25 @@ SET SoLanBiKhoa = 1
 WHERE TrangThai = 'LOCKED' AND SoLanBiKhoa = 0;
 GO
 
+-- 1b. Bổ sung cột PhanHoiShop & NgayPhanHoi trên DanhGia, AnhPhanHoi trên TranhChap (nếu DB cũ chưa có)
+IF OBJECT_ID(N'dbo.DanhGia', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.DanhGia', N'PhanHoiShop') IS NULL
+BEGIN
+    ALTER TABLE dbo.DanhGia ADD PhanHoiShop nvarchar(1000) NULL;
+END;
+GO
+
+IF OBJECT_ID(N'dbo.DanhGia', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.DanhGia', N'NgayPhanHoi') IS NULL
+BEGIN
+    ALTER TABLE dbo.DanhGia ADD NgayPhanHoi datetime2(3) NULL;
+END;
+GO
+
+IF OBJECT_ID(N'dbo.TranhChap', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.TranhChap', N'AnhPhanHoi') IS NULL
+BEGIN
+    ALTER TABLE dbo.TranhChap ADD AnhPhanHoi nvarchar(500) NULL;
+END;
+GO
+
 -- 2. Tạo bảng KhieuNaiTaiKhoan
 IF OBJECT_ID(N'dbo.KhieuNaiTaiKhoan', N'U') IS NULL
 BEGIN
