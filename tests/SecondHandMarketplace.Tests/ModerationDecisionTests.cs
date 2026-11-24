@@ -124,4 +124,78 @@ public class ModerationDecisionTests
     {
         Assert.Equal(3, ModerationPolicy.ViolationLockThreshold);
     }
+
+    // ---------------------------------------------------------------- C-01 Hybrid Merge & Green Lane
+
+    [Fact]
+    public void MergeWithAi_NoneAndAiApprove_IsHybridAndGreenLane()
+    {
+        var kw = ModerationDecision.Evaluate(Array.Empty<KeywordMatch>());
+        var ai = AiModerationResult.Ok("LOW", "APPROVE", "Sản phẩm hợp lệ.", Array.Empty<AiModerationSignal>(), "gemini-3.1-flash-lite");
+
+        var merged = ModerationDecision.MergeWithAi(kw, ai, aiAttempted: true);
+
+        Assert.Equal("NONE", merged.Level);
+        Assert.Equal("LOW", merged.MucRuiRo);
+        Assert.Equal("APPROVE", merged.DeXuat);
+        Assert.Equal("hybrid:gemini-3.1-flash-lite", merged.ModelVersion);
+        Assert.True(ModerationPolicy.IsGreenLane("DONE", merged.Level, merged.MucRuiRo, merged.DeXuat, merged.ModelVersion));
+    }
+
+    [Fact]
+    public void MergeWithAi_NoneAndAiHighRisk_KeepsKeywordLevelNone_MergesSignalsAndIsNotGreenLane()
+    {
+        var kw = ModerationDecision.Evaluate(Array.Empty<KeywordMatch>());
+        var signals = new[]
+        {
+            new AiModerationSignal("BAT_THUONG_GIA", "HIGH", "Gia", "iPhone 15 giá 300.000đ bất thường."),
+            new AiModerationSignal("NGOAI_SAN", "MEDIUM", "MoTa", "Chứa số Zalo yêu cầu cọc ngoài sàn.")
+        };
+        var ai = AiModerationResult.Ok("HIGH", "REJECT", "Nghi ngờ lừa đảo giá ảo.", signals, "gemini-3.1-flash-lite");
+
+        var merged = ModerationDecision.MergeWithAi(kw, ai, aiAttempted: true);
+
+        Assert.Equal("NONE", merged.Level);
+        Assert.Equal("HIGH", merged.MucRuiRo);
+        Assert.Equal("REJECT", merged.DeXuat);
+        Assert.False(ModerationPolicy.IsGreenLane("DONE", merged.Level, merged.MucRuiRo, merged.DeXuat, merged.ModelVersion));
+
+        // JSON hợp lệ, ParseEvidence không bị vỡ, ParseAiSignals đọc đủ 2 tín hiệu
+        Assert.Empty(ModerationDecision.ParseEvidence(merged.DauHieuJson));
+        var parsedSignals = ModerationDecision.ParseAiSignals(merged.DauHieuJson);
+        Assert.Equal(2, parsedSignals.Count);
+        Assert.Contains(parsedSignals, s => s.Group == "BAT_THUONG_GIA" && s.Field == "Gia");
+        Assert.Contains(parsedSignals, s => s.Group == "NGOAI_SAN" && s.Field == "MoTa");
+    }
+
+    [Fact]
+    public void MergeWithAi_LowKeywordAndAiApprove_RespectsSafetyFloor()
+    {
+        var kw = ModerationDecision.Evaluate(new[] { Kw(1, "replica", "LOW") });
+        var ai = AiModerationResult.Ok("LOW", "APPROVE", "Có vẻ ổn.", Array.Empty<AiModerationSignal>(), "gemini-3.1-flash-lite");
+
+        var merged = ModerationDecision.MergeWithAi(kw, ai, aiAttempted: true);
+
+        Assert.Equal("LOW", merged.Level);
+        Assert.Equal("MEDIUM", merged.MucRuiRo);        // không bị hạ xuống LOW
+        Assert.Equal("NEEDS_REVIEW", merged.DeXuat);    // không bị hạ xuống APPROVE
+        Assert.False(ModerationPolicy.IsGreenLane("DONE", merged.Level, merged.MucRuiRo, merged.DeXuat, merged.ModelVersion));
+        Assert.Single(ModerationDecision.ParseEvidence(merged.DauHieuJson));
+    }
+
+    [Fact]
+    public void MergeWithAi_WhenAiFails_FallsBackToKeywordV1Fallback_AndNotGreenLane()
+    {
+        var kw = ModerationDecision.Evaluate(Array.Empty<KeywordMatch>());
+        var failed = AiModerationResult.Fail("HTTP 429 Too Many Requests", "gemini-3.1-flash-lite");
+
+        var merged = ModerationDecision.MergeWithAi(kw, failed, aiAttempted: true);
+
+        Assert.Equal("NONE", merged.Level);
+        Assert.Equal("LOW", merged.MucRuiRo);
+        Assert.Equal("APPROVE", merged.DeXuat);
+        Assert.Equal(ModerationPolicy.ModelVersionFallback, merged.ModelVersion);
+        Assert.True(ModerationPolicy.IsFallbackModel(merged.ModelVersion));
+        Assert.False(ModerationPolicy.IsGreenLane("DONE", merged.Level, merged.MucRuiRo, merged.DeXuat, merged.ModelVersion));
+    }
 }

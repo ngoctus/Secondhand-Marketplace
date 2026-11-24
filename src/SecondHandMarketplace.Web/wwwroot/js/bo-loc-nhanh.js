@@ -9,6 +9,7 @@
     if (!form || !khoiKetQua) return;
 
     const mucTieu = khoiKetQua.dataset.mucTieu || window.location.pathname;
+    const mucTieuPath = new URL(mucTieu, window.location.href).pathname.replace(/\/+$/, '').toLowerCase();
     const rangeLo = form.querySelector('[data-gia-lo]');
     const rangeCao = form.querySelector('[data-gia-cao]');
     const readout = form.querySelector('[data-gia-readout]');
@@ -209,12 +210,27 @@
     });
 
     document.addEventListener('click', (e) => {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         const a = e.target.closest ? e.target.closest('a') : null;
         if (!a || !a.closest('#ketQuaTimKiem')) return;
+        if (a.target && a.target.toLowerCase() !== '_self') return;
         const href = a.getAttribute('href');
-        if (!href || href.indexOf(mucTieu) !== 0) return;
+        if (!href || href.startsWith('#')) return;
+
+        // Chỉ chặn AJAX cho đúng trang danh sách (/Products hoặc /Products/Index),
+        // KHÔNG chặn link chi tiết sản phẩm (/Products/Details/{id}) khiến cả trang Details bị nhét vào #ketQuaTimKiem.
+        let parsed;
+        try {
+            parsed = new URL(href, window.location.href);
+        } catch {
+            return;
+        }
+        if (parsed.origin !== window.location.origin) return;
+        const targetPath = parsed.pathname.replace(/\/+$/, '').toLowerCase();
+        if (targetPath !== mucTieuPath && targetPath !== mucTieuPath + '/index') return;
+
         e.preventDefault();
-        tai(href, true);
+        tai(parsed.pathname + parsed.search, true);
     });
 
     // Nút back/forward: URL đã đổi nên chỉ việc xin lại partial theo URL hiện hành.

@@ -1,0 +1,412 @@
+@using SecondHandMarketplace.Web.Services.Accounts
+@model AdminAccountAppealDetailDto
+@{
+    ViewData["Title"] = HienThi.Chon($"Đơn khiếu nại tài khoản #{Model.MaKhieuNai}", $"Account Appeal #{Model.MaKhieuNai}");
+    var isPending = Model.TrangThai == AccountAppealRules.StatusPending;
+    var isAppeal = Model.LoaiYeuCau == AccountAppealRules.TypeAppeal;
+    var statusBadge = Model.TrangThai switch
+    {
+        AccountAppealRules.StatusPending => "bg-warning text-dark",
+        AccountAppealRules.StatusApproved => "bg-success",
+        AccountAppealRules.StatusRejected => "bg-danger",
+        _ => "bg-secondary"
+    };
+    var hasValidImage = !string.IsNullOrWhiteSpace(Model.BangChungAnh) && UrlAnToan.HopLe(Model.BangChungAnh);
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-action="Index">@HienThi.Chon("Khiếu nại tài khoản", "Account Appeals")</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@HienThi.Chon($"Đơn #{Model.MaKhieuNai}", $"Request #{Model.MaKhieuNai}")</li>
+                </ol>
+            </nav>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <h4 class="fw-bold mb-0">@HienThi.Chon($"Đơn #{Model.MaKhieuNai}", $"Request #{Model.MaKhieuNai}") — @AccountAppealRules.RequestTypeLabel(Model.LoaiYeuCau, Model.LanKhoaThu)</h4>
+                <span class="badge @statusBadge">@AccountAppealRules.StatusLabel(Model.TrangThai)</span>
+                <span class="badge @(Model.LanKhoaThu >= AccountAppealRules.PermanentLockThreshold ? "bg-danger" : Model.LanKhoaThu == AccountAppealRules.FeeLockTier ? "bg-warning text-dark" : "bg-secondary")">
+                    @HienThi.Chon($"Khóa lần {Model.LanKhoaThu}", $"Lock #{Model.LanKhoaThu}")
+                </span>
+            </div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> @HienThi.Chon("Quay lại hàng chờ", "Back to queue")
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Cột trái: Nội dung đơn, Phí/Biên lai, Lịch sử vi phạm, Các đơn trước -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2">@HienThi.Chon("Nội dung đơn của người dùng", "User Request Content")</h5>
+
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">@HienThi.Chon("Lý do khóa tại thời điểm gửi đơn", "Lock reason at submission time")</div>
+                        <div class="p-3 bg-light rounded-3 text-danger fw-medium">@Model.LyDoKhoaLucGui</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">
+                            @(isAppeal ? HienThi.Chon("Giải trình khiếu nại khóa nhầm", "Wrongful lock appeal explanation") : HienThi.Chon("Nội dung cam kết mở khóa", "Unlock commitment content"))
+                        </div>
+                        <div class="p-3 bg-light rounded-3" style="white-space: pre-wrap;">@Model.NoiDung</div>
+                    </div>
+
+                    <div class="text-muted small">
+                        <i class="bi bi-clock me-1"></i> @HienThi.Chon("Gửi lúc:", "Submitted at:") @HienThi.NgayGio(Model.NgayTao)
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.YeuCauPhi || hasValidImage)
+            {
+                <div class="card border-0 shadow-sm rounded-4 mb-4 @(Model.YeuCauPhi ? "border-start border-4 border-warning" : "")">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3 border-bottom pb-2">
+                            @(Model.YeuCauPhi ? HienThi.Chon("Đối chiếu phí mở khóa lần 2 (VietQR) & Biên lai", "2nd Lock Fee Verification (VietQR) & Receipt") : HienThi.Chon("Ảnh bằng chứng đính kèm", "Attached Evidence Image"))
+                        </h5>
+
+                        @if (Model.YeuCauPhi)
+                        {
+                            <div class="alert alert-warning mb-3">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <div>
+                                        <div><strong>@HienThi.Chon("Số tiền cần đối chiếu:", "Amount to verify:")</strong> <span class="fs-5 text-danger fw-bold">@Model.SoTienPhi.ToString("N0") đ</span></div>
+                                        <div>
+                                            <strong>@HienThi.Chon("Mã nội dung chuyển khoản chuẩn:", "Expected transfer reference code:")</strong>
+                                            <code id="transferRefCode" class="fs-6 ms-1">@(Model.MaGiaoDichThamChieu ?? "—")</code>
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(Model.MaGiaoDichThamChieu))
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-dark" id="btnCopyRefCode">
+                                            <i class="bi bi-clipboard me-1"></i> @HienThi.Chon("Sao chép mã CK", "Copy Code")
+                                        </button>
+                                    }
+                                </div>
+                                <div class="small mt-2 mb-0">
+                                    @HienThi.Chon("Admin kiểm tra tài khoản ngân hàng của sàn đã nhận đúng số tiền và nội dung chuyển khoản khớp biên lai bên dưới trước khi bấm Chấp thuận.", "Verify that the marketplace bank account received the exact amount and transfer description matching the receipt below before approving.")
+                                </div>
+                            </div>
+                        }
+
+                        @if (hasValidImage)
+                        {
+                            <div>
+                                <div class="text-muted small mb-2">
+                                    @(Model.YeuCauPhi ? HienThi.Chon("Ảnh biên lai chuyển khoản", "Transfer receipt image") : HienThi.Chon("Ảnh bằng chứng người dùng gửi", "User evidence image"))
+                                    @HienThi.Chon("(bấm vào ảnh để phóng to)", "(click image to zoom)")
+                                </div>
+                                <div class="d-flex flex-wrap align-items-start gap-3">
+                                    <button type="button" class="btn p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#evidenceZoomModal">
+                                        <img src="@Model.BangChungAnh"
+                                             alt="Ảnh bằng chứng / biên lai"
+                                             class="img-thumbnail rounded-3"
+                                             style="max-height: 300px; cursor: zoom-in;" />
+                                    </button>
+                                    <div class="d-flex flex-column gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#evidenceZoomModal">
+                                            <i class="bi bi-zoom-in me-1"></i> @HienThi.Chon("Phóng to ảnh", "Zoom image")
+                                        </button>
+                                        <a href="@Model.BangChungAnh" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-box-arrow-up-right me-1"></i> @HienThi.Chon("Mở ảnh ở tab mới", "Open in new tab")
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else if (Model.YeuCauPhi)
+                        {
+                            <div class="alert alert-danger mb-0">
+                                @HienThi.Chon("Đơn yêu cầu phí nhưng không có đường dẫn ảnh biên lai hợp lệ.", "Fee required but no valid receipt image URL was provided.")
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Lịch sử vi phạm gần đây -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 border-bottom pb-2">
+                        <h5 class="fw-bold mb-0">@HienThi.Chon("Lịch sử vi phạm của tài khoản", "Account Violation History")</h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-danger">@HienThi.Chon("Hiệu lực:", "Active:") @Model.SoViPhamHieuLuc / @AccountAppealRules.PermanentLockThreshold</span>
+                            <span class="badge bg-secondary">@HienThi.Chon("Tổng lịch sử:", "Total history:") @Model.TongViPhamLichSu</span>
+                            <a asp-controller="Violations" asp-action="Index" asp-route-sellerId="@Model.MaNguoiDung" class="btn btn-sm btn-outline-secondary">
+                                @HienThi.Chon("Xem trang Vi phạm", "View Violations")
+                            </a>
+                        </div>
+                    </div>
+
+                    @if (Model.ViPhamGanDay.Count == 0)
+                    {
+                        <div class="text-muted fst-italic">@HienThi.Chon("Chưa ghi nhận bản ghi vi phạm kiểm duyệt hoặc báo cáo đã xử lý nào.", "No moderation violations or resolved reports recorded.")</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>@L["Admin_Time"]</th>
+                                        <th>@HienThi.Chon("Nguồn", "Source")</th>
+                                        <th>@L["Admin_Details"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var v in Model.ViPhamGanDay)
+                                    {
+                                        <tr>
+                                            <td class="text-nowrap small">@HienThi.NgayGio(v.ThoiGian)</td>
+                                            <td class="text-nowrap">
+                                                <span class="badge @(v.Nguon.Contains("Hiệu lực") ? "bg-warning text-dark" : "bg-light text-muted border")">
+                                                    @v.Nguon
+                                                </span>
+                                            </td>
+                                            <td class="small">@v.MoTa</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Các đơn trước đó của user -->
+            @if (Model.CacDonKhacCuaUser.Count > 0)
+            {
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3 border-bottom pb-2">@HienThi.Chon($"Các đơn khiếu nại khác của người dùng ({Model.CacDonKhacCuaUser.Count})", $"Other Appeal Requests by User ({Model.CacDonKhacCuaUser.Count})")</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>@HienThi.Chon("Mã", "ID")</th>
+                                        <th>@HienThi.Chon("Loại / Lần khóa", "Type / Lock Tier")</th>
+                                        <th>@L["Admin_Status"]</th>
+                                        <th>@HienThi.Chon("Ngày gửi", "Submitted")</th>
+                                        <th>@HienThi.Chon("Ghi chú Admin", "Admin Note")</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var other in Model.CacDonKhacCuaUser)
+                                    {
+                                        var otherBadge = other.TrangThai switch
+                                        {
+                                            AccountAppealRules.StatusPending => "bg-warning text-dark",
+                                            AccountAppealRules.StatusApproved => "bg-success",
+                                            AccountAppealRules.StatusRejected => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                        <tr>
+                                            <td><strong>#@other.MaKhieuNai</strong></td>
+                                            <td class="small">
+                                                @AccountAppealRules.RequestTypeLabel(other.LoaiYeuCau, other.LanKhoaThu)
+                                                <span class="text-muted">(@HienThi.Chon($"Lần {other.LanKhoaThu}", $"Lock #{other.LanKhoaThu}"))</span>
+                                            </td>
+                                            <td><span class="badge @otherBadge">@AccountAppealRules.StatusLabel(other.TrangThai)</span></td>
+                                            <td class="small text-nowrap">@HienThi.NgayGio(other.NgayTao)</td>
+                                            <td class="small text-muted">@(string.IsNullOrWhiteSpace(other.GhiChuAdmin) ? "—" : other.GhiChuAdmin)</td>
+                                            <td><a asp-action="Details" asp-route-id="@other.MaKhieuNai" class="small">@HienThi.Chon("Xem", "View")</a></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Cột phải: Thông tin tài khoản + Form Duyệt / Từ chối -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2">@HienThi.Chon("Thông tin tài khoản", "Account Information")</h5>
+                    <dl class="row small mb-0">
+                        <dt class="col-5 text-muted">@L["Account_FullName"]</dt>
+                        <dd class="col-7 fw-semibold">@Model.HoTen (#@Model.MaNguoiDung)</dd>
+
+                        <dt class="col-5 text-muted">@L["Account_Email"]</dt>
+                        <dd class="col-7">@Model.Email</dd>
+
+                        <dt class="col-5 text-muted">@L["Account_Phone"]</dt>
+                        <dd class="col-7">@(Model.SoDienThoai ?? "—")</dd>
+
+                        <dt class="col-5 text-muted">@HienThi.Chon("Trạng thái TK", "Account Status")</dt>
+                        <dd class="col-7">
+                            <span class="badge @(Model.TrangThaiTaiKhoan == "ACTIVE" ? "bg-success" : "bg-danger")">
+                                @HienThi.TrangThaiTaiKhoan(Model.TrangThaiTaiKhoan)
+                            </span>
+                        </dd>
+
+                        <dt class="col-5 text-muted">@HienThi.Chon("Số lần bị khóa", "Lock Count")</dt>
+                        <dd class="col-7 fw-semibold">@Model.SoLanBiKhoaHienTai @HienThi.Chon("lần", "time(s)")</dd>
+
+                        @if (Model.ThoiGianKhoaHienTai is not null)
+                        {
+                            <dt class="col-5 text-muted">@HienThi.Chon("Khóa gần nhất", "Last Locked")</dt>
+                            <dd class="col-7">@HienThi.NgayGio(Model.ThoiGianKhoaHienTai.Value)</dd>
+                        }
+
+                        @if (Model.MocTinhViPham is not null)
+                        {
+                            <dt class="col-5 text-muted">@HienThi.Chon("Mốc reset gậy", "Strike Reset At")</dt>
+                            <dd class="col-7">@HienThi.NgayGio(Model.MocTinhViPham.Value)</dd>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.TenShop))
+                        {
+                            <dt class="col-5 text-muted">@L["Admin_ShopName"]</dt>
+                            <dd class="col-7">
+                                @Model.TenShop
+                                <span class="badge @(Model.TrangThaiShop == "ACTIVE" ? "bg-success" : "bg-secondary") ms-1">@HienThi.TrangThaiTaiKhoan(Model.TrangThaiShop)</span>
+                            </dd>
+                        }
+                    </dl>
+                    <div class="mt-3 pt-2 border-top">
+                        <a asp-controller="Users" asp-action="Index" asp-route-search="@Model.Email" class="btn btn-sm btn-outline-secondary w-100">
+                            <i class="bi bi-person-gear me-1"></i> @HienThi.Chon("Mở tại Quản lý người dùng", "Open in User Management")
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            @if (isPending)
+            {
+                <div class="card border-0 shadow-sm rounded-4 mb-4 border-top border-4 border-success">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold text-success mb-2">
+                            <i class="bi bi-check-circle me-1"></i> @HienThi.Chon("Chấp thuận & Mở khóa", "Approve & Unlock")
+                        </h5>
+                        <p class="small text-muted mb-3">
+                            @if (isAppeal)
+                            {
+                                <span>
+                                    @Html.Raw(HienThi.Chon(
+                                        $"Duyệt <strong>Khiếu nại khóa nhầm</strong> sẽ mở khóa tài khoản + cửa hàng, đặt lại mốc vi phạm về <code>0/3</code> và <strong>giảm số lần bị khóa đi 1</strong> (từ {Model.SoLanBiKhoaHienTai} → {Math.Max(0, Model.SoLanBiKhoaHienTai - 1)}).",
+                                        $"Approving a <strong>Wrongful Lock Appeal</strong> will unlock the account + shop, reset active strikes to <code>0/3</code>, and <strong>decrease lock count by 1</strong> (from {Model.SoLanBiKhoaHienTai} → {Math.Max(0, Model.SoLanBiKhoaHienTai - 1)})."))
+                                </span>
+                            }
+                            else
+                            {
+                                <span>
+                                    @Html.Raw(HienThi.Chon(
+                                        $"Duyệt <strong>Cam kết mở khóa</strong> sẽ mở khóa tài khoản + cửa hàng, đặt lại mốc vi phạm về <code>0/3</code> và <strong>giữ nguyên số lần bị khóa ({Model.SoLanBiKhoaHienTai})</strong>.",
+                                        $"Approving an <strong>Unlock Commitment</strong> will unlock the account + shop, reset active strikes to <code>0/3</code>, and <strong>keep the lock count ({Model.SoLanBiKhoaHienTai})</strong>."))
+                                </span>
+                            }
+                        </p>
+                        <form asp-action="Approve" asp-route-id="@Model.MaKhieuNai" method="post">
+                            <div class="mb-3">
+                                <label for="approveNote" class="form-label small fw-semibold">@HienThi.Chon("Ghi chú cho người dùng (tùy chọn)", "Note to user (optional)")</label>
+                                <textarea id="approveNote" name="ghiChuAdmin" class="form-control form-control-sm" rows="3" maxlength="1000"
+                                          placeholder="@HienThi.Chon("VD: Đã đối chiếu biên lai chuyển khoản / Xác nhận hệ thống khóa nhầm...", "e.g., Verified transfer receipt / Confirmed wrongful system lock...")"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100"
+                                    onclick="return confirm('@HienThi.Chon($"Xác nhận CHẤP THUẬN đơn #{Model.MaKhieuNai} và MỞ KHÓA tài khoản {Model.Email}?", $"Confirm APPROVING request #{Model.MaKhieuNai} and UNLOCKING account {Model.Email}?")');">
+                                <i class="bi bi-unlock me-1"></i> @HienThi.Chon("Chấp thuận & Mở khóa tài khoản", "Approve & Unlock Account")
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 border-top border-4 border-danger">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold text-danger mb-2">
+                            <i class="bi bi-x-circle me-1"></i> @HienThi.Chon("Từ chối đơn", "Reject Request")
+                        </h5>
+                        <p class="small text-muted mb-3">
+                            @Html.Raw(HienThi.Chon(
+                                "Tài khoản sẽ giữ nguyên trạng thái <code>LOCKED</code>. Lý do từ chối sẽ được hiển thị cho người dùng và gửi qua email.",
+                                "The account will remain <code>LOCKED</code>. The rejection reason will be shown to the user and sent via email."))
+                        </p>
+                        <form asp-action="Reject" asp-route-id="@Model.MaKhieuNai" method="post">
+                            <div class="mb-3">
+                                <label for="rejectNote" class="form-label small fw-semibold">
+                                    @HienThi.Chon("Lý do từ chối", "Rejection reason") <span class="text-danger">*</span> (@HienThi.Chon($"tối thiểu {AccountAppealRules.MinAdminRejectNoteLength} ký tự", $"min {AccountAppealRules.MinAdminRejectNoteLength} chars"))
+                                </label>
+                                <textarea id="rejectNote" name="ghiChuAdmin" class="form-control form-control-sm" rows="4"
+                                          required minlength="@AccountAppealRules.MinAdminRejectNoteLength" maxlength="1000"
+                                          placeholder="@HienThi.Chon("Nêu rõ lý do từ chối (VD: Biên lai chưa khớp số tiền/mã CK, bằng chứng chưa đủ căn cứ...)", "Specify the rejection reason (e.g., Receipt amount/reference code mismatch, insufficient evidence...)")"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-danger w-100"
+                                    onclick="return confirm('@HienThi.Chon($"Xác nhận TỪ CHỐI đơn #{Model.MaKhieuNai}?", $"Confirm REJECTING request #{Model.MaKhieuNai}?")');">
+                                <i class="bi bi-x-octagon me-1"></i> @HienThi.Chon("Từ chối đơn này", "Reject This Request")
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm rounded-4 border-top border-4 @(Model.TrangThai == AccountAppealRules.StatusApproved ? "border-success" : "border-danger")">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-2">@HienThi.Chon("Kết quả xử lý", "Review Outcome")</h5>
+                        <div class="mb-2">
+                            <span class="badge @statusBadge">@AccountAppealRules.StatusLabel(Model.TrangThai)</span>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            <div><strong>@HienThi.Chon("Người xử lý:", "Reviewed by:")</strong> @(Model.TenNguoiXuLy ?? (Model.NguoiXuLyId.HasValue ? $"Admin #{Model.NguoiXuLyId}" : "—"))</div>
+                            @if (Model.NgayXuLy is not null)
+                            {
+                                <div><strong>@L["Admin_Time"]:</strong> @HienThi.NgayGio(Model.NgayXuLy.Value)</div>
+                            }
+                        </div>
+                        <div class="small">
+                            <strong>@HienThi.Chon("Ghi chú Admin:", "Admin Note:")</strong>
+                            <div class="p-2 bg-light rounded-2 mt-1" style="white-space: pre-wrap;">@(string.IsNullOrWhiteSpace(Model.GhiChuAdmin) ? HienThi.Chon("Không có ghi chú.", "No notes.") : Model.GhiChuAdmin)</div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (hasValidImage)
+{
+    <div class="modal fade" id="evidenceZoomModal" tabindex="-1" aria-labelledby="evidenceZoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="evidenceZoomModalLabel">
+                        @(Model.YeuCauPhi ? HienThi.Chon("Biên lai chuyển khoản", "Transfer Receipt") : HienThi.Chon("Ảnh bằng chứng", "Evidence Image")) — #@Model.MaKhieuNai
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Btn_Close"]"></button>
+                </div>
+                <div class="modal-body text-center bg-dark p-3">
+                    <img src="@Model.BangChungAnh" alt="Evidence" class="img-fluid rounded" style="max-height: 80vh;" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            const btn = document.getElementById('btnCopyRefCode');
+            const codeEl = document.getElementById('transferRefCode');
+            if (btn && codeEl) {
+                btn.addEventListener('click', async () => {
+                    const text = codeEl.textContent?.trim();
+                    if (!text) return;
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        const original = btn.innerHTML;
+                        btn.innerHTML = '<i class="bi bi-check2 me-1"></i> @Html.Raw(HienThi.Chon("Đã sao chép", "Copied"))';
+                        setTimeout(() => btn.innerHTML = original, 1800);
+                    } catch { }
+                });
+            }
+        })();
+    </script>
+}

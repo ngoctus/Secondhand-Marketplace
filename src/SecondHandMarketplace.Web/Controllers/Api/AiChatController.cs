@@ -45,7 +45,7 @@ public class AiChatController : ControllerBase
         var role = User.IsInRole(AppRoles.Admin) ? AppRoles.Admin
                  : User.IsInRole(AppRoles.User) ? AppRoles.User
                  : string.Empty;
-        var userId = User.GetUserId();
+        var userId = User.LayNguoiDungId()?.ToString() ?? string.Empty;
         if (role.Length == 0 || string.IsNullOrWhiteSpace(userId))
             return StatusCode(StatusCodes.Status403Forbidden, KetQua.ThatBai("Bạn không có quyền sử dụng trợ lý AI."));
 

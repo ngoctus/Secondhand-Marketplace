@@ -657,6 +657,78 @@ public class ProductReviewWorkflowTests
     }
 
     // =====================================================================
+    // C-01: Duyệt nhanh Làn Xanh (server tự xác minh lại từng sản phẩm)
+    // =====================================================================
+    [Fact]
+    public async Task ApproveGreenLane_OnlyApprovesVerifiedGreenLane_SkipsYellowAndFallback()
+    {
+        var h = NewHost();
+
+        // SP 301: Làn Xanh thật (DONE + NONE + LOW + APPROVE + hybrid:...)
+        var t301 = GuiDuyet(h, 301, "Bàn học gỗ cũ");
+        var ai301 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == t301);
+        ai301.TrangThai = ModerationPolicy.AnalysisDone;
+        ai301.MucDoTuKhoa = ModerationPolicy.LevelNone;
+        ai301.MucRuiRo = ModerationPolicy.RiskLow;
+        ai301.DeXuat = ModerationPolicy.AdviceApprove;
+        ai301.PhienBanMoHinh = "hybrid:gemini-3.1-flash-lite";
+        ai301.ThoiGianHoanThanh = DateTime.UtcNow;
+
+        // SP 302: Làn Vàng (AI cảnh báo MEDIUM/NEEDS_REVIEW dù NONE từ khóa)
+        var t302 = GuiDuyet(h, 302, "iPhone 15 giá 300k");
+        var ai302 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == t302);
+        ai302.TrangThai = ModerationPolicy.AnalysisDone;
+        ai302.MucDoTuKhoa = ModerationPolicy.LevelNone;
+        ai302.MucRuiRo = ModerationPolicy.RiskHigh;
+        ai302.DeXuat = ModerationPolicy.AdviceReject;
+        ai302.PhienBanMoHinh = "hybrid:gemini-3.1-flash-lite";
+        ai302.ThoiGianHoanThanh = DateTime.UtcNow;
+
+        // SP 303: Fallback (chưa qua AI thật)
+        var t303 = GuiDuyet(h, 303, "Tai nghe cũ");
+        var ai303 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == t303);
+        ai303.TrangThai = ModerationPolicy.AnalysisDone;
+        ai303.MucDoTuKhoa = ModerationPolicy.LevelNone;
+        ai303.MucRuiRo = ModerationPolicy.RiskLow;
+        ai303.DeXuat = ModerationPolicy.AdviceApprove;
+        ai303.PhienBanMoHinh = ModerationPolicy.ModelVersionFallback;
+        ai303.ThoiGianHoanThanh = DateTime.UtcNow;
+
+        // SP 304: Làn Vàng từ khóa LOW
+        var t304 = GuiDuyet(h, 304, "Giày replica cũ");
+        var ai304 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == t304);
+        ai304.TrangThai = ModerationPolicy.AnalysisDone;
+        ai304.MucDoTuKhoa = ModerationPolicy.LevelLow;
+        ai304.MucRuiRo = ModerationPolicy.RiskMedium;
+        ai304.DeXuat = ModerationPolicy.AdviceNeedsReview;
+        ai304.PhienBanMoHinh = "hybrid:gemini-3.1-flash-lite";
+        ai304.ThoiGianHoanThanh = DateTime.UtcNow;
+
+        await h.Db.SaveChangesAsync();
+
+        // Client cố tình gửi cả 4 ID lên -> server chỉ duyệt 301, bỏ qua 302/303/304
+        var bulk = await h.Reviews.ApproveGreenLaneAsync(AdminId, new[] { 301, 302, 303, 304 });
+
+        Assert.True(bulk.Success);
+        Assert.Equal(1, bulk.ApprovedCount);
+        Assert.Equal(3, bulk.SkippedCount);
+
+        Assert.Equal("ACTIVE", (await ProductAsync(h, 301)).TrangThai);
+        Assert.Equal(ModerationPolicy.ProductPending, (await ProductAsync(h, 302)).TrangThai);
+        Assert.Equal(ModerationPolicy.ProductPending, (await ProductAsync(h, 303)).TrangThai);
+        Assert.Equal(ModerationPolicy.ProductPending, (await ProductAsync(h, 304)).TrangThai);
+    }
+
+    [Fact]
+    public async Task ApproveGreenLane_NonAdmin_IsDenied()
+    {
+        var h = NewHost();
+        var bulk = await h.Reviews.ApproveGreenLaneAsync(SellerId, new[] { 100 });
+        Assert.False(bulk.Success);
+        Assert.Contains("quản trị viên", bulk.Error!);
+    }
+
+    // =====================================================================
 
     private static ApiProductsController NewApiController(IProductService products, IModerationService moderation)
     {

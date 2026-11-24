@@ -3512,4 +3512,17 @@ SET SystemPrompt = N'Bạn là trợ lý AI của Re:market - sàn mua bán đ�
 WHERE MaCauHinhAI = 1
   AND SystemPrompt = N'Bạn là trợ lý của Re:market, sàn mua bán đồ đã qua sử dụng. Hãy trả lời bằng tiếng Việt, ngắn gọn, thân thiện. Bạn giúp người dùng tìm sản phẩm, gợi ý sản phẩm theo nhu cầu và soạn mô tả sản phẩm.';
 GO
+
+-- KN-01: Seed dòng cấu hình mặc định cho Khiếu nại & Mở khóa tài khoản (chỉ thêm nếu chưa có).
+IF NOT EXISTS (SELECT 1 FROM dbo.CauHinhKhieuNaiTaiKhoan WHERE Id = 1)
+BEGIN
+    INSERT INTO dbo.CauHinhKhieuNaiTaiKhoan (
+        Id, SoLanGuiMoiChuKy, CooldownPhut, PhiMoKhoaLan2,
+        TenNganHang, MaNganHang, SoTaiKhoan, ChuTaiKhoan
+    )
+    VALUES (
+        1, 2, 4320, 200000,
+        N'MB Bank', 'MB', '090123456789', N'RE MARKET PLATFORM'
+    );
+END;
 GO

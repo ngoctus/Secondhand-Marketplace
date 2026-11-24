@@ -123,6 +123,9 @@
                     <button type="submit" class="btn btn-success w-100 rounded-pill fw-semibold py-2 shadow-sm">
                         <i class="bi bi-check-circle-fill me-1"></i> Tôi đã chuyển khoản xong
                     </button>
+                    <div class="text-center text-muted small mt-2" style="font-size: 11.5px;">
+                        <i class="bi bi-bell me-1"></i>Hệ thống sẽ gửi thông báo đến chủ shop để đối soát giao dịch và chuẩn bị hàng.
+                    </div>
                 </form>
             }
         </div>
@@ -130,12 +133,6 @@
 </div>
 
 <script>
-function copyVietQr(elementId, btn) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    const text = el.innerText.trim();
-    copyTextToClipboard(text, btn);
-}
 function copyVietQrRaw(text, btn) {
     copyTextToClipboard(text, btn);
 }

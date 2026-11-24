@@ -33,8 +33,29 @@ public sealed class UsersController(AppDbContext db, IUserAdminService userAdmin
                 VaiTro = x.VaiTro,
                 TrangThai = x.TrangThai,
                 LyDoKhoa = x.LyDoKhoa,
+                SoLanBiKhoa = x.SoLanBiKhoa,
                 NgayTao = x.NgayTao
             }).ToListAsync(cancellationToken);
+
+        if (rows.Count > 0)
+        {
+            var userIds = rows.Select(r => r.Id).ToList();
+            var pendingAppeals = await db.KhieuNaiTaiKhoans.AsNoTracking()
+                .Where(k => userIds.Contains(k.MaNguoiDung) && k.TrangThai == AccountAppealRules.StatusPending)
+                .Select(k => new { k.MaNguoiDung, k.MaKhieuNai })
+                .ToListAsync(cancellationToken);
+
+            var pendingByUser = pendingAppeals
+                .GroupBy(x => x.MaNguoiDung)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.MaKhieuNai).First().MaKhieuNai);
+
+            foreach (var r in rows)
+            {
+                if (pendingByUser.TryGetValue(r.Id, out var appealId))
+                    r.PendingAppealId = appealId;
+            }
+        }
+
         return View(new AdminUsersVm
         {
             Items = rows,
@@ -50,7 +71,7 @@ public sealed class UsersController(AppDbContext db, IUserAdminService userAdmin
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Lock(int id, string reason, CancellationToken cancellationToken)
     {
-        var result = await userAdmin.LockUserAsync(ParseCurrentUserId(), id, reason, cancellationToken);
+        var result = await userAdmin.LockUserAsync(User.LayNguoiDungId(), id, reason, cancellationToken);
         if (result.Success) TempData["ThanhCong"] = "Đã khóa tài khoản.";
         else TempData["Loi"] = result.Error;
         return RedirectToAction(nameof(Index));
@@ -60,11 +81,9 @@ public sealed class UsersController(AppDbContext db, IUserAdminService userAdmin
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Unlock(int id, CancellationToken cancellationToken)
     {
-        var result = await userAdmin.UnlockUserAsync(ParseCurrentUserId(), id, cancellationToken);
+        var result = await userAdmin.UnlockUserAsync(User.LayNguoiDungId(), id, cancellationToken);
         if (result.Success) TempData["ThanhCong"] = "Đã mở khóa tài khoản.";
         else TempData["Loi"] = result.Error;
         return RedirectToAction(nameof(Index));
     }
-
-    private int? ParseCurrentUserId() => int.TryParse(User.GetUserId(), out var id) ? id : null;
 }

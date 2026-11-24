@@ -238,6 +238,12 @@
                     tongTien += parseFloat(chk.getAttribute('data-price') || 0);
                 });
 
+                document.querySelectorAll('.shop-select-all').forEach(function (chkShop) {
+                    const shopId = chkShop.getAttribute('data-shop-id');
+                    const items = document.querySelectorAll('.item-checkbox[data-shop-id="' + shopId + '"]');
+                    chkShop.checked = items.length > 0 && Array.from(items).every(function (c) { return c.checked; });
+                });
+
                 document.getElementById('lbl-tong-mon').innerText = tongMon + ' sản phẩm';
                 document.getElementById('lbl-tong-tien').innerText = new Intl.NumberFormat('vi-VN').format(tongTien) + ' ₫';
 

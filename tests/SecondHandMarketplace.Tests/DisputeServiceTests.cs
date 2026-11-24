@@ -240,6 +240,59 @@ public class DisputeServiceTests
     }
 
     [Fact]
+    public async Task NguoiBanPhanHoiAsync_CoAnhPhanHoi_LuuAnhVaCapNhatThanhCong()
+    {
+        using var db = GetInMemoryDbContext("DisputeTest_SellerReplyWithImage");
+        var fakeNotify = new FakeNotificationService();
+        var fakeAudit = new FakeAuditLogService();
+        var service = new DisputeService(db, fakeNotify, fakeAudit);
+
+        var nguoiMua = new NguoiDung { MaNguoiDung = 20, HoTen = "Người mua test", Email = "buyer@test.com", MatKhauBam = "hash" };
+        db.NguoiDungs.Add(nguoiMua);
+
+        var shop = new CuaHang { MaCuaHang = 1, MaNguoiDung = 30, TenShop = "Test Shop" };
+        db.CuaHangs.Add(shop);
+
+        var don = new DonHang
+        {
+            MaDonHang = 2,
+            MaDon = "DH002",
+            MaNguoiDung = 20,
+            MaCuaHang = 1,
+            TenNguoiNhan = "A",
+            SoDienThoaiNhan = "0901234567",
+            DiaChiNhan = "HCM",
+            TienHang = 150000,
+            TongTien = 150000,
+            CuaHang = shop
+        };
+        db.DonHangs.Add(don);
+
+        db.TranhChaps.Add(new TranhChap
+        {
+            MaTranhChap = 2,
+            MaDonHang = 2,
+            MaNguoiTao = 20,
+            LyDo = "Hàng vỡ",
+            TrangThai = "OPEN",
+            DonHang = don
+        });
+        await db.SaveChangesAsync();
+
+        var (thanhCong, _) = await service.NguoiBanPhanHoiAsync(30, 2, "Shop có video gói hàng nguyên vẹn", "/uploads/disputes/seller_proof.png");
+        Assert.True(thanhCong);
+
+        var tc = await db.TranhChaps.FindAsync(2);
+        Assert.Equal("PROCESSING", tc!.TrangThai);
+        Assert.Equal("Shop có video gói hàng nguyên vẹn", tc.PhanHoiNguoiBan);
+        Assert.Equal("/uploads/disputes/seller_proof.png", tc.AnhPhanHoi);
+
+        var detail = await service.LayChiTietTranhChapAsync(2);
+        Assert.NotNull(detail);
+        Assert.Equal("/uploads/disputes/seller_proof.png", detail.AnhPhanHoi);
+    }
+
+    [Fact]
     public async Task XuLyTranhChapAdminAsync_RefundBuyer_CapNhatTrangThaiDonVaHoanTien()
     {
         using var db = GetInMemoryDbContext("DisputeTest_RefundBuyer");

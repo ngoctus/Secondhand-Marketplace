@@ -47,7 +47,7 @@ public sealed class BannersController(IBannerService banners, IAuditLogService a
     private static DateTime? SangUtc(DateTime? gioVn) => gioVn is null ? null : HienThi.TuGioVnSangUtc(gioVn.Value);
 
     private Task LogAsync(string action, int id) =>
-        auditLog.LogAsync(int.TryParse(User.GetUserId(), out var userId) ? userId : null, action, "Banner", id);
+        auditLog.LogAsync(User.LayNguoiDungId(), action, "Banner", id);
 }
 
 public sealed class BannerManagementVm

@@ -20,7 +20,7 @@ namespace SecondHandMarketplace.Web.Controllers
         IMemoryCache cache,
         SecondHandMarketplace.Web.Data.AppDbContext db) : Controller
     {
-        private const string CacheKey = "home:catalog";
+        public const string CatalogCacheKey = "home:catalog";
         private static readonly TimeSpan CacheTrangChu = TimeSpan.FromMinutes(5);
 
         private const int SoTinDuocVeMotLan = 60;
@@ -33,14 +33,14 @@ namespace SecondHandMarketplace.Web.Controllers
             // Trang chủ hiển thị giống nhau cho mọi khách nên dùng chung một bản cache 5 phút.
             // Cố ý không truyền HttpContext.RequestAborted: nếu người dùng đóng tab giữa chừng,
             // truy vấn bị hủy và kết quả dở dang sẽ bị cache lại cho các request sau.
-            if (!cache.TryGetValue(CacheKey, out HomeIndexVm? duLieu) || duLieu is null)
+            if (!cache.TryGetValue(CatalogCacheKey, out HomeIndexVm? duLieu) || duLieu is null)
             {
                 duLieu = await NapTrangChuAsync();
 
                 // Chỉ cache khi lấy được sản phẩm: DB đang lỗi thì lần tải lại phải được thử thật,
                 // không bị khóa một trang trống suốt 5 phút.
                 if (duLieu.SanPhamNoiBat.Count > 0)
-                    cache.Set(CacheKey, duLieu, CacheTrangChu);
+                    cache.Set(CatalogCacheKey, duLieu, CacheTrangChu);
             }
 
             return View(duLieu);
@@ -156,11 +156,21 @@ namespace SecondHandMarketplace.Web.Controllers
         {
             var (tieuDe, thongDiep) = ma switch
             {
-                400 => ("Yêu cầu không hợp lệ", "Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra lại."),
-                401 => ("Cần đăng nhập", "Bạn cần đăng nhập để tiếp tục."),
-                403 => ("Không có quyền truy cập", "Bạn không có quyền truy cập trang này."),
-                404 => ("Không tìm thấy trang", "Trang bạn tìm không tồn tại hoặc đã bị di chuyển."),
-                _ => ("Đã xảy ra lỗi", "Hệ thống gặp sự cố. Vui lòng thử lại sau.")
+                400 => (
+                    HienThi.Chon("Yêu cầu không hợp lệ", "Bad Request"),
+                    HienThi.Chon("Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra lại.", "The submitted request is invalid. Please check and try again.")),
+                401 => (
+                    HienThi.Chon("Cần đăng nhập", "Authentication Required"),
+                    HienThi.Chon("Bạn cần đăng nhập để tiếp tục.", "Please sign in to continue.")),
+                403 => (
+                    HienThi.Chon("Không có quyền truy cập", "Access Denied"),
+                    HienThi.Chon("Bạn không có quyền truy cập trang này.", "You do not have permission to access this page.")),
+                404 => (
+                    HienThi.Chon("Không tìm thấy trang", "Page Not Found"),
+                    HienThi.Chon("Trang bạn tìm không tồn tại hoặc đã bị di chuyển.", "The page you are looking for does not exist or has been moved.")),
+                _ => (
+                    HienThi.Chon("Đã xảy ra lỗi", "An Error Occurred"),
+                    HienThi.Chon("Hệ thống gặp sự cố. Vui lòng thử lại sau.", "Something went wrong on our end. Please try again later."))
             };
 
             return View("Error", new ErrorViewModel

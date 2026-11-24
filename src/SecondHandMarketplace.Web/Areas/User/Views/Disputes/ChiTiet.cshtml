@@ -90,6 +90,15 @@
             <div class="p-3 bg-light rounded-3 text-dark border" style="line-height: 1.6; white-space: pre-line;">
                 @Model.PhanHoiNguoiBan
             </div>
+            @if (!string.IsNullOrEmpty(Model.AnhPhanHoi) && UrlAnToan.HopLe(Model.AnhPhanHoi))
+            {
+                <div class="mt-3">
+                    <span class="text-muted small d-block mb-2"><i class="bi bi-image me-1"></i> Ảnh bằng chứng từ người bán:</span>
+                    <a href="@Model.AnhPhanHoi" target="_blank" rel="noopener noreferrer">
+                        <img src="@Model.AnhPhanHoi" alt="Bằng chứng từ người bán" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
+                    </a>
+                </div>
+            }
             <div class="small text-muted mt-2 text-end">Cập nhật lúc: @HienThi.NgayGio(Model.NgayCapNhat)</div>
         }
         else
@@ -102,12 +111,18 @@
         {
             <div class="mt-3 pt-3 border-top">
                 <h6 class="fw-bold text-dark mb-2"><i class="bi bi-reply-fill text-primary"></i> Gửi phản hồi của cửa hàng</h6>
-                <form asp-action="PhanHoi" method="post">
+                <form asp-action="PhanHoi" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.MaTranhChap" />
                     <div class="mb-3">
+                        <label class="form-label small fw-semibold">Nội dung giải trình <span class="text-danger">*</span></label>
                         <textarea name="phanHoi" rows="3" class="form-control rounded-3" required
                                   placeholder="Nhập giải trình của cửa hàng, tình trạng đóng gói, đối soát với bên vận chuyển... (tối đa 1000 ký tự)"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Ảnh bằng chứng đối soát (nếu có)</label>
+                        <input type="file" name="fileDinhKem" class="form-control form-control-sm rounded-3" accept=".jpg,.jpeg,.png,.webp" />
+                        <div class="form-text small">Hỗ trợ định dạng JPG, JPEG, PNG, WEBP (tối đa 5MB).</div>
                     </div>
                     <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
                         <i class="bi bi-send"></i> Gửi phản hồi khiếu nại

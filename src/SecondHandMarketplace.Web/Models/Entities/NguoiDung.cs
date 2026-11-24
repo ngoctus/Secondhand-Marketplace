@@ -12,6 +12,10 @@ public class NguoiDung
     public string TrangThai { get; set; } = "ACTIVE";
     public string? LyDoKhoa { get; set; }
     public DateTime? ThoiGianKhoa { get; set; }
+    /// <summary>Mốc thời gian mở khóa gần nhất; chỉ các vi phạm sau mốc này mới tính vào bộ đếm 3 gậy.</summary>
+    public DateTime? MocTinhViPham { get; set; }
+    /// <summary>Tổng số đợt tài khoản bị chuyển sang LOCKED (giảm 1 nếu Admin duyệt khiếu nại khóa nhầm).</summary>
+    public int SoLanBiKhoa { get; set; }
     public string? AnhDaiDien { get; set; }
     public string? DiaChiMacDinh { get; set; }
     public DateTime NgayTao { get; set; }

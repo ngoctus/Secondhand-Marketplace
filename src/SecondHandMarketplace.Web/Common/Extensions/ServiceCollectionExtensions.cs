@@ -45,6 +45,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddScoped<IRegistrationOtpService, RegistrationOtpService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
+        // Khiếu nại & Mở khóa tài khoản:
+        services.AddScoped<IAccountAppealAdminService, AccountAppealAdminService>();
+        services.AddScoped<IAccountAppealUserService, AccountAppealUserService>();
         services.AddScoped<IShopService, ShopService>();
         services.AddScoped<IKhuVucService, KhuVucService>();
         services.AddScoped<IProductService, ProductService>();
@@ -52,6 +55,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationService, NotificationService>();
         services.AddAiChat();   // C3: IAiChatService (typed HttpClient), IAiSettingsService, IAiRequestThrottle
         services.AddScoped<IKeywordScanner, SqlKeywordScanner>();
+        services.AddHttpClient<IAiModerationAnalyzer, AiModerationAnalyzer>()
+            .ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
         services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<IForbiddenKeywordService, ForbiddenKeywordService>();
         services.AddScoped<IProductReviewService, ProductReviewService>();

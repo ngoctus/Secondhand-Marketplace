@@ -18,7 +18,13 @@ public sealed record ModerationReview(
     bool CanApprove,                // false => C1 ẩn/vô hiệu nút Duyệt (DB cũng sẽ chặn bằng lỗi 50210/50211)
     string? ApproveBlockedReason,
     bool RejectionRecordsViolation, // true => nếu Admin TỪ CHỐI lượt này thì người bán bị ghi 1 vi phạm (LOW): C1 nên cảnh báo
-    bool CanReanalyze);
+    bool CanReanalyze,
+    string? RiskLevel = null,       // LOW | MEDIUM | HIGH (tổng hợp Tầng 1 + Tầng 2 AI)
+    string? Recommendation = null,  // APPROVE | NEEDS_REVIEW | REJECT
+    string? ModelVersion = null,    // keyword-v1 | hybrid:<model> | keyword-v1-fallback
+    IReadOnlyList<AiModerationSignal>? AiSignals = null,
+    bool IsGreenLane = false,
+    bool IsFallback = false);
 
 /// <summary>Kết quả của AfterAdminDecisionAsync.</summary>
 public sealed record AdminDecisionFollowUp(

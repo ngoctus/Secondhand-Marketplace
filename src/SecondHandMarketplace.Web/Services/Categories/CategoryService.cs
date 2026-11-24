@@ -34,6 +34,7 @@ public sealed class CategoryService(AppDbContext db, IMemoryCache cache) : ICate
         if (!id.HasValue) db.DanhMucs.Add(entity);
         await db.SaveChangesAsync(cancellationToken);
         cache.Remove("catalog:categories");
+        cache.Remove(Controllers.HomeController.CatalogCacheKey);
         return (true, null, entity.MaDanhMuc);
     }
 
@@ -46,6 +47,7 @@ public sealed class CategoryService(AppDbContext db, IMemoryCache cache) : ICate
         else db.DanhMucs.Remove(entity);
         await db.SaveChangesAsync(cancellationToken);
         cache.Remove("catalog:categories");
+        cache.Remove(Controllers.HomeController.CatalogCacheKey);
         return (true, inUse ? "Danh mục đang có sản phẩm nên đã được ẩn thay vì xóa." : "Đã xóa danh mục.");
     }
 
@@ -60,6 +62,7 @@ public sealed class CategoryService(AppDbContext db, IMemoryCache cache) : ICate
         if (!id.HasValue) db.TinhTrangSanPhams.Add(entity);
         await db.SaveChangesAsync(cancellationToken);
         cache.Remove("catalog:conditions");
+        cache.Remove(Controllers.HomeController.CatalogCacheKey);
         return (true, null, entity.MaTinhTrang);
     }
 
@@ -72,6 +75,7 @@ public sealed class CategoryService(AppDbContext db, IMemoryCache cache) : ICate
         else db.TinhTrangSanPhams.Remove(entity);
         await db.SaveChangesAsync(cancellationToken);
         cache.Remove("catalog:conditions");
+        cache.Remove(Controllers.HomeController.CatalogCacheKey);
         return (true, inUse ? "Tình trạng đang được sản phẩm sử dụng nên đã được ẩn." : "Đã xóa tình trạng.");
     }
 }

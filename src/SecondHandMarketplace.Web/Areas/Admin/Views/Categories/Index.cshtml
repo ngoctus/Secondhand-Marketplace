@@ -1,11 +1,123 @@
 @model SecondHandMarketplace.Web.Areas.Admin.Controllers.CategoryManagementVm
-@{ ViewData["Title"] = "Danh mục và tình trạng"; }
+@{
+    ViewData["Title"] = L["Admin_Categories_Title"].Value;
+}
 <div class="container-fluid py-4">
-    <h2>Danh mục và tình trạng sản phẩm</h2>
-    <h4 class="mt-4">Danh mục</h4>
-    <form asp-action="SaveCategory" method="post" class="row g-2 mb-3"><div class="col-md-5"><input name="name" class="form-control" placeholder="Tên danh mục" required maxlength="100"/></div><div class="col-md-2"><input name="order" type="number" class="form-control" value="0"/></div><div class="col-md-2 form-check align-self-center"><input name="visible" type="checkbox" value="true" checked class="form-check-input"/><input type="hidden" name="visible" value="false"/><label class="form-check-label">Hiển thị</label></div><div class="col-auto"><button class="btn btn-primary">Thêm danh mục</button></div></form>
-    <div class="table-responsive"><table class="table table-striped"><thead><tr><th>Tên</th><th>Thứ tự</th><th>Hiển thị</th><th></th></tr></thead><tbody>@foreach(var c in Model.Categories){<tr><td><form asp-action="SaveCategory" method="post" class="d-flex gap-2"><input type="hidden" name="id" value="@c.MaDanhMuc"/><input name="name" value="@c.Ten" class="form-control"/><input name="order" type="number" value="@c.ThuTuHienThi" class="form-control" style="max-width:100px"/><select name="visible" class="form-select" style="max-width:130px"><option value="true" selected="@c.DangHienThi">Hiện</option><option value="false" selected="@(!c.DangHienThi)">Ẩn</option></select><button class="btn btn-sm btn-outline-primary">Lưu</button></form></td><td colspan="2"></td><td><form asp-action="DeleteCategory" method="post"><input type="hidden" name="id" value="@c.MaDanhMuc"/><button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa hoặc ẩn danh mục này?')">Xóa</button></form></td></tr>}</tbody></table></div>
-    <h4 class="mt-5">Tình trạng sản phẩm</h4>
-    <form asp-action="SaveCondition" method="post" class="row g-2 mb-3"><div class="col-md-2"><input name="code" class="form-control" placeholder="Mã (NEW)" required maxlength="30"/></div><div class="col-md-3"><input name="name" class="form-control" placeholder="Tên tình trạng" required maxlength="100"/></div><div class="col-md-3"><input name="description" class="form-control" placeholder="Mô tả" maxlength="500"/></div><div class="col-md-1"><input name="order" type="number" class="form-control" value="0"/></div><div class="col-auto"><button class="btn btn-primary">Thêm</button></div></form>
-    <div class="table-responsive"><table class="table table-striped"><thead><tr><th>Mã</th><th>Tên</th><th>Mô tả</th><th>Thứ tự</th><th>Đang dùng</th><th></th></tr></thead><tbody>@foreach(var c in Model.Conditions){<tr><td colspan="6"><form asp-action="SaveCondition" method="post" class="d-flex gap-2"><input type="hidden" name="id" value="@c.MaTinhTrang"/><input name="code" value="@c.Ma" class="form-control" style="max-width:120px"/><input name="name" value="@c.Ten" class="form-control"/><input name="description" value="@c.MoTa" class="form-control"/><input name="order" type="number" value="@c.ThuTuHienThi" class="form-control" style="max-width:90px"/><select name="active" class="form-select" style="max-width:120px"><option value="true" selected="@c.DangSuDung">Có</option><option value="false" selected="@(!c.DangSuDung)">Không</option></select><button class="btn btn-sm btn-outline-primary">Lưu</button><button formaction="@Url.Action("DeleteCondition")" name="id" value="@c.MaTinhTrang" class="btn btn-sm btn-outline-danger" formmethod="post" onclick="return confirm('Xóa hoặc ẩn tình trạng này?')">Xóa</button></form></td></tr>}</tbody></table></div>
+    <h2 class="h4 fw-bold mb-4">@L["Admin_Categories_Title"]</h2>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h5 class="fw-bold mb-3">@L["Admin_Categories_SectionCat"]</h5>
+        <form asp-action="SaveCategory" method="post" class="row g-2 mb-3 align-items-center">
+            <div class="col-md-5">
+                <input name="name" class="form-control" placeholder="@L["Admin_Categories_NamePlaceholder"]" required maxlength="100" />
+            </div>
+            <div class="col-md-2">
+                <input name="order" type="number" class="form-control" value="0" />
+            </div>
+            <div class="col-md-2 form-check ms-2">
+                <input name="visible" type="checkbox" value="true" checked class="form-check-input" id="chkCatVis" />
+                <input type="hidden" name="visible" value="false" />
+                <label class="form-check-label" for="chkCatVis">@L["Admin_Categories_ColVisible"]</label>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary">@L["Admin_Categories_AddCat"]</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>@L["Admin_Categories_ColName"]</th>
+                        <th style="width: 110px;">@L["Admin_Categories_ColOrder"]</th>
+                        <th style="width: 140px;">@L["Admin_Categories_ColVisible"]</th>
+                        <th style="width: 160px;" class="text-end">@L["Common_Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <tr>
+                            <td colspan="3">
+                                <form asp-action="SaveCategory" method="post" class="d-flex gap-2 align-items-center">
+                                    <input type="hidden" name="id" value="@c.MaDanhMuc" />
+                                    <input name="name" value="@c.Ten" class="form-control" />
+                                    <input name="order" type="number" value="@c.ThuTuHienThi" class="form-control" style="max-width:100px" />
+                                    <select name="visible" class="form-select" style="max-width:130px">
+                                        <option value="true" selected="@c.DangHienThi">@L["Common_Show"]</option>
+                                        <option value="false" selected="@(!c.DangHienThi)">@L["Common_Hide"]</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary text-nowrap">@L["Btn_SaveShort"]</button>
+                                </form>
+                            </td>
+                            <td class="text-end">
+                                <form asp-action="DeleteCategory" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@c.MaDanhMuc" />
+                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('@HienThi.Chon("Xóa hoặc ẩn danh mục này?", "Delete or hide this category?")')">@L["Btn_Delete"]</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h5 class="fw-bold mb-3">@L["Admin_Categories_SectionCond"]</h5>
+        <form asp-action="SaveCondition" method="post" class="row g-2 mb-3 align-items-center">
+            <div class="col-md-2">
+                <input name="code" class="form-control" placeholder="@L["Admin_Categories_ColCode"] (NEW)" required maxlength="30" />
+            </div>
+            <div class="col-md-3">
+                <input name="name" class="form-control" placeholder="@L["Admin_Categories_CondNamePlaceholder"]" required maxlength="100" />
+            </div>
+            <div class="col-md-4">
+                <input name="description" class="form-control" placeholder="@L["Admin_Categories_ColDesc"]" maxlength="500" />
+            </div>
+            <div class="col-md-1">
+                <input name="order" type="number" class="form-control" value="0" />
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary">@L["Btn_Add"]</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>@L["Admin_Categories_ColCode"]</th>
+                        <th>@L["Admin_Categories_ColName"]</th>
+                        <th>@L["Admin_Categories_ColDesc"]</th>
+                        <th>@L["Admin_Categories_ColOrder"]</th>
+                        <th>@L["Admin_Categories_ColInUse"]</th>
+                        <th class="text-end">@L["Common_Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Conditions)
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <form asp-action="SaveCondition" method="post" class="d-flex gap-2 align-items-center">
+                                    <input type="hidden" name="id" value="@c.MaTinhTrang" />
+                                    <input name="code" value="@c.Ma" class="form-control" style="max-width:120px" />
+                                    <input name="name" value="@c.Ten" class="form-control" style="max-width:180px" />
+                                    <input name="description" value="@c.MoTa" class="form-control" />
+                                    <input name="order" type="number" value="@c.ThuTuHienThi" class="form-control" style="max-width:90px" />
+                                    <select name="active" class="form-select" style="max-width:120px">
+                                        <option value="true" selected="@c.DangSuDung">@L["Common_Yes"]</option>
+                                        <option value="false" selected="@(!c.DangSuDung)">@L["Common_No"]</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary text-nowrap">@L["Btn_SaveShort"]</button>
+                                    <button formaction="@Url.Action("DeleteCondition")" name="id" value="@c.MaTinhTrang" class="btn btn-sm btn-outline-danger text-nowrap" formmethod="post" onclick="return confirm('@HienThi.Chon("Xóa hoặc ẩn tình trạng này?", "Delete or hide this condition?")')">@L["Btn_Delete"]</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>

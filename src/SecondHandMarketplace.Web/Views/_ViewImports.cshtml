@@ -1,3 +1,6 @@
+@using Microsoft.Extensions.Localization
+@using SecondHandMarketplace.Web
+
 @using SecondHandMarketplace.Web.Common.Constants
 @using SecondHandMarketplace.Web.Models.Entities
 @using SecondHandMarketplace.Web.Models.Enums
@@ -8,4 +11,5 @@
 @using SecondHandMarketplace.Web.Models.ViewModels.Orders
 @using SecondHandMarketplace.Web.Models.ViewModels.Auctions
 @using SecondHandMarketplace.Web.Models.ViewModels.Dashboard
+@inject IStringLocalizer<SharedResource> L
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers

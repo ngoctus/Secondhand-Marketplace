@@ -70,6 +70,10 @@ ALTER TABLE dbo.PhuongXa ADD CONSTRAINT PK_PhuongXa PRIMARY KEY CLUSTERED (MaPhu
 GO
 ALTER TABLE dbo.PasswordResetOtp ADD CONSTRAINT PK_PasswordResetOtp PRIMARY KEY CLUSTERED (Id);
 GO
+ALTER TABLE dbo.KhieuNaiTaiKhoan ADD CONSTRAINT PK_KhieuNaiTaiKhoan PRIMARY KEY CLUSTERED (MaKhieuNai);
+GO
+ALTER TABLE dbo.CauHinhKhieuNaiTaiKhoan ADD CONSTRAINT PK_CauHinhKhieuNaiTaiKhoan PRIMARY KEY CLUSTERED (Id);
+GO
 ALTER TABLE CuaHang ADD
     CONSTRAINT FK_CuaHang_NguoiDung FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung (MaNguoiDung);
 
@@ -154,7 +158,8 @@ ALTER TABLE NguoiDung ADD
     CONSTRAINT CK_NguoiDung_SDTBatBuoc  CHECK (VaiTro = 'ADMIN' OR SoDienThoai IS NOT NULL),
     CONSTRAINT CK_NguoiDung_MatKhau   CHECK (LEN(MatKhauBam) >= 20),
     CONSTRAINT CK_NguoiDung_Khoa      CHECK ((TrangThai = 'ACTIVE' AND LyDoKhoa IS NULL AND ThoiGianKhoa IS NULL)
-                                          OR (TrangThai = 'LOCKED' AND LyDoKhoa IS NOT NULL AND LEN(LTRIM(RTRIM(LyDoKhoa))) > 0 AND ThoiGianKhoa IS NOT NULL));
+                                          OR (TrangThai = 'LOCKED' AND LyDoKhoa IS NOT NULL AND LEN(LTRIM(RTRIM(LyDoKhoa))) > 0 AND ThoiGianKhoa IS NOT NULL)),
+    CONSTRAINT CK_NguoiDung_SoLanBiKhoa CHECK (SoLanBiKhoa >= 0);
 
 ALTER TABLE CuaHang ADD
     CONSTRAINT CK_CuaHang_TrangThai   CHECK (TrangThai IN ('ACTIVE','LOCKED')),
@@ -368,6 +373,26 @@ GO
 ALTER TABLE dbo.PhuongXa ADD CONSTRAINT FK_PhuongXa_TinhThanh FOREIGN KEY (MaTinhThanh) REFERENCES dbo.TinhThanh (MaTinhThanh);
 GO
 ALTER TABLE dbo.PasswordResetOtp ADD CONSTRAINT CK_PasswordResetOtp_FailedAttempts CHECK (FailedAttempts BETWEEN 0 AND 5);
+GO
+
+ALTER TABLE dbo.KhieuNaiTaiKhoan ADD
+    CONSTRAINT FK_KhieuNaiTaiKhoan_NguoiDung  FOREIGN KEY (MaNguoiDung) REFERENCES dbo.NguoiDung (MaNguoiDung),
+    CONSTRAINT FK_KhieuNaiTaiKhoan_NguoiXuLy  FOREIGN KEY (NguoiXuLyId) REFERENCES dbo.NguoiDung (MaNguoiDung),
+    CONSTRAINT CK_KhieuNaiTaiKhoan_LoaiYeuCau CHECK (LoaiYeuCau IN ('APPEAL', 'UNLOCK_REQUEST')),
+    CONSTRAINT CK_KhieuNaiTaiKhoan_TrangThai  CHECK (TrangThai IN ('PENDING', 'APPROVED', 'REJECTED')),
+    CONSTRAINT CK_KhieuNaiTaiKhoan_LanKhoaThu CHECK (LanKhoaThu >= 1),
+    CONSTRAINT CK_KhieuNaiTaiKhoan_SoTienPhi  CHECK (SoTienPhi >= 0),
+    CONSTRAINT CK_KhieuNaiTaiKhoan_NoiDung    CHECK (LEN(LTRIM(RTRIM(NoiDung))) >= 10),
+    CONSTRAINT CK_KhieuNaiTaiKhoan_XuLy       CHECK ((TrangThai = 'PENDING' AND NgayXuLy IS NULL)
+                                                  OR (TrangThai IN ('APPROVED', 'REJECTED') AND NgayXuLy IS NOT NULL));
+GO
+
+ALTER TABLE dbo.CauHinhKhieuNaiTaiKhoan ADD
+    CONSTRAINT FK_CauHinhKhieuNai_NguoiCapNhat FOREIGN KEY (NguoiCapNhatId) REFERENCES dbo.NguoiDung (MaNguoiDung),
+    CONSTRAINT CK_CauHinhKhieuNai_MotDong      CHECK (Id = 1),
+    CONSTRAINT CK_CauHinhKhieuNai_SoLanGui     CHECK (SoLanGuiMoiChuKy >= 1),
+    CONSTRAINT CK_CauHinhKhieuNai_Cooldown     CHECK (CooldownPhut >= 1),
+    CONSTRAINT CK_CauHinhKhieuNai_Phi          CHECK (PhiMoKhoaLan2 >= 0);
 GO
 
 -- Dọn dữ liệu trùng cũ trước khi tạo các unique index (không tác động database mới).
@@ -688,6 +713,28 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PasswordResetOtp_Email_CreatedAtUtc' AND object_id = OBJECT_ID(N'dbo.PasswordResetOtp'))
 BEGIN
     CREATE INDEX IX_PasswordResetOtp_Email_CreatedAtUtc ON dbo.PasswordResetOtp(Email, CreatedAtUtc DESC);
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UQ_KhieuNaiTaiKhoan_DangCho' AND object_id = OBJECT_ID(N'dbo.KhieuNaiTaiKhoan'))
+BEGIN
+    CREATE UNIQUE NONCLUSTERED INDEX UQ_KhieuNaiTaiKhoan_DangCho
+    ON dbo.KhieuNaiTaiKhoan (MaNguoiDung)
+    WHERE TrangThai = 'PENDING';
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_KhieuNaiTaiKhoan_TrangThai_NgayTao' AND object_id = OBJECT_ID(N'dbo.KhieuNaiTaiKhoan'))
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_KhieuNaiTaiKhoan_TrangThai_NgayTao
+    ON dbo.KhieuNaiTaiKhoan (TrangThai, NgayTao DESC);
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_KhieuNaiTaiKhoan_MaNguoiDung_NgayTao' AND object_id = OBJECT_ID(N'dbo.KhieuNaiTaiKhoan'))
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_KhieuNaiTaiKhoan_MaNguoiDung_NgayTao
+    ON dbo.KhieuNaiTaiKhoan (MaNguoiDung, NgayTao DESC);
 END;
 GO
 

@@ -1,0 +1,32 @@
+@using System.Globalization
+@{
+    var currentCulture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLowerInvariant();
+    var isEn = currentCulture == "en";
+    var returnUrl = string.IsNullOrEmpty(Context.Request.Path)
+        ? "~/"
+        : $"{Context.Request.PathBase}{Context.Request.Path}{Context.Request.QueryString}";
+}
+<div class="rm-lang-switcher d-inline-flex align-items-center" role="group" aria-label="@(isEn ? "Language switcher" : "Chuyển ngôn ngữ")" style="border: 1px solid var(--color-border, #D5C8B3); border-radius: 999px; padding: 2px; background: var(--color-surface-white, #fff); font-size: 12px; line-height: 1;">
+    <form asp-area="" asp-controller="Language" asp-action="SetLanguage" method="post" class="m-0 p-0 d-inline">
+        <input type="hidden" name="culture" value="vi-VN" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <button type="submit"
+                class="border-0 rounded-pill px-2 py-1 fw-semibold"
+                style="background: @(!isEn ? "var(--color-primary, #68705A)" : "transparent"); color: @(!isEn ? "#fff" : "var(--color-text-secondary, #79563A)"); cursor: pointer;"
+                aria-pressed="@(!isEn ? "true" : "false")"
+                title="Tiếng Việt">
+            VI
+        </button>
+    </form>
+    <form asp-area="" asp-controller="Language" asp-action="SetLanguage" method="post" class="m-0 p-0 d-inline">
+        <input type="hidden" name="culture" value="en-US" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <button type="submit"
+                class="border-0 rounded-pill px-2 py-1 fw-semibold"
+                style="background: @(isEn ? "var(--color-primary, #68705A)" : "transparent"); color: @(isEn ? "#fff" : "var(--color-text-secondary, #79563A)"); cursor: pointer;"
+                aria-pressed="@(isEn ? "true" : "false")"
+                title="English">
+            EN
+        </button>
+    </form>
+</div>

@@ -49,6 +49,17 @@
                     @if (!string.IsNullOrWhiteSpace(Model.PhanHoiNguoiBan))
                     {
                         <div class="p-3 bg-light rounded-3 mb-2">@Model.PhanHoiNguoiBan</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.AnhPhanHoi) && UrlAnToan.HopLe(Model.AnhPhanHoi))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted small mb-1">Bằng chứng hình ảnh từ người bán</label>
+                                <div>
+                                    <a href="@Model.AnhPhanHoi" target="_blank" rel="noopener noreferrer">
+                                        <img src="@Model.AnhPhanHoi" class="img-thumbnail rounded-3" style="max-height: 250px;" alt="Bằng chứng từ người bán" />
+                                    </a>
+                                </div>
+                            </div>
+                        }
                         <div class="text-muted small">Thời gian phản hồi: @HienThi.NgayGio(Model.NgayPhanHoi)</div>
                     }
                     else

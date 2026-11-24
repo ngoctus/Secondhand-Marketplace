@@ -3,9 +3,24 @@
 @{
     ViewData["Title"] = "Kiểm duyệt sản phẩm";
     var pending = Model.Tab == ProductReviewTabs.Pending;
+    var greenLaneIds = pending
+        ? Model.Items.Where(x => x.IsGreenLane).Select(x => x.MaSanPham).ToList()
+        : new List<int>();
 }
 <div class="container-fluid py-4">
-    <h2>Kiểm duyệt sản phẩm</h2>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <h2 class="mb-0">Kiểm duyệt sản phẩm</h2>
+        @if (pending && greenLaneIds.Count > 0)
+        {
+            <form asp-action="ApproveGreenLane" method="post" onsubmit="return confirm('Duyệt nhanh @greenLaneIds.Count sản phẩm Làn Xanh (đã qua AI kiểm duyệt an toàn)?');">
+                @foreach (var gid in greenLaneIds)
+                {
+                    <input type="hidden" name="productIds" value="@gid" />
+                }
+                <button type="submit" class="btn btn-success btn-sm">Duyệt nhanh Làn Xanh (@greenLaneIds.Count)</button>
+            </form>
+        }
+    </div>
     <ul class="nav nav-tabs mb-3">
         <li class="nav-item"><a class="nav-link @(pending ? "active" : "")" asp-action="Index" asp-route-tab="@ProductReviewTabs.Pending">Chờ duyệt</a></li>
         <li class="nav-item"><a class="nav-link @(pending ? "" : "active")" asp-action="Index" asp-route-tab="@ProductReviewTabs.Active">Đang bán (gỡ vi phạm)</a></li>
@@ -17,14 +32,15 @@
                 <tr>
                     <th style="width:72px"></th><th>Sản phẩm</th><th>Người bán / Shop</th><th>Giá</th>
                     <th>@(pending ? "Gửi lúc" : "Cập nhật")</th>
-                    @if (pending) { <th>Cảnh báo (phân tích)</th> }
+                    @if (pending) { <th>Phân làn &amp; Phân tích AI</th> }
                     <th></th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var item in Model.Items)
             {
-                var badge = ReviewDisplay.Describe(item.AnalysisStatus, item.Level);
+                var lane = ReviewDisplay.DescribeLane(item.AnalysisStatus, item.Level, item.RiskLevel, item.Recommendation, item.ModelVersion);
+                var rec = ReviewDisplay.DescribeRecommendation(item.Recommendation);
                 <tr>
                     <td>
                         @if (!string.IsNullOrWhiteSpace(item.AnhDaiDien))
@@ -39,7 +55,16 @@
                     <td>@item.TenNguoiBan<div class="small text-muted">@item.EmailNguoiBan · @item.TenShop</div></td>
                     <td>@(item.Gia?.ToString("N0"))</td>
                     <td>@HienThi.NgayGio(item.Moc)</td>
-                    @if (pending) { <td><span class="badge @badge.BadgeClass">@badge.Text</span></td> }
+                    @if (pending)
+                    {
+                        <td>
+                            <div><span class="badge @lane.BadgeClass">@lane.Text</span></div>
+                            @if (!string.IsNullOrWhiteSpace(item.Recommendation))
+                            {
+                                <div class="small text-muted mt-1">@rec.Text</div>
+                            }
+                        </td>
+                    }
                     <td><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@item.MaSanPham">@(pending ? "Xem & xử lý" : "Xem / gỡ")</a></td>
                 </tr>
             }

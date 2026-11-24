@@ -83,7 +83,8 @@
                                 ChuTaiKhoan = don.ThanhToanShop.TenChuTaiKhoan!,
                                 MaDonHang = don.MaDonHang,
                                 MaDon = don.MaDon,
-                                ChoPhepXacNhan = false
+                                ChoPhepXacNhan = true,
+                                ReturnUrl = Context.Request.Path + Context.Request.QueryString
                             }' />
                         }
                         else
@@ -97,7 +98,8 @@
                                 ChuTaiKhoan = "PHAN HIEU TRUONG DH GTVT TAI TPHCM",
                                 MaDonHang = don.MaDonHang,
                                 MaDon = don.MaDon,
-                                ChoPhepXacNhan = false
+                                ChoPhepXacNhan = true,
+                                ReturnUrl = Context.Request.Path + Context.Request.QueryString
                             }' />
                         }
                     </div>

@@ -28,7 +28,7 @@ public sealed class SellersController(AppDbContext db, IShopService shops) : Adm
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Lock(int id, string reason, CancellationToken cancellationToken)
     {
-        var result = await shops.LockShopAsync(ParseCurrentUserId(), id, reason, cancellationToken);
+        var result = await shops.LockShopAsync(User.LayNguoiDungId(), id, reason, cancellationToken);
         if (result.Success) TempData["ThanhCong"] = "Đã khóa cửa hàng.";
         else TempData["Loi"] = result.Error;
         return RedirectToAction(nameof(Index));
@@ -38,11 +38,9 @@ public sealed class SellersController(AppDbContext db, IShopService shops) : Adm
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Unlock(int id, CancellationToken cancellationToken)
     {
-        var result = await shops.UnlockShopAsync(ParseCurrentUserId(), id, cancellationToken);
+        var result = await shops.UnlockShopAsync(User.LayNguoiDungId(), id, cancellationToken);
         if (result.Success) TempData["ThanhCong"] = "Đã mở khóa cửa hàng.";
         else TempData["Loi"] = result.Error;
         return RedirectToAction(nameof(Index));
     }
-
-    private int? ParseCurrentUserId() => int.TryParse(User.GetUserId(), out var id) ? id : null;
 }

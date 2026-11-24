@@ -4,7 +4,7 @@
     var isGoogle = provider.Equals("Google", StringComparison.OrdinalIgnoreCase);
     var returnUrl = (string?)ViewBag.ReturnUrl;
     var accounts = (List<ExternalAccountItemVm>?)ViewBag.Accounts ?? new List<ExternalAccountItemVm>();
-    ViewData["Title"] = $"Đăng nhập bằng {provider}";
+    ViewData["Title"] = HienThi.Chon($"Đăng nhập bằng {provider}", $"Sign in with {provider}");
 }
 
 <div class="container py-5" style="max-width: 520px;">
@@ -26,8 +26,8 @@
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                 </svg>
             }
-            <h4 class="fw-bold text-dark mb-1">Chọn một tài khoản</h4>
-            <p class="text-muted small mb-0">để tiếp tục đến <strong class="text-dark">Re:Market</strong></p>
+            <h4 class="fw-bold text-dark mb-1">@L["Account_Ext_ChooseAccount"]</h4>
+            <p class="text-muted small mb-0">@L["Account_Ext_ToContinue"] <strong class="text-dark">Re:Market</strong></p>
         </div>
 
         <div class="p-4">
@@ -36,7 +36,7 @@
             <!-- Danh sách tài khoản có sẵn trên thiết bị -->
             <div class="mb-4">
                 <div class="small fw-semibold text-secondary text-uppercase mb-2" style="font-size: 11px; letter-spacing: 0.5px;">
-                    Tài khoản trên thiết bị này
+                    @L["Account_Ext_OnDevice"]
                 </div>
                 <div class="list-group list-group-flush rounded-3 border">
                     @foreach (var acc in accounts)
@@ -66,8 +66,8 @@
                             <i class="bi bi-person-plus fs-5"></i>
                         </div>
                         <div class="text-start flex-grow-1">
-                            <div class="fw-semibold text-primary">Sử dụng một tài khoản khác</div>
-                            <div class="text-muted small">Đăng nhập bằng tài khoản Google / Facebook của bạn</div>
+                            <div class="fw-semibold text-primary">@L["Account_Ext_UseAnother"]</div>
+                            <div class="text-muted small">@L["Account_Ext_UseAnotherDesc"]</div>
                         </div>
                         <i class="bi bi-chevron-down text-primary small"></i>
                     </button>
@@ -77,7 +77,7 @@
             <!-- Form nhập tài khoản khác (Collapse) -->
             <div class="collapse @(accounts.Count == 0 ? "show" : "") mb-4" id="useAnotherAccountForm">
                 <div class="card border rounded-3 p-3 bg-light">
-                    <h6 class="fw-bold text-dark mb-3">Nhập thông tin tài khoản @provider</h6>
+                    <h6 class="fw-bold text-dark mb-3">@HienThi.Chon($"Nhập thông tin tài khoản {provider}", $"Enter {provider} account details")</h6>
                     <form asp-action="ExternalLoginSelectAccountSubmit" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="provider" value="@provider" />
@@ -85,15 +85,15 @@
 
                         <div class="mb-3">
                             <label class="form-label small fw-semibold text-dark">Email @provider <span class="text-danger">*</span></label>
-                            <input type="email" name="email" class="form-control" placeholder="Ví dụ: yourname@gmail.com" required />
+                            <input type="email" name="email" class="form-control" placeholder="yourname@gmail.com" required />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold text-dark">Họ và tên hiển thị</label>
-                            <input type="text" name="fullName" class="form-control" placeholder="Ví dụ: Nguyễn Văn An" />
+                            <label class="form-label small fw-semibold text-dark">@L["Account_FullName"]</label>
+                            <input type="text" name="fullName" class="form-control" placeholder="@L["Account_FullName_Placeholder"]" />
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
-                            Tiếp tục với tài khoản này
+                            @L["Account_Ext_ContinueWithThis"]
                         </button>
                     </form>
                 </div>
@@ -103,13 +103,20 @@
             <div class="alert alert-light border small text-muted mb-3 d-flex gap-2 align-items-start">
                 <i class="bi bi-info-circle-fill text-primary mt-1"></i>
                 <div>
-                    <strong>Chế độ kết nối:</strong> Đang chạy mô phỏng chọn tài khoản thiết bị. Để liên kết trực tiếp tới cửa sổ cấp quyền OAuth thật của Google (`accounts.google.com`), hãy điền <code>ClientId</code> & <code>ClientSecret</code> tại <code>Authentication:Google</code> trong file <code>appsettings.json</code>.
+                    @if (HienThi.LaTiengAnh)
+                    {
+                        <span><strong>Connection Mode:</strong> Running device account selector simulation. To connect directly to real Google OAuth (`accounts.google.com`), configure <code>ClientId</code> &amp; <code>ClientSecret</code> under <code>Authentication:Google</code> in <code>appsettings.json</code>.</span>
+                    }
+                    else
+                    {
+                        <span><strong>Chế độ kết nối:</strong> Đang chạy mô phỏng chọn tài khoản thiết bị. Để liên kết trực tiếp tới cửa sổ cấp quyền OAuth thật của Google (`accounts.google.com`), hãy điền <code>ClientId</code> &amp; <code>ClientSecret</code> tại <code>Authentication:Google</code> trong file <code>appsettings.json</code>.</span>
+                    }
                 </div>
             </div>
 
             <div class="text-center">
                 <a asp-action="Login" asp-route-returnUrl="@returnUrl" class="text-decoration-none small text-muted">
-                    <i class="bi bi-arrow-left me-1"></i> Quay lại trang Đăng nhập
+                    <i class="bi bi-arrow-left me-1"></i> @L["Btn_BackToLogin"]
                 </a>
             </div>
         </div>
