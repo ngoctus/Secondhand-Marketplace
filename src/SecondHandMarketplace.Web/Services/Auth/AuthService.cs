@@ -14,7 +14,7 @@ public sealed class AuthService(
     ILogger<AuthService> logger) : IAuthService
 {
     private const string DummyHash = "$2a$11$0000000000000000000000uL1y6E0j5bVvL9tWj4K6M2EaN.aL0u6";
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int FailedCount, DateTime LockoutEnd)> AccountLockouts = new(StringComparer.OrdinalIgnoreCase);
+    internal static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int FailedCount, DateTime LockoutEnd)> AccountLockouts = new(StringComparer.OrdinalIgnoreCase);
     private const int MaxFailedAttempts = 5;
     private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
 
@@ -32,10 +32,18 @@ public sealed class AuthService(
     {
         var normalizedEmail = NormalizeEmail(email);
 
-        if (AccountLockouts.TryGetValue(normalizedEmail, out var lockout) && lockout.LockoutEnd > DateTime.UtcNow)
+        if (AccountLockouts.TryGetValue(normalizedEmail, out var lockout))
         {
-            await GhiNhatKyAsync(null, "LOGIN", null, "LOCKED", $"Tài khoản bị khóa tạm đến {lockout.LockoutEnd:HH:mm:ss} UTC do sai mật khẩu {MaxFailedAttempts} lần liên tiếp.");
-            return AuthStatusResult.TempLockout(lockout.LockoutEnd);
+            if (lockout.LockoutEnd > DateTime.UtcNow)
+            {
+                await GhiNhatKyAsync(null, "LOGIN", null, "LOCKED", $"Tài khoản bị khóa tạm đến {lockout.LockoutEnd:HH:mm:ss} UTC do sai mật khẩu {MaxFailedAttempts} lần liên tiếp.");
+                return AuthStatusResult.TempLockout(lockout.LockoutEnd);
+            }
+            if (lockout.LockoutEnd != DateTime.MinValue)
+            {
+                // Khi thời gian khóa tạm đã trôi qua, giải phóng entry để người dùng được cấp lại 5 lượt thử mới
+                AccountLockouts.TryRemove(normalizedEmail, out _);
+            }
         }
 
         var user = await db.NguoiDungs.AsNoTracking()

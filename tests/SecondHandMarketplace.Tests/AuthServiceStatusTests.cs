@@ -183,4 +183,36 @@ public class AuthServiceStatusTests
         var sixthResult = await authService.AuthenticateWithStatusAsync("lockout_target@example.com", "ActualPassword123!");
         Assert.Equal(AuthResultStatus.TempLockout, sixthResult.Status);
     }
+
+    [Fact]
+    public async Task AuthenticateWithStatusAsync_HetThoiGianLockout_DuocCapLaiDuSoLanThu()
+    {
+        AuthService.ResetLockouts();
+        using var db = CreateDbContext("AuthStatus_LockoutExpiryTest");
+        var passwordService = new MatKhauService();
+        var fakeAudit = new FakeAuditLogService();
+        var authService = new AuthService(db, passwordService, fakeAudit, NullLogger<AuthService>.Instance);
+
+        var user = new NguoiDung
+        {
+            MaNguoiDung = 6,
+            Email = "expired_lockout@example.com",
+            HoTen = "Expired Lockout User",
+            MatKhauBam = passwordService.Bam("Secret123!"),
+            TrangThai = "ACTIVE"
+        };
+        db.NguoiDungs.Add(user);
+        await db.SaveChangesAsync();
+
+        // Giả lập trạng thái khóa tạm nhưng đã hết hạn (LockoutEnd trong quá khứ)
+        AuthService.AccountLockouts["expired_lockout@example.com"] = (5, DateTime.UtcNow.AddMinutes(-1));
+
+        // Nhập sai mật khẩu 1 lần -> Phải trả InvalidCredentials (được tính lại từ 1), KHÔNG được tiếp tục TempLockout ngay
+        var firstWrong = await authService.AuthenticateWithStatusAsync("expired_lockout@example.com", "WrongPass");
+        Assert.Equal(AuthResultStatus.InvalidCredentials, firstWrong.Status);
+
+        // Kiểm tra trong từ điển failed count đã được reset về 1
+        Assert.True(AuthService.AccountLockouts.TryGetValue("expired_lockout@example.com", out var entry));
+        Assert.Equal(1, entry.FailedCount);
+    }
 }

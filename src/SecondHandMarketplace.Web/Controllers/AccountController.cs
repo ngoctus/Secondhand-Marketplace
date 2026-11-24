@@ -49,7 +49,7 @@ public sealed class AccountController(
             if (!long.TryParse(parts[1], out var ticks)) return false;
 
             var issuedAt = new DateTime(ticks, DateTimeKind.Utc);
-            if (DateTime.UtcNow - issuedAt > TimeSpan.FromMinutes(30))
+            if (DateTime.UtcNow - issuedAt > TimeSpan.FromMinutes(10))
             {
                 return false;
             }
@@ -653,7 +653,7 @@ public sealed class AccountController(
     [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [EnableRateLimiting("login")]
+    [EnableRateLimiting("appeal")]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> SubmitAppeal(SubmitAppealFormVm form, CancellationToken cancellationToken)
     {
