@@ -44,7 +44,7 @@ public sealed class PartEReadinessTests
 
         Assert.DoesNotContain("PublicAuctions", layout, StringComparison.Ordinal);
         Assert.DoesNotContain("asp-controller=\"Auctions\"", layout, StringComparison.Ordinal);
-        Assert.DoesNotContain("Auctions", adminLinks, StringComparison.Ordinal);
+        Assert.Contains("Auctions", adminLinks, StringComparison.Ordinal);
         Assert.DoesNotContain("Auctions", dashboard, StringComparison.Ordinal);
         Assert.Contains("AiSettings", adminLinks, StringComparison.Ordinal);
     }

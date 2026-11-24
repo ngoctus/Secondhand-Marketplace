@@ -17,8 +17,16 @@ public sealed class ShopPublicVm
     /// <summary>Tên xã/phường (có thể null với shop cũ chưa bổ sung địa chỉ).</summary>
     public string? WardName { get; set; }
     public string? ProvinceName { get; set; }
+    public string? CustomAreaLabel { get; set; }
 
-    public string? AreaText => string.Join(", ", new[] { WardName, ProvinceName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    public string? AreaText
+    {
+        get
+        {
+            var joined = string.Join(", ", new[] { WardName, ProvinceName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+            return !string.IsNullOrWhiteSpace(joined) ? joined : CustomAreaLabel;
+        }
+    }
 
     /// <summary>Điểm trung bình; null = chưa có dữ liệu từ vw_DiemCuaHang hoặc chưa có đánh giá.</summary>
     public decimal? AverageRating { get; set; }

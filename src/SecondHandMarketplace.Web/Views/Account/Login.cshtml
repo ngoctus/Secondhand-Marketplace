@@ -1,38 +1,38 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Account.LoginVm
 @{
-    ViewData["Title"] = "Đăng nhập";
+    ViewData["Title"] = L["Account_Login_Title"].Value;
 }
 <div class="form-page page rm-auth-page">
     <div class="row justify-content-center py-5">
         <div class="col-12 col-md-6 col-lg-5">
             <div class="card shadow-sm border-0 rm-auth-card">
                 <div class="card-body p-4 p-md-5">
-                    <h2 class="text-center mb-2">Đăng nhập</h2>
-                    <p class="text-center text-muted mb-4">Đăng nhập để mua bán đồ second hand</p>
+                    <h2 class="text-center mb-2">@L["Account_Login_Title"]</h2>
+                    <p class="text-center text-muted mb-4">@L["Account_Login_Subtitle"]</p>
                     <form asp-action="Login" method="post">
                         <input type="hidden" asp-for="ReturnUrl" />
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                         <div class="mb-3">
-                            <label asp-for="Email" class="form-label">Email</label>
+                            <label asp-for="Email" class="form-label">@L["Account_Email"]</label>
                             <input asp-for="Email" class="form-control" placeholder="name@example.com" autocomplete="email" />
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
                         <div class="mb-3">
-                            <label asp-for="Password" class="form-label">Mật khẩu</label>
-                            <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu" autocomplete="current-password" />
+                            <label asp-for="Password" class="form-label">@L["Account_Password"]</label>
+                            <input asp-for="Password" class="form-control" placeholder="@L["Account_Password_Placeholder"]" autocomplete="current-password" />
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
                         <div class="form-check mb-4">
                             <input asp-for="RememberMe" class="form-check-input" />
-                            <label asp-for="RememberMe" class="form-check-label">Ghi nhớ đăng nhập</label>
+                            <label asp-for="RememberMe" class="form-check-label">@L["Account_RememberMe"]</label>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Đăng nhập</button>
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">@L["Account_Login_Title"]</button>
                     </form>
-                    <p class="text-end mt-2 mb-0"><a asp-action="ForgotPassword" class="text-muted small text-decoration-none">Quên mật khẩu?</a></p>
+                    <p class="text-end mt-2 mb-0"><a asp-action="ForgotPassword" class="text-muted small text-decoration-none">@L["Account_ForgotPassword"]</a></p>
 
                     <div class="position-relative my-4 text-center">
                         <hr class="text-muted opacity-25 m-0" />
-                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">Hoặc đăng nhập với</span>
+                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">@L["Account_OrLoginWith"]</span>
                     </div>
 
                     <div class="d-flex flex-column gap-2 mb-3">
@@ -47,7 +47,7 @@
                                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
                                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                                 </svg>
-                                <span>Tiếp tục với Google</span>
+                                <span>@L["Account_ContinueGoogle"]</span>
                             </button>
                         </form>
                         <form asp-action="ExternalLogin" method="post" class="w-100 m-0">
@@ -58,13 +58,13 @@
                                 <svg width="18" height="18" fill="#1877F2" viewBox="0 0 24 24">
                                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                                 </svg>
-                                <span>Tiếp tục với Facebook</span>
+                                <span>@L["Account_ContinueFacebook"]</span>
                             </button>
                         </form>
                     </div>
 
-                    <p class="text-center mt-4 mb-0">Chưa có tài khoản? <a asp-action="Register" class="fw-semibold text-primary">Đăng ký ngay</a></p>
-                    <p class="text-center mt-2 mb-0 small text-muted">Tài khoản bị khóa? <a asp-action="Locked" class="text-decoration-none text-danger fw-semibold">Khiếu nại / Mở khóa tài khoản</a></p>
+                    <p class="text-center mt-4 mb-0">@L["Account_NoAccount"] <a asp-action="Register" class="fw-semibold text-primary">@L["Account_RegisterNow"]</a></p>
+                    <p class="text-center mt-2 mb-0 small text-muted">@L["Account_LockedQuestion"] <a asp-action="Locked" class="text-decoration-none text-danger fw-semibold">@L["Account_AppealUnlockLink"]</a></p>
                 </div>
             </div>
         </div>

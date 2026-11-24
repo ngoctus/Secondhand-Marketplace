@@ -139,17 +139,17 @@ public static class AccountAppealRules
 
     public static string RequestTypeLabel(string loaiYeuCau, int lockCount = 1) => loaiYeuCau switch
     {
-        TypeAppeal when lockCount >= PermanentLockThreshold => "Khiếu nại khóa nhầm / Xem xét đặc biệt",
-        TypeAppeal => "Khiếu nại khóa nhầm",
-        TypeUnlockRequest => "Cam kết mở khóa",
+        TypeAppeal when lockCount >= PermanentLockThreshold => Common.HienThi.Chon("Khiếu nại khóa nhầm / Xem xét đặc biệt", "Wrongful Lock Appeal / Special Review"),
+        TypeAppeal => Common.HienThi.Chon("Khiếu nại khóa nhầm", "Wrongful Lock Appeal"),
+        TypeUnlockRequest => Common.HienThi.Chon("Cam kết mở khóa", "Unlock Commitment"),
         _ => loaiYeuCau
     };
 
     public static string StatusLabel(string trangThai) => trangThai switch
     {
-        StatusPending => "Đang chờ duyệt",
-        StatusApproved => "Đã chấp thuận",
-        StatusRejected => "Đã từ chối",
+        StatusPending => Common.HienThi.Chon("Đang chờ duyệt", "Pending Review"),
+        StatusApproved => Common.HienThi.Chon("Đã chấp thuận", "Approved"),
+        StatusRejected => Common.HienThi.Chon("Đã từ chối", "Rejected"),
         _ => trangThai
     };
 }

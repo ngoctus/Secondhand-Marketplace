@@ -1,6 +1,6 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Account.CompleteProfileVm
 @{
-    ViewData["Title"] = "Hoàn tất hồ sơ";
+    ViewData["Title"] = L["Account_Complete_Title"].Value;
 }
 
 <div class="form-page page rm-auth-page">
@@ -12,10 +12,8 @@
                         <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-3" style="width:64px;height:64px">
                             <i class="bi bi-person-vcard fs-2"></i>
                         </div>
-                        <h2 class="h3 mb-2">Hoàn tất hồ sơ</h2>
-                        <p class="text-muted small mb-0">
-                            Vui lòng bổ sung số điện thoại liên hệ duy nhất để hoàn tất đăng nhập lần đầu vào <strong>Re:Market</strong>.
-                        </p>
+                        <h2 class="h3 mb-2">@L["Account_Complete_Title"]</h2>
+                        <p class="text-muted small mb-0">@L["Account_Complete_Subtitle"]</p>
                     </div>
 
                     <form asp-action="CompleteProfile" method="post">
@@ -24,31 +22,31 @@
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                         <div class="mb-3">
-                            <label asp-for="Email" class="form-label fw-semibold"></label>
+                            <label asp-for="Email" class="form-label fw-semibold">@L["Account_Email"]</label>
                             <input asp-for="Email" class="form-control bg-light" readonly />
-                            <small class="text-muted">Email được xác thực từ tài khoản mạng xã hội của bạn.</small>
+                            <small class="text-muted">@L["Account_Complete_EmailHint"]</small>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="HoTen" class="form-label fw-semibold"></label>
-                            <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên của bạn" />
+                            <label asp-for="HoTen" class="form-label fw-semibold">@L["Account_FullName"]</label>
+                            <input asp-for="HoTen" class="form-control" placeholder="@L["Account_FullName_Placeholder"]" />
                             <span asp-validation-for="HoTen" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="SoDienThoai" class="form-label fw-semibold"></label>
-                            <input asp-for="SoDienThoai" class="form-control" inputmode="tel" maxlength="10" placeholder="Ví dụ: 0901234567" autofocus />
+                            <label asp-for="SoDienThoai" class="form-label fw-semibold">@L["Account_Phone"]</label>
+                            <input asp-for="SoDienThoai" class="form-control" inputmode="tel" maxlength="10" placeholder="@L["Account_Phone_Placeholder"]" autofocus />
                             <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-4">
-                            <label asp-for="DiaChiMacDinh" class="form-label fw-semibold"></label>
-                            <textarea asp-for="DiaChiMacDinh" class="form-control" rows="2" placeholder="Số nhà, đường, phường/xã, tỉnh/thành phố (không bắt buộc)"></textarea>
+                            <label asp-for="DiaChiMacDinh" class="form-label fw-semibold">@L["Account_DefaultAddress"]</label>
+                            <textarea asp-for="DiaChiMacDinh" class="form-control" rows="2" placeholder="@L["Account_Complete_AddressPlaceholder"]"></textarea>
                             <span asp-validation-for="DiaChiMacDinh" class="text-danger small"></span>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
-                            <i class="bi bi-check2-circle me-1"></i> Hoàn tất và đăng nhập
+                            <i class="bi bi-check2-circle me-1"></i> @L["Account_Complete_Submit"]
                         </button>
                     </form>
                 </div>
