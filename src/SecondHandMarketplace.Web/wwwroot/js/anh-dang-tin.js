@@ -45,8 +45,8 @@
 
     const kiemTraFile = (f) => {
         const ten = f.name.toLowerCase();
-        if (!DinhDang.some(d => ten.endsWith(d))) return 'định dạng không hỗ trợ';
-        if (f.size > DungLuongToiDa) return 'lớn hơn 5MB';
+        if (!DinhDang.some(d => ten.endsWith(d))) return window.rmT('Js_UnsupportedFormat', 'định dạng không hỗ trợ');
+        if (f.size > DungLuongToiDa) return window.rmT('Js_PhotoTooLarge', 'lớn hơn 5MB');
         return null;
     };
 
@@ -76,7 +76,7 @@
 
         const temBia = document.createElement('span');
         temBia.className = 'rm-anh-bia';
-        temBia.textContent = 'Ảnh bìa';
+        temBia.textContent = window.rmT('Form_Cover', 'Ảnh bìa');
         item.appendChild(temBia);
 
         const temSo = document.createElement('span');
@@ -92,7 +92,7 @@
         const nutBo = document.createElement('button');
         nutBo.type = 'button';
         nutBo.className = 'rm-anh-bo';
-        nutBo.setAttribute('aria-label', 'Bỏ ảnh ' + f.name);
+        nutBo.setAttribute('aria-label', window.rmT('Js_UnfavoritePhotoAria', 'Bỏ ảnh {0}', f.name));
         nutBo.textContent = '×';
         nutBo.dataset.anhBo = String(i);
         item.appendChild(nutBo);
@@ -116,10 +116,10 @@
             const loi = kiemTraFile(f);
             if (loi) { boLo.push(f.name + ': ' + loi); continue; }
             if (daCo(f)) continue;
-            if (danhSach.length >= soLuongToiDa) { boLo.push('chỉ thêm được ' + soLuongToiDa + ' ảnh mới'); break; }
+            if (danhSach.length >= soLuongToiDa) { boLo.push(window.rmT('Js_MaxPhotos', 'chỉ thêm được {0} ảnh mới', soLuongToiDa)); break; }
             danhSach.push(f);
         }
-        baoLoi(boLo.length ? 'Bỏ qua: ' + boLo.slice(0, 3).join(' · ') : '');
+        baoLoi(boLo.length ? window.rmT('Js_SkippedPrefix', 'Bỏ qua: {0}', boLo.slice(0, 3).join(' · ')) : '');
         veDanhSach();
     };
 
@@ -195,7 +195,7 @@
 
             const item = nut.closest('.rm-anh-item');
             const laXoa = nut.hasAttribute('data-anh-xoa');
-            if (laXoa && !window.confirm('Xóa ảnh này?')) return;
+            if (laXoa && !window.confirm(window.rmT('Js_ConfirmDeletePhoto', 'Xóa ảnh này?'))) return;
 
             const formDuLieu = new FormData();
             formDuLieu.append('__RequestVerificationToken', layToken());
@@ -209,10 +209,10 @@
                     body: formDuLieu,
                     credentials: 'same-origin'
                 });
-                if (!phanHoi.ok) throw new Error('máy chủ trả về lỗi ' + phanHoi.status);
+                if (!phanHoi.ok) throw new Error(window.rmT('Js_ServerErrorStatus', 'máy chủ trả về lỗi {0}', phanHoi.status));
 
                 const ketQua = await phanHoi.json();
-                if (!ketQua.ok) throw new Error(ketQua.error || 'thao tác không thành công');
+                if (!ketQua.ok) throw new Error(ketQua.error || window.rmT('Js_ActionFailed', 'thao tác không thành công'));
 
                 if (laXoa) {
                     item.remove();
@@ -238,10 +238,10 @@
                 if (danhSach.length > soLuongToiDa) {
                     danhSach.length = soLuongToiDa;
                     veDanhSach();
-                    baoLoi('Đã bỏ bớt ảnh mới vì tin vượt quá 10 ảnh.');
+                    baoLoi(window.rmT('Js_TrimmedPhotos', 'Đã bỏ bớt ảnh mới vì tin vượt quá 10 ảnh.'));
                 }
             } catch (loi) {
-                baoLoi('Không lưu được thay đổi (' + loi.message + '). Ảnh trên màn hình vẫn là ảnh cũ.');
+                baoLoi(window.rmT('Js_PhotoSaveFailed', 'Không lưu được thay đổi ({0}). Ảnh trên màn hình vẫn là ảnh cũ.', loi.message));
             } finally {
                 nut.disabled = false;
             }

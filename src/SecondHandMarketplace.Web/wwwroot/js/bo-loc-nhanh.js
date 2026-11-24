@@ -86,7 +86,7 @@
         }
         if (readout) {
             readout.textContent = (lo <= bienMin && cao >= bienMax)
-                ? 'Tất cả mức giá'
+                ? window.rmT('Search_AllPrices', 'Tất cả mức giá')
                 : dinhDangGia(lo) + ' – ' + dinhDangGia(cao);
         }
     }
@@ -139,7 +139,7 @@
                 + ((thamSo.get('MaTinhThanh') || thamSo.get('MaPhuongXa')) ? 1 : 0)
                 + ((thamSo.get('MinPrice') || thamSo.get('MaxPrice') || thamSo.get('TenPhanGia')) ? 1 : 0);
             nutMobile.dataset.soBoLoc = String(so);
-            nutMobile.textContent = 'Hiện bộ lọc' + (so > 0 ? ` (${so})` : '');
+            nutMobile.textContent = window.rmT('Search_ShowFilters', 'Hiện bộ lọc') + (so > 0 ? ` (${so})` : '');
         }
     };
 

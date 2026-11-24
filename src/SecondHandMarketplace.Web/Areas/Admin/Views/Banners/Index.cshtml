@@ -1,62 +1,69 @@
 @model SecondHandMarketplace.Web.Areas.Admin.Controllers.BannerManagementVm
 @{
-    ViewData["Title"] = "Quản lý banner";
+    ViewData["Title"] = L["Banner_Title"];
 }
 
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-1">Quản lý Banner trang chủ</h2>
-            <p class="text-muted mb-0">Cấu hình các banner quảng cáo và chiến dịch khuyến mãi xuất hiện tại slider trang chủ.</p>
+            <h2 class="mb-1">@L["Banner_Heading"]</h2>
+            <p class="text-muted mb-0">@L["Banner_Subtitle"]</p>
         </div>
     </div>
 
     <!-- Form thêm banner mới -->
     <div class="card shadow-sm mb-4 border-0">
         <div class="card-header bg-white py-3 border-bottom">
-            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-plus-circle me-2"></i>Thêm banner mới</h5>
+            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-plus-circle me-2"></i>@L["Banner_AddNew"]</h5>
         </div>
         <div class="card-body p-4">
-            <form asp-action="Save" method="post">
+            <form asp-action="Save" method="post" enctype="multipart/form-data" data-banner-form>
                 <input type="hidden" name="id" value="" />
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Tiêu đề banner <span class="text-danger">*</span></label>
-                        <input name="tieuDe" class="form-control" placeholder="Ví dụ: Tuần lễ đồ cũ — giá tốt" required maxlength="200" />
+                        <label class="form-label fw-semibold">@L["Banner_FieldTitle"] <span class="text-danger">*</span></label>
+                        <input name="tieuDe" class="form-control" placeholder="@L["Banner_TitlePlaceholder"]" required maxlength="200" />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Đường dẫn ảnh <span class="text-danger">*</span></label>
-                        <input name="duongDanAnh" class="form-control" placeholder="/uploads/banners/banner-1.svg hoặc URL ảnh" required maxlength="500" />
+                        <label class="form-label fw-semibold">@L["Banner_Upload"] <span class="text-muted small fw-normal">@L["Banner_FormatHint"]</span></label>
+                        <input name="anhTaiLen" type="file" accept="image/jpeg,image/png,image/webp" class="form-control" data-banner-file />
+                        <div class="text-center" data-banner-preview hidden>
+                            <img alt="@L["Js_BannerPreview"]" class="mt-2 rounded border" style="max-height: 90px; max-width: 100%; object-fit: cover;" />
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Mô tả phụ</label>
-                        <input name="moTa" class="form-control" placeholder="Mô tả ngắn gọn về chương trình (tùy chọn)" maxlength="500" />
+                        <label class="form-label fw-semibold">@L["Banner_Url"] <span class="text-muted small fw-normal">@L["Banner_UrlHint"]</span></label>
+                        <input name="duongDanAnh" class="form-control" placeholder="@L["Banner_UrlPlaceholder"]" maxlength="500" data-banner-url />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Liên kết khi click (URL)</label>
-                        <input name="lienKet" class="form-control" placeholder="/Products hoặc liên kết trang đích" maxlength="500" />
+                        <label class="form-label fw-semibold">@L["Banner_Subdesc"]</label>
+                        <input name="moTa" class="form-control" placeholder="@L["Banner_SubdescPlaceholder"]" maxlength="500" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">@L["Banner_Link"]</label>
+                        <input name="lienKet" class="form-control" placeholder="@L["Banner_LinkPlaceholder"]" maxlength="500" />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold">Thứ tự hiển thị</label>
+                        <label class="form-label fw-semibold">@L["Banner_Order"]</label>
                         <input name="thuTu" type="number" min="1" value="1" class="form-control" />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold">Trạng thái</label>
+                        <label class="form-label fw-semibold">@L["Admin_Status"]</label>
                         <select name="dangHienThi" class="form-select">
-                            <option value="true" selected>Hiển thị</option>
-                            <option value="false">Tạm ẩn</option>
+                            <option value="true" selected>@L["Banner_Show"]</option>
+                            <option value="false">@L["Banner_Hide"]</option>
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold">Bắt đầu từ</label>
+                        <label class="form-label fw-semibold">@L["Banner_StartAt"]</label>
                         <input name="batDauTu" type="datetime-local" class="form-control" />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold">Kết thúc lúc</label>
+                        <label class="form-label fw-semibold">@L["Banner_EndAt"]</label>
                         <input name="ketThucLuc" type="datetime-local" class="form-control" />
                     </div>
                     <div class="col-12 text-end mt-3">
-                        <button class="btn btn-primary px-4 fw-semibold"><i class="bi bi-save me-1"></i>Thêm banner</button>
+                        <button class="btn btn-primary px-4 fw-semibold"><i class="bi bi-save me-1"></i>@L["Banner_AddBtn"]</button>
                     </div>
                 </div>
             </form>
@@ -66,12 +73,12 @@
     <!-- Danh sách banner hiện tại -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3 border-bottom">
-            <h5 class="mb-0 fw-bold"><i class="bi bi-images me-2"></i>Danh sách banner đang có (@Model.Banners.Count)</h5>
+            <h5 class="mb-0 fw-bold"><i class="bi bi-images me-2"></i>@L["Banner_ListTitle", Model.Banners.Count]</h5>
         </div>
         <div class="card-body p-0">
             @if (Model.Banners.Count == 0)
             {
-                <div class="p-4 text-center text-muted">Chưa có banner nào.</div>
+                <div class="p-4 text-center text-muted">@L["Banner_Empty"]</div>
             }
             else
             {
@@ -79,7 +86,7 @@
                     @foreach (var b in Model.Banners)
                     {
                         <div class="list-group-item p-4">
-                            <form asp-action="Save" method="post">
+                            <form asp-action="Save" method="post" enctype="multipart/form-data" data-banner-form>
                                 <input type="hidden" name="id" value="@b.MaBanner" />
                                 <div class="row g-3 align-items-center">
                                     <div class="col-lg-3 col-md-4 text-center">
@@ -87,50 +94,55 @@
                                             <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="img-fluid rounded" style="max-height: 110px; width: 100%; object-fit: cover;" onerror="this.src='/uploads/banners/banner-1.svg'" />
                                         </div>
                                         <span class="badge @(b.DangHienThi ? "bg-success" : "bg-secondary") mt-2">
-                                            @(b.DangHienThi ? "Đang hiển thị" : "Đang ẩn")
+                                            @(b.DangHienThi ? (string)L["Banner_ActiveBadge"] : (string)L["Banner_HiddenBadge"])
                                         </span>
                                     </div>
                                     <div class="col-lg-9 col-md-8">
                                         <div class="row g-2">
                                             <div class="col-md-8">
-                                                <label class="form-label small fw-semibold text-muted mb-1">Tiêu đề</label>
+                                                <label class="form-label small fw-semibold text-muted mb-1">@L["Banner_ColTitle"]</label>
                                                 <input name="tieuDe" value="@b.TieuDe" class="form-control form-control-sm fw-bold" required maxlength="200" />
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label small fw-semibold text-muted mb-1">Thứ tự & Trạng thái</label>
+                                                <label class="form-label small fw-semibold text-muted mb-1">@L["Banner_OrderStatus"]</label>
                                                 <div class="input-group input-group-sm">
                                                     <span class="input-group-text">#</span>
                                                     <input name="thuTu" type="number" min="1" value="@b.ThuTuHienThi" class="form-control" style="max-width: 70px;" />
                                                     <select name="dangHienThi" class="form-select">
-                                                        <option value="true" selected="@b.DangHienThi">Hiện</option>
-                                                        <option value="false" selected="@(!b.DangHienThi)">Ẩn</option>
+                                                        <option value="true" selected="@b.DangHienThi">@L["Banner_OptShow"]</option>
+                                                        <option value="false" selected="@(!b.DangHienThi)">@L["Banner_OptHide"]</option>
                                                     </select>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label small fw-semibold text-muted mb-1">Đường dẫn ảnh</label>
-                                                <input name="duongDanAnh" value="@b.DuongDanAnh" class="form-control form-control-sm" required maxlength="500" />
+                                                <label class="form-label small fw-semibold text-muted mb-1">@L["Banner_Url"]</label>
+                                                <input name="duongDanAnh" value="@b.DuongDanAnh" class="form-control form-control-sm" maxlength="500" data-banner-url />
+                                                <label class="form-label small fw-semibold text-muted mb-1 mt-2">@L["Banner_UploadNew"]</label>
+                                                <input name="anhTaiLen" type="file" accept="image/jpeg,image/png,image/webp" class="form-control form-control-sm" data-banner-file />
+                                                <div class="text-center" data-banner-preview hidden>
+                                                    <img alt="@L["Js_BannerPreview"]" class="mt-2 rounded border" style="max-height: 70px; max-width: 100%; object-fit: cover;" />
+                                                </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label small fw-semibold text-muted mb-1">Liên kết đích</label>
+                                                <label class="form-label small fw-semibold text-muted mb-1">@L["Banner_TargetLink"]</label>
                                                 <input name="lienKet" value="@b.LienKet" class="form-control form-control-sm" placeholder="/Products" maxlength="500" />
                                             </div>
                                             <div class="col-md-12">
-                                                <label class="form-label small fw-semibold text-muted mb-1">Mô tả phụ</label>
+                                                <label class="form-label small fw-semibold text-muted mb-1">@L["Banner_Subdesc"]</label>
                                                 <input name="moTa" value="@b.MoTa" class="form-control form-control-sm" maxlength="500" />
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label small fw-semibold text-muted mb-1">Bắt đầu từ</label>
+                                                <label class="form-label small fw-semibold text-muted mb-1">@L["Banner_StartAt"]</label>
                                                 <input name="batDauTu" type="datetime-local" value="@HienThi.ChoInputGio(b.BatDauTu)" class="form-control form-control-sm" />
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label small fw-semibold text-muted mb-1">Kết thúc lúc</label>
+                                                <label class="form-label small fw-semibold text-muted mb-1">@L["Banner_EndAt"]</label>
                                                 <input name="ketThucLuc" type="datetime-local" value="@HienThi.ChoInputGio(b.KetThucLuc)" class="form-control form-control-sm" />
                                             </div>
                                             <div class="col-12 d-flex justify-content-end gap-2 mt-3">
-                                                <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold"><i class="bi bi-check-lg me-1"></i>Lưu thay đổi</button>
+                                                <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold"><i class="bi bi-check-lg me-1"></i>@L["Banner_SaveChanges"]</button>
                                                 <button formaction="@Url.Action("Delete")" name="id" value="@b.MaBanner" formmethod="post"
-                                                        class="btn btn-sm btn-outline-danger px-3" onclick="return confirm('Bạn có chắc muốn xóa banner này?')"><i class="bi bi-trash me-1"></i>Xóa</button>
+                                                        class="btn btn-sm btn-outline-danger px-3" onclick="return confirm('@L["Banner_ConfirmDelete"]');"><i class="bi bi-trash me-1"></i>@L["Btn_Delete"]</button>
                                             </div>
                                         </div>
                                     </div>

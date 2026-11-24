@@ -5,11 +5,11 @@
 }
 <div class="container py-4">
     <!-- Phần đầu: thông tin shop (không hiển thị SĐT, địa chỉ chi tiết hay thông tin ngân hàng) -->
-    <section class="card card-body mb-4" aria-label="Thông tin cửa hàng">
+    <section class="card card-body mb-4" aria-label="@L["Shop_InfoAria"]">
         <div class="d-flex flex-wrap gap-3 align-items-center">
             @if (!string.IsNullOrWhiteSpace(Model.Logo))
             {
-                <img src="@Model.Logo" alt="Logo @Model.Name" width="88" height="88" class="rounded-circle border" style="object-fit:cover" data-fallback />
+                <img src="@Model.Logo" alt="@L["Shop_LogoAlt", Model.Name]" width="88" height="88" class="rounded-circle border" style="object-fit:cover" data-fallback />
             }
             else
             {
@@ -26,17 +26,17 @@
                 <div class="mt-2 d-flex flex-wrap gap-3 small">
                     @if (Model.AverageRating.HasValue && Model.ReviewCount > 0)
                     {
-                        <span><strong>@Model.AverageRating.Value.ToString("0.0")</strong> ★ (@Model.ReviewCount đánh giá)</span>
+                        <span><strong>@Model.AverageRating.Value.ToString("0.0")</strong> ★ (@L["Shop_ReviewCount", Model.ReviewCount])</span>
                     }
                     else
                     {
-                        <span class="text-muted">Chưa có đánh giá</span>
+                        <span class="text-muted">@L["Shop_NoRating"]</span>
                     }
                     @if (Model.CompletedOrders.HasValue)
                     {
-                        <span>@Model.CompletedOrders đơn thành công</span>
+                        <span>@L["Shop_SuccessOrders", Model.CompletedOrders.Value]</span>
                     }
-                    <span class="text-muted">Tham gia từ @Model.JoinedAtUtc.ToString("MM/yyyy")</span>
+                    <span class="text-muted">@L["Shop_JoinedFrom", Model.JoinedAtUtc.ToString("MM/yyyy")]</span>
                 </div>
             </div>
         </div>
@@ -47,7 +47,7 @@
     </section>
 
     <!-- Phần giữa: danh sách đánh giá của shop (module C) -->
-    <section id="shop-reviews" class="mb-4" aria-label="Đánh giá cửa hàng" data-shop-id="@Model.Id">
+    <section id="shop-reviews" class="mb-4" aria-label="@L["Nav_ShopReviews"]" data-shop-id="@Model.Id">
         @if (ViewBag.ShopReviews is SecondHandMarketplace.Web.Models.ViewModels.Reviews.DanhSachDanhGiaTheoShopVm shopReviews)
         {
             <partial name="_ShopReviews" model="shopReviews" />
@@ -55,11 +55,11 @@
     </section>
 
     <!-- Phần dưới: sản phẩm đang bán, dùng thẻ sản phẩm chung -->
-    <section aria-label="Sản phẩm đang bán">
-        <h2 class="h5 mb-3">Sản phẩm đang bán (@products.TotalItems)</h2>
+    <section aria-label="@L["Shop_OnSaleAria"]">
+        <h2 class="h5 mb-3">@L["Shop_OnSaleTitle", products.TotalItems]</h2>
         @if (products.Items.Count == 0)
         {
-            <div class="text-center text-muted py-5 border rounded">Cửa hàng chưa có sản phẩm nào đang bán.</div>
+            <div class="text-center text-muted py-5 border rounded">@L["Shop_NoProducts"]</div>
         }
         else
         {

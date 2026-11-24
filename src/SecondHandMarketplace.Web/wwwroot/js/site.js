@@ -2,6 +2,18 @@
  * JavaScript dùng chung cho Re:Market
  * Quản lý dropdowns, mobile menu, fallback ảnh, thông báo toast
  */
+
+// B-05: JS sinh chuỗi hiển thị nên không đi qua Razor localizer. _Layout đổ từ điển ngôn ngữ hiện tại vào
+// #rm-i18n; thiếu khối đó (ví dụ _LayoutAdmin) thì rmT rơi về fallback tiếng Việt để script không hỏng.
+const RM_TEXT = (() => {
+    try { return JSON.parse(document.getElementById('rm-i18n')?.textContent || '{}'); } catch { return {}; }
+})();
+window.rmT = (key, fallback, ...args) => {
+    let s = RM_TEXT[key] ?? fallback ?? key;
+    args.forEach((arg, i) => { s = s.split('{' + i + '}').join(String(arg)); });
+    return s;
+};
+
 (() => {
     // Helper đóng toàn bộ dropdown đang mở
     const closeAllDropdowns = () => {
@@ -84,8 +96,8 @@
 
         const fallback = document.createElement('div');
         fallback.className = 'product-art-fallback';
-        fallback.setAttribute('aria-label', 'Chưa có ảnh sản phẩm');
-        fallback.innerHTML = '<span class="fallback-icon">♻</span><span class="fallback-text">Ảnh sản phẩm 4:5</span>';
+        fallback.setAttribute('aria-label', window.rmT('Js_ImageMissing', 'Chưa có ảnh sản phẩm'));
+        fallback.innerHTML = `<span class="fallback-icon">♻</span><span class="fallback-text">${window.rmT('Card_ImagePlaceholder', 'Ảnh sản phẩm 4:5')}</span>`;
         img.replaceWith(fallback);
     };
 
@@ -152,7 +164,7 @@
             <div class="rm-toast-body">
                 <span class="rm-toast-msg">${escapeHtml(message)}</span>
             </div>
-            <button type="button" class="rm-toast-close" aria-label="Đóng">&times;</button>
+            <button type="button" class="rm-toast-close" aria-label="${window.rmT('Layout_Close', 'Đóng')}">&times;</button>
         `;
 
         const dismiss = () => {
@@ -176,9 +188,9 @@
      */
     window.rmConfirm = (message, options = {}) => {
         return new Promise((resolve) => {
-            const title = options.title || 'Xác nhận thao tác';
-            const confirmText = options.confirmText || 'Xác nhận';
-            const cancelText = options.cancelText || 'Hủy bỏ';
+            const title = options.title || window.rmT('Js_ConfirmTitle', 'Xác nhận thao tác');
+            const confirmText = options.confirmText || window.rmT('Js_ConfirmBtn', 'Xác nhận');
+            const cancelText = options.cancelText || window.rmT('Js_CancelBtn', 'Hủy bỏ');
             const isDanger = options.danger !== false;
 
             const overlay = document.createElement('div');
@@ -232,8 +244,8 @@
 
         e.preventDefault();
         const ok = await window.rmConfirm(msg, {
-            title: form.getAttribute('data-confirm-title') || 'Xác nhận thao tác',
-            confirmText: form.getAttribute('data-confirm-btn') || 'Xác nhận',
+            title: form.getAttribute('data-confirm-title') || window.rmT('Js_ConfirmTitle', 'Xác nhận thao tác'),
+            confirmText: form.getAttribute('data-confirm-btn') || window.rmT('Js_ConfirmBtn', 'Xác nhận'),
             danger: form.getAttribute('data-confirm-danger') !== 'false'
         });
 
@@ -253,7 +265,7 @@
     const danhDau = (productId, isFavorite) => {
         document.querySelectorAll(`.rm-card-favorite-btn[data-product-id="${productId}"]`).forEach(btn => {
             btn.classList.toggle('is-favorite', isFavorite);
-            btn.setAttribute('aria-label', isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích');
+            btn.setAttribute('aria-label', isFavorite ? window.rmT('Card_UnfavoriteAria', 'Bỏ yêu thích') : window.rmT('Card_FavoriteAria', 'Thêm vào yêu thích'));
             btn.setAttribute('aria-pressed', String(isFavorite));
         });
     };
@@ -261,7 +273,7 @@
     const thongBao = (message, type = 'info', title = null) => {
         if (window.showNotifyBox) {
             window.showNotifyBox({
-                title: title || (type === 'success' ? 'Đã lưu yêu thích' : type === 'error' ? 'Lỗi' : 'Thông báo'),
+                title: title || (type === 'success' ? window.rmT('Js_FavSavedTitle', 'Đã lưu yêu thích') : type === 'error' ? window.rmT('Js_Error', 'Lỗi') : window.rmT('Js_Notice', 'Thông báo')),
                 message: message,
                 type: type
             });
@@ -294,19 +306,19 @@
                 return;
             }
             if (!res.ok) {
-                thongBao('Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.', 'warning', 'Cần lưu ý');
+                thongBao(window.rmT('Js_FavListNotUpdated', 'Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.'), 'warning', window.rmT('Js_Note', 'Cần lưu ý'));
                 return;
             }
             const data = await res.json();
             if (!data.success) {
-                thongBao(data.message || 'Không thể lưu sản phẩm yêu thích này.', 'error', 'Không thành công');
+                thongBao(data.message || window.rmT('Js_FavSaveFailed', 'Không thể lưu sản phẩm yêu thích này.'), 'error', window.rmT('Js_FavFailedTitle', 'Không thành công'));
                 return;
             }
             danhDau(productId, data.isFavorite);
             thongBao(
-                data.isFavorite ? 'Sản phẩm đã được thêm vào danh sách yêu thích của bạn!' : 'Đã bỏ sản phẩm khỏi danh sách yêu thích.',
+                data.isFavorite ? window.rmT('Js_FavAddedMsg', 'Sản phẩm đã được thêm vào danh sách yêu thích của bạn!') : window.rmT('Js_FavRemovedMsg', 'Đã bỏ sản phẩm khỏi danh sách yêu thích.'),
                 data.isFavorite ? 'success' : 'info',
-                data.isFavorite ? 'Yêu thích' : 'Đã bỏ yêu thích'
+                data.isFavorite ? window.rmT('Nav_Favorites', 'Yêu thích') : window.rmT('Js_FavRemovedTitle', 'Đã bỏ yêu thích')
             );
             if (!data.isFavorite && window.location.pathname.toLowerCase().startsWith('/user/favorites')) {
                 const item = btn.closest('.col') ?? btn.closest('.rm-product-card');
@@ -314,7 +326,7 @@
                 if (!document.querySelector('.rm-product-card')) window.location.reload();
             }
         } catch {
-            thongBao('Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.', 'error', 'Lỗi kết nối');
+            thongBao(window.rmT('Js_NetworkInterrupt', 'Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.'), 'error', window.rmT('Js_ConnectionError', 'Lỗi kết nối'));
         } finally {
             btn.disabled = false;
         }
@@ -365,14 +377,14 @@
         modal.hidden = true;
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-label', 'Ảnh phóng to');
+        modal.setAttribute('aria-label', window.rmT('Js_LightboxAria', 'Ảnh phóng to'));
         modal.innerHTML = `
             <div class="rm-lightbox-container">
-                <button type="button" class="rm-lightbox-close" aria-label="Đóng">&times;</button>
-                <button type="button" class="rm-lightbox-nav rm-lightbox-prev" aria-label="Ảnh trước">&#8249;</button>
-                <button type="button" class="rm-lightbox-nav rm-lightbox-next" aria-label="Ảnh tiếp theo">&#8250;</button>
+                <button type="button" class="rm-lightbox-close" aria-label="${window.rmT('Layout_Close', 'Đóng')}">&times;</button>
+                <button type="button" class="rm-lightbox-nav rm-lightbox-prev" aria-label="${window.rmT('Detail_PrevImage', 'Ảnh trước')}">&#8249;</button>
+                <button type="button" class="rm-lightbox-nav rm-lightbox-next" aria-label="${window.rmT('Detail_NextImage', 'Ảnh tiếp theo')}">&#8250;</button>
                 <div class="rm-lightbox-body">
-                    <img class="rm-lightbox-img" src="" alt="Ảnh phóng to" />
+                    <img class="rm-lightbox-img" src="" alt="${window.rmT('Js_LightboxAria', 'Ảnh phóng to')}" />
                     <div class="rm-lightbox-caption"></div>
                     <div class="rm-lightbox-counter" aria-live="polite"></div>
                 </div>
@@ -516,16 +528,16 @@
 
     const capNhat = () => {
         const dai = o.value.trim().length;
-        if (so) so.textContent = `${dai}/${toiDa} ký tự`;
+        if (so) so.textContent = window.rmT('Js_CharCount', `${dai}/${toiDa} ký tự`, dai, toiDa);
         if (!trangThai) return;
         if (dai === 0) {
-            trangThai.textContent = 'Chưa có mô tả';
+            trangThai.textContent = window.rmT('Js_NoDescriptionYet', 'Chưa có mô tả');
             trangThai.className = 'text-muted';
         } else if (dai < toiThieu) {
-            trangThai.textContent = `Còn thiếu ${toiThieu - dai} ký tự để gửi duyệt`;
+            trangThai.textContent = window.rmT('Js_DescriptionShortBy', `Còn thiếu ${toiThieu - dai} ký tự để gửi duyệt`, toiThieu - dai);
             trangThai.className = 'text-danger';
         } else {
-            trangThai.textContent = 'Đủ độ dài để gửi duyệt';
+            trangThai.textContent = window.rmT('Js_DescriptionLongEnough', 'Đủ độ dài để gửi duyệt');
             trangThai.className = 'text-success';
         }
     };
@@ -543,10 +555,10 @@
     if (!panel || !btn) return;
 
     const soLoc = Number(btn.dataset.soBoLoc || 0);
-    const tenLoc = soLoc > 0 ? `bộ lọc (${soLoc})` : 'bộ lọc';
+    const tenLoc = soLoc > 0 ? window.rmT('Js_FiltersCount', `bộ lọc (${soLoc})`, soLoc) : window.rmT('Js_Filters', 'bộ lọc');
     const capNhat = () => {
         const mo = panel.classList.contains('show');
-        btn.textContent = `${mo ? 'Ẩn' : 'Hiện'} ${tenLoc}`;
+        btn.textContent = `${mo ? window.rmT('Common_Hide', 'Ẩn') : window.rmT('Common_Show', 'Hiện')} ${tenLoc}`;
         btn.setAttribute('aria-expanded', String(mo));
     };
 
@@ -689,7 +701,7 @@
             const data = await res.json();
 
             if (data.success) {
-                const prodName = form.dataset.productName || document.querySelector('.detail-title, .product-title')?.textContent?.trim() || 'Sản phẩm';
+                const prodName = form.dataset.productName || document.querySelector('.detail-title, .product-title')?.textContent?.trim() || window.rmT('Js_Product', 'Sản phẩm');
                 const prodPrice = form.dataset.productPrice || document.querySelector('.main-price, .detail-pricing-row .main-price')?.textContent?.trim() || '';
                 const prodImg = form.dataset.productImage || document.querySelector('.detail-main-img img, .rm-card-image')?.src || '';
 
@@ -715,28 +727,28 @@
                     autoCloseTimer = setTimeout(closeModal, 6000);
                 } else {
                     window.showNotifyBox({
-                        title: 'Đã thêm vào giỏ hàng!',
-                        message: `Đã thêm "${prodName}" vào giỏ hàng thành công.`,
+                        title: window.rmT('Layout_CartAdded', 'Đã thêm vào giỏ hàng!'),
+                        message: window.rmT('Js_CartAddedMsg', `Đã thêm "${prodName}" vào giỏ hàng thành công.`, prodName),
                         type: 'success',
-                        buttonText: 'Đồng ý'
+                        buttonText: window.rmT('Js_Ok', 'Đồng ý')
                     });
                 }
 
                 updateCartCount(typeof data.cartCount === 'number' ? data.cartCount : undefined);
             } else {
                 window.showNotifyBox({
-                    title: 'Thông báo giỏ hàng',
-                    message: data.message || 'Không thể thêm sản phẩm vào giỏ hàng.',
+                    title: window.rmT('Js_CartNotice', 'Thông báo giỏ hàng'),
+                    message: data.message || window.rmT('Js_CartAddFailed', 'Không thể thêm sản phẩm vào giỏ hàng.'),
                     type: 'warning',
-                    buttonText: 'Đã hiểu'
+                    buttonText: window.rmT('Js_GotIt', 'Đã hiểu')
                 });
             }
         } catch {
             window.showNotifyBox({
-                title: 'Lỗi kết nối',
-                message: 'Không thể kết nối máy chủ. Vui lòng thử lại sau.',
+                title: window.rmT('Js_ConnectionError', 'Lỗi kết nối'),
+                message: window.rmT('Js_CannotConnect', 'Không thể kết nối máy chủ. Vui lòng thử lại sau.'),
                 type: 'error',
-                buttonText: 'Đóng'
+                buttonText: window.rmT('Layout_Close', 'Đóng')
             });
         } finally {
             if (submitBtn) {
@@ -781,7 +793,7 @@
             modal.setAttribute('aria-modal', 'true');
             modal.innerHTML = `
                 <div class="rm-notify-box rm-notify-box-success">
-                    <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="Đóng">&times;</button>
+                    <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="${window.rmT('Layout_Close', 'Đóng')}">&times;</button>
                     <div class="rm-notify-icon-wrap">
                         <div class="rm-notify-icon rm-notify-icon-success" id="rmNotifyIcon">
                             <i class="bi bi-check-circle-fill"></i>
@@ -801,9 +813,9 @@
         }
 
         const type = opts.type || 'success';
-        const title = opts.title || (type === 'success' ? 'Thành công!' : type === 'error' ? 'Đã xảy ra lỗi' : type === 'warning' ? 'Cần lưu ý' : 'Thông báo');
+        const title = opts.title || (type === 'success' ? window.rmT('Js_Success', 'Thành công!') : type === 'error' ? window.rmT('Js_ErrorOccurred', 'Đã xảy ra lỗi') : type === 'warning' ? window.rmT('Js_Note', 'Cần lưu ý') : window.rmT('Js_Notice', 'Thông báo'));
         const message = opts.message || '';
-        const btnText = opts.buttonText || 'Đồng ý';
+        const btnText = opts.buttonText || window.rmT('Js_Ok', 'Đồng ý');
 
         const boxEl = modal.querySelector('.rm-notify-box');
         if (boxEl) {
@@ -885,5 +897,56 @@
     window.alertBox = (message, type = 'success', title = null) => {
         window.showNotifyBox({ message, type, title });
     };
+})();
+
+// =========================================================================
+// B-01 (vòng 2): form banner Admin — xem trước ảnh vừa chọn và chặn sớm file
+// sai định dạng/dung lượng theo đúng luật của UploadAnhAnToan phía server.
+// =========================================================================
+(() => {
+    const forms = document.querySelectorAll('[data-banner-form]');
+    if (!forms.length) return;
+
+    const dinhDangChoPhep = ['image/jpeg', 'image/png', 'image/webp'];
+    const dungLuongToiDa = 5 * 1024 * 1024;
+
+    forms.forEach((form) => {
+        const input = form.querySelector('[data-banner-file]');
+        const khoiXemTruoc = form.querySelector('[data-banner-preview]');
+        if (!input || !khoiXemTruoc) return;
+
+        let duongDanTam = '';
+        const hienKhung = (noiDung) => {
+            if (duongDanTam) URL.revokeObjectURL(duongDanTam);
+            duongDanTam = '';
+            khoiXemTruoc.textContent = noiDung;
+            khoiXemTruoc.hidden = !noiDung;
+        };
+
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file) return hienKhung('');
+
+            const loi = !dinhDangChoPhep.includes(file.type)
+                ? window.rmT('Js_BannerOnlyFormats', 'Chỉ nhận ảnh JPG, PNG hoặc WEBP.')
+                : file.size > dungLuongToiDa
+                    ? window.rmT('Js_BannerTooLarge', 'Ảnh banner tối đa 5MB.')
+                    : null;
+            if (loi) {
+                input.value = '';
+                return hienKhung(loi);
+            }
+
+            duongDanTam = URL.createObjectURL(file);
+            khoiXemTruoc.hidden = false;
+            khoiXemTruoc.textContent = '';
+            const img = document.createElement('img');
+            img.alt = window.rmT('Js_BannerPreview', 'Xem trước banner');
+            img.className = 'mt-2 rounded border';
+            img.style.cssText = 'max-height:90px;max-width:100%;object-fit:cover;';
+            img.src = duongDanTam;
+            khoiXemTruoc.appendChild(img);
+        });
+    });
 })();
 

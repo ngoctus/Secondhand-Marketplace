@@ -11,7 +11,7 @@
         var url = box.dataset.url;
         if (!tinh || !xa || !url) return;
 
-        var labelXa = box.dataset.labelXa || '-- Chọn phường/xã --';
+        var labelXa = box.dataset.labelXa || window.rmT('KhuVuc_PickWard', '-- Chọn phường/xã --');
         var token = 0;   // bỏ qua phản hồi cũ khi người dùng đổi tỉnh liên tục
         var xaCho = null; // xã cần chọn sau khi danh sách tải xong
         var dangTai = false;
@@ -31,7 +31,7 @@
             if (!maTinh) { dangTai = false; reset(labelXa, true); xaCho = null; return; }
 
             dangTai = true;
-            reset('Đang tải...', true);
+            reset(window.rmT('KhuVuc_Loading', 'Đang tải...'), true);
             fetch(url + '?maTinh=' + encodeURIComponent(maTinh), { headers: { 'Accept': 'application/json' } })
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(function (items) {
@@ -49,7 +49,7 @@
                 .catch(function () {
                     if (current !== token) return;
                     dangTai = false;
-                    reset('Không tải được danh sách, thử lại', false);
+                    reset(window.rmT('KhuVuc_LoadFailed', 'Không tải được danh sách, thử lại'), false);
                 });
         }
 

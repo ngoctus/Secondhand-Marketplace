@@ -1,26 +1,26 @@
 @model PagedResult<ProductCardVm>
 @{
-    ViewData["Title"] = "Sản phẩm yêu thích";
+    ViewData["Title"] = L["Fav_Title"];
 }
 
 <div class="rm-main-content" style="padding-top:8px">
     <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2 style="font-family:'Playfair Display',serif; font-size:24px;">Sản phẩm yêu thích</h2>
-        <a asp-area="" asp-controller="Products" asp-action="Index" class="btn-rm-outline">Tiếp tục khám phá</a>
+        <h2 style="font-family:'Playfair Display',serif; font-size:24px;">@L["Fav_Title"]</h2>
+        <a asp-area="" asp-controller="Products" asp-action="Index" class="btn-rm-outline">@L["Fav_Continue"]</a>
     </div>
 
     @if (Model.Items.Count == 0)
     {
         <div class="rm-empty-state">
-            <h3>Bạn chưa lưu sản phẩm nào</h3>
-            <p>Lưu món đồ bạn quan tâm để quay lại xem trạng thái, giá và thông tin cửa hàng bất cứ lúc nào.</p>
+            <h3>@L["Fav_EmptyTitle"]</h3>
+            <p>@L["Fav_EmptyDesc"]</p>
             <ol>
-                <li>Mở "Tất cả sản phẩm", lọc theo danh mục, khoảng giá hoặc khu vực.</li>
-                <li>Bấm nút tim trên tin bạn quan tâm để thêm vào danh sách này.</li>
-                <li>Bỏ lưu món không còn phù hợp bằng nút tim ngay trên thẻ sản phẩm.</li>
+                <li>@L["Fav_Tip1"]</li>
+                <li>@L["Fav_Tip2"]</li>
+                <li>@L["Fav_Tip3"]</li>
             </ol>
             <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap">
-                <a asp-area="" asp-controller="Products" asp-action="Index" class="btn-rm-primary">Tìm sản phẩm</a>
+                <a asp-area="" asp-controller="Products" asp-action="Index" class="btn-rm-primary">@L["Fav_FindProducts"]</a>
             </div>
         </div>
     }

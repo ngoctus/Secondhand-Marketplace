@@ -68,7 +68,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
             ApplyExtras(shop, input, addressDetail, areaLabel, bank);
             try { await db.SaveChangesAsync(cancellationToken); }
             catch (DbUpdateException) { return (false, "Đã tạo cửa hàng nhưng chưa lưu được địa chỉ, vui lòng cập nhật lại."); }
-            cache?.Remove(Controllers.HomeController.CatalogCacheKey);
+            HomeCacheHelper.XoaCacheTrangChu(cache);
             return (true, null);
         }
 
@@ -82,7 +82,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
         try { await db.SaveChangesAsync(cancellationToken); }
         catch (DbUpdateException) { return (false, "Thông tin cửa hàng không hợp lệ."); }
         await auditLog.LogAsync(userId, "UPDATE_SHOP", "CuaHang", shop.MaCuaHang);
-        cache?.Remove(Controllers.HomeController.CatalogCacheKey);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         return (true, null);
     }
 
@@ -178,7 +178,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
         shop.NgayCapNhat = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await auditLog.LogAsync(actorId, "LOCK_SHOP", "CuaHang", shopId, "SUCCESS", reason);
-        cache?.Remove(Controllers.HomeController.CatalogCacheKey);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         return (true, null);
     }
 
@@ -194,7 +194,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
         shop.NgayCapNhat = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await auditLog.LogAsync(actorId, "UNLOCK_SHOP", "CuaHang", shopId);
-        cache?.Remove(Controllers.HomeController.CatalogCacheKey);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         return (true, null);
     }
 
