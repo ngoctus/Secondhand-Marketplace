@@ -613,6 +613,7 @@
   <data name="Banner_OptHide" xml:space="preserve"><value>Ẩn</value></data>
   <data name="Banner_SaveChanges" xml:space="preserve"><value>Lưu thay đổi</value></data>
   <data name="Banner_ConfirmDelete" xml:space="preserve"><value>Bạn có chắc muốn xóa banner này?</value></data>
+  <!-- D-03: Giỏ hàng, Đơn hàng, Tranh chấp, Báo cáo & Khiếu nại khóa tài khoản -->
   <data name="Cart_Title" xml:space="preserve"><value>Giỏ hàng của bạn</value></data>
   <data name="Cart_Subtitle" xml:space="preserve"><value>Các món đồ cũ độc nhất bạn đã chọn mua từ các cửa hàng.</value></data>
   <data name="Cart_Continue" xml:space="preserve"><value>Tiếp tục mua sắm</value></data>
@@ -845,4 +846,253 @@
   <data name="Locked_EvidenceLabel" xml:space="preserve"><value>Ảnh minh chứng (Tùy chọn)</value></data>
   <data name="Locked_EvidenceHint" xml:space="preserve"><value>Hỗ trợ định dạng JPG, PNG, WEBP. Tối đa 5MB.</value></data>
   <data name="Locked_SubmitBtn" xml:space="preserve"><value>Gửi yêu cầu xem xét mở khóa</value></data>
+  <!-- C-04: Chat, Thông báo, Đánh giá & Cụm Kiểm duyệt / AI Admin -->
+  <data name="ShopRev_Title" xml:space="preserve"><value>Đánh giá từ người mua</value></data>
+  <data name="ShopRev_Subtitle" xml:space="preserve"><value>Chỉ người mua của các đơn hàng đã hoàn tất mới được gửi đánh giá.</value></data>
+  <data name="ShopRev_TotalReviews" xml:space="preserve"><value>{0} lượt đánh giá</value></data>
+  <data name="ShopRev_Empty" xml:space="preserve"><value>Cửa hàng chưa có đánh giá nào từ người mua.</value></data>
+  <data name="ShopRev_StarCount" xml:space="preserve"><value>({0} sao)</value></data>
+  <data name="ShopRev_VerifiedBuyer" xml:space="preserve"><value>Đã mua hàng</value></data>
+  <data name="ShopRev_NoComment" xml:space="preserve"><value>Người mua không để lại nhận xét bằng lời.</value></data>
+  <data name="ShopRev_SellerReply" xml:space="preserve"><value>Phản hồi từ người bán</value></data>
+  <data name="ShopRev_PaginationAria" xml:space="preserve"><value>Phân trang đánh giá shop</value></data>
+  <data name="MyRev_Title" xml:space="preserve"><value>Đánh giá của tôi</value></data>
+  <data name="MyRev_Subtitle" xml:space="preserve"><value>Danh sách nhận xét bạn đã gửi cho các cửa hàng sau khi hoàn tất mua sắm.</value></data>
+  <data name="MyRev_BtnShopReviews" xml:space="preserve"><value>Đánh giá shop nhận được</value></data>
+  <data name="MyRev_BtnMyOrders" xml:space="preserve"><value>Xem đơn mua của tôi</value></data>
+  <data name="MyRev_EmptyTitle" xml:space="preserve"><value>Bạn chưa viết đánh giá nào</value></data>
+  <data name="MyRev_EmptyDesc" xml:space="preserve"><value>Mỗi đánh giá của bạn là nguồn thông tin quý giá giúp cộng đồng Re:Market mua bán an toàn và minh bạch hơn. Hãy đánh giá sau khi nhận hàng thành công nhé!</value></data>
+  <data name="MyRev_BtnCompletedOrders" xml:space="preserve"><value>Xem các đơn hàng đã hoàn tất</value></data>
+  <data name="MyRev_OrderLabel" xml:space="preserve"><value>Đơn hàng:</value></data>
+  <data name="MyRev_ReviewedAt" xml:space="preserve"><value>Ngày đánh giá:</value></data>
+  <data name="MyRev_StatusVisible" xml:space="preserve"><value>Đang hiển thị</value></data>
+  <data name="MyRev_StatusHidden" xml:space="preserve"><value>Bị ẩn bởi Admin</value></data>
+  <data name="MyRev_StatusHiddenTip" xml:space="preserve"><value>Đánh giá này đã bị ẩn bởi quản trị viên do vi phạm quy định</value></data>
+  <data name="MyRev_StarsOutOf" xml:space="preserve"><value>{0} / 5 sao</value></data>
+  <data name="MyRev_NoComment" xml:space="preserve"><value>Không có nhận xét kèm theo.</value></data>
+  <data name="MyRev_ProductsLabel" xml:space="preserve"><value>Sản phẩm:</value></data>
+  <data name="MyRev_ViewOrder" xml:space="preserve"><value>Xem đơn</value></data>
+  <data name="MyRev_PaginationAria" xml:space="preserve"><value>Phân trang đánh giá</value></data>
+  <data name="ShopRevMgr_Title" xml:space="preserve"><value>Đánh giá cửa hàng của tôi</value></data>
+  <data name="ShopRevMgr_Subtitle" xml:space="preserve"><value>Quản lý các nhận xét từ người mua và gửi phản hồi giải trình (Kênh Người Bán).</value></data>
+  <data name="ShopRevMgr_BtnWritten" xml:space="preserve"><value>Đánh giá tôi đã viết</value></data>
+  <data name="ShopRevMgr_BtnSellerOrders" xml:space="preserve"><value>Quản lý đơn bán</value></data>
+  <data name="ShopRevMgr_NoShopTitle" xml:space="preserve"><value>Bạn chưa mở cửa hàng</value></data>
+  <data name="ShopRevMgr_NoShopDesc" xml:space="preserve"><value>Hãy tạo hồ sơ cửa hàng để bắt đầu đăng bán sản phẩm và nhận đánh giá uy tín từ khách hàng.</value></data>
+  <data name="ShopRevMgr_BtnCreateShop" xml:space="preserve"><value>Tạo hồ sơ cửa hàng</value></data>
+  <data name="ShopRevMgr_NoScore" xml:space="preserve"><value>Chưa có</value></data>
+  <data name="ShopRevMgr_BadgeExcellent" xml:space="preserve"><value>Cửa hàng uy tín xuất sắc</value></data>
+  <data name="ShopRevMgr_BadgePositive" xml:space="preserve"><value>Đánh giá tích cực</value></data>
+  <data name="ShopRevMgr_BadgeImprove" xml:space="preserve"><value>Cần cải thiện chất lượng</value></data>
+  <data name="ShopRevMgr_BadgeActive" xml:space="preserve"><value>Cửa hàng đang hoạt động</value></data>
+  <data name="ShopRevMgr_EmptyTitle" xml:space="preserve"><value>Chưa có đánh giá nào từ người mua</value></data>
+  <data name="ShopRevMgr_EmptyDesc" xml:space="preserve"><value>Khi người mua hoàn tất đơn hàng và để lại nhận xét, bạn có thể xem và gửi phản hồi giải trình tại đây.</value></data>
+  <data name="ShopRevMgr_StarUnit" xml:space="preserve"><value>{0} sao</value></data>
+  <data name="ShopRevMgr_BuyerCommentLabel" xml:space="preserve"><value>Nhận xét của khách:</value></data>
+  <data name="ShopRevMgr_NoBuyerComment" xml:space="preserve"><value>Khách không để lại lời nhận xét chi tiết.</value></data>
+  <data name="ShopRevMgr_YourReplyLabel" xml:space="preserve"><value>Phản hồi của shop bạn:</value></data>
+  <data name="ShopRevMgr_BtnWriteReply" xml:space="preserve"><value>Viết phản hồi giải trình</value></data>
+  <data name="ShopRevMgr_BtnEditReply" xml:space="preserve"><value>Chỉnh sửa phản hồi</value></data>
+  <data name="ShopRevMgr_ReplyFieldLabel" xml:space="preserve"><value>Nội dung phản hồi giải trình của shop:</value></data>
+  <data name="ShopRevMgr_ReplyPlaceholder" xml:space="preserve"><value>Cảm ơn bạn đã phản hồi hoặc giải trình cụ thể về đơn hàng...</value></data>
+  <data name="ShopRevMgr_ReplyHint" xml:space="preserve"><value>Tối đa 1.000 ký tự. Phản hồi sẽ hiển thị công khai bên dưới đánh giá của khách.</value></data>
+  <data name="ShopRevMgr_BtnSendReply" xml:space="preserve"><value>Gửi phản hồi</value></data>
+  <data name="UserNotify_UnreadLabel" xml:space="preserve"><value>Chưa đọc:</value></data>
+  <data name="UserNotify_MarkRead" xml:space="preserve"><value>Đánh dấu đã đọc</value></data>
+  <data name="UserNotify_Read" xml:space="preserve"><value>Đã đọc</value></data>
+  <data name="UserNotify_Total" xml:space="preserve"><value>Tổng {0} thông báo</value></data>
+  <data name="AdminMod_Title" xml:space="preserve"><value>Kiểm duyệt sản phẩm</value></data>
+  <data name="AdminMod_Subtitle" xml:space="preserve"><value>Phân 3 làn (Đỏ – Vàng – Xanh) kết hợp quét từ khóa Tầng 1 và AI ngữ cảnh Tầng 2.</value></data>
+  <data name="AdminMod_GreenLaneBtn" xml:space="preserve"><value>Duyệt nhanh Làn Xanh ({0})</value></data>
+  <data name="AdminMod_GreenLaneConfirm" xml:space="preserve"><value>Duyệt nhanh {0} sản phẩm Làn Xanh (đã qua AI kiểm duyệt an toàn)?</value></data>
+  <data name="AdminMod_TabPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="AdminMod_TabActive" xml:space="preserve"><value>Đang bán (gỡ vi phạm)</value></data>
+  <data name="AdminMod_ColProduct" xml:space="preserve"><value>Sản phẩm</value></data>
+  <data name="AdminMod_ColSeller" xml:space="preserve"><value>Người bán / Shop</value></data>
+  <data name="AdminMod_ColPrice" xml:space="preserve"><value>Giá</value></data>
+  <data name="AdminMod_ColSubmitted" xml:space="preserve"><value>Gửi lúc</value></data>
+  <data name="AdminMod_ColUpdated" xml:space="preserve"><value>Cập nhật</value></data>
+  <data name="AdminMod_ColAiAnalysis" xml:space="preserve"><value>Phân làn &amp; Phân tích AI</value></data>
+  <data name="AdminMod_BtnReview" xml:space="preserve"><value>Xem &amp; xử lý</value></data>
+  <data name="AdminMod_BtnViewRemove" xml:space="preserve"><value>Xem / gỡ</value></data>
+  <data name="AdminMod_EmptyPending" xml:space="preserve"><value>Không có sản phẩm nào đang chờ duyệt.</value></data>
+  <data name="AdminMod_EmptyActive" xml:space="preserve"><value>Không có sản phẩm đang bán.</value></data>
+  <data name="AdminMod_TotalProducts" xml:space="preserve"><value>Tổng {0} sản phẩm</value></data>
+  <data name="AdminMod_DetailTitle" xml:space="preserve"><value>Chi tiết kiểm duyệt</value></data>
+  <data name="AdminMod_NoImages" xml:space="preserve"><value>Sản phẩm chưa có ảnh.</value></data>
+  <data name="AdminMod_CategoryCondition" xml:space="preserve"><value>Danh mục / Tình trạng</value></data>
+  <data name="AdminMod_Seller" xml:space="preserve"><value>Người bán</value></data>
+  <data name="AdminMod_SellerViolations" xml:space="preserve"><value>Vi phạm của người bán</value></data>
+  <data name="AdminMod_ViewHistory" xml:space="preserve"><value>xem lịch sử</value></data>
+  <data name="AdminMod_CreatedUpdated" xml:space="preserve"><value>Ngày tạo / cập nhật</value></data>
+  <data name="AdminMod_RemoveReason" xml:space="preserve"><value>Lý do gỡ</value></data>
+  <data name="AdminMod_Description" xml:space="preserve"><value>Mô tả sản phẩm</value></data>
+  <data name="AdminMod_HybridTitle" xml:space="preserve"><value>Phân tích kiểm duyệt Hybrid</value></data>
+  <data name="AdminMod_ModelBadge" xml:space="preserve"><value>Mô hình: {0}</value></data>
+  <data name="AdminMod_AttemptsBadge" xml:space="preserve"><value>Lần quét: {0}</value></data>
+  <data name="AdminMod_ReanalyzeAiBtn" xml:space="preserve"><value>Phân tích lại với AI</value></data>
+  <data name="AdminMod_ReanalyzeBtn" xml:space="preserve"><value>Phân tích lại</value></data>
+  <data name="AdminMod_Reanalyzing" xml:space="preserve"><value>Đang phân tích...</value></data>
+  <data name="AdminMod_FallbackAlert" xml:space="preserve"><value>AI ngữ cảnh (Tầng 2) tạm không phản hồi trong lượt phân tích này — hệ thống đã tự động fallback về kết quả quét từ khóa Tầng 1. Quản trị viên có thể bấm "Phân tích lại với AI" để quét lại Tầng 2 hoặc tự xem kỹ ảnh/mô tả và duyệt thủ công.</value></data>
+  <data name="AdminMod_AnalysisError" xml:space="preserve"><value>Lỗi phân tích: {0}</value></data>
+  <data name="AdminMod_Tier1Heading" xml:space="preserve"><value>Tầng 1 — Từ khóa cấm phát hiện</value></data>
+  <data name="AdminMod_ColKeyword" xml:space="preserve"><value>Từ khóa</value></data>
+  <data name="AdminMod_ColLevel" xml:space="preserve"><value>Mức độ</value></data>
+  <data name="AdminMod_ColField" xml:space="preserve"><value>Trường</value></data>
+  <data name="AdminMod_ColPosition" xml:space="preserve"><value>Vị trí</value></data>
+  <data name="AdminMod_Tier2Heading" xml:space="preserve"><value>Tầng 2 — Dấu hiệu rủi ro từ AI</value></data>
+  <data name="AdminMod_ColRiskGroup" xml:space="preserve"><value>Nhóm rủi ro</value></data>
+  <data name="AdminMod_ColEvidence" xml:space="preserve"><value>Bằng chứng / Nhận xét AI</value></data>
+  <data name="AdminMod_ApproveBtn" xml:space="preserve"><value>Duyệt sản phẩm</value></data>
+  <data name="AdminMod_LowApproveHint" xml:space="preserve"><value>Cảnh báo LOW: duyệt thì không ghi vi phạm.</value></data>
+  <data name="AdminMod_RejectPlaceholder" xml:space="preserve"><value>Lý do từ chối (10–500 ký tự, bắt buộc)</value></data>
+  <data name="AdminMod_LowRejectWarn" xml:space="preserve"><value>Từ chối sản phẩm có cảnh báo LOW sẽ ghi 1 vi phạm cho người bán (đủ {0} vi phạm sẽ khóa tài khoản).</value></data>
+  <data name="AdminMod_RejectBtn" xml:space="preserve"><value>Từ chối sản phẩm</value></data>
+  <data name="AdminMod_RemoveHeading" xml:space="preserve"><value>Gỡ sản phẩm vi phạm</value></data>
+  <data name="AdminMod_RemoveConfirm" xml:space="preserve"><value>Gỡ sản phẩm này khỏi sàn?</value></data>
+  <data name="AdminMod_RemovePlaceholder" xml:space="preserve"><value>Lý do gỡ (10–500 ký tự, bắt buộc)</value></data>
+  <data name="AdminMod_RemoveBtn" xml:space="preserve"><value>Gỡ sản phẩm</value></data>
+  <data name="AdminMod_TurnsHeading" xml:space="preserve"><value>Lịch sử các lượt kiểm duyệt</value></data>
+  <data name="AdminMod_ColTurn" xml:space="preserve"><value>Lượt</value></data>
+  <data name="AdminMod_ColAnalysis" xml:space="preserve"><value>Phân tích</value></data>
+  <data name="AdminMod_ColDecision" xml:space="preserve"><value>Quyết định</value></data>
+  <data name="AdminMod_ColReviewer" xml:space="preserve"><value>Người quyết định</value></data>
+  <data name="AdminMod_ColReason" xml:space="preserve"><value>Lý do</value></data>
+  <data name="AdminMod_ColViolation" xml:space="preserve"><value>Vi phạm</value></data>
+  <data name="AdminMod_PendingDecision" xml:space="preserve"><value>Đang chờ</value></data>
+  <data name="AdminMod_SystemAuto" xml:space="preserve"><value>Hệ thống (tự động)</value></data>
+  <data name="AdminMod_ViolationPlusOne" xml:space="preserve"><value>Có (+1)</value></data>
+  <data name="AdminMod_TurnsEmpty" xml:space="preserve"><value>Chưa có lượt kiểm duyệt.</value></data>
+  <data name="AdminMod_StatusHistoryHeading" xml:space="preserve"><value>Lịch sử trạng thái sản phẩm</value></data>
+  <data name="AdminMod_ColFrom" xml:space="preserve"><value>Từ</value></data>
+  <data name="AdminMod_ColTo" xml:space="preserve"><value>Sang</value></data>
+  <data name="AdminMod_ColActor" xml:space="preserve"><value>Thực hiện</value></data>
+  <data name="AdminMod_StatusHistoryEmpty" xml:space="preserve"><value>Chưa có lịch sử trạng thái.</value></data>
+  <data name="AdminMod_KeywordsPrefix" xml:space="preserve"><value>Từ khóa:</value></data>
+  <data name="AdminKw_Title" xml:space="preserve"><value>Từ khóa cấm</value></data>
+  <data name="AdminKw_DescHigh" xml:space="preserve"><value>HIGH: sản phẩm bị tự động từ chối và người bán bị ghi 1 vi phạm.</value></data>
+  <data name="AdminKw_DescLow" xml:space="preserve"><value>LOW: chờ Admin xem xét ở màn hình kiểm duyệt (xác nhận vi phạm hoặc bỏ qua).</value></data>
+  <data name="AdminKw_DescNote" xml:space="preserve"><value>Thay đổi chỉ áp dụng cho các lần phân tích sau.</value></data>
+  <data name="AdminKw_AddSection" xml:space="preserve"><value>Thêm từ khóa mới</value></data>
+  <data name="AdminKw_PhrasePlaceholder" xml:space="preserve"><value>Từ/cụm từ cấm</value></data>
+  <data name="AdminKw_GroupPlaceholder" xml:space="preserve"><value>Nhóm (HANG_GIA)</value></data>
+  <data name="AdminKw_OptLow" xml:space="preserve"><value>LOW - chờ Admin</value></data>
+  <data name="AdminKw_OptHigh" xml:space="preserve"><value>HIGH - tự từ chối</value></data>
+  <data name="AdminKw_NotePlaceholder" xml:space="preserve"><value>Ghi chú</value></data>
+  <data name="AdminKw_AddBtn" xml:space="preserve"><value>Thêm từ khóa</value></data>
+  <data name="AdminKw_SearchPlaceholder" xml:space="preserve"><value>Tìm theo từ khóa hoặc nhóm</value></data>
+  <data name="AdminKw_AllLevels" xml:space="preserve"><value>Mọi mức độ</value></data>
+  <data name="AdminKw_Active" xml:space="preserve"><value>Đang áp dụng</value></data>
+  <data name="AdminKw_Disabled" xml:space="preserve"><value>Đã tắt</value></data>
+  <data name="AdminKw_ColGroup" xml:space="preserve"><value>Nhóm</value></data>
+  <data name="AdminKw_ColNote" xml:space="preserve"><value>Ghi chú</value></data>
+  <data name="AdminKw_BtnDisable" xml:space="preserve"><value>Tắt</value></data>
+  <data name="AdminKw_BtnEnable" xml:space="preserve"><value>Bật</value></data>
+  <data name="AdminKw_Empty" xml:space="preserve"><value>Chưa có từ khóa nào.</value></data>
+  <data name="AdminVio_Title" xml:space="preserve"><value>Lịch sử vi phạm kiểm duyệt</value></data>
+  <data name="AdminVio_Desc" xml:space="preserve"><value>Mỗi dòng là một bản ghi vi phạm kiểm duyệt. Bộ đếm tự động khóa chỉ tính các vi phạm hiệu lực sau lần mở khóa gần nhất (đủ {0} vi phạm hiệu lực tài khoản bị khóa tự động). HIGH: hệ thống tự ghi khi từ chối tự động. LOW: ghi khi Admin từ chối sản phẩm có cảnh báo LOW. Mở khóa tài khoản reset bộ đếm hiệu lực về 0/{0} nhưng không xóa lịch sử.</value></data>
+  <data name="AdminVio_FilterSeller" xml:space="preserve"><value>Đang lọc theo người bán:</value></data>
+  <data name="AdminVio_Effective" xml:space="preserve"><value>Hiệu lực:</value></data>
+  <data name="AdminVio_TotalHistory" xml:space="preserve"><value>Tổng lịch sử:</value></data>
+  <data name="AdminVio_ResetAt" xml:space="preserve"><value>(Mốc reset: {0})</value></data>
+  <data name="AdminVio_ViewAll" xml:space="preserve"><value>Xem tất cả</value></data>
+  <data name="AdminVio_ColAccount" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="AdminVio_ColCount" xml:space="preserve"><value>Hiệu lực / Lịch sử</value></data>
+  <data name="AdminVio_ColLevelSource" xml:space="preserve"><value>Mức / Nguồn</value></data>
+  <data name="AdminVio_ColConfirmedBy" xml:space="preserve"><value>Người xác nhận</value></data>
+  <data name="AdminVio_BadgeEffective" xml:space="preserve"><value>Đang tính gậy</value></data>
+  <data name="AdminVio_BadgeBeforeUnlock" xml:space="preserve"><value>Trước mở khóa</value></data>
+  <data name="AdminVio_UnlockLink" xml:space="preserve"><value>Mở khóa tại Quản lý người dùng</value></data>
+  <data name="AdminVio_EffectiveUnit" xml:space="preserve"><value>hiệu lực</value></data>
+  <data name="AdminVio_TotalHistoryRow" xml:space="preserve"><value>Tổng lịch sử: {0}</value></data>
+  <data name="AdminVio_TurnLabel" xml:space="preserve"><value>Lượt #{0}</value></data>
+  <data name="AdminVio_SourceAutoHigh" xml:space="preserve"><value>Hệ thống tự động</value></data>
+  <data name="AdminVio_SourceAdminReject" xml:space="preserve"><value>Admin từ chối</value></data>
+  <data name="AdminVio_Empty" xml:space="preserve"><value>Chưa có vi phạm nào.</value></data>
+  <data name="AdminVio_TotalCount" xml:space="preserve"><value>Tổng {0} vi phạm</value></data>
+  <data name="AdminAi_Title" xml:space="preserve"><value>Cấu hình chatbox AI</value></data>
+  <data name="AdminAi_Subtitle" xml:space="preserve"><value>Thay đổi được lưu vào database và áp dụng ngay cho các tin nhắn tiếp theo của người dùng.</value></data>
+  <data name="AdminAi_NotPersistedWarn" xml:space="preserve"><value>Database chưa có cấu hình AI (bảng CauHinhAI). Đang hiển thị giá trị mặc định; bạn chỉ lưu được sau khi bảng này được tạo.</value></data>
+  <data name="AdminAi_EnabledLabel" xml:space="preserve"><value>Bật Chatbox AI</value></data>
+  <data name="AdminAi_EnabledHint" xml:space="preserve"><value>Khi tắt, nút chat ẩn đi và máy chủ từ chối mọi yêu cầu chat.</value></data>
+  <data name="AdminAi_ModelLabel" xml:space="preserve"><value>Model AI</value></data>
+  <data name="AdminAi_PromptLabel" xml:space="preserve"><value>System Prompt</value></data>
+  <data name="AdminAi_PromptHint" xml:space="preserve"><value>Tối đa 4.000 ký tự. Hệ thống luôn tự nối thêm các quy tắc an toàn cố định (chỉ dùng dữ liệu thật, không tự đặt hàng/đăng bán, không tiết lộ thông tin nội bộ) nên không cần lặp lại ở đây.</value></data>
+  <data name="AdminAi_SaveBtn" xml:space="preserve"><value>Lưu cấu hình</value></data>
+  <data name="AdminAi_LastUpdated" xml:space="preserve"><value>Cập nhật lần cuối: {0}</value></data>
+  <data name="AdminAi_ApiKeyNote" xml:space="preserve"><value>Khóa API không được cấu hình tại đây mà nằm trong User Secrets / biến môi trường của máy chủ.</value></data>
+  <data name="AdminRev_Title" xml:space="preserve"><value>Rà soát đánh giá shop</value></data>
+  <data name="AdminRev_Heading" xml:space="preserve"><value>Rà soát shop bị đánh giá thấp</value></data>
+  <data name="AdminRev_Criteria" xml:space="preserve"><value>Tiêu chí cảnh báo: điểm trung bình dưới 3.0 sao và có ít nhất 5 đánh giá. Hiện có {0} shop cần rà soát.</value></data>
+  <data name="AdminRev_TabFlagged" xml:space="preserve"><value>Shop cần rà soát (&lt; 3 sao)</value></data>
+  <data name="AdminRev_TabAll" xml:space="preserve"><value>Tất cả shop có đánh giá</value></data>
+  <data name="AdminRev_SearchPlaceholder" xml:space="preserve"><value>Tìm theo tên shop, tên chủ shop hoặc email...</value></data>
+  <data name="AdminRev_PerPage" xml:space="preserve"><value>{0} / trang</value></data>
+  <data name="AdminRev_ClearSearch" xml:space="preserve"><value>Xóa từ khóa</value></data>
+  <data name="AdminRev_ColRating" xml:space="preserve"><value>Điểm sao</value></data>
+  <data name="AdminRev_ColCompletedOrders" xml:space="preserve"><value>Đơn thành công</value></data>
+  <data name="AdminRev_ColReports" xml:space="preserve"><value>Báo cáo</value></data>
+  <data name="AdminRev_EmptyFlagged" xml:space="preserve"><value>Không có shop nào dưới 3 sao trong nhóm này.</value></data>
+  <data name="AdminRev_EmptyAll" xml:space="preserve"><value>Không tìm thấy shop nào phù hợp với bộ lọc.</value></data>
+  <data name="AdminRev_ReviewsCount" xml:space="preserve"><value>{0} đánh giá</value></data>
+  <data name="AdminRev_CompletedOrdersUnit" xml:space="preserve"><value>đơn COMPLETED</value></data>
+  <data name="AdminRev_ReportsTip" xml:space="preserve"><value>Báo cáo shop và sản phẩm của shop</value></data>
+  <data name="AdminRev_BtnInspect" xml:space="preserve"><value>Xem rà soát</value></data>
+  <data name="AdminRev_BtnOrderHistory" xml:space="preserve"><value>Lịch sử đơn</value></data>
+  <data name="AdminRev_BtnWarn" xml:space="preserve"><value>Cảnh cáo</value></data>
+  <data name="AdminRev_BtnSendWarn" xml:space="preserve"><value>Gửi cảnh cáo</value></data>
+  <data name="AdminRev_BtnLockShop" xml:space="preserve"><value>Khóa shop</value></data>
+  <data name="AdminRev_BtnUnlockShop" xml:space="preserve"><value>Mở khóa shop</value></data>
+  <data name="AdminRev_ShopsCount" xml:space="preserve"><value>{0} shop</value></data>
+  <data name="AdminRev_ModalLockTitle" xml:space="preserve"><value>Khóa cửa hàng</value></data>
+  <data name="AdminRev_ModalLockIntro" xml:space="preserve"><value>Bạn đang khóa cửa hàng</value></data>
+  <data name="AdminRev_ModalLockReasonLabel" xml:space="preserve"><value>Lý do khóa</value></data>
+  <data name="AdminRev_ModalLockPlaceholder" xml:space="preserve"><value>Ví dụ: Nhiều đánh giá phản ánh hàng không đúng mô tả, shop không phản hồi...</value></data>
+  <data name="AdminRev_ModalLockHint" xml:space="preserve"><value>Tối đa 500 ký tự. Lý do được lưu vào nhật ký hệ thống.</value></data>
+  <data name="AdminRev_ModalLockConfirm" xml:space="preserve"><value>Xác nhận khóa</value></data>
+  <data name="AdminRev_ModalWarnTitle" xml:space="preserve"><value>Gửi cảnh cáo chất lượng dịch vụ</value></data>
+  <data name="AdminRev_ModalWarnIntro" xml:space="preserve"><value>Gửi thông báo hệ thống tới chủ shop</value></data>
+  <data name="AdminRev_ModalWarnLabel" xml:space="preserve"><value>Nội dung cảnh cáo</value></data>
+  <data name="AdminRev_ModalWarnPlaceholder" xml:space="preserve"><value>Ví dụ: Shop có 5 đánh giá 1-2 sao phản ánh hàng không đúng mô tả. Đề nghị cải thiện chất lượng và phản hồi khách hàng.</value></data>
+  <data name="AdminRev_ModalWarnHint" xml:space="preserve"><value>Tối đa 1.000 ký tự. Chủ shop sẽ nhận được thông báo ngay.</value></data>
+  <data name="AdminRev_DetailTitle" xml:space="preserve"><value>Chi tiết rà soát shop</value></data>
+  <data name="AdminRev_BreadcrumbRoot" xml:space="preserve"><value>Rà soát shop</value></data>
+  <data name="AdminRev_QualityAlertTitle" xml:space="preserve"><value>Cảnh báo chất lượng:</value></data>
+  <data name="AdminRev_QualityAlertBody" xml:space="preserve"><value>shop đang có điểm trung bình {0} sao từ {1} đánh giá hiển thị — dưới ngưỡng 3.0 sao. Hãy rà soát nội dung đánh giá, gửi cảnh cáo hoặc khóa shop nếu cần thiết.</value></data>
+  <data name="AdminRev_ShopOwnerInfo" xml:space="preserve"><value>Thông tin shop &amp; chủ shop</value></data>
+  <data name="AdminRev_LockReasonLabel" xml:space="preserve"><value>Lý do khóa</value></data>
+  <data name="AdminRev_AvgScore" xml:space="preserve"><value>Điểm trung bình</value></data>
+  <data name="AdminRev_VisibleReviewsCount" xml:space="preserve"><value>{0} đánh giá hiển thị</value></data>
+  <data name="AdminRev_CompletedOrdersCard" xml:space="preserve"><value>Đơn hoàn tất</value></data>
+  <data name="AdminRev_ReportsSummary" xml:space="preserve"><value>Báo cáo vi phạm (shop &amp; sản phẩm):</value></data>
+  <data name="AdminRev_CustomerReviewsHeading" xml:space="preserve"><value>Đánh giá của khách hàng</value></data>
+  <data name="AdminRev_TotalInclHidden" xml:space="preserve"><value>{0} đánh giá (gồm cả đánh giá đã ẩn)</value></data>
+  <data name="AdminRev_ColBuyer" xml:space="preserve"><value>Người mua</value></data>
+  <data name="AdminRev_ColStars" xml:space="preserve"><value>Số sao</value></data>
+  <data name="AdminRev_ColComment" xml:space="preserve"><value>Nội dung nhận xét</value></data>
+  <data name="AdminRev_NoReviews" xml:space="preserve"><value>Shop chưa có đánh giá nào.</value></data>
+  <data name="AdminRev_BtnHideReview" xml:space="preserve"><value>Ẩn đánh giá vi phạm</value></data>
+  <data name="AdminRev_BtnShowReview" xml:space="preserve"><value>Hiện đánh giá</value></data>
+  <data name="AdminRev_HideReviewTip" xml:space="preserve"><value>Ẩn đánh giá này; điểm shop sẽ tính lại ngay</value></data>
+  <data name="AdminRev_HideReviewConfirm" xml:space="preserve"><value>Ẩn đánh giá này? Điểm trung bình của shop sẽ được tính lại từ các đánh giá hiển thị còn lại.</value></data>
+  <data name="AdminRev_ShowReviewTip" xml:space="preserve"><value>Hiển thị lại đánh giá này</value></data>
+  <data name="AdminRev_RecentOrdersHeading" xml:space="preserve"><value>5 đơn hàng gần nhất</value></data>
+  <data name="AdminRev_ColOrderCode" xml:space="preserve"><value>Mã đơn</value></data>
+  <data name="AdminRev_ColRecipient" xml:space="preserve"><value>Người nhận</value></data>
+  <data name="AdminRev_ColTotal" xml:space="preserve"><value>Tổng tiền</value></data>
+  <data name="AdminRev_ColOrderDate" xml:space="preserve"><value>Ngày đặt</value></data>
+  <data name="AdminRev_NoOrders" xml:space="preserve"><value>Shop chưa có đơn hàng nào.</value></data>
+  <data name="AdminNotify_Title" xml:space="preserve"><value>Gửi thông báo hệ thống</value></data>
+  <data name="AdminNotify_Subtitle" xml:space="preserve"><value>Gửi thông báo trực tiếp tới một tài khoản cụ thể hoặc phát sóng tới toàn bộ người dùng đang hoạt động.</value></data>
+  <data name="AdminNotify_TargetLabel" xml:space="preserve"><value>Gửi tới</value></data>
+  <data name="AdminNotify_TargetUser" xml:space="preserve"><value>Một người dùng</value></data>
+  <data name="AdminNotify_TargetAll" xml:space="preserve"><value>Toàn hệ thống (mọi tài khoản đang hoạt động)</value></data>
+  <data name="AdminNotify_RecipientEmail" xml:space="preserve"><value>Email người nhận</value></data>
+  <data name="AdminNotify_RecipientPlaceholder" xml:space="preserve"><value>vd: chi.buyer@demo.local</value></data>
+  <data name="AdminNotify_SubjectLabel" xml:space="preserve"><value>Tiêu đề</value></data>
+  <data name="AdminNotify_SubjectPlaceholder" xml:space="preserve"><value>Nhập tiêu đề thông báo...</value></data>
+  <data name="AdminNotify_BodyLabel" xml:space="preserve"><value>Nội dung</value></data>
+  <data name="AdminNotify_BodyPlaceholder" xml:space="preserve"><value>Nhập nội dung thông báo chi tiết...</value></data>
+  <data name="AdminNotify_SendBtn" xml:space="preserve"><value>Gửi thông báo</value></data>
+  <data name="AdminNotify_ConfirmBroadcast" xml:space="preserve"><value>Gửi thông báo này tới TẤT CẢ người dùng đang hoạt động?</value></data>
 </root>

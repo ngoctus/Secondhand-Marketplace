@@ -1,6 +1,31 @@
 // NotificationHub: toast + cập nhật số chưa đọc trên chuông + Popover Dropdown xem nhanh (Task C-02).
 // Chỉ nạp khi đã đăng nhập (xem _Layout).
 (() => {
+    const isEn = (document.documentElement.lang || '').toLowerCase().startsWith('en');
+    const T = isEn
+        ? {
+            bellAria: (n) => `Notifications (${n} unread)`,
+            newCount: (n) => `(${n} new)`,
+            typeOrder: 'Order',
+            typeProduct: 'Product',
+            typeSystem: 'System',
+            defaultTitle: 'New notification',
+            badgeNew: 'NEW',
+            justNow: 'Just now',
+            unread: 'Unread'
+        }
+        : {
+            bellAria: (n) => `Thông báo (${n} chưa đọc)`,
+            newCount: (n) => `(${n} mới)`,
+            typeOrder: 'Đơn hàng',
+            typeProduct: 'Sản phẩm',
+            typeSystem: 'Hệ thống',
+            defaultTitle: 'Thông báo mới',
+            badgeNew: 'MỚI',
+            justNow: 'Vừa xong',
+            unread: 'Chưa đọc'
+        };
+
     // 1. Quản lý số đếm & trạng thái chuông
     const bell = () => document.getElementById('notifyCount');
     const getCount = () => {
@@ -17,13 +42,13 @@
 
         const bellBtn = document.getElementById('notifyBellBtn');
         if (bellBtn) {
-            bellBtn.setAttribute('aria-label', `Thông báo (${n} chưa đọc)`);
+            bellBtn.setAttribute('aria-label', T.bellAria(n));
         }
 
         const unreadLabel = document.getElementById('notifyUnreadLabel');
         if (unreadLabel) {
             if (n > 0) {
-                unreadLabel.textContent = `(${n > 99 ? '99+' : n} mới)`;
+                unreadLabel.textContent = T.newCount(n > 99 ? '99+' : n);
                 unreadLabel.style.display = '';
             } else {
                 unreadLabel.style.display = 'none';
@@ -144,9 +169,9 @@
 
     const resolveTypeName = (type) => {
         const t = (type || '').toUpperCase();
-        if (t === 'ORDER') return 'Đơn hàng';
-        if (t === 'PRODUCT') return 'Sản phẩm';
-        return 'Hệ thống';
+        if (t === 'ORDER') return T.typeOrder;
+        if (t === 'PRODUCT') return T.typeProduct;
+        return T.typeSystem;
     };
 
     const toast = (n) => {
@@ -206,10 +231,10 @@
         const titleDiv = document.createElement('div');
         titleDiv.className = 'rm-notify-item-title';
         const titleSpan = document.createElement('span');
-        titleSpan.textContent = n.title || 'Thông báo mới';
+        titleSpan.textContent = n.title || T.defaultTitle;
         const badgeSpan = document.createElement('span');
         badgeSpan.className = 'rm-notify-badge-new';
-        badgeSpan.textContent = 'MỚI';
+        badgeSpan.textContent = T.badgeNew;
         titleDiv.append(titleSpan, badgeSpan);
 
         const descDiv = document.createElement('div');
@@ -226,14 +251,14 @@
         sepSpan.textContent = '·';
         const timeSpan = document.createElement('span');
         timeSpan.className = 'rm-notify-meta-time';
-        timeSpan.textContent = 'Vừa xong';
+        timeSpan.textContent = T.justNow;
         metaDiv.append(typeSpan, sepSpan, timeSpan);
 
         mainDiv.append(titleDiv, descDiv, metaDiv);
 
         const dotDiv = document.createElement('div');
         dotDiv.className = 'rm-notify-unread-dot';
-        dotDiv.title = 'Chưa đọc';
+        dotDiv.title = T.unread;
 
         a.append(iconDiv, mainDiv, dotDiv);
         a.addEventListener('click', handleItemClick);

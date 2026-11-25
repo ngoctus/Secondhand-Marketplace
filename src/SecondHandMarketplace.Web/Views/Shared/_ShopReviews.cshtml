@@ -9,10 +9,10 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
         <div>
             <h2 class="h5 fw-bold text-dark mb-1">
-                <i class="bi bi-star-fill text-warning me-1"></i> Đánh giá từ người mua
+                <i class="bi bi-star-fill text-warning me-1"></i> @L["ShopRev_Title"]
                 <span class="text-muted fw-normal fs-6">(@totalItems)</span>
             </h2>
-            <div class="text-muted small">Chỉ người mua của các đơn hàng đã hoàn tất mới được gửi đánh giá.</div>
+            <div class="text-muted small">@L["ShopRev_Subtitle"]</div>
         </div>
 
         @if (totalItems > 0)
@@ -33,7 +33,7 @@
                             }
                         }
                     </div>
-                    <span class="text-muted" style="font-size: 11px;">@totalItems lượt đánh giá</span>
+                    <span class="text-muted" style="font-size: 11px;">@L["ShopRev_TotalReviews", totalItems]</span>
                 </div>
             </div>
         }
@@ -43,7 +43,7 @@
     {
         <div class="text-center py-4 text-muted">
             <i class="bi bi-chat-heart text-secondary fs-3 d-block mb-2"></i>
-            <span>Cửa hàng chưa có đánh giá nào từ người mua.</span>
+            <span>@L["ShopRev_Empty"]</span>
         </div>
     }
     else
@@ -51,7 +51,7 @@
         <div class="d-flex flex-column gap-3">
             @foreach (var review in items)
             {
-                <div class="p-3 rounded-3 bg-light border border-light-subtle">
+                <div class="p-3 rounded-3 border" style="background-color: var(--color-surface); border-color: var(--color-border-subtle) !important;">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                         <div class="d-flex align-items-center gap-2">
                             @if (!string.IsNullOrWhiteSpace(review.AnhDaiDienNguoiMua))
@@ -61,8 +61,8 @@
                             }
                             else
                             {
-                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold small"
-                                     style="width: 36px; height: 36px;">
+                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold small"
+                                     style="width: 36px; height: 36px; background-color: var(--color-primary);">
                                     @(string.IsNullOrWhiteSpace(review.TenNguoiMua) ? "U" : review.TenNguoiMua.Substring(0, 1).ToUpperInvariant())
                                 </div>
                             }
@@ -80,13 +80,13 @@
                                             <i class="bi bi-star text-secondary opacity-50"></i>
                                         }
                                     }
-                                    <span class="text-muted ms-1">(@review.SoSao sao)</span>
+                                    <span class="text-muted ms-1">@L["ShopRev_StarCount", review.SoSao]</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="text-muted small" style="font-size: 11px;">
-                            <i class="bi bi-check2-circle text-success me-1"></i>Đã mua hàng • @HienThi.Ngay(review.NgayTao)
+                            <i class="bi bi-check2-circle text-success me-1"></i>@L["ShopRev_VerifiedBuyer"] • @HienThi.Ngay(review.NgayTao)
                         </div>
                     </div>
 
@@ -96,7 +96,7 @@
                     }
                     else
                     {
-                        <p class="text-muted fst-italic small mb-0 ps-1">Người mua không để lại nhận xét bằng lời.</p>
+                        <p class="text-muted fst-italic small mb-0 ps-1">@L["ShopRev_NoComment"]</p>
                     }
 
                     @if (!string.IsNullOrWhiteSpace(review.PhanHoiShop))
@@ -104,7 +104,7 @@
                         <div class="mt-2.5 p-2.5 rounded-3 bg-white border border-success-subtle border-start border-start-3 border-start-success ms-2 mt-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 11px;">
-                                    <i class="bi bi-reply-fill me-1"></i>Phản hồi từ người bán
+                                    <i class="bi bi-reply-fill me-1"></i>@L["ShopRev_SellerReply"]
                                 </span>
                                 @if (review.NgayPhanHoi.HasValue)
                                 {
@@ -123,13 +123,14 @@
             var prodPage = Context.Request.Query["page"].ToString();
             var pagePrefix = !string.IsNullOrWhiteSpace(prodPage) ? $"page={prodPage}&" : "";
             <div class="d-flex justify-content-center mt-3">
-                <nav aria-label="Phân trang đánh giá shop">
+                <nav aria-label="@L["ShopRev_PaginationAria"]">
                     <ul class="pagination pagination-sm mb-0">
                         @for (int p = 1; p <= Model.TotalPages; p++)
                         {
                             var isActive = p == Model.Page;
                             <li class="page-item @(isActive ? "active" : "")">
-                                <a class="page-link rounded-pill px-3 mx-1 @(isActive ? "bg-success border-success text-white" : "text-dark bg-white border")"
+                                <a class="page-link rounded-pill px-3 mx-1 @(isActive ? "text-white border-0" : "text-dark bg-white border")"
+                                   style="@(isActive ? "background-color: var(--color-primary);" : "")"
                                    href="?@(pagePrefix)reviewPage=@p#shop-reviews"
                                    data-review-page="@p">
                                     @p

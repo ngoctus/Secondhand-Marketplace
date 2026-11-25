@@ -34,6 +34,12 @@
         transform: translateY(-1px);
     }
 
+.rmc-launcher-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .rmc-badge {
     position: absolute;
     top: -6px;
@@ -42,7 +48,7 @@
     height: 20px;
     padding: 0 5px;
     border-radius: 999px;
-    background: #d9534f;
+    background: var(--color-error, #A33D32);
     color: #fff;
     font-size: 11px;
     font-weight: 700;
@@ -63,11 +69,11 @@
     height: min(560px, calc(100vh - 120px));
     display: flex;
     flex-direction: column;
-    background: #fff;
-    border: 1px solid #e6e8df;
-    border-radius: 14px;
+    background: var(--color-surface-white, #FFFFFF);
+    border: 1px solid var(--color-border, #D5C8B3);
+    border-radius: var(--radius-lg, 12px);
     overflow: hidden;
-    box-shadow: 0 18px 45px rgba(40, 62, 37, .22);
+    box-shadow: var(--shadow-lg, 0 12px 32px rgba(41, 35, 29, 0.14));
 }
 
 .rmc-head {
@@ -128,11 +134,12 @@
     width: 100%;
     padding: 11px 14px;
     border: 0;
-    border-bottom: 1px solid #f0f1ea;
-    background: #fff;
+    border-bottom: 1px solid var(--color-border-subtle, #E8DEC9);
+    background: var(--color-surface-white, #FFFFFF);
     text-align: left;
     cursor: pointer;
     font: inherit;
+    color: var(--color-text-primary, #29231D);
 }
 
     .rmc-conv:hover {
@@ -190,7 +197,7 @@
     height: 20px;
     padding: 0 6px;
     border-radius: 999px;
-    background: #d9534f;
+    background: var(--color-error, #A33D32);
     color: #fff;
     font-size: 11px;
     font-weight: 700;
@@ -219,7 +226,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    background: #fafaf6;
+    background: var(--color-surface, #F8F5EE);
 }
 
 .rmc-more {
@@ -254,8 +261,8 @@
 }
 
 .rmc-theirs .rmc-bubble {
-    background: #fff;
-    border: 1px solid #e6e8df;
+    background: var(--color-surface-white, #FFFFFF);
+    border: 1px solid var(--color-border-subtle, #E8DEC9);
     border-bottom-left-radius: 4px;
 }
 
@@ -273,14 +280,14 @@
 }
 
 .rmc-tick.rmc-read {
-    color: #d6ed8a;
+    color: var(--color-primary-subtle, #EBF0E6);
     opacity: 1;
 }
 
 .rmc-hint {
     padding: 6px 12px;
-    background: #fff4e5;
-    color: #8a5a00;
+    background: var(--color-warning-bg, #F3E9D5);
+    color: var(--color-warning, #79563A);
     font-size: 12px;
 }
 
@@ -289,8 +296,8 @@
     align-items: flex-end;
     gap: 8px;
     padding: 10px;
-    border-top: 1px solid #e6e8df;
-    background: #fff;
+    border-top: 1px solid var(--color-border-subtle, #E8DEC9);
+    background: var(--color-surface-white, #FFFFFF);
 }
 
 .rmc-input {
@@ -298,8 +305,8 @@
     resize: none;
     max-height: 96px;
     padding: 8px 10px;
-    border: 1px solid #d9dccf;
-    border-radius: 10px;
+    border: 1px solid var(--color-border, #D5C8B3);
+    border-radius: var(--radius-md, 8px);
     font: inherit;
     line-height: 1.35;
 }
