@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
@@ -46,6 +47,26 @@ public class ProductReviewWorkflowTests
         }
     }
 
+    private sealed class ScriptedAiAnalyzer : IAiModerationAnalyzer
+    {
+        public Func<AiModerationInput, AiModerationResult>? Handler { get; set; }
+        public int Calls { get; private set; }
+
+        public Task<AiModerationResult> AnalyzeAsync(AiModerationInput input, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            var res = Handler is not null
+                ? Handler(input)
+                : AiModerationResult.Ok(
+                    ModerationPolicy.RiskLow,
+                    ModerationPolicy.AdviceApprove,
+                    "Nội dung rõ ràng, không phát hiện dấu hiệu bất thường.",
+                    Array.Empty<AiModerationSignal>(),
+                    "gemini-3.1-flash-lite");
+            return Task.FromResult(res);
+        }
+    }
+
     /// <summary>Ghi đè 2 lời gọi procedure để chạy được trên InMemory; mô phỏng đúng hiệu ứng DB thật.</summary>
     private sealed class InMemoryReviewService : ProductReviewService
     {
@@ -56,8 +77,9 @@ public class ProductReviewWorkflowTests
             IModerationService moderation,
             INotificationService notifications,
             IAuditLogService auditLog,
-            Microsoft.Extensions.Logging.ILogger<ProductReviewService> logger)
-            : base(db, moderation, notifications, auditLog, logger)
+            Microsoft.Extensions.Logging.ILogger<ProductReviewService> logger,
+            IMemoryCache? cache = null)
+            : base(db, moderation, notifications, auditLog, logger, cache)
         {
             _db = db;
         }
@@ -152,11 +174,12 @@ public class ProductReviewWorkflowTests
         public required AppDbContext Db { get; init; }
         public required ScriptedScanner Scanner { get; init; }
         public required FakeAuditLogService Audit { get; init; }
+        public required MemoryCache Cache { get; init; }
         public required ModerationService Moderation { get; init; }
         public required InMemoryReviewService Reviews { get; init; }
     }
 
-    private static Host NewHost()
+    private static Host NewHost(IAiModerationAnalyzer? aiAnalyzer = null)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -166,12 +189,13 @@ public class ProductReviewWorkflowTests
         var db = new AppDbContext(options);
         var scanner = new ScriptedScanner();
         var audit = new FakeAuditLogService();
+        var cache = new MemoryCache(new MemoryCacheOptions());
         var notifications = new NotificationService(db);
         var userAdmin = new UserAdminService(db, audit);
         var moderation = new ModerationService(db, scanner, userAdmin, notifications, audit,
-            NullLogger<ModerationService>.Instance);
+            NullLogger<ModerationService>.Instance, aiAnalyzer);
         var reviews = new InMemoryReviewService(db, moderation, notifications, audit,
-            NullLogger<ProductReviewService>.Instance);
+            NullLogger<ProductReviewService>.Instance, cache);
 
         db.NguoiDungs.AddRange(
             new NguoiDung { MaNguoiDung = AdminId, HoTen = "Admin", Email = "admin@t.local", VaiTro = "ADMIN", TrangThai = "ACTIVE" },
@@ -183,7 +207,7 @@ public class ProductReviewWorkflowTests
         });
         db.SaveChanges();
 
-        return new Host { Db = db, Scanner = scanner, Audit = audit, Moderation = moderation, Reviews = reviews };
+        return new Host { Db = db, Scanner = scanner, Audit = audit, Cache = cache, Moderation = moderation, Reviews = reviews };
     }
 
     /// <summary>
@@ -657,6 +681,279 @@ public class ProductReviewWorkflowTests
     }
 
     // =====================================================================
+    // C-01: Duyệt nhanh Làn Xanh (server tự xác minh lại từng sản phẩm)
+    // =====================================================================
+    [Fact]
+    public async Task ApproveGreenLane_OnlyApprovesVerifiedGreenLane_SkipsYellowAndFallback()
+    {
+        var h = NewHost();
+
+        // SP 301: Làn Xanh thật (DONE + NONE + LOW + APPROVE + hybrid:...)
+        var t301 = GuiDuyet(h, 301, "Bàn học gỗ cũ");
+        var ai301 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == t301);
+        ai301.TrangThai = ModerationPolicy.AnalysisDone;
+        ai301.MucDoTuKhoa = ModerationPolicy.LevelNone;
+        ai301.MucRuiRo = ModerationPolicy.RiskLow;
+        ai301.DeXuat = ModerationPolicy.AdviceApprove;
+        ai301.PhienBanMoHinh = "hybrid:gemini-3.1-flash-lite";
+        ai301.ThoiGianHoanThanh = DateTime.UtcNow;
+
+        // SP 302: Làn Vàng (AI cảnh báo MEDIUM/NEEDS_REVIEW dù NONE từ khóa)
+        var t302 = GuiDuyet(h, 302, "iPhone 15 giá 300k");
+        var ai302 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == t302);
+        ai302.TrangThai = ModerationPolicy.AnalysisDone;
+        ai302.MucDoTuKhoa = ModerationPolicy.LevelNone;
+        ai302.MucRuiRo = ModerationPolicy.RiskHigh;
+        ai302.DeXuat = ModerationPolicy.AdviceReject;
+        ai302.PhienBanMoHinh = "hybrid:gemini-3.1-flash-lite";
+        ai302.ThoiGianHoanThanh = DateTime.UtcNow;
+
+        // SP 303: Fallback (chưa qua AI thật)
+        var t303 = GuiDuyet(h, 303, "Tai nghe cũ");
+        var ai303 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == t303);
+        ai303.TrangThai = ModerationPolicy.AnalysisDone;
+        ai303.MucDoTuKhoa = ModerationPolicy.LevelNone;
+        ai303.MucRuiRo = ModerationPolicy.RiskLow;
+        ai303.DeXuat = ModerationPolicy.AdviceApprove;
+        ai303.PhienBanMoHinh = ModerationPolicy.ModelVersionFallback;
+        ai303.ThoiGianHoanThanh = DateTime.UtcNow;
+
+        // SP 304: Làn Vàng từ khóa LOW
+        var t304 = GuiDuyet(h, 304, "Giày replica cũ");
+        var ai304 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == t304);
+        ai304.TrangThai = ModerationPolicy.AnalysisDone;
+        ai304.MucDoTuKhoa = ModerationPolicy.LevelLow;
+        ai304.MucRuiRo = ModerationPolicy.RiskMedium;
+        ai304.DeXuat = ModerationPolicy.AdviceNeedsReview;
+        ai304.PhienBanMoHinh = "hybrid:gemini-3.1-flash-lite";
+        ai304.ThoiGianHoanThanh = DateTime.UtcNow;
+
+        await h.Db.SaveChangesAsync();
+
+        // Client cố tình gửi cả 4 ID lên -> server chỉ duyệt 301, bỏ qua 302/303/304
+        var bulk = await h.Reviews.ApproveGreenLaneAsync(AdminId, new[] { 301, 302, 303, 304 });
+
+        Assert.True(bulk.Success);
+        Assert.Equal(1, bulk.ApprovedCount);
+        Assert.Equal(3, bulk.SkippedCount);
+
+        Assert.Equal("ACTIVE", (await ProductAsync(h, 301)).TrangThai);
+        Assert.Equal(ModerationPolicy.ProductPending, (await ProductAsync(h, 302)).TrangThai);
+        Assert.Equal(ModerationPolicy.ProductPending, (await ProductAsync(h, 303)).TrangThai);
+        Assert.Equal(ModerationPolicy.ProductPending, (await ProductAsync(h, 304)).TrangThai);
+    }
+
+    [Fact]
+    public async Task ApproveGreenLane_NonAdmin_IsDenied()
+    {
+        var h = NewHost();
+        var bulk = await h.Reviews.ApproveGreenLaneAsync(SellerId, new[] { 100 });
+        Assert.False(bulk.Success);
+        Assert.Contains("quản trị viên", bulk.Error!);
+    }
+
+    // =====================================================================
+    // C-02: Phân tích lại (Reanalyze) + Xóa cache trang chủ home:catalog
+    // =====================================================================
+    [Fact]
+    public async Task Reanalyze_FailedAndQueued_RerunsModeration_EnablesApprove_AndWritesAuditLog()
+    {
+        var h = NewHost();
+
+        // 1) FAILED -> Reanalyze thành công -> DONE, duyệt được, có AuditLog REANALYZE_PRODUCT
+        var turnFailed = GuiDuyet(h, 401, "Ghế xoay văn phòng cũ");
+        h.Scanner.Throw = true;
+        await h.Moderation.PhanTichSanPhamAsync(401);
+        var detailBefore = await h.Reviews.GetDetailAsync(401);
+        Assert.True(detailBefore!.CanReanalyze);
+        Assert.False(detailBefore.CanApprove);
+
+        h.Scanner.Throw = false;
+        h.Scanner.Hits = new();
+        var reanalyze = await h.Reviews.ReanalyzeAsync(AdminId, 401);
+
+        Assert.True(reanalyze.Success);
+        Assert.False(reanalyze.IsFallback);
+        Assert.False(reanalyze.AutoRejected);
+        Assert.NotNull(reanalyze.Message);
+        Assert.Equal(ModerationPolicy.AnalysisDone, reanalyze.Review!.AnalysisStatus);
+        Assert.Equal(2, reanalyze.Review.Attempts);
+        Assert.True(reanalyze.Review.CanApprove);
+        Assert.Contains(h.Audit.Logs, l => l.Action == "REANALYZE_PRODUCT" && l.TargetId == 401);
+
+        // 2) QUEUED -> Reanalyze thành công ngay
+        GuiDuyet(h, 402, "Bàn phím cơ cũ");
+        var reanalyzeQueued = await h.Reviews.ReanalyzeAsync(AdminId, 402);
+        Assert.True(reanalyzeQueued.Success);
+        Assert.Equal(ModerationPolicy.AnalysisDone, reanalyzeQueued.Review!.AnalysisStatus);
+        Assert.True(reanalyzeQueued.Review.CanApprove);
+        Assert.Equal(ModerationPolicy.AnalysisDone, (await AnalysisAsync(h, turnFailed)).TrangThai);
+    }
+
+    [Fact]
+    public async Task Reanalyze_FallbackProduct_WhenAiRecovers_UpgradesToGreenLane()
+    {
+        var ai = new ScriptedAiAnalyzer
+        {
+            Handler = _ => AiModerationResult.Fail("HTTP 429 rate limit")
+        };
+        var h = NewHost(ai);
+
+        GuiDuyet(h, 403, "Đèn bàn học chống cận");
+        await h.Moderation.PhanTichSanPhamAsync(403);
+
+        var before = await h.Moderation.GetReviewAsync(403);
+        Assert.True(before!.IsFallback);
+        Assert.False(before.IsGreenLane);
+        Assert.True(before.CanReanalyze);
+        Assert.Equal(ModerationPolicy.ModelVersionFallback, before.ModelVersion);
+
+        // AI hồi phục -> Admin bấm Phân tích lại với AI -> lên Làn Xanh (hybrid:...)
+        ai.Handler = _ => AiModerationResult.Ok(
+            ModerationPolicy.RiskLow,
+            ModerationPolicy.AdviceApprove,
+            "Sản phẩm sạch, giá và mô tả hợp lý.",
+            Array.Empty<AiModerationSignal>(),
+            "gemini-3.1-flash-lite");
+
+        var result = await h.Reviews.ReanalyzeAsync(AdminId, 403);
+
+        Assert.True(result.Success);
+        Assert.False(result.IsFallback);
+        Assert.False(result.AutoRejected);
+        Assert.Null(result.Warning);
+        Assert.Contains("Làn Xanh", result.Message!);
+        Assert.True(result.Review!.IsGreenLane);
+        Assert.False(result.Review.IsFallback);
+        Assert.Equal("hybrid:gemini-3.1-flash-lite", result.Review.ModelVersion);
+        Assert.Equal(2, result.Review.Attempts);
+        Assert.Equal(2, ai.Calls);
+    }
+
+    [Fact]
+    public async Task Reanalyze_FallbackProduct_WhenAiStillUnavailable_ReturnsWarning()
+    {
+        var ai = new ScriptedAiAnalyzer
+        {
+            Handler = _ => AiModerationResult.Fail("Timeout 20s")
+        };
+        var h = NewHost(ai);
+
+        GuiDuyet(h, 404, "Tai nghe chụp tai Sony");
+        await h.Moderation.PhanTichSanPhamAsync(404);
+
+        var result = await h.Reviews.ReanalyzeAsync(AdminId, 404);
+
+        Assert.True(result.Success);
+        Assert.True(result.IsFallback);
+        Assert.Null(result.Message);
+        Assert.Contains("Fallback", result.Warning!);
+        Assert.Equal(ModerationPolicy.ModelVersionFallback, result.Review!.ModelVersion);
+        Assert.Equal(2, result.Review.Attempts);
+    }
+
+    [Fact]
+    public async Task Reanalyze_WhenNewHighKeywordDetected_AutoRejectsAndRecordsViolation()
+    {
+        var h = NewHost();
+        GuiDuyet(h, 405, "Sản phẩm nghi vấn mới thêm từ khóa");
+        await h.Moderation.PhanTichSanPhamAsync(405);
+        Assert.Equal(ModerationPolicy.ProductPending, (await ProductAsync(h, 405)).TrangThai);
+
+        // Admin vừa thêm từ khóa cấm mức HIGH và bấm Phân tích lại
+        h.Scanner.Hits = new() { High(99, "từ khóa cấm mới") };
+
+        var result = await h.Reviews.ReanalyzeAsync(AdminId, 405);
+
+        Assert.True(result.Success);
+        Assert.True(result.AutoRejected);
+        Assert.Contains("HIGH", result.Warning!);
+        Assert.False(result.Review!.TurnIsOpen);
+        Assert.Equal(ModerationPolicy.ProductRejected, (await ProductAsync(h, 405)).TrangThai);
+        Assert.Single(await h.Db.LichSuViPhams.AsNoTracking().Where(v => v.MaSanPham == 405).ToListAsync());
+    }
+
+    [Fact]
+    public async Task Reanalyze_WhenAlreadyDecidedOrNonAdmin_IsRejected()
+    {
+        var h = NewHost();
+        GuiDuyet(h, 406, "Sách lập trình C#");
+        await h.Moderation.PhanTichSanPhamAsync(406);
+
+        var nonAdmin = await h.Reviews.ReanalyzeAsync(SellerId, 406);
+        Assert.False(nonAdmin.Success);
+        Assert.Contains("quản trị viên", nonAdmin.Error!);
+
+        Assert.True((await h.Reviews.ApproveAsync(AdminId, 406)).Success);
+
+        var afterApprove = await h.Reviews.ReanalyzeAsync(AdminId, 406);
+        Assert.False(afterApprove.Success);
+        Assert.True(afterApprove.AlreadyDecided);
+        Assert.Contains("không còn ở trạng thái chờ duyệt", afterApprove.Error!);
+    }
+
+    [Fact]
+    public async Task HomeCache_ClearedOnApprove_ApproveGreenLane_AndRemove_ButKeptOnFailure()
+    {
+        var h = NewHost();
+        void SeedHomeCache() => h.Cache.Set(HomeCacheHelper.CatalogCacheKey, new object(), TimeSpan.FromMinutes(5));
+        bool HasHomeCache() => h.Cache.TryGetValue(HomeCacheHelper.CatalogCacheKey, out _);
+
+        // 1) ApproveAsync thất bại (QUEUED) -> giữ nguyên cache
+        GuiDuyet(h, 410, "Máy ảnh phim cũ");
+        SeedHomeCache();
+        Assert.False((await h.Reviews.ApproveAsync(AdminId, 410)).Success);
+        Assert.True(HasHomeCache());
+
+        // 2) ApproveAsync thành công -> xóa cache home:catalog
+        await h.Moderation.PhanTichSanPhamAsync(410);
+        SeedHomeCache();
+        Assert.True((await h.Reviews.ApproveAsync(AdminId, 410)).Success);
+        Assert.False(HasHomeCache());
+
+        // 3) ApproveGreenLaneAsync không có SP hợp lệ -> giữ nguyên cache
+        GuiDuyet(h, 411, "Tin Fallback không phải Làn Xanh");
+        var ai411 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == 4110);
+        ai411.TrangThai = ModerationPolicy.AnalysisDone;
+        ai411.MucDoTuKhoa = ModerationPolicy.LevelNone;
+        ai411.MucRuiRo = ModerationPolicy.RiskLow;
+        ai411.DeXuat = ModerationPolicy.AdviceApprove;
+        ai411.PhienBanMoHinh = ModerationPolicy.ModelVersionFallback;
+        await h.Db.SaveChangesAsync();
+
+        SeedHomeCache();
+        Assert.False((await h.Reviews.ApproveGreenLaneAsync(AdminId, new[] { 411 })).Success);
+        Assert.True(HasHomeCache());
+
+        // 4) ApproveGreenLaneAsync thành công -> xóa cache home:catalog
+        var t412 = GuiDuyet(h, 412, "Balo laptop sạch");
+        var ai412 = await h.Db.PhanTichAIs.SingleAsync(a => a.MaLuotKiemDuyet == t412);
+        ai412.TrangThai = ModerationPolicy.AnalysisDone;
+        ai412.MucDoTuKhoa = ModerationPolicy.LevelNone;
+        ai412.MucRuiRo = ModerationPolicy.RiskLow;
+        ai412.DeXuat = ModerationPolicy.AdviceApprove;
+        ai412.PhienBanMoHinh = "hybrid:gemini-3.1-flash-lite";
+        ai412.ThoiGianHoanThanh = DateTime.UtcNow;
+        await h.Db.SaveChangesAsync();
+
+        SeedHomeCache();
+        var bulk = await h.Reviews.ApproveGreenLaneAsync(AdminId, new[] { 412 });
+        Assert.True(bulk.Success);
+        Assert.Equal(1, bulk.ApprovedCount);
+        Assert.False(HasHomeCache());
+
+        // 5) RemoveProductAsync thất bại (lý do quá ngắn) -> giữ nguyên cache
+        SeedHomeCache();
+        Assert.False((await h.Reviews.RemoveProductAsync(AdminId, 410, "ngắn")).Success);
+        Assert.True(HasHomeCache());
+
+        // 6) RemoveProductAsync thành công -> xóa cache home:catalog
+        SeedHomeCache();
+        Assert.True((await h.Reviews.RemoveProductAsync(AdminId, 410, "Sản phẩm vi phạm chính sách hiển thị.")).Success);
+        Assert.False(HasHomeCache());
+    }
+
+    // =====================================================================
 
     private static ApiProductsController NewApiController(IProductService products, IModerationService moderation)
     {
@@ -694,7 +991,8 @@ public class ProductReviewWorkflowTests
         public Task<(bool Success, string? Error)> HideAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<(bool Success, string? Error)> DeleteAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<(bool Success, string? Error)> DatAnhChinhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public Task<(bool Success, string? Error)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<(bool Success, string? Error, int? MaAnhChinhMoi)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<(decimal Min, decimal Max)> LayBienGiaAsync(CancellationToken cancellationToken = default) => Task.FromResult((0m, 0m));
     }
 
     private sealed class RecordingModeration : IModerationService

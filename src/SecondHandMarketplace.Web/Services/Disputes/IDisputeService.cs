@@ -7,7 +7,7 @@ public interface IDisputeService
 {
     Task<(bool HopLe, string? ThongBao, MoTranhChapViewModel? ViewModel, int? MaTranhChapHienCo)> ChuanBiMoTranhChapAsync(int userId, int maDonHang);
     Task<(bool ThanhCong, string? ThongBao)> MoTranhChapAsync(int maNguoiMua, MoTranhChapViewModel vm);
-    Task<(bool ThanhCong, string? ThongBao)> NguoiBanPhanHoiAsync(int maChuShop, int maTranhChap, string phanHoi);
+    Task<(bool ThanhCong, string? ThongBao)> NguoiBanPhanHoiAsync(int maChuShop, int maTranhChap, string phanHoi, string? anhPhanHoi = null);
     Task<TranhChapDetailViewModel?> LayChiTietTranhChapAsync(int maTranhChap);
     Task<List<TranhChapDetailViewModel>> LayDanhSachTranhChapNguoiDungAsync(int maNguoiDung);
     Task<AdminDisputeListViewModel> LayDanhSachTranhChapAdminAsync(string? trangThai, int page = 1, int pageSize = 10);

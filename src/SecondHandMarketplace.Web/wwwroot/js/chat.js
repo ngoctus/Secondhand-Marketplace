@@ -10,8 +10,56 @@
         start: d.startUrl,
         unread: d.unreadUrl,
         me: Number(d.userId),
-        csrf: d.csrfToken
+        csrf: d.csrfToken,
+        lang: d.lang === 'en' || document.documentElement.lang === 'en' ? 'en' : 'vi'
     };
+    const isEn = cfg.lang === 'en';
+    const LOCALE = isEn ? 'en-US' : 'vi-VN';
+    const T = isEn
+        ? {
+            messages: 'Messages',
+            dialogAria: 'Messages with sellers',
+            backAria: 'Back to conversations',
+            closeAria: 'Close',
+            loadOlder: 'Load older messages',
+            placeholder: 'Type a message...',
+            send: 'Send',
+            sessionExpired: 'Your session has expired. Please refresh the page.',
+            emptyList: 'No conversations yet. Open any listing and click "Chat" to message the seller.',
+            noMessagesShort: 'No messages yet',
+            loadListError: 'Could not load conversations.',
+            loadMsgsError: 'Could not load messages.',
+            emptyThread: 'No messages yet. Say hello!',
+            newMsgFrom: (name) => 'New message from ' + (name || 'user'),
+            reconnecting: 'Reconnecting, please try again in a moment.',
+            sendFailed: 'Could not send message.',
+            cannotOpenTitle: 'Unable to open chat',
+            cannotOpenMsg: 'Could not start the conversation.',
+            errorTitle: 'An error occurred',
+            connectError: 'Chat connection error.'
+        }
+        : {
+            messages: 'Tin nhắn',
+            dialogAria: 'Tin nhắn với người bán',
+            backAria: 'Quay lại danh sách',
+            closeAria: 'Đóng',
+            loadOlder: 'Xem tin cũ hơn',
+            placeholder: 'Nhập tin nhắn...',
+            send: 'Gửi',
+            sessionExpired: 'Phiên đăng nhập đã hết hạn, vui lòng tải lại trang.',
+            emptyList: 'Chưa có cuộc trò chuyện nào. Mở một sản phẩm và bấm "Chat" để nhắn cho người bán.',
+            noMessagesShort: 'Chưa có tin nhắn',
+            loadListError: 'Không tải được danh sách.',
+            loadMsgsError: 'Không tải được tin nhắn.',
+            emptyThread: 'Chưa có tin nhắn. Hãy gửi lời chào!',
+            newMsgFrom: (name) => 'Tin nhắn mới từ ' + (name || 'người dùng'),
+            reconnecting: 'Đang kết nối lại, vui lòng thử lại sau giây lát.',
+            sendFailed: 'Không gửi được tin nhắn.',
+            cannotOpenTitle: 'Không mở được trò chuyện',
+            cannotOpenMsg: 'Không mở được cuộc trò chuyện.',
+            errorTitle: 'Đã xảy ra lỗi',
+            connectError: 'Lỗi kết nối trò chuyện.'
+        };
     const PAGE = 30;
 
     const el = (tag, cls, text) => {
@@ -22,10 +70,10 @@
     };
     const timeText = (iso) => {
         const t = new Date(iso), now = new Date();
-        const hm = t.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const hm = t.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
         return t.toDateString() === now.toDateString()
             ? hm
-            : t.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) + ' ' + hm;
+            : t.toLocaleDateString(LOCALE, { day: '2-digit', month: '2-digit' }) + ' ' + hm;
     };
     async function api(url, { method = 'GET', form } = {}) {
         const headers = { Accept: 'application/json' };
@@ -35,7 +83,7 @@
         }
         const res = await fetch(url, { method, headers, body: form ? new URLSearchParams(form) : undefined });
         if (!(res.headers.get('content-type') || '').includes('json'))
-            throw new Error('Phiên đăng nhập đã hết hạn, vui lòng tải lại trang.');
+            throw new Error(T.sessionExpired);
         return { ok: res.ok, data: await res.json() };
     }
 
@@ -48,33 +96,36 @@
     launcher.setAttribute('aria-expanded', 'false');
     const badge = el('span', 'rmc-badge');
     badge.hidden = true;
-    launcher.append(el('span', 'rmc-launcher-icon', '💬'), el('span', null, 'Tin nhắn'), badge);
+    const launcherIcon = el('span', 'rmc-launcher-icon');
+    launcherIcon.setAttribute('aria-hidden', 'true');
+    launcherIcon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+    launcher.append(launcherIcon, el('span', null, T.messages), badge);
 
     const panel = el('section', 'rmc-panel');
     panel.hidden = true;
     panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', 'Tin nhắn với người bán');
+    panel.setAttribute('aria-label', T.dialogAria);
 
     const head = el('div', 'rmc-head');
     const back = el('button', 'rmc-icon', '←');
     back.type = 'button';
     back.hidden = true;
-    back.setAttribute('aria-label', 'Quay lại danh sách');
+    back.setAttribute('aria-label', T.backAria);
     const titleBox = el('div', 'rmc-title-box');
-    const title = el('div', 'rmc-title', 'Tin nhắn');
+    const title = el('div', 'rmc-title', T.messages);
     const sub = el('div', 'rmc-sub');
     sub.hidden = true;
     titleBox.append(title, sub);
     const close = el('button', 'rmc-icon', '✕');
     close.type = 'button';
-    close.setAttribute('aria-label', 'Đóng');
+    close.setAttribute('aria-label', T.closeAria);
     head.append(back, titleBox, close);
 
     const list = el('div', 'rmc-list');
     const thread = el('div', 'rmc-thread');
     thread.hidden = true;
     const msgs = el('div', 'rmc-msgs');
-    const more = el('button', 'rmc-more', 'Xem tin cũ hơn');
+    const more = el('button', 'rmc-more', T.loadOlder);
     more.type = 'button';
     more.hidden = true;
     const hint = el('div', 'rmc-hint');
@@ -83,8 +134,8 @@
     const input = el('textarea', 'rmc-input');
     input.rows = 1;
     input.maxLength = 1000;
-    input.placeholder = 'Nhập tin nhắn...';
-    const sendBtn = el('button', 'rmc-send', 'Gửi');
+    input.placeholder = T.placeholder;
+    const sendBtn = el('button', 'rmc-send', T.send);
     sendBtn.type = 'submit';
     form.append(input, sendBtn);
     thread.append(msgs, hint, form);
@@ -134,7 +185,7 @@
     // ----- Danh sách hội thoại -----
     function renderConversations() {
         if (!st.convs.length) {
-            list.replaceChildren(el('div', 'rmc-empty', 'Chưa có cuộc trò chuyện nào. Mở một sản phẩm và bấm "Chat" để nhắn cho người bán.'));
+            list.replaceChildren(el('div', 'rmc-empty', T.emptyList));
             return;
         }
         list.replaceChildren(...st.convs.map((c) => {
@@ -143,7 +194,7 @@
             const body = el('span', 'rmc-conv-body');
             const top = el('span', 'rmc-conv-top');
             top.append(el('b', 'rmc-conv-name', c.title), el('span', 'rmc-conv-time', timeText(c.lastAtUtc)));
-            body.append(top, el('span', 'rmc-conv-last', c.lastMessage || 'Chưa có tin nhắn'));
+            body.append(top, el('span', 'rmc-conv-last', c.lastMessage || T.noMessagesShort));
             row.append(el('span', 'rmc-avatar', (c.title || '?').trim().charAt(0).toUpperCase()), body);
             if (c.unread > 0) row.append(el('span', 'rmc-unread', c.unread > 99 ? '99+' : String(c.unread)));
             row.addEventListener('click', () => showThread(c));
@@ -157,7 +208,7 @@
             st.convs = data.data;
             renderConversations();
         } catch (e) {
-            list.replaceChildren(el('div', 'rmc-empty', e.message || 'Không tải được danh sách.'));
+            list.replaceChildren(el('div', 'rmc-empty', e.message || T.loadListError));
         }
     }
     async function refreshUnread() {
@@ -175,7 +226,7 @@
         if (older && st.oldestId) q.set('before', String(st.oldestId));
         const { ok, data } = await api(cfg.conversations + '/' + conv.id + '/messages?' + q);
         if (conv !== st.cur) return;   // đã chuyển cuộc trò chuyện khác trong lúc tải
-        if (!ok) { showHint(data.message || 'Không tải được tin nhắn.'); return; }
+        if (!ok) { showHint(data.message || T.loadMsgsError); return; }
 
         const items = data.data;
         if (items.length) st.oldestId = items[0].id;
@@ -188,7 +239,7 @@
             msgs.scrollTop += msgs.scrollHeight - prevHeight;   // giữ nguyên vị trí đang đọc
         } else {
             msgs.replaceChildren(more);
-            if (!items.length) msgs.append(el('div', 'rmc-empty', 'Chưa có tin nhắn. Hãy gửi lời chào!'));
+            if (!items.length) msgs.append(el('div', 'rmc-empty', T.emptyThread));
             items.forEach((m) => msgs.append(bubble(m)));
             toBottom();
         }
@@ -218,16 +269,24 @@
         showHint('');
         try { await loadMessages(false); } catch (e) { showHint(e.message); }
         markRead(conv.id);
-        input.focus();
+        updateMobileViewport();
+        toBottom();
+        if (window.innerWidth >= 768) {
+            input.focus();
+        }
     }
     async function showList() {
         st.cur = null;
         st.view = 'list';
-        title.textContent = 'Tin nhắn';
+        title.textContent = T.messages;
         sub.hidden = true;
         back.hidden = true;
         thread.hidden = true;
         list.hidden = false;
+        if (document.activeElement === input) {
+            input.blur();
+        }
+        updateMobileViewport();
         await loadConversations();
     }
     async function openById(id) {
@@ -236,12 +295,56 @@
         if (c) await showThread(c);
     }
 
+    // Xử lý đồng bộ kích thước viewport cho giao diện Full-screen và chống bàn phím ảo che khuất
+    function updateMobileViewport() {
+        if (!st.open || window.innerWidth >= 768) {
+            panel.style.top = '';
+            panel.style.height = '';
+            panel.style.bottom = '';
+            panel.classList.remove('rmc-keyboard-open');
+            return;
+        }
+
+        if (window.visualViewport) {
+            const vv = window.visualViewport;
+            panel.style.top = `${vv.offsetTop}px`;
+            panel.style.height = `${vv.height}px`;
+            panel.style.bottom = 'auto';
+
+            // Khi visual viewport nhỏ hơn đáng kể so với innerHeight tức là bàn phím ảo đang mở
+            const isKeyboardOpen = vv.height < (window.innerHeight - 120);
+            if (isKeyboardOpen) {
+                panel.classList.add('rmc-keyboard-open');
+            } else {
+                panel.classList.remove('rmc-keyboard-open');
+            }
+        } else {
+            panel.style.top = '0px';
+            panel.style.height = '100dvh';
+            panel.style.bottom = '0px';
+        }
+    }
+
     let closingAi = false;
     function setOpen(open) {
         st.open = open;
         panel.hidden = !open;
         launcher.setAttribute('aria-expanded', String(open));
-        if (!open) return;
+        if (open) {
+            root.classList.add('rmc-active');
+            if (window.innerWidth < 768) {
+                document.body.classList.add('rmc-open');
+            }
+            updateMobileViewport();
+        } else {
+            root.classList.remove('rmc-active');
+            document.body.classList.remove('rmc-open');
+            panel.style.top = '';
+            panel.style.height = '';
+            panel.style.bottom = '';
+            panel.classList.remove('rmc-keyboard-open');
+            return;
+        }
         // Chỉ mở một cửa sổ một lúc: đóng cửa sổ Trợ lý AI nếu đang mở.
         const ai = document.querySelector('.rmchat-toggle[aria-expanded="true"]');
         if (ai) { closingAi = true; ai.click(); closingAi = false; }
@@ -260,7 +363,7 @@
         const a = el('a', 'rm-toast');
         a.href = '#';
         const text = m.content.length > 80 ? m.content.slice(0, 77) + '...' : m.content;
-        a.append(el('b', null, 'Tin nhắn mới từ ' + (m.senderName || 'người dùng')), el('span', null, text));
+        a.append(el('b', null, T.newMsgFrom(m.senderName)), el('span', null, text));
         a.addEventListener('click', async (e) => {
             e.preventDefault();
             a.remove();
@@ -317,23 +420,88 @@
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); }
     });
+
+    // Khi chạm hoặc cuộn xem lịch sử tin nhắn: tự động hạ bàn phím ảo để giải phóng không gian đọc
+    msgs.addEventListener('touchstart', () => {
+        if (document.activeElement === input) {
+            input.blur();
+        }
+    }, { passive: true });
+
+    // Khi người dùng bấm vào ô nhập trên mobile: bàn phím ảo đẩy lên -> cuộn ngay tin nhắn mới nhất và cập nhật viewport
+    input.addEventListener('focus', () => {
+        if (window.innerWidth < 768) {
+            window.scrollTo(0, 0);
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+                updateMobileViewport();
+                toBottom();
+            }, 100);
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+                updateMobileViewport();
+                toBottom();
+            }, 300);
+        }
+    });
+
+    input.addEventListener('blur', () => {
+        if (window.innerWidth < 768) {
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+                updateMobileViewport();
+            }, 100);
+        }
+    });
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const text = input.value.trim();
         if (!text || !st.cur) return;
-        if (st.conn?.state !== signalR.HubConnectionState.Connected) { showHint('Đang kết nối lại, vui lòng thử lại sau giây lát.'); return; }
+        if (st.conn?.state !== signalR.HubConnectionState.Connected) { showHint(T.reconnecting); return; }
         sendBtn.disabled = true;
         try {
             await st.conn.invoke('SendMessage', st.cur.id, text);
             input.value = '';
             input.style.height = 'auto';
+            toBottom();
         } catch (err) {
             const msg = String(err?.message || '');
             const i = msg.indexOf('HubException: ');
-            showHint(i >= 0 ? msg.slice(i + 14) : 'Không gửi được tin nhắn.');
+            showHint(i >= 0 ? msg.slice(i + 14) : T.sendFailed);
         } finally {
             sendBtn.disabled = false;
-            input.focus();
+            if (window.innerWidth >= 768 || document.activeElement === input) {
+                input.focus();
+            }
+            updateMobileViewport();
+        }
+    });
+
+    // Lắng nghe thay đổi kích thước do bàn phím ảo bật/tắt (qua VisualViewport API chuẩn mobile)
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            if (st.open) {
+                updateMobileViewport();
+                if (st.view === 'thread') toBottom();
+            }
+        });
+        window.visualViewport.addEventListener('scroll', () => {
+            if (st.open) {
+                updateMobileViewport();
+            }
+        });
+    }
+
+    // Lắng nghe resize cửa sổ trình duyệt (khi xoay màn hình hoặc đổi kích thước trên desktop/dev tools)
+    window.addEventListener('resize', () => {
+        if (st.open) {
+            if (window.innerWidth < 768) {
+                document.body.classList.add('rmc-open');
+            } else {
+                document.body.classList.remove('rmc-open');
+            }
+            updateMobileViewport();
         }
     });
 
@@ -347,19 +515,21 @@
             const { ok, data } = await api(cfg.start, { method: 'POST', form: { productId: btn.dataset.productId } });
             if (!ok || !data.success) {
                 if (window.showNotifyBox) {
-                    window.showNotifyBox({ title: 'Không mở được trò chuyện', message: data.message || 'Không mở được cuộc trò chuyện.', type: 'warning' });
+                    window.showNotifyBox({ title: T.cannotOpenTitle, message: data.message || T.cannotOpenMsg, type: 'warning' });
                 } else {
-                    alert(data.message || 'Không mở được cuộc trò chuyện.');
+                    alert(data.message || T.cannotOpenMsg);
                 }
                 return;
             }
             setOpen(true);
             await showThread(data.data);
             if (btn.dataset.prefill && !input.value) input.value = btn.dataset.prefill;
-            input.focus();
+            if (window.innerWidth >= 768) {
+                input.focus();
+            }
         } catch (err) {
             if (window.showNotifyBox) {
-                window.showNotifyBox({ title: 'Đã xảy ra lỗi', message: err.message || 'Lỗi kết nối trò chuyện.', type: 'error' });
+                window.showNotifyBox({ title: T.errorTitle, message: err.message || T.connectError, type: 'error' });
             } else {
                 alert(err.message);
             }

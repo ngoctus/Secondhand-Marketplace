@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Common.Constants;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -20,7 +21,8 @@ public class ProductReviewService(
     IModerationService moderation,
     INotificationService notifications,
     IAuditLogService auditLog,
-    ILogger<ProductReviewService> logger) : IProductReviewService
+    ILogger<ProductReviewService> logger,
+    IMemoryCache? cache = null) : IProductReviewService
 {
     // Số lỗi SQL đã biết (06_procedures.sql, 15_kiemduyet_tukhoa.sql)
     private const int ErrNotPending = 50022;
@@ -67,18 +69,27 @@ public class ProductReviewService(
 
         var turnIds = rows.Select(r => r.MaLuotKiemDuyet).ToList();
         var analyses = turnIds.Count == 0
-            ? new Dictionary<int, (string Status, string? Level)>()
+            ? new Dictionary<int, (string Status, string? Level, string? Risk, string? Advice, string? Model)>()
             : (await db.PhanTichAIs.AsNoTracking()
                 .Where(a => turnIds.Contains(a.MaLuotKiemDuyet))
-                .Select(a => new { a.MaLuotKiemDuyet, a.TrangThai, a.MucDoTuKhoa })
-                .ToListAsync(ct)).ToDictionary(a => a.MaLuotKiemDuyet, a => (Status: a.TrangThai, Level: a.MucDoTuKhoa));
+                .Select(a => new { a.MaLuotKiemDuyet, a.TrangThai, a.MucDoTuKhoa, a.MucRuiRo, a.DeXuat, a.PhienBanMoHinh })
+                .ToListAsync(ct))
+                .ToDictionary(
+                    a => a.MaLuotKiemDuyet,
+                    a => (Status: a.TrangThai, Level: a.MucDoTuKhoa, Risk: a.MucRuiRo, Advice: a.DeXuat, Model: a.PhienBanMoHinh));
 
         var items = rows.Select(r =>
         {
             var has = analyses.TryGetValue(r.MaLuotKiemDuyet, out var a);
+            var status = has ? a.Status : ModerationPolicy.AnalysisMissing;
+            var level = has ? a.Level : null;
+            var risk = has ? a.Risk : null;
+            var advice = has ? a.Advice : null;
+            var model = has ? a.Model : null;
+            var isGreen = ModerationPolicy.IsGreenLane(status, level, risk, advice, model);
             return new ProductListItem(r.MaSanPham, r.MaLuotKiemDuyet, r.Ten, r.Gia, r.TenDanhMuc, r.Anh, r.TrangThai,
                 r.MaCuaHang, r.TenShop, r.MaNguoiBan, r.TenNguoiBan, r.EmailNguoiBan, r.ThoiGianGui,
-                has ? a.Status : ModerationPolicy.AnalysisMissing, has ? a.Level : null);
+                status, level, risk, advice, model, isGreen);
         }).ToList();
 
         return new ProductListPage(ProductReviewTabs.Pending, items, page, total, TotalPages(total));
@@ -156,7 +167,8 @@ public class ProductReviewService(
             return new ReviewTurnRow(t.MaLuotKiemDuyet, t.ThoiGianGui, t.QuyetDinh, t.LyDo, t.MaQuanTriVien, NameOf(t.MaQuanTriVien),
                 t.ThoiGianQuyetDinh, t.QuyetDinhTuDong, a?.TrangThai ?? ModerationPolicy.AnalysisMissing, a?.MucDoTuKhoa,
                 a?.GiaiThich, a?.LoiXuLy, violationTurns.Contains(t.MaLuotKiemDuyet),
-                ModerationDecision.ParseEvidence(a?.DauHieu));
+                ModerationDecision.ParseEvidence(a?.DauHieu),
+                a?.MucRuiRo, a?.DeXuat, a?.PhienBanMoHinh, ModerationDecision.ParseAiSignals(a?.DauHieu));
         }).ToList();
 
         var historyRows = history.Select(h => new StatusHistoryRow(h.TrangThaiCu, h.TrangThaiMoi, h.LoaiNguoiThucHien,
@@ -201,7 +213,117 @@ public class ProductReviewService(
         {
             return DecisionFailure(ex);
         }
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         return await AfterDecisionAsync(adminId, maSanPham, review.MaNguoiBan, "ACTIVE", approve: true, reason: null, cancellationToken);
+    }
+
+    public async Task<BulkApproveResult> ApproveGreenLaneAsync(int adminId, IReadOnlyCollection<int> productIds, CancellationToken cancellationToken = default)
+    {
+        var denied = await RequireAdminAsync(adminId, cancellationToken);
+        if (denied is not null) return BulkApproveResult.Fail(denied.Error ?? "Không có quyền quản trị viên.");
+
+        var ids = (productIds ?? Array.Empty<int>()).Where(id => id > 0).Distinct().ToList();
+        if (ids.Count == 0)
+            return BulkApproveResult.Fail("Không có sản phẩm Làn Xanh nào để duyệt nhanh.");
+
+        var approved = 0;
+        var skipped = 0;
+
+        foreach (var id in ids)
+        {
+            // Kiểm tra lại phía server: chỉ cho phép duyệt nhanh nếu đúng chuẩn Làn Xanh (không tin danh sách client).
+            var review = await moderation.GetReviewAsync(id, cancellationToken);
+            if (review is null || !review.CanApprove || !review.IsGreenLane)
+            {
+                skipped++;
+                continue;
+            }
+
+            var res = await ApproveAsync(adminId, id, cancellationToken);
+            if (res.Success) approved++;
+            else skipped++;
+        }
+
+        if (approved == 0)
+            return new BulkApproveResult(false, "Không có sản phẩm nào đủ điều kiện Làn Xanh để duyệt nhanh.", 0, skipped);
+
+        // Đảm bảo xóa cache trang chủ (home:catalog) sau khi duyệt nhanh Làn Xanh thành công.
+        HomeCacheHelper.XoaCacheTrangChu(cache);
+        return new BulkApproveResult(true, null, approved, skipped);
+    }
+
+    public async Task<ProductReanalyzeResult> ReanalyzeAsync(int adminId, int maSanPham, CancellationToken cancellationToken = default)
+    {
+        var denied = await RequireAdminAsync(adminId, cancellationToken);
+        if (denied is not null)
+            return ProductReanalyzeResult.Fail(denied.Error ?? "Chỉ quản trị viên đang hoạt động mới được thực hiện thao tác này.");
+
+        var before = await moderation.GetReviewAsync(maSanPham, cancellationToken);
+        if (before is null || !before.CanReanalyze)
+            return ProductReanalyzeResult.Fail("Sản phẩm không còn ở trạng thái chờ duyệt (có thể đã được xử lý).", alreadyDecided: true);
+
+        var productStillPending = await db.SanPhams.AsNoTracking()
+            .AnyAsync(p => p.MaSanPham == maSanPham && !p.DaXoa && p.TrangThai == ModerationPolicy.ProductPending, cancellationToken);
+        if (!productStillPending)
+            return ProductReanalyzeResult.Fail("Sản phẩm không còn ở trạng thái chờ duyệt (có thể đã được xử lý).", alreadyDecided: true);
+
+        try
+        {
+            await moderation.PhanTichSanPhamAsync(maSanPham, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Phân tích lại kiểm duyệt lỗi cho sản phẩm {ProductId}.", maSanPham);
+            return ProductReanalyzeResult.Fail("Không thể chạy phân tích lại lúc này. Vui lòng thử lại sau.");
+        }
+
+        var after = await moderation.GetReviewByTurnAsync(before.MaLuotKiemDuyet, cancellationToken);
+        if (after is null)
+            return ProductReanalyzeResult.Fail("Không đọc lại được kết quả phân tích sau khi quét.");
+
+        var auditDetail = $"Lượt #{before.MaLuotKiemDuyet}: {before.AnalysisStatus}/{before.ModelVersion ?? "-"} -> {after.AnalysisStatus}/{after.ModelVersion ?? "-"} ({after.Level ?? "-"}, {after.RiskLevel ?? "-"}, {after.Recommendation ?? "-"})";
+        await TryAuditAsync(adminId, "REANALYZE_PRODUCT", maSanPham, auditDetail, cancellationToken);
+
+        // Phát hiện từ khóa cấm mức HIGH mới -> hệ thống đã tự đóng lượt, từ chối sản phẩm và ghi nhận vi phạm.
+        if (!after.TurnIsOpen && after.Level == ModerationPolicy.LevelHigh)
+        {
+            return new ProductReanalyzeResult(
+                true, null, AlreadyDecided: false, AutoRejected: true, IsFallback: false,
+                Message: null,
+                Warning: "Đã phân tích lại: phát hiện từ khóa cấm mức HIGH nên hệ thống đã tự động từ chối sản phẩm và ghi nhận vi phạm.",
+                Review: after);
+        }
+
+        if (!after.TurnIsOpen)
+            return ProductReanalyzeResult.Fail("Lượt kiểm duyệt đã được xử lý trước khi hoàn tất phân tích lại.", alreadyDecided: true, review: after);
+
+        if (after.AnalysisStatus == ModerationPolicy.AnalysisFailed)
+        {
+            var err = string.IsNullOrWhiteSpace(after.ErrorMessage)
+                ? "Phân tích lại thất bại. Vui lòng kiểm tra cấu hình và thử lại."
+                : $"Phân tích lại thất bại: {after.ErrorMessage}";
+            return ProductReanalyzeResult.Fail(err, alreadyDecided: false, review: after);
+        }
+
+        if (after.IsFallback)
+        {
+            return new ProductReanalyzeResult(
+                true, null, AlreadyDecided: false, AutoRejected: false, IsFallback: true,
+                Message: null,
+                Warning: "Đã quét lại từ khóa Tầng 1 nhưng AI ngữ cảnh (Tầng 2) vẫn tạm không phản hồi (Fallback). Bạn có thể thử lại sau hoặc tự kiểm tra để duyệt thủ công.",
+                Review: after);
+        }
+
+        var lane = ReviewDisplay.DescribeLane(after.AnalysisStatus, after.Level, after.RiskLevel, after.Recommendation, after.ModelVersion, forceVietnamese: true);
+        return new ProductReanalyzeResult(
+            true, null, AlreadyDecided: false, AutoRejected: false, IsFallback: false,
+            Message: $"Đã phân tích lại thành công — Kết quả: {lane.Text}.",
+            Warning: null,
+            Review: after);
     }
 
     public async Task<ProductDecisionResult> RejectAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default)
@@ -253,6 +375,7 @@ public class ProductReviewService(
         {
             return DecisionFailure(ex);
         }
+        HomeCacheHelper.XoaCacheTrangChu(cache);
 
         await TryAuditAsync(adminId, "REMOVE_PRODUCT", maSanPham, cleanReason, cancellationToken);
         await TryNotifyAsync(product.SellerId, "Sản phẩm của bạn đã bị gỡ",
@@ -339,13 +462,22 @@ public class ProductReviewService(
         page = Math.Clamp(page, 1, 10000);
         var query = db.LichSuViPhams.AsNoTracking().AsQueryable();
         string? sellerName = null;
+        int? sellerEffectiveViolations = null;
+        int? sellerTotalViolations = null;
+        DateTime? sellerViolationResetAt = null;
         if (sellerId is not null)
         {
             query = query.Where(v => v.MaNguoiBan == sellerId);
-            sellerName = await db.NguoiDungs.AsNoTracking().Where(u => u.MaNguoiDung == sellerId)
-                .Select(u => u.HoTen).SingleOrDefaultAsync(cancellationToken);
+            var filteredSeller = await db.NguoiDungs.AsNoTracking()
+                .Where(u => u.MaNguoiDung == sellerId)
+                .Select(u => new { u.HoTen, u.MocTinhViPham })
+                .SingleOrDefaultAsync(cancellationToken);
+            sellerName = filteredSeller?.HoTen;
+            sellerViolationResetAt = filteredSeller?.MocTinhViPham;
+            sellerEffectiveViolations = await moderation.GetViolationCountAsync(sellerId.Value, cancellationToken);
         }
         var total = await query.CountAsync(cancellationToken);
+        if (sellerId is not null) sellerTotalViolations = total;
 
         var rows = await query
             .OrderByDescending(v => v.ThoiGian).ThenByDescending(v => v.MaViPham)
@@ -362,23 +494,45 @@ public class ProductReviewService(
         var products = productIds.Count == 0 ? new Dictionary<int, string>()
             : await db.SanPhams.AsNoTracking().Where(p => productIds.Contains(p.MaSanPham))
                 .ToDictionaryAsync(p => p.MaSanPham, p => p.Ten, cancellationToken);
-        // Bộ đếm chung của C2: số dòng LichSuViPham theo người bán (không tạo bộ đếm riêng).
-        var counts = sellerIds.Count == 0 ? new Dictionary<int, int>()
-            : (await db.LichSuViPhams.AsNoTracking().Where(v => sellerIds.Contains(v.MaNguoiBan))
-                .GroupBy(v => v.MaNguoiBan).Select(g => new { Id = g.Key, N = g.Count() })
-                .ToListAsync(cancellationToken)).ToDictionary(x => x.Id, x => x.N);
+
+        // KN-02: phân biệt rõ vi phạm hiệu lực (ThoiGian > MocTinhViPham) so với tổng lịch sử toàn thời gian.
+        var sellerViolations = sellerIds.Count == 0
+            ? new List<(int MaNguoiBan, DateTime ThoiGian)>()
+            : (await db.LichSuViPhams.AsNoTracking()
+                .Where(v => sellerIds.Contains(v.MaNguoiBan))
+                .Select(v => new { v.MaNguoiBan, v.ThoiGian })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.MaNguoiBan, x.ThoiGian))
+                .ToList();
+
+        var totalCounts = new Dictionary<int, int>();
+        var effectiveCounts = new Dictionary<int, int>();
+        foreach (var group in sellerViolations.GroupBy(x => x.MaNguoiBan))
+        {
+            var moc = users.TryGetValue(group.Key, out var u) ? u.MocTinhViPham : null;
+            totalCounts[group.Key] = group.Count();
+            effectiveCounts[group.Key] = moc is null
+                ? group.Count()
+                : group.Count(x => x.ThoiGian > moc.Value);
+        }
 
         var items = rows.Select(v =>
         {
             users.TryGetValue(v.MaNguoiBan, out var seller);
             var admin = v.MaQuanTriVien is { } aid && users.TryGetValue(aid, out var a) ? a.HoTen : null;
-            return new ViolationRow(v.MaViPham, v.MaNguoiBan, seller?.HoTen ?? "", seller?.Email ?? "", seller?.TrangThai ?? "",
-                seller?.VaiTro ?? "", counts.GetValueOrDefault(v.MaNguoiBan), v.MaSanPham,
+            var moc = seller?.MocTinhViPham;
+            var isEffective = moc is null || v.ThoiGian > moc.Value;
+            return new ViolationRow(
+                v.MaViPham, v.MaNguoiBan, seller?.HoTen ?? "", seller?.Email ?? "", seller?.TrangThai ?? "",
+                seller?.VaiTro ?? "", totalCounts.GetValueOrDefault(v.MaNguoiBan), v.MaSanPham,
                 products.GetValueOrDefault(v.MaSanPham) ?? "", v.MaLuotKiemDuyet, v.MucDo, v.NguonGhiNhan, v.ThoiGian,
-                v.MaQuanTriVien, admin, ModerationDecision.ParseEvidence(v.ChiTietTuKhoa));
+                v.MaQuanTriVien, admin, ModerationDecision.ParseEvidence(v.ChiTietTuKhoa),
+                effectiveCounts.GetValueOrDefault(v.MaNguoiBan), isEffective, moc);
         }).ToList();
 
-        return new ViolationPage(sellerId, sellerName, items, page, total, TotalPages(total), ModerationPolicy.ViolationLockThreshold);
+        return new ViolationPage(
+            sellerId, sellerName, items, page, total, TotalPages(total), ModerationPolicy.ViolationLockThreshold,
+            sellerEffectiveViolations, sellerTotalViolations, sellerViolationResetAt);
     }
 
     // =====================================================================

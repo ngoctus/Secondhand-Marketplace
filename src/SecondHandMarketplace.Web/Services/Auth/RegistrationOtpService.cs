@@ -18,42 +18,18 @@ public sealed class RegistrationOtpService(
     IMemoryCache cache,
     ILogger<RegistrationOtpService> logger) : IRegistrationOtpService
 {
-    private readonly IDataProtector _protector = protectionProvider.CreateProtector("ReMarket.RegistrationOtp.v2");
+    private readonly IDataProtector _protector = protectionProvider.CreateProtector("ReMarket.RegistrationOtp.v1");
 
-    /// <summary>
-    /// Payload gọn gửi về client dưới dạng token đã mã hóa (KHÔNG chứa mật khẩu gốc, mã OTP hay bộ đếm thử sai).
-    /// </summary>
     public sealed class PendingRegistrationPayload
     {
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
-        public DateTime CreatedAtUtc { get; set; }
-        public DateTime ExpiresAtUtc { get; set; }
-    }
-
-    /// <summary>
-    /// Trạng thái đăng ký chờ kích hoạt chỉ lưu trên máy chủ (IMemoryCache gắn theo Email).
-    /// </summary>
-    private sealed class PendingRegistrationServerState
-    {
-        public string FullName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
-        public string PasswordHash { get; set; } = string.Empty;
-        public string OtpHash { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
         public DateTime CreatedAtUtc { get; set; }
         public DateTime ExpiresAtUtc { get; set; }
         public int FailedAttempts { get; set; }
-    }
-
-    private static string GetStateCacheKey(string normalizedEmail) => $"reg_otp_state_{normalizedEmail}";
-    private static string GetCooldownCacheKey(string normalizedEmail) => $"reg_otp_cooldown_{normalizedEmail}";
-
-    private static string HashOtp(string normalizedEmail, string code)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes($"{normalizedEmail}:{code.Trim()}"));
-        return Convert.ToHexString(bytes);
     }
 
     public async Task<(bool Success, string? Error, string? Token)> StartRegistrationAsync(RegisterVm model, CancellationToken cancellationToken = default)
@@ -71,11 +47,8 @@ public sealed class RegistrationOtpService(
             return (false, "Số điện thoại này đã được sử dụng. Vui lòng kiểm tra lại.", null);
         }
 
-        var cooldownKey = GetCooldownCacheKey(normalizedEmail);
-        var stateKey = GetStateCacheKey(normalizedEmail);
-        if (cache.TryGetValue(cooldownKey, out string? cachedToken) &&
-            !string.IsNullOrWhiteSpace(cachedToken) &&
-            cache.TryGetValue(stateKey, out PendingRegistrationServerState? _))
+        var cacheKey = $"reg_otp_cooldown_{normalizedEmail}";
+        if (cache.TryGetValue(cacheKey, out string? cachedToken) && !string.IsNullOrWhiteSpace(cachedToken))
         {
             logger.LogInformation("[OTP-REGISTER] Đang có mã OTP còn hiệu lực cho {Email}, sử dụng lại token hiện tại tránh gửi trùng.", normalizedEmail);
             return (true, null, cachedToken);
@@ -83,7 +56,18 @@ public sealed class RegistrationOtpService(
 
         var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
         var now = DateTime.UtcNow;
-        var fullName = (model.FullName ?? string.Empty).Trim();
+
+        var payload = new PendingRegistrationPayload
+        {
+            FullName = (model.FullName ?? string.Empty).Trim(),
+            Email = normalizedEmail,
+            Phone = normalizedPhone,
+            Password = model.Password,
+            Code = code,
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.AddMinutes(10),
+            FailedAttempts = 0
+        };
 
         try
         {
@@ -92,7 +76,7 @@ public sealed class RegistrationOtpService(
             await emailSender.SendAsync(normalizedEmail, "Mã xác nhận đăng ký tài khoản Re:Market",
                 $"<div style='font-family:sans-serif;max-width:560px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:12px;background:#ffffff'>" +
                 $"<h2 style='color:#68705A;margin-top:0'>Xác nhận đăng ký tài khoản Re:Market</h2>" +
-                $"<p>Chào <strong>{System.Net.WebUtility.HtmlEncode(fullName)}</strong>,</p>" +
+                $"<p>Chào <strong>{System.Net.WebUtility.HtmlEncode(payload.FullName)}</strong>,</p>" +
                 $"<p>Cảm ơn bạn đã đăng ký tham gia sàn giao dịch đồ cũ Re:Market. Mã xác nhận OTP của bạn là:</p>" +
                 $"<div style='text-align:center;margin:24px 0'><span style='display:inline-block;padding:12px 28px;background:#f4f5f0;color:#68705A;font-size:30px;font-weight:700;letter-spacing:6px;border-radius:8px;border:2px dashed #68705A'>{safeCode}</span></div>" +
                 $"<p style='color:#64748b;font-size:14px'>Mã OTP này có hiệu lực trong vòng <strong>10 phút</strong>. Vì lý do bảo mật, vui lòng không chia sẻ mã này cho bất kỳ ai.</p>" +
@@ -111,31 +95,9 @@ public sealed class RegistrationOtpService(
             return (false, "Chưa gửi được email xác nhận tới hộp thư của bạn. Vui lòng kiểm tra lại địa chỉ email hoặc thử lại sau.", null);
         }
 
-        var expiresAt = now.AddMinutes(10);
-        var serverState = new PendingRegistrationServerState
-        {
-            FullName = fullName,
-            Email = normalizedEmail,
-            Phone = normalizedPhone,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
-            OtpHash = HashOtp(normalizedEmail, code),
-            CreatedAtUtc = now,
-            ExpiresAtUtc = expiresAt,
-            FailedAttempts = 0
-        };
-        cache.Set(stateKey, serverState, TimeSpan.FromMinutes(10));
-
-        var payload = new PendingRegistrationPayload
-        {
-            FullName = fullName,
-            Email = normalizedEmail,
-            Phone = normalizedPhone,
-            CreatedAtUtc = now,
-            ExpiresAtUtc = expiresAt
-        };
-
-        var token = _protector.Protect(JsonSerializer.Serialize(payload));
-        cache.Set(cooldownKey, token, TimeSpan.FromSeconds(60));
+        var json = JsonSerializer.Serialize(payload);
+        var token = _protector.Protect(json);
+        cache.Set(cacheKey, token, TimeSpan.FromSeconds(60));
         return (true, null, token);
     }
 
@@ -152,58 +114,47 @@ public sealed class RegistrationOtpService(
             return (false, "Phiên xác thực đăng ký không hợp lệ hoặc đã hết hạn. Vui lòng đăng ký lại.", null, null);
         }
 
-        if (payload is null || string.IsNullOrWhiteSpace(payload.Email))
+        if (payload is null)
         {
             return (false, "Dữ liệu đăng ký không hợp lệ. Vui lòng đăng ký lại.", null, null);
         }
 
-        var normalizedEmail = payload.Email.Trim().ToLowerInvariant();
-        var stateKey = GetStateCacheKey(normalizedEmail);
-        if (!cache.TryGetValue(stateKey, out PendingRegistrationServerState? state) || state is null)
-        {
-            return (false, "Phiên xác thực đăng ký đã hết hạn hoặc không tồn tại. Vui lòng đăng ký lại.", null, null);
-        }
-
         var now = DateTime.UtcNow;
-        if (payload.ExpiresAtUtc <= now || state.ExpiresAtUtc <= now)
+        if (payload.ExpiresAtUtc <= now)
         {
-            cache.Remove(stateKey);
-            return (false, "Mã OTP đã hết hiệu lực (quá 10 phút). Vui lòng nhấn 'Gửi lại mã OTP' hoặc đăng ký lại.", null, null);
+            return (false, "Mã OTP đã hết hiệu lực (quá 10 phút). Vui lòng nhấn 'Gửi lại mã OTP'.", null, null);
         }
 
-        if (state.FailedAttempts >= 5)
+        if (payload.FailedAttempts >= 5)
         {
             return (false, "Bạn đã nhập sai OTP quá 5 lần. Vui lòng thực hiện đăng ký lại từ đầu.", null, null);
         }
 
-        var expected = Encoding.ASCII.GetBytes(state.OtpHash);
-        var actual = Encoding.ASCII.GetBytes(HashOtp(normalizedEmail, code ?? string.Empty));
+        var expected = Encoding.ASCII.GetBytes(payload.Code);
+        var actual = Encoding.ASCII.GetBytes((code ?? string.Empty).Trim());
 
         if (expected.Length != actual.Length || !CryptographicOperations.FixedTimeEquals(expected, actual))
         {
-            state.FailedAttempts++;
-            var ttl = state.ExpiresAtUtc > now ? state.ExpiresAtUtc - now : TimeSpan.FromMinutes(1);
-            cache.Set(stateKey, state, ttl);
-
-            var remaining = Math.Max(0, 5 - state.FailedAttempts);
-            var msg = state.FailedAttempts >= 5
+            payload.FailedAttempts++;
+            var updatedToken = _protector.Protect(JsonSerializer.Serialize(payload));
+            var remaining = Math.Max(0, 5 - payload.FailedAttempts);
+            var msg = payload.FailedAttempts >= 5
                 ? "Bạn đã nhập sai mã OTP quá 5 lần. Vui lòng gửi lại mã mới hoặc đăng ký lại."
                 : $"Mã OTP không chính xác. Bạn còn {remaining} lần thử.";
-            return (false, msg, null, token);
+            return (false, msg, null, updatedToken);
         }
 
-        // OTP chính xác, tiến hành lưu tài khoản vào cơ sở dữ liệu với mật khẩu đã băm trên máy chủ
+        // OTP chính xác, tiến hành lưu tài khoản vào cơ sở dữ liệu
         var regResult = await authService.RegisterAsync(
-            state.FullName, state.Email, state.Phone, state.PasswordHash, cancellationToken);
+            payload.FullName, payload.Email, payload.Phone, payload.Password, cancellationToken);
 
         if (!regResult.Success || regResult.User is null)
         {
             return (false, regResult.Error ?? "Không thể hoàn tất đăng ký tài khoản.", null, null);
         }
 
-        cache.Remove(stateKey);
-        cache.Remove(GetCooldownCacheKey(normalizedEmail));
-        logger.LogInformation("Người dùng {Email} đã xác thực OTP thành công và tạo tài khoản #{UserId}", state.Email, regResult.User.MaNguoiDung);
+        cache.Remove($"reg_otp_cooldown_{payload.Email}");
+        logger.LogInformation("Người dùng {Email} đã xác thực OTP thành công và tạo tài khoản #{UserId}", payload.Email, regResult.User.MaNguoiDung);
         return (true, null, regResult.User, null);
     }
 
@@ -220,35 +171,32 @@ public sealed class RegistrationOtpService(
             return (false, "Phiên đăng ký không hợp lệ hoặc đã hết hạn. Vui lòng đăng ký lại.", null);
         }
 
-        if (payload is null || string.IsNullOrWhiteSpace(payload.Email))
+        if (payload is null)
         {
             return (false, "Dữ liệu đăng ký không hợp lệ. Vui lòng đăng ký lại.", null);
         }
 
-        var normalizedEmail = payload.Email.Trim().ToLowerInvariant();
-        var stateKey = GetStateCacheKey(normalizedEmail);
-        if (!cache.TryGetValue(stateKey, out PendingRegistrationServerState? state) || state is null)
-        {
-            return (false, "Phiên đăng ký đã hết hạn. Vui lòng thực hiện đăng ký lại.", null);
-        }
-
         var now = DateTime.UtcNow;
-        if (state.CreatedAtUtc > now.AddSeconds(-60))
+        if (payload.CreatedAtUtc > now.AddSeconds(-60))
         {
-            var secondsWait = (int)(60 - (now - state.CreatedAtUtc).TotalSeconds);
+            var secondsWait = (int)(60 - (now - payload.CreatedAtUtc).TotalSeconds);
             return (false, $"Vui lòng chờ {Math.Max(1, secondsWait)} giây trước khi yêu cầu gửi lại mã OTP.", token);
         }
 
         var newCode = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+        payload.Code = newCode;
+        payload.CreatedAtUtc = now;
+        payload.ExpiresAtUtc = now.AddMinutes(10);
+        payload.FailedAttempts = 0;
 
         try
         {
             var safeCode = System.Net.WebUtility.HtmlEncode(newCode);
-            logger.LogInformation("[OTP-REGISTER] Mã xác nhận đăng ký mới cho {Email} là: {Code}", state.Email, newCode);
-            await emailSender.SendAsync(state.Email, "Mã xác nhận đăng ký tài khoản Re:Market (Gửi lại)",
+            logger.LogInformation("[OTP-REGISTER] Mã xác nhận đăng ký mới cho {Email} là: {Code}", payload.Email, newCode);
+            await emailSender.SendAsync(payload.Email, "Mã xác nhận đăng ký tài khoản Re:Market (Gửi lại)",
                 $"<div style='font-family:sans-serif;max-width:560px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:12px;background:#ffffff'>" +
                 $"<h2 style='color:#68705A;margin-top:0'>Mã xác nhận mới cho tài khoản Re:Market</h2>" +
-                $"<p>Chào <strong>{System.Net.WebUtility.HtmlEncode(state.FullName)}</strong>,</p>" +
+                $"<p>Chào <strong>{System.Net.WebUtility.HtmlEncode(payload.FullName)}</strong>,</p>" +
                 $"<p>Bạn vừa yêu cầu gửi lại mã xác nhận OTP đăng ký tài khoản. Mã mới của bạn là:</p>" +
                 $"<div style='text-align:center;margin:24px 0'><span style='display:inline-block;padding:12px 28px;background:#f4f5f0;color:#68705A;font-size:30px;font-weight:700;letter-spacing:6px;border-radius:8px;border:2px dashed #68705A'>{safeCode}</span></div>" +
                 $"<p style='color:#64748b;font-size:14px'>Mã OTP này có hiệu lực trong vòng <strong>10 phút</strong>.</p>" +
@@ -256,26 +204,17 @@ public sealed class RegistrationOtpService(
         }
         catch (OperationCanceledException oce)
         {
-            logger.LogWarning(oce, "Thao tác gửi lại email OTP tới {Email} bị quá thời gian chờ hoặc kết nối bị gián đoạn.", state.Email);
+            logger.LogWarning(oce, "Thao tác gửi lại email OTP tới {Email} bị quá thời gian chờ hoặc kết nối bị gián đoạn.", payload.Email);
             return (false, "Yêu cầu gửi lại mã xác nhận bị quá thời gian chờ. Vui lòng thử lại sau.", token);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Không thể gửi lại email OTP tới {Email}.", state.Email);
+            logger.LogError(ex, "Không thể gửi lại email OTP tới {Email}.", payload.Email);
             return (false, "Chưa gửi được email xác nhận mới. Vui lòng thử lại sau.", token);
         }
 
-        var expiresAt = now.AddMinutes(10);
-        state.OtpHash = HashOtp(normalizedEmail, newCode);
-        state.CreatedAtUtc = now;
-        state.ExpiresAtUtc = expiresAt;
-        state.FailedAttempts = 0;
-        cache.Set(stateKey, state, TimeSpan.FromMinutes(10));
-
-        payload.CreatedAtUtc = now;
-        payload.ExpiresAtUtc = expiresAt;
         var newToken = _protector.Protect(JsonSerializer.Serialize(payload));
-        cache.Set(GetCooldownCacheKey(normalizedEmail), newToken, TimeSpan.FromSeconds(60));
+        cache.Set($"reg_otp_cooldown_{payload.Email}", newToken, TimeSpan.FromSeconds(60));
         return (true, null, newToken);
     }
 }

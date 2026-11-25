@@ -159,6 +159,8 @@ public class ProductsController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
         var (ok, loi) = await _products.DatAnhChinhAsync(userId, id, maAnh);
+        if (YeuCauTuAjax()) return Json(new { ok, error = ok ? null : loi });
+
         if (!ok) this.ThongBaoLoi(loi ?? "Không đặt được ảnh chính.");
         return RedirectToAction(nameof(Edit), new { id });
     }
@@ -168,10 +170,17 @@ public class ProductsController : UserBaseController
     public async Task<IActionResult> XoaAnh(int id, int maAnh)
     {
         var userId = User.LayNguoiDungId()!.Value;
-        var (ok, loi) = await _products.XoaAnhAsync(userId, id, maAnh);
+        var (ok, loi, maAnhChinhMoi) = await _products.XoaAnhAsync(userId, id, maAnh);
+        if (YeuCauTuAjax()) return Json(new { ok, error = ok ? null : loi, coverId = maAnhChinhMoi });
+
         if (!ok) this.ThongBaoLoi(loi ?? "Không xóa được ảnh.");
         return RedirectToAction(nameof(Edit), new { id });
     }
+
+    // B-03: lưới ảnh trong form đăng/sửa gọi hai action trên bằng fetch để không mất nội dung
+    // người bán đang soạn; request thường (tắt JS) vẫn nhận redirect như cũ.
+    private bool YeuCauTuAjax() =>
+        StringComparer.OrdinalIgnoreCase.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest");
 
     // =====================================================================
 

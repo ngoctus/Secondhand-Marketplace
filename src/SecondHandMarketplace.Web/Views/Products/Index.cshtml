@@ -1,53 +1,30 @@
 @model ProductSearchResultVm
 @{
-    ViewData["Title"] = "Kết quả tìm kiếm";
+    ViewData["Title"] = L["Search_ResultsBreadcrumb"];
     var f = Model.Filter;
-    var ketQua = Model.Result;
     var keyword = f.Keyword?.Trim() ?? "";
-    var tieuDe = string.IsNullOrWhiteSpace(keyword) ? "Tất cả sản phẩm" : $"Kết quả cho “{keyword}”";
 
-    string LocUrl(string key, string? value)
-    {
-        var pairs = Context.Request.Query
-            .Where(k => !k.Key.Equals(key, StringComparison.OrdinalIgnoreCase))
-            .SelectMany(k => k.Value, (k, v) => new KeyValuePair<string, string?>(k.Key, v))
-            .ToList();
-        if (!string.IsNullOrEmpty(value)) pairs.Add(new KeyValuePair<string, string?>(key, value));
-        return Context.Request.Path + QueryString.Create(pairs);
-    }
+    // Số bộ lọc đang bật, hiển thị trên nút "Hiện bộ lọc" của mobile; nội dung chip do _SearchResults lo.
+    var soBoLocDangChon = 0
+        + (f.CategoryId is null ? 0 : 1)
+        + (f.ConditionId is null ? 0 : 1)
+        + (string.IsNullOrWhiteSpace(Model.KhuVucDaChon) ? 0 : 1)
+        + (string.IsNullOrWhiteSpace(f.TenPhanGia) && f.MinPrice is null && f.MaxPrice is null ? 0 : 1);
 
-    var filterChips = new List<(string Label, string RemoveUrl)>();
-    if (f.CategoryId is int maDanhMuc)
-    {
-        var catName = Model.DanhSachDanhMuc.FirstOrDefault(c => c.MaDanhMuc == maDanhMuc)?.Ten ?? "Danh mục";
-        filterChips.Add((catName, LocUrl("CategoryId", null)));
-    }
-    if (!string.IsNullOrWhiteSpace(f.TenPhanGia))
-    {
-        filterChips.Add((f.TenPhanGia, LocUrl("PriceRange", null)));
-    }
-    if (f.ConditionId is int maTinhTrang)
-    {
-        var condName = Model.DanhSachTinhTrang.FirstOrDefault(t => t.MaTinhTrang == maTinhTrang)?.Ten ?? "Tình trạng";
-        filterChips.Add((condName, LocUrl("ConditionId", null)));
-    }
-    if (!string.IsNullOrWhiteSpace(Model.KhuVucDaChon))
-    {
-        var pairsNoKhuVuc = Context.Request.Query
-            .Where(k => !k.Key.Equals("MaTinhThanh", StringComparison.OrdinalIgnoreCase) && !k.Key.Equals("MaPhuongXa", StringComparison.OrdinalIgnoreCase))
-            .SelectMany(k => k.Value, (k, v) => new KeyValuePair<string, string?>(k.Key, v))
-            .ToList();
-        var urlNoKhuVuc = Context.Request.Path + QueryString.Create(pairsNoKhuVuc);
-        filterChips.Add((Model.KhuVucDaChon, urlNoKhuVuc));
-    }
-    var chips = filterChips.Select(c => c.Label).ToList();
+    // Thanh trượt giá kéo trên thang thật của gian hàng; bước 50.000đ đủ mịn mà không tạo hàng nghìn vị trí.
+    var buocGia = 50_000m;
+    var giaMin = Math.Floor((Model.BienGiaMin ?? 0m) / buocGia) * buocGia;
+    var giaMax = Math.Ceiling((Model.BienGiaMax ?? 0m) / buocGia) * buocGia;
+    var keoGiaDuoc = giaMax > giaMin;
+    var giaToiThieuKe = f.MinPrice is null ? giaMin : Math.Max(giaMin, Math.Round(f.MinPrice.Value / buocGia) * buocGia);
+    var giaToiDaKe = f.MaxPrice is null ? giaMax : Math.Min(giaMax, Math.Round(f.MaxPrice.Value / buocGia) * buocGia);
 }
 
 <!-- Breadcrumb (Ảnh 4) -->
-<nav class="rm-breadcrumb" aria-label="Đường dẫn trang">
-    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+<nav class="rm-breadcrumb" aria-label="@L["Detail_BreadcrumbAria"]">
+    <a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a>
     <span class="sep">/</span>
-    <span>Kết quả tìm kiếm</span>
+    <span>@L["Search_ResultsBreadcrumb"]</span>
 </nav>
 
 <!-- Layout 2 cột: Bộ lọc + Danh sách sản phẩm (Ảnh 4) -->
@@ -55,13 +32,13 @@
     <!-- CỘT BỘ LỌC (Sidebar) -->
     <aside class="filter-sidebar" data-rm-reveal="left">
         <div class="filter-header">
-            <h3>Bộ lọc</h3>
+            <h3>@L["Search_PanelTitle"]</h3>
             <div class="d-flex align-items-center gap-2">
-                <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-reset">Xóa</a>
+                <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-reset">@L["Search_ClearShort"]</a>
                 @* Điện thoại: để gọn bảng lọc dưới nút này người mua thấy kết quả trước khi phải cuộn qua bộ lọc. *@
                 <button type="button" class="filter-toggle d-lg-none" data-bs-toggle="collapse" data-bs-target="#filterPanel"
-                        data-so-bo-loc="@chips.Count" aria-controls="filterPanel" aria-expanded="false">
-                    Hiện bộ lọc@(chips.Count > 0 ? $" ({chips.Count})" : "")
+                        data-so-bo-loc="@soBoLocDangChon" aria-controls="filterPanel" aria-expanded="false">
+                    @L["Search_ShowFilters"]@(soBoLocDangChon > 0 ? $" ({soBoLocDangChon})" : "")
                 </button>
             </div>
         </div>
@@ -74,154 +51,98 @@
 
             <!-- Tìm trong kết quả: trên điện thoại ô search của header có thể bị thu gọn -->
             <div class="filter-group">
-                <div class="filter-title">Từ khóa</div>
+                <div class="filter-title">@L["Search_KeywordTitle"]</div>
                 <input type="search" name="Keyword" value="@keyword" class="filter-keyword-input"
-                       placeholder="VD: xe đạp, laptop, áo khoác..." />
+                       placeholder="@L["Search_KeywordPlaceholder"]" />
             </div>
 
             <!-- Khu vực sinh sống (thành phần chọn khu vực của A, mục A4) -->
             <div class="filter-group filter-khu-vuc">
-                <div class="filter-title">Khu vực sinh sống</div>
+                <div class="filter-title">@L["Search_AreaTitle"]</div>
                 <partial name="_ChonKhuVuc" model="Model.KhuVuc" />
-                <div class="form-text">Lọc theo nơi người bán sinh sống, không phải khoảng cách tới bạn.</div>
+                <div class="form-text">@L["Search_AreaHint"]</div>
             </div>
 
             <!-- Danh mục -->
             <div class="filter-group">
-                <div class="filter-title">Danh mục</div>
+                <div class="filter-title">@L["Search_CategoryTitle"]</div>
                 <div class="filter-radio-list">
                     <label class="filter-label">
                         <input type="radio" name="CategoryId" value="" checked="@(f.CategoryId == null)" />
-                        <span>Tất cả</span>
+                        <span>@L["Search_All"]</span>
                     </label>
                     @foreach (var c in Model.DanhSachDanhMuc)
                     {
                         <label class="filter-label">
                             <input type="radio" name="CategoryId" value="@c.MaDanhMuc" checked="@(f.CategoryId == c.MaDanhMuc)" />
-                            <span>@c.Ten</span>
+                            <span>@HienThi.TenDanhMuc(c.Ten)</span>
                         </label>
                     }
                 </div>
             </div>
 
-            <!-- Khoảng giá: phân khúc cố định, không nhập tay -->
-            <div class="filter-group">
-                <div class="filter-title">Khoảng giá</div>
-                <div class="filter-radio-list">
-                    @for (var i = 0; i < ProductSearchVm.KhoPhanGia.Length; i++)
-                    {
-                        <label class="filter-label">
-                            <input type="radio" name="PriceRange" value="@i" checked="@((f.PriceRange ?? 0) == i)" />
-                            <span>@ProductSearchVm.KhoPhanGia[i].Label</span>
-                        </label>
-                    }
-                </div>
+            @* B-04: hai input range chồng lên nhau thay cho 6 nút radio. Mỗi input vẫn là control thật
+               của form GET nên tắt JS người mua vẫn kéo được từng đầu; JS chỉ chồng chúng thành một dải.
+               Kéo hết cỡ hai đầu = không lọc giá, vì MinPrice/MaxPrice khi đó bằng đúng biên của thang. *@
+            <div class="filter-group" data-gia-slider>
+                <div class="filter-title">@L["Search_PriceTitle"]</div>
+                @if (keoGiaDuoc)
+                {
+                    var nguyenBo = giaToiThieuKe <= giaMin && giaToiDaKe >= giaMax;
+                    <div class="rm-gia-readout" data-gia-readout>@(nguyenBo ? (string)L["Search_AllPrices"] : $"{HienThi.Tien(giaToiThieuKe)} – {HienThi.Tien(giaToiDaKe)}")</div>
+                    <div class="rm-gia-slider">
+                        <div class="rm-gia-track" aria-hidden="true"><span class="rm-gia-band" data-gia-band></span></div>
+                        <input type="range" class="rm-gia-range rm-gia-range-lo" name="MinPrice" data-gia-lo
+                               min="@giaMin" max="@giaMax" step="@buocGia" value="@giaToiThieuKe"
+                               aria-label="@L["Search_PriceMinAria"]" />
+                        <input type="range" class="rm-gia-range rm-gia-range-cao" name="MaxPrice" data-gia-cao
+                               min="@giaMin" max="@giaMax" step="@buocGia" value="@giaToiDaKe"
+                               aria-label="@L["Search_PriceMaxAria"]" />
+                    </div>
+                    <div class="rm-gia-scale">
+                        <span>@HienThi.Tien(giaMin)</span>
+                        <span>@HienThi.Tien(giaMax)</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="form-text">@L["Search_NoPriceScale"]</div>
+                }
             </div>
 
             <!-- Tình trạng -->
             <div class="filter-group">
-                <div class="filter-title">Tình trạng</div>
+                <div class="filter-title">@L["Search_ConditionTitle"]</div>
                 <div class="filter-radio-list">
                     <label class="filter-label">
                         <input type="radio" name="ConditionId" value="" checked="@(f.ConditionId == null)" />
-                        <span>Tất cả</span>
+                        <span>@L["Search_All"]</span>
                     </label>
                     @foreach (var t in Model.DanhSachTinhTrang)
                     {
                         <label class="filter-label">
                             <input type="radio" name="ConditionId" value="@t.MaTinhTrang" checked="@(f.ConditionId == t.MaTinhTrang)" />
-                            <span>@t.Ten</span>
+                            <span>@HienThi.TenTinhTrang(t.Ten)</span>
                         </label>
                     }
                 </div>
             </div>
 
-            <button type="submit" class="btn-rm-primary w-100" style="padding: 10px;">Áp dụng bộ lọc</button>
+            <button type="submit" class="btn-rm-primary w-100" style="padding: 10px;">@L["Search_Apply"]</button>
         </form>
     </aside>
 
     <!-- CỘT KẾT QUẢ SẢN PHẨM -->
     <main>
-        <div class="search-results-header">
-            <div>
-                <h2>@tieuDe</h2>
-                <span class="count-label">@ketQua.TotalItems sản phẩm</span>
-            </div>
-            <div class="sort-select-box">
-                <label for="sortOrder">Sắp xếp:</label>
-                <select id="sortOrder" onchange="location.href=this.selectedOptions[0].dataset.url">
-                    @foreach (var (key, label) in ProductSearchVm.KhoSapXep)
-                    {
-                        <option value="@key" data-url="@LocUrl("sort", key)" selected="@((f.Sort ?? "newest") == key)">@label</option>
-                    }
-                </select>
-            </div>
+        @* B-04: toàn bộ khối này là một partial, và cũng là thứ fetch trả về khi lọc/sắp xếp/đánh trang.
+           Server render một lần cho request thường nên link chia sẻ vẫn y nguyên. *@
+        <div id="ketQuaTimKiem" data-muc-tieu="@Url.Action("Index")">
+            <partial name="_SearchResults" model="Model" />
         </div>
-
-        @if (filterChips.Count > 0)
-        {
-            <div class="rm-active-filters">
-                @foreach (var chip in filterChips)
-                {
-                    <span class="rm-filter-chip">
-                        <span>@chip.Label</span>
-                        <a href="@chip.RemoveUrl" class="rm-chip-remove" title="Bỏ lọc @chip.Label">&times;</a>
-                    </span>
-                }
-                <a asp-action="Index" asp-route-Keyword="@keyword" class="rm-filter-clear">Xóa tất cả bộ lọc</a>
-            </div>
-        }
-
-        @if (ketQua.Items.Count == 0)
-        {
-            <div class="rm-empty-state">
-                <h3>Chưa có sản phẩm nào khớp</h3>
-                <p>Bộ lọc hiện đang quá chặt hoặc khu vực bạn chọn chưa có người bán nào đăng tin.</p>
-                <ol>
-                    <li>Bỏ bớt bộ lọc danh mục, khoảng giá hoặc tình trạng.</li>
-                    <li>Thử từ khóa ngắn hơn, ví dụ "áo khoác" thay vì "áo khoác jeans nữ form rộng".</li>
-                    <li>Chuyển sang khu vực khác hoặc để "Tất cả khu vực".</li>
-                    <li>Chưa tìm được món bạn cần? Bấm "Đăng bán" để người khác hỏi mua món của bạn.</li>
-                </ol>
-                <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap">
-                    <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-rm-outline">Xóa bộ lọc giá và tình trạng</a>
-                    <a asp-action="Index" class="btn-rm-primary">Xem tất cả sản phẩm</a>
-                </div>
-            </div>
-        }
-        else
-        {
-            <!-- Lưới 3 cột chuẩn Ảnh 4 -->
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4" data-rm-stagger>
-                @foreach (var p in ketQua.Items)
-                {
-                    <div class="col">
-                        <partial name="_ProductCard" model="p" />
-                    </div>
-                }
-            </div>
-
-            @if (ketQua.TotalPages > 1)
-            {
-                <partial name="_Pager" model="new PagerVm(ketQua.Page, ketQua.TotalPages)" />
-            }
-        }
     </main>
 </div>
 
 @section Scripts {
     <script src="~/js/khu-vuc.js" asp-append-version="true"></script>
-    <script>
-        document.querySelectorAll('#filterPanel input[type="radio"]').forEach(function(r) {
-            r.addEventListener('change', function() {
-                document.getElementById('filterPanel').submit();
-            });
-        });
-        document.querySelector('#filterPanel #kv-MaTinhThanh')?.addEventListener('change', function() {
-            document.getElementById('filterPanel').submit();
-        });
-        document.querySelector('#filterPanel #kv-MaPhuongXa')?.addEventListener('change', function() {
-            document.getElementById('filterPanel').submit();
-        });
-    </script>
+    <script src="~/js/bo-loc-nhanh.js" asp-append-version="true"></script>
 }

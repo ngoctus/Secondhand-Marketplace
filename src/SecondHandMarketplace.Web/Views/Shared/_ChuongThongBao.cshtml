@@ -1,23 +1,115 @@
-@* Chuông thông báo + số chưa đọc. Người B chèn vào _Layout.cshtml bằng: <partial name="_ChuongThongBao" />
-   Chỉ hiện khi đã đăng nhập. Tự lấy số chưa đọc qua INotificationService, không cần model. *@
+@* Chuông thông báo + Dropdown xem nhanh tại chỗ (Task C-02).
+   Chỉ hiện khi đã đăng nhập. Tự lấy số chưa đọc và 5 thông báo mới nhất qua INotificationService. *@
 @using SecondHandMarketplace.Web.Common
 @using SecondHandMarketplace.Web.Services.Notifications
 @inject INotificationService Notifications
+@{
+    Func<string, string> tenLoai = loai => loai switch
+    {
+        "ORDER" => (string)L["Notify_TypeOrder"],
+        "PRODUCT" => (string)L["Notify_TypeProduct"],
+        _ => (string)L["Notify_TypeSystem"]
+    };
+}
 @if (User.Identity?.IsAuthenticated == true && User.LayNguoiDungId() is int nguoiDungId)
 {
     var chuaDoc = await Notifications.CountUnreadAsync(nguoiDungId);
-    @if (User.IsInRole("ADMIN"))
-    {
-        <a class="iconbtn" asp-area="Admin" asp-controller="Notifications" asp-action="Index" aria-label="Thông báo (@chuaDoc chưa đọc)">
-            <span aria-hidden="true">🔔</span>
+    var recent = await Notifications.GetForUserAsync(nguoiDungId, page: 1, pageSize: 5);
+
+    <div class="rm-notify-wrapper" id="notifyWrapper">
+        <form id="notifyCsrfForm" style="display:none;" aria-hidden="true">
+            @Html.AntiForgeryToken()
+        </form>
+        <button type="button" class="iconbtn rm-notify-bell-btn" id="notifyBellBtn" aria-label="@L["Notify_AriaLabel", chuaDoc]" aria-expanded="false" aria-haspopup="true">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
             <span class="count" id="notifyCount" @(chuaDoc > 0 ? "" : "hidden")>@(chuaDoc > 99 ? "99+" : chuaDoc.ToString())</span>
-        </a>
-    }
-    else
-    {
-    <a class="iconbtn" asp-area="User" asp-controller="Notifications" asp-action="Index" aria-label="Thông báo (@chuaDoc chưa đọc)">
-        <span aria-hidden="true">🔔</span>
-        <span class="count" id="notifyCount" @(chuaDoc > 0 ? "" : "hidden")>@(chuaDoc > 99 ? "99+" : chuaDoc.ToString())</span>
-    </a>
-    }
+        </button>
+
+        @* Dropdown Popover xem nhanh tại chỗ *@
+        <div class="rm-notify-dropdown" id="notifyDropdownMenu" hidden>
+            <div class="rm-notify-drop-head">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h6 class="rm-notify-drop-title mb-0">
+                        <span>@L["Notify_Title"]</span>
+                        <span class="rm-notify-unread-badge" id="notifyUnreadLabel" style="@(chuaDoc > 0 ? "" : "display:none;")">@L["Notify_NewCount", chuaDoc]</span>
+                    </h6>
+                    <button type="button" class="rm-notify-action-btn" id="markAllReadBtn" title="@L["Notify_MarkAllRead"]" @(chuaDoc == 0 ? "disabled" : "")>
+                        <svg viewBox="0 0 20 20" width="13" height="13" fill="currentColor" class="me-1">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        @L["Notify_MarkAll"]
+                    </button>
+                </div>
+            </div>
+
+            <div class="rm-notify-drop-body" id="notifyDropBody">
+                <div class="rm-notify-empty" id="notifyEmptyState" style="@(recent.Items.Count == 0 ? "" : "display:none;")">
+                    <div class="rm-notify-empty-icon"><i class="bi bi-bell" aria-hidden="true"></i></div>
+                    <div class="rm-notify-empty-text">@L["Notify_Empty"]</div>
+                </div>
+
+                <div class="rm-notify-drop-list" id="notifyDropList" style="@(recent.Items.Count == 0 ? "display:none;" : "")">
+                    @foreach (var n in recent.Items)
+                    {
+                        var url = $"/User/Notifications/ChiTiet/{n.MaThongBao}";
+                        var loaiClass = n.Loai.ToLowerInvariant();
+                        <a href="@url" class="rm-notify-item @(!n.DaDoc ? "is-unread" : "")" data-id="@n.MaThongBao" data-unread="@(!n.DaDoc ? "true" : "false")">
+                            <div class="rm-notify-item-icon rm-notify-icon-@loaiClass">
+                                @if (n.Loai == "ORDER")
+                                {
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                }
+                                else if (n.Loai == "PRODUCT")
+                                {
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                                }
+                                else
+                                {
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                }
+                            </div>
+                            <div class="rm-notify-item-main">
+                                <div class="rm-notify-item-title">
+                                    <span>@n.TieuDe</span>
+                                    @if (!n.DaDoc)
+                                    {
+                                        <span class="rm-notify-badge-new">@L["Notify_New"]</span>
+                                    }
+                                </div>
+                                <div class="rm-notify-item-desc">@n.NoiDung</div>
+                                <div class="rm-notify-item-meta">
+                                    <span class="rm-notify-meta-type">@tenLoai(n.Loai)</span>
+                                    <span class="rm-notify-meta-sep">·</span>
+                                    <span class="rm-notify-meta-time">@HienThi.NgayGio(n.NgayTao)</span>
+                                </div>
+                            </div>
+                            @if (!n.DaDoc)
+                            {
+                                <div class="rm-notify-unread-dot" title="@L["Notify_Unread"]"></div>
+                            }
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="rm-notify-drop-foot">
+                @if (User.IsInRole("ADMIN"))
+                {
+                    <a asp-area="Admin" asp-controller="Notifications" asp-action="Index" class="rm-notify-all-link">
+                        @L["Notify_AdminLink"] &rarr;
+                    </a>
+                }
+                else
+                {
+                    <a asp-area="User" asp-controller="Notifications" asp-action="Index" class="rm-notify-all-link">
+                        @L["Notify_ViewAll"] &rarr;
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
 }

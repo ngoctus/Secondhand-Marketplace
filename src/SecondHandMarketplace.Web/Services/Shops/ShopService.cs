@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -10,7 +11,7 @@ using SecondHandMarketplace.Web.Services.AuditLogs;
 
 namespace SecondHandMarketplace.Web.Services.Shops;
 
-public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IShopService
+public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMemoryCache? cache = null) : IShopService
 {
     public Task<CuaHang?> GetByOwnerAsync(int userId, CancellationToken cancellationToken = default) =>
         db.CuaHangs.AsNoTracking().SingleOrDefaultAsync(x => x.MaNguoiDung == userId, cancellationToken);
@@ -67,6 +68,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IS
             ApplyExtras(shop, input, addressDetail, areaLabel, bank);
             try { await db.SaveChangesAsync(cancellationToken); }
             catch (DbUpdateException) { return (false, "Đã tạo cửa hàng nhưng chưa lưu được địa chỉ, vui lòng cập nhật lại."); }
+            HomeCacheHelper.XoaCacheTrangChu(cache);
             return (true, null);
         }
 
@@ -80,6 +82,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IS
         try { await db.SaveChangesAsync(cancellationToken); }
         catch (DbUpdateException) { return (false, "Thông tin cửa hàng không hợp lệ."); }
         await auditLog.LogAsync(userId, "UPDATE_SHOP", "CuaHang", shop.MaCuaHang);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         return (true, null);
     }
 
@@ -99,7 +102,8 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IS
                 Description = x.MoTa,
                 JoinedAtUtc = x.NgayTao,
                 WardName = x.PhuongXa != null ? x.PhuongXa.TenPhuongXa : null,
-                ProvinceName = x.TinhThanh != null ? x.TinhThanh.TenTinhThanh : null
+                ProvinceName = x.TinhThanh != null ? x.TinhThanh.TenTinhThanh : null,
+                CustomAreaLabel = x.KhuVucHienThi
             })
             .SingleOrDefaultAsync(cancellationToken);
         if (shop is null) return null;
@@ -114,13 +118,17 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IS
                 Id = p.MaSanPham,
                 Name = p.Ten,
                 Price = p.Gia ?? 0m,
+                MoTaNgan = p.MoTa,
+                Status = p.TrangThai,
                 ImageUrl = p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
+                ShopId = id,
                 ShopName = p.CuaHang.TenShop,
+                ShopLogoUrl = shop.Logo,
                 ConditionName = p.TinhTrang != null ? p.TinhTrang.Ten : null,
-                CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null
+                CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null,
+                CategoryId = p.MaDanhMuc
             })
             .ToListAsync(cancellationToken);
-        shop.Products = new PagedResult<ProductCardVm>(items, total, page, pageSize);
 
         // Điểm và số đơn đọc từ vw_DiemCuaHang (module C). Chưa có view/đánh giá thì để null, view hiện "Chưa có đánh giá".
         try
@@ -143,6 +151,15 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IS
             // view chưa tồn tại (chưa chạy 11_danhgia.sql) hoặc provider không hỗ trợ SQL thô: bỏ qua điểm.
         }
 
+        foreach (var item in items)
+        {
+            item.MoTaNgan = ProductCardVm.TaoMoTaNgan(item.MoTaNgan);
+            item.KhuVuc = shop.AreaText;
+            item.DiemTrungBinh = shop.AverageRating;
+            item.SoDanhGia = shop.ReviewCount ?? 0;
+        }
+        shop.Products = new PagedResult<ProductCardVm>(items, total, page, pageSize);
+
         return shop;
     }
 
@@ -161,6 +178,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IS
         shop.NgayCapNhat = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await auditLog.LogAsync(actorId, "LOCK_SHOP", "CuaHang", shopId, "SUCCESS", reason);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         return (true, null);
     }
 
@@ -176,6 +194,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog) : IS
         shop.NgayCapNhat = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await auditLog.LogAsync(actorId, "UNLOCK_SHOP", "CuaHang", shopId);
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         return (true, null);
     }
 

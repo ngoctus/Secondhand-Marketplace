@@ -2,7 +2,7 @@
 @inject SecondHandMarketplace.Web.Services.Reviews.IReviewService ReviewService
 
 @{
-    ViewData["Title"] = "Chi tiết đơn hàng " + Model.MaDon;
+    ViewData["Title"] = string.Format(L["OrderDetail_Title"].Value, Model.MaDon);
     var danhGiaHienTai = Model.TrangThai == "COMPLETED"
         ? await ReviewService.LayDanhGiaTheoDonHangAsync(Model.MaDonHang)
         : null;
@@ -23,32 +23,31 @@
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
             <h2 class="h3 fw-bold text-dark mb-1">
-                <i class="bi bi-receipt text-success"></i> Đơn hàng: <span class="font-monospace text-success">#@Model.MaDon</span>
+                <i class="bi bi-receipt text-success"></i> @string.Format(L["OrderDetail_Title"].Value, "") <span class="font-monospace text-success">#@Model.MaDon</span>
             </h2>
-            <div class="text-muted small">Cửa hàng: <strong class="text-dark">@Model.TenShop</strong>
+            <div class="text-muted small">@L["OrderDetail_ShopLabel"] <strong class="text-dark">@Model.TenShop</strong>
                 <a asp-area="User" asp-controller="Reports" asp-action="Tao" asp-route-loai="SHOP" asp-route-id="@Model.MaCuaHang" asp-route-ten="@Model.TenShop"
-                   class="text-danger small ms-2 text-decoration-none" title="Báo cáo cửa hàng vi phạm">
-                    🚩 Báo cáo shop
+                   class="text-danger small ms-2 text-decoration-none" title="@L["OrderDetail_ReportShop"]">
+                    @L["OrderDetail_ReportShop"]
                 </a>
-                | Ngày đặt: @HienThi.NgayGio(Model.NgayTao)</div>
+                | @L["OrderDetail_OrderedDate"] @HienThi.NgayGio(Model.NgayTao)</div>
         </div>
-        <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-            &larr; Về danh sách đơn
+        <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-rm-secondary btn-sm rounded-pill px-3">
+            &larr; @L["OrderDetail_BackToList"]
         </a>
     </div>
     <partial name="_ThongBao" />
 
     @if (!string.IsNullOrWhiteSpace(Model.KhungGioNhan))
     {
-        <div class="alert alert-light border rounded-3"><strong>Khung giờ nhận:</strong> @Model.KhungGioNhan</div>
+        <div class="alert alert-light border rounded-3"><strong>@L["OrderDetail_DeliveryTime"]</strong> @Model.KhungGioNhan</div>
     }
 
     <!-- Thanh trạng thái & Nút thao tác -->
-
     <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-                <span class="text-muted small me-2">Trạng thái đơn:</span>
+                <span class="text-muted small me-2">@L["OrderDetail_StatusLabel"]</span>
                 <span class="badge @(Model.TrangThai switch {
                     "PENDING" => "bg-warning text-dark",
                     "CONFIRMED" => "bg-info text-dark",
@@ -62,7 +61,7 @@
                 </span>
                 @if (!string.IsNullOrEmpty(Model.LyDoHuy))
                 {
-                    <div class="small text-danger mt-1">Lý do hủy: @Model.LyDoHuy</div>
+                    <div class="small text-danger mt-1">@L["OrderDetail_CancelReason"] @Model.LyDoHuy</div>
                 }
             </div>
 
@@ -71,33 +70,32 @@
                 @if (Model.CoTheHuy)
                 {
                     <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" onclick="toggleHuyDon()">
-                        <i class="bi bi-x-circle me-1"></i> Hủy đơn hàng
+                        <i class="bi bi-x-circle me-1"></i> @L["OrderDetail_CancelOrderBtn"]
                     </button>
                 }
                 @if (Model.CoTheXacNhanNhanHang)
                 {
                     <form asp-area="User" asp-controller="Orders" asp-action="XacNhanDaNhanHang" method="post" class="d-inline"
-                          onsubmit="return confirm('Bạn xác nhận đã nhận được hàng đúng như mô tả và hài lòng với sản phẩm?');">
+                          onsubmit="return confirm('@L["OrderDetail_ConfirmReceivedPrompt"].Value');">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="maDonHang" value="@Model.MaDonHang" />
-                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold"
-                                style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
-                            <i class="bi bi-check2-all me-1"></i> Đã nhận được hàng
+                        <button type="submit" class="btn btn-rm-primary btn-sm rounded-pill px-3 fw-semibold">
+                            <i class="bi bi-check2-all me-1"></i> @L["OrderDetail_ConfirmReceivedBtn"]
                         </button>
                     </form>
                 }
                 @if (Model.MaTranhChap.HasValue)
                 {
                     <a asp-area="User" asp-controller="Disputes" asp-action="ChiTiet" asp-route-id="@Model.MaTranhChap.Value"
-                       class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
-                        <i class="bi bi-shield-check me-1"></i> Xem tiến độ khiếu nại
+                       class="btn btn-rm-outline btn-sm rounded-pill px-3 fw-semibold">
+                        <i class="bi bi-shield-check me-1"></i> @L["OrderDetail_ViewDispute"]
                     </a>
                 }
                 else if (Model.CoTheMoTranhChap)
                 {
                     <a asp-area="User" asp-controller="Disputes" asp-action="Tao" asp-route-maDonHang="@Model.MaDonHang"
                        class="btn btn-outline-warning text-dark btn-sm rounded-pill px-3 fw-semibold">
-                        <i class="bi bi-shield-exclamation me-1"></i> Khiếu nại / Tranh chấp
+                        <i class="bi bi-shield-exclamation me-1"></i> @L["OrderDetail_OpenDispute"]
                     </a>
                 }
                 @if (Model.TrangThai == "COMPLETED")
@@ -106,13 +104,13 @@
                     {
                         <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 fw-semibold text-dark shadow-sm"
                                 data-bs-toggle="modal" data-bs-target="#modalDanhGia">
-                            <i class="bi bi-star-fill text-dark me-1"></i> Đánh giá người bán
+                            <i class="bi bi-star-fill text-dark me-1"></i> @L["OrderDetail_RateSeller"]
                         </button>
                     }
                     else
                     {
                         <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-2 rounded-pill small">
-                            <i class="bi bi-star-fill text-warning me-1"></i> Đã đánh giá (@danhGiaHienTai.SoSao ★)
+                            <i class="bi bi-star-fill text-warning me-1"></i> @string.Format(L["OrderDetail_RatedBadge"].Value, danhGiaHienTai.SoSao)
                         </span>
                     }
                 }
@@ -124,26 +122,25 @@
             <span>@huongDanTrangThai
                 @if (Model.PhuongThucThanhToan == "BANK_TRANSFER" && Model.TrangThaiThanhToan != "PAID" && Model.TrangThai != "CANCELLED")
                 {
-                    <text> Shop cần kiểm tra giao dịch chuyển khoản và xác nhận riêng trạng thái thanh toán.</text>
+                    <text> @L["OrderDetail_BankTransferNotice"]</text>
                 }
             </span>
         </div>
 
         <!-- Khung xác nhận hủy đơn inline -->
         <div id="boxHuyDon" class="mt-3 p-3 bg-light rounded-3 border border-danger-subtle" style="display: none;">
-
             <form asp-area="User" asp-controller="Orders" asp-action="HuyDon" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="maDonHang" value="@Model.MaDonHang" />
-                <h6 class="text-danger fw-bold mb-2"><i class="bi bi-exclamation-triangle"></i> Xác nhận hủy đơn hàng</h6>
-                <p class="small text-secondary mb-2">Bạn có chắc chắn muốn hủy đơn hàng này không? Sản phẩm sẽ được đưa lại lên sàn để người khác có thể mua.</p>
+                <h6 class="text-danger fw-bold mb-2"><i class="bi bi-exclamation-triangle"></i> @L["OrderDetail_CancelModalTitle"]</h6>
+                <p class="small text-secondary mb-2">@L["OrderDetail_CancelModalDesc"]</p>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold small">Lý do hủy đơn <span class="text-danger">*</span></label>
-                    <textarea name="lyDo" rows="2" class="form-control form-control-sm rounded-2" required placeholder="Nhập lý do bạn muốn hủy đơn..."></textarea>
+                    <label class="form-label fw-semibold small">@L["OrderDetail_CancelReasonLabel"] <span class="text-danger">*</span></label>
+                    <textarea name="lyDo" rows="2" class="form-control form-control-sm rounded-2" required placeholder="@L["OrderDetail_CancelReasonPlaceholder"].Value"></textarea>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3">Xác nhận hủy ngay</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="toggleHuyDon()">Đóng</button>
+                    <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3">@L["OrderDetail_CancelConfirmBtn"]</button>
+                    <button type="button" class="btn btn-rm-secondary btn-sm rounded-pill px-3" onclick="toggleHuyDon()">@L["OrderDetail_CloseBtn"]</button>
                 </div>
             </form>
         </div>
@@ -154,10 +151,10 @@
         <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4 border-start border-warning border-4">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                 <div class="fw-bold text-dark">
-                    <i class="bi bi-star-fill text-warning me-1"></i> Đánh giá của bạn dành cho shop @Model.TenShop
+                    <i class="bi bi-star-fill text-warning me-1"></i> @string.Format(L["OrderDetail_YourReviewTitle"].Value, Model.TenShop)
                 </div>
                 <div class="small text-muted">
-                    Ngày gửi: @HienThi.NgayGio(danhGiaHienTai.NgayTao)
+                    @L["OrderDetail_ReviewSentDate"] @HienThi.NgayGio(danhGiaHienTai.NgayTao)
                 </div>
             </div>
             <div class="d-flex align-items-center gap-1 mb-2">
@@ -172,14 +169,14 @@
                         <i class="bi bi-star text-secondary fs-5 opacity-50"></i>
                     }
                 }
-                <span class="ms-2 fw-semibold text-dark small">(@danhGiaHienTai.SoSao / 5 sao)</span>
+                <span class="ms-2 fw-semibold text-dark small">@string.Format(L["OrderDetail_ReviewStars"].Value, danhGiaHienTai.SoSao)</span>
                 @if (danhGiaHienTai.TrangThai == "VISIBLE")
                 {
-                    <span class="badge bg-success-subtle text-success rounded-pill ms-2" style="font-size: 11px;">Đang hiển thị</span>
+                    <span class="badge bg-success-subtle text-success rounded-pill ms-2" style="font-size: 11px;">@L["OrderDetail_ReviewVisible"]</span>
                 }
                 else
                 {
-                    <span class="badge bg-danger-subtle text-danger rounded-pill ms-2" style="font-size: 11px;" title="Đánh giá bị ẩn bởi quản trị viên">Đã bị ẩn</span>
+                    <span class="badge bg-danger-subtle text-danger rounded-pill ms-2" style="font-size: 11px;" title="Đánh giá bị ẩn bởi quản trị viên">@L["OrderDetail_ReviewHidden"]</span>
                 }
             </div>
             @if (!string.IsNullOrWhiteSpace(danhGiaHienTai.NoiDung))
@@ -188,7 +185,7 @@
             }
             else
             {
-                <div class="text-muted fst-italic small bg-light p-2 rounded-2">Không có nhận xét kèm theo.</div>
+                <div class="text-muted fst-italic small bg-light p-2 rounded-2">@L["OrderDetail_ReviewNoComment"]</div>
             }
         </div>
     }
@@ -196,27 +193,25 @@
     <!-- Thông tin người nhận & Thanh toán -->
     <div class="row g-4 mb-4">
         <div class="col-md-6">
-
             <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
-                <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-geo-alt text-danger me-1"></i> @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Thông tin điểm hẹn trực tiếp" : "Thông tin giao hàng")</h6>
-                <div class="small mb-2"><span class="text-muted">Hình thức nhận:</span> <strong class="text-primary">@HienThi.TenHinhThucNhan(Model.HinhThucNhan)</strong></div>
-                <div class="small mb-2"><span class="text-muted">@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Người hẹn:" : "Người nhận:")</span> <strong class="text-dark">@Model.TenNguoiNhan</strong></div>
-                <div class="small mb-2"><span class="text-muted">Số điện thoại:</span> <strong class="text-dark">@Model.SoDienThoaiNhan</strong></div>
-                <div class="small"><span class="text-muted">@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Địa điểm hẹn:" : "Địa chỉ nhận:")</span> <span class="text-dark">@Model.DiaChiNhan</span></div>
+                <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-geo-alt text-danger me-1"></i> @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? L["OrderDetail_MeetupInfo"].Value : L["OrderDetail_DeliveryInfo"].Value)</h6>
+                <div class="small mb-2"><span class="text-muted">@L["OrderDetail_FulfillmentMethod"]</span> <strong class="text-primary">@HienThi.TenHinhThucNhan(Model.HinhThucNhan)</strong></div>
+                <div class="small mb-2"><span class="text-muted">@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? L["OrderDetail_MeetupPerson"].Value : L["OrderDetail_ReceiverPerson"].Value)</span> <strong class="text-dark">@Model.TenNguoiNhan</strong></div>
+                <div class="small mb-2"><span class="text-muted">@L["OrderDetail_PhoneNumber"]</span> <strong class="text-dark">@Model.SoDienThoaiNhan</strong></div>
+                <div class="small"><span class="text-muted">@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? L["OrderDetail_MeetupPlace"].Value : L["OrderDetail_DeliveryAddress"].Value)</span> <span class="text-dark">@Model.DiaChiNhan</span></div>
             </div>
         </div>
         <div class="col-md-6">
-
             <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
-                <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-credit-card text-success me-1"></i> Thanh toán</h6>
+                <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-credit-card text-success me-1"></i> @L["OrderDetail_PaymentSection"]</h6>
                 <div class="small mb-2">
-                    <span class="text-muted">Phương thức:</span>
+                    <span class="text-muted">@L["OrderDetail_PaymentMethodLabel"]</span>
                     <strong class="text-dark">
                         @(Model.PhuongThucThanhToan == "COD" ? "Thanh toán khi nhận hàng (COD)" : Model.PhuongThucThanhToan == "BANK_TRANSFER" ? "Chuyển khoản VietQR" : "Trực tuyến")
                     </strong>
                 </div>
                 <div class="small mb-2">
-                    <span class="text-muted">Trạng thái thanh toán:</span>
+                    <span class="text-muted">@L["OrderDetail_PaymentStatusLabel"]</span>
                     <span class="badge @(Model.TrangThaiThanhToan == "PAID" ? "bg-success" : Model.TrangThaiThanhToan == "REFUNDED" ? "bg-info text-dark" : "bg-warning text-dark") rounded-pill px-2 py-1 small">
                         @HienThi.TrangThaiThanhToan(Model.TrangThaiThanhToan)
                     </span>
@@ -224,8 +219,8 @@
                 @if (Model.PhuongThucThanhToan == "BANK_TRANSFER" && Model.TrangThaiThanhToan != "PAID" && Model.TrangThai != "CANCELLED")
                 {
                     <div class="mt-3 pt-2 border-top">
-                        <a href="#vietqrSection" class="btn btn-outline-primary btn-sm rounded-pill px-3 w-100">
-                            <i class="bi bi-qr-code-scan me-1"></i> Xem mã VietQR chuyển khoản
+                        <a href="#vietqrSection" class="btn btn-rm-outline btn-sm rounded-pill px-3 w-100">
+                            <i class="bi bi-qr-code-scan me-1"></i> @L["OrderDetail_ViewVietQrBtn"]
                         </a>
                     </div>
                 }
@@ -245,8 +240,7 @@
                     SoTaiKhoan = Model.ThanhToanShop.SoTaiKhoan!,
                     ChuTaiKhoan = Model.ThanhToanShop.TenChuTaiKhoan!,
                     MaDonHang = Model.MaDonHang,
-                    MaDon = Model.MaDon,
-                    ChoPhepXacNhan = false,
+                    ChoPhepXacNhan = true,
                     ReturnUrl = Context.Request.Path
                 }' />
             }
@@ -260,8 +254,7 @@
                     SoTaiKhoan = "119002953584",
                     ChuTaiKhoan = "PHAN HIEU TRUONG DH GTVT TAI TPHCM",
                     MaDonHang = Model.MaDonHang,
-                    MaDon = Model.MaDon,
-                    ChoPhepXacNhan = false,
+                    ChoPhepXacNhan = true,
                     ReturnUrl = Context.Request.Path
                 }' />
             }
@@ -269,9 +262,8 @@
     }
 
     <!-- Danh sách món hàng trong đơn -->
-
     <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4">
-        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom">Sản phẩm trong đơn hàng</h6>
+        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom">@L["OrderDetail_ProductsTitle"]</h6>
         @foreach (var sp in Model.DanhSachSanPham)
         {
             <div class="d-flex align-items-center gap-3 py-2 border-bottom">
@@ -283,7 +275,7 @@
                             @sp.TenSanPham
                         </a>
                     </div>
-                    <div class="text-muted small" style="font-size: 11px;">Số lượng: 1 (đồ cũ duy nhất)</div>
+                    <div class="text-muted small" style="font-size: 11px;">@L["OrderDetail_UniqueItemNote"]</div>
                 </div>
                 <div class="fw-bold text-success text-nowrap">@sp.Gia.ToString("N0") ₫</div>
             </div>
@@ -293,15 +285,15 @@
         <div class="row justify-content-end pt-3">
             <div class="col-md-5">
                 <div class="d-flex justify-content-between mb-1 small">
-                    <span class="text-muted">Tiền hàng:</span>
+                    <span class="text-muted">@L["OrderDetail_ItemsSubtotal"]</span>
                     <strong class="text-dark">@Model.TienHang.ToString("N0") ₫</strong>
                 </div>
                 <div class="d-flex justify-content-between mb-1 small">
-                    <span class="text-muted">Phí vận chuyển:</span>
-                    <strong class="text-success">@(Model.PhiVanChuyen == 0 ? "Miễn phí" : Model.PhiVanChuyen.ToString("N0") + " ₫")</strong>
+                    <span class="text-muted">@L["OrderDetail_ShippingFeeLabel"]</span>
+                    <strong class="text-success">@(Model.PhiVanChuyen == 0 ? L["OrderDetail_FreeShipping"].Value : Model.PhiVanChuyen.ToString("N0") + " ₫")</strong>
                 </div>
                 <div class="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                    <span class="fw-bold text-dark">Tổng tiền:</span>
+                    <span class="fw-bold text-dark">@L["OrderDetail_TotalAmount"]</span>
                     <span class="h5 fw-bold text-success mb-0">@Model.TongTien.ToString("N0") ₫</span>
                 </div>
             </div>
@@ -309,12 +301,11 @@
     </div>
 
     <!-- Lịch sử trạng thái đơn hàng -->
-
     <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
-        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-clock-history text-secondary me-1"></i> Lịch sử trạng thái đơn hàng</h6>
+        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-clock-history text-secondary me-1"></i> @L["OrderDetail_TimelineTitle"]</h6>
         @if (!Model.LichSuTrangThai.Any())
         {
-            <div class="text-muted small">Chưa có lịch sử cập nhật.</div>
+            <div class="text-muted small">@L["OrderDetail_TimelineEmpty"]</div>
         }
         else
         {
@@ -329,7 +320,7 @@
                         <div class="text-muted small" style="font-size: 11px;">@HienThi.NgayGioGiay(ls.ThoiGian)</div>
                         @if (!string.IsNullOrEmpty(ls.LyDo))
                         {
-                            <div class="text-secondary small mt-1">Ghi chú: @ls.LyDo</div>
+                            <div class="text-secondary small mt-1">@L["OrderDetail_TimelineNote"] @ls.LyDo</div>
                         }
                     </div>
                 }
@@ -351,20 +342,20 @@
 
                     <div class="modal-header border-0 pb-0">
                         <h5 class="modal-title fw-bold" id="modalDanhGiaLabel">
-                            <i class="bi bi-star-fill text-warning me-1"></i> Đánh giá người bán
+                            <i class="bi bi-star-fill text-warning me-1"></i> @L["OrderDetail_RateModalTitle"]
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["OrderDetail_CloseBtn"]"></button>
                     </div>
 
                     <div class="modal-body py-3">
                         <div class="text-center mb-3">
                             <div class="fw-bold text-dark fs-5">@Model.TenShop</div>
-                            <div class="text-muted small">Đơn hàng: <span class="font-monospace">#@Model.MaDon</span></div>
+                            <div class="text-muted small">@string.Format(L["OrderDetail_RateModalOrder"].Value, Model.MaDon)</div>
                         </div>
 
                         <!-- Chọn số sao trực quan -->
                         <div class="mb-3 text-center">
-                            <label class="form-label fw-semibold small text-muted d-block">Mức độ hài lòng của bạn</label>
+                            <label class="form-label fw-semibold small text-muted d-block">@L["OrderDetail_RateSatisfaction"]</label>
                             <div class="d-inline-flex gap-2 justify-content-center" id="starRatingContainer">
                                 @for (int i = 1; i <= 5; i++)
                                 {
@@ -374,23 +365,22 @@
                                 }
                             </div>
                             <input type="hidden" name="SoSao" id="inputSoSao" value="5" required />
-                            <div class="small fw-semibold text-warning mt-1" id="starRatingText">5 sao - Rất hài lòng</div>
+                            <div class="small fw-semibold text-warning mt-1" id="starRatingText">@L["OrderDetail_RateStar5"]</div>
                         </div>
 
                         <!-- Nhận xét chi tiết -->
                         <div class="mb-2">
-                            <label class="form-label fw-semibold small">Nhận xét chi tiết (tùy chọn)</label>
+                            <label class="form-label fw-semibold small">@L["OrderDetail_RateCommentLabel"]</label>
                             <textarea name="NoiDung" class="form-control rounded-3" rows="4" maxlength="1000"
-                                      placeholder="Hãy chia sẻ trải nghiệm của bạn về tình trạng sản phẩm, mức độ đúng như mô tả và sự nhiệt tình của người bán..."></textarea>
-                            <div class="form-text text-end small">Tối đa 1.000 ký tự</div>
+                                      placeholder="@L["OrderDetail_RateCommentPlaceholder"].Value"></textarea>
+                            <div class="form-text text-end small">@L["OrderDetail_RateCommentMax"]</div>
                         </div>
                     </div>
 
                     <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-success rounded-pill px-4 fw-semibold"
-                                style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
-                            Gửi đánh giá
+                        <button type="button" class="btn btn-rm-secondary rounded-pill px-4" data-bs-dismiss="modal">@L["OrderDetail_RateCancelBtn"]</button>
+                        <button type="submit" class="btn btn-rm-primary rounded-pill px-4 fw-semibold">
+                            @L["OrderDetail_RateSubmitBtn"]
                         </button>
                     </div>
                 </form>

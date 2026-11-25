@@ -31,6 +31,15 @@ public class FakeAuthService : IAuthService
         return Task.FromResult(user);
     }
 
+    public Task<AuthStatusResult> AuthenticateWithStatusAsync(string email, string password, CancellationToken cancellationToken = default)
+    {
+        var user = Users.FirstOrDefault(u => u.Email == email.Trim().ToLowerInvariant());
+        if (user is null) return Task.FromResult(AuthStatusResult.InvalidCredentials());
+        if (string.Equals(user.TrangThai, "LOCKED", StringComparison.OrdinalIgnoreCase))
+            return Task.FromResult(AuthStatusResult.AccountLocked(user));
+        return Task.FromResult(AuthStatusResult.Success(user));
+    }
+
     public Task<(bool Success, string? Error, NguoiDung? User)> RegisterAsync(string fullName, string email, string phone, string password, CancellationToken cancellationToken = default)
     {
         var normEmail = email.Trim().ToLowerInvariant();

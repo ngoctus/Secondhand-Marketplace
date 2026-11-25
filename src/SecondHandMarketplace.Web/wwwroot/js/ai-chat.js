@@ -1,6 +1,6 @@
 // Widget Chatbox AI của Re:market. Tự dựng giao diện bằng DOM API (textContent, không innerHTML) nên nội dung
 // từ AI hay từ người dùng không thể chèn HTML/script. Không lưu lịch sử hội thoại ở đâu cả.
-// Được nhúng bởi Views/Shared/_AiChatWidget.cshtml (kèm data-chat-url và data-status-url).
+// Được nhúng bởi Views/Shared/_AiChatWidget.cshtml (kèm data-chat-url, data-status-url, data-csrf-token, data-lang).
 (() => {
     'use strict';
 
@@ -10,12 +10,53 @@
     const CHAT_URL = script.dataset.chatUrl;
     const STATUS_URL = script.dataset.statusUrl;
     const CSRF_TOKEN = script.dataset.csrfToken || '';   // Antiforgery token do _AiChatWidget.cshtml cấp cho phiên Cookie
+    const LANG = script.dataset.lang === 'en' ? 'en' : 'vi';
     const MAX_LENGTH = 1000;            // khớp AiChatService.MessageMaxLength
     const CLIENT_TIMEOUT_MS = 90000;    // lớn hơn thời gian chờ hàng đợi (30 giây) + xử lý (50 giây) phía máy chủ
     const MAX_ERROR_LENGTH = 300;
     const SITE_BASE = CHAT_URL.replace(/api\/ai\/chat\/?$/i, '');
     // [Tên sản phẩm](/Products/Details/<số>) hoặc chỉ đường dẫn trần; nhóm 1 = tên, nhóm 2/3 = mã sản phẩm.
     const PRODUCT_PATH = /\[([^\]\n]{1,120})\]\(\/Products\/Details\/(\d{1,9})\)|\/Products\/Details\/(\d{1,9})/g;
+
+    const T = LANG === 'en'
+        ? {
+            toggleLabel: 'AI Assistant',
+            dialogLabel: 'Re:market AI Assistant',
+            title: 'AI Assistant',
+            subtitle: 'Ask about products on Re:market',
+            closeLabel: 'Close AI assistant',
+            placeholder: 'Ask a question…',
+            inputLabel: 'Message content',
+            sendLabel: 'Send',
+            note: 'AI can make mistakes. Please double-check item details before buying.',
+            typing: 'Thinking',
+            welcome: 'Hi! I can help you search for products, recommend items within your budget, or draft a listing description. How can I help?',
+            loginRequired: 'Please sign in to use the AI assistant.',
+            disabled: 'The AI assistant is temporarily disabled.',
+            genericError: 'Something went wrong. Please try again later.',
+            tooLong: (max) => `Messages can be at most ${max} characters.`,
+            timeout: 'The assistant took too long to respond. Please try again.',
+            networkError: 'Could not connect to the server. Please check your connection and try again.'
+        }
+        : {
+            toggleLabel: 'Trợ lý AI',
+            dialogLabel: 'Trợ lý AI Re:market',
+            title: 'Trợ lý AI',
+            subtitle: 'Hỏi về sản phẩm trên Re:market',
+            closeLabel: 'Đóng trợ lý AI',
+            placeholder: 'Nhập câu hỏi của bạn…',
+            inputLabel: 'Nội dung tin nhắn',
+            sendLabel: 'Gửi',
+            note: 'Trợ lý AI có thể nhầm. Hãy kiểm tra lại thông tin trước khi mua.',
+            typing: 'Đang xử lý',
+            welcome: 'Xin chào! Mình có thể giúp bạn tìm sản phẩm, gợi ý theo nhu cầu và ngân sách, hoặc viết mô tả bán hàng. Bạn cần gì nào?',
+            loginRequired: 'Bạn cần đăng nhập để dùng trợ lý AI.',
+            disabled: 'Trợ lý AI đang tạm tắt.',
+            genericError: 'Đã xảy ra lỗi. Vui lòng thử lại sau.',
+            tooLong: (max) => 'Tin nhắn tối đa ' + max + ' ký tự.',
+            timeout: 'Trợ lý phản hồi quá lâu. Bạn thử lại nhé.',
+            networkError: 'Không kết nối được máy chủ. Vui lòng kiểm tra mạng và thử lại.'
+        };
 
     const el = (tag, className, text) => {
         const node = document.createElement(tag);
@@ -32,20 +73,20 @@
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-controls', 'rmchat-panel');
-    toggle.append(el('span', 'rmchat-toggle-icon', '✦'), el('span', 'rmchat-toggle-label', 'Trợ lý AI'));
+    toggle.append(el('span', 'rmchat-toggle-icon', '✦'), el('span', 'rmchat-toggle-label', T.toggleLabel));
 
     const panel = el('section', 'rmchat-panel');
     panel.id = 'rmchat-panel';
     panel.hidden = true;
     panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', 'Trợ lý AI Re:market');
+    panel.setAttribute('aria-label', T.dialogLabel);
 
     const header = el('div', 'rmchat-header');
     const heading = el('div', 'rmchat-heading');
-    heading.append(el('strong', 'rmchat-title', 'Trợ lý AI'), el('span', 'rmchat-subtitle', 'Hỏi về sản phẩm trên Re:market'));
+    heading.append(el('strong', 'rmchat-title', T.title), el('span', 'rmchat-subtitle', T.subtitle));
     const closeButton = el('button', 'rmchat-close', '×');
     closeButton.type = 'button';
-    closeButton.setAttribute('aria-label', 'Đóng trợ lý AI');
+    closeButton.setAttribute('aria-label', T.closeLabel);
     header.append(heading, closeButton);
 
     const log = el('div', 'rmchat-log');
@@ -56,13 +97,13 @@
     const input = el('textarea', 'rmchat-input');
     input.rows = 1;
     input.maxLength = MAX_LENGTH;
-    input.placeholder = 'Nhập câu hỏi của bạn…';
-    input.setAttribute('aria-label', 'Nội dung tin nhắn');
-    const sendButton = el('button', 'rmchat-send', 'Gửi');
+    input.placeholder = T.placeholder;
+    input.setAttribute('aria-label', T.inputLabel);
+    const sendButton = el('button', 'rmchat-send', T.sendLabel);
     sendButton.type = 'button';
     composer.append(input, sendButton);
 
-    const note = el('p', 'rmchat-note', 'Trợ lý AI có thể nhầm. Hãy kiểm tra lại thông tin trước khi mua.');
+    const note = el('p', 'rmchat-note', T.note);
 
     panel.append(header, log, composer, note);
     root.append(panel, toggle);
@@ -100,7 +141,7 @@
         typingRow = el('div', 'rmchat-msg rmchat-msg-bot rmchat-typing');
         typingRow.setAttribute('role', 'status');
         const bubble = el('div', 'rmchat-bubble');
-        bubble.append(el('span', 'rmchat-typing-text', 'Đang xử lý'), el('span', 'rmchat-dot'), el('span', 'rmchat-dot'), el('span', 'rmchat-dot'));
+        bubble.append(el('span', 'rmchat-typing-text', T.typing), el('span', 'rmchat-dot'), el('span', 'rmchat-dot'), el('span', 'rmchat-dot'));
         typingRow.append(bubble);
         log.append(typingRow);
         scrollToEnd();
@@ -139,7 +180,7 @@
         toggle.classList.toggle('is-open', open);
         if (open) {
             if (log.children.length === 0) {
-                addMessage('bot', 'Xin chào! Mình có thể giúp bạn tìm sản phẩm, gợi ý theo nhu cầu và ngân sách, hoặc viết mô tả bán hàng. Bạn cần gì nào?');
+                addMessage('bot', T.welcome);
             }
             if (!input.disabled) input.focus();
         } else if (restoreFocus) {
@@ -159,11 +200,11 @@
     const handleFailure = (response, body) => {
         const serverMessage = safeServerMessage(body);
         if (response.status === 401) {
-            addMessage('error', 'Bạn cần đăng nhập để dùng trợ lý AI.');
+            addMessage('error', T.loginRequired);
         } else if (response.status === 503 && body && body.data && body.data.disabled === true) {
-            lock(serverMessage || 'Trợ lý AI đang tạm tắt.');
+            lock(serverMessage || T.disabled);
         } else {
-            addMessage('error', serverMessage || 'Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            addMessage('error', serverMessage || T.genericError);
         }
     };
 
@@ -173,7 +214,7 @@
         const text = input.value.trim();
         if (!text) { input.focus(); return; }
         if (text.length > MAX_LENGTH) {
-            addMessage('error', 'Tin nhắn tối đa ' + MAX_LENGTH + ' ký tự.');
+            addMessage('error', T.tooLong(MAX_LENGTH));
             return;
         }
 
@@ -191,7 +232,7 @@
                 headers: Object.assign(
                     { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     CSRF_TOKEN ? { 'RequestVerificationToken': CSRF_TOKEN } : {}),
-                body: JSON.stringify({ message: text }),
+                body: JSON.stringify({ message: text, language: LANG }),
                 signal: controller.signal
             });
             const body = await readJson(response);
@@ -201,9 +242,7 @@
                 handleFailure(response, body);
             }
         } catch (error) {
-            addMessage('error', error && error.name === 'AbortError'
-                ? 'Trợ lý phản hồi quá lâu. Bạn thử lại nhé.'
-                : 'Không kết nối được máy chủ. Vui lòng kiểm tra mạng và thử lại.');
+            addMessage('error', error && error.name === 'AbortError' ? T.timeout : T.networkError);
         } finally {
             clearTimeout(timer);
             setBusy(false);

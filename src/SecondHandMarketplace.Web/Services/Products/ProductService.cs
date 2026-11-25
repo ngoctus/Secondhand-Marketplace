@@ -49,7 +49,8 @@ public class ProductService : IProductService
                 p.CuaHang.KhuVucHienThi,
                 p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault(),
                 p.TinhTrang != null ? p.TinhTrang.Ten : null,
-                p.DanhMuc != null ? p.DanhMuc.Ten : null))
+                p.DanhMuc != null ? p.DanhMuc.Ten : null,
+                p.MaDanhMuc))
             .ToListAsync();
 
         var items = await ProductCardMapper.TaoDanhSachAsync(duLieuTho, _danhGia);
@@ -68,10 +69,27 @@ public class ProductService : IProductService
         };
     }
 
+    /// <summary>
+    /// Hai đầu thanh trượt giá (B-04): biên thấp/cao nhất của tập tin đang hiển thị công khai.
+    /// Cố ý không áp các bộ lọc khác để slider không đổi thang mỗi lần người mua đổi danh mục hay khu vực.
+    /// </summary>
+    public async Task<(decimal Min, decimal Max)> LayBienGiaAsync(CancellationToken cancellationToken = default)
+    {
+        var bien = await _db.SanPhams.AsNoTracking()
+            .Where(p => p.TrangThai == "ACTIVE" && !p.DaXoa
+                        && p.CuaHang.TrangThai == "ACTIVE"
+                        && p.CuaHang.NguoiDung.TrangThai == "ACTIVE"
+                        && p.Gia != null)
+            .GroupBy(p => 1)
+            .Select(g => new { Min = g.Min(p => p.Gia), Max = g.Max(p => p.Gia) })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return bien is null ? (0m, 0m) : (bien.Min ?? 0m, bien.Max ?? 0m);
+    }
+
     // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
     // cửa hàng và chủ cửa hàng đều đang hoạt động.
-    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f)
-    {
+    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f)    {
         var query = _db.SanPhams
             .AsNoTracking()
             .Include(p => p.CuaHang)
@@ -180,6 +198,28 @@ public class ProductService : IProductService
             : imageUrl;
     }
 
+    // Xóa file ảnh + thumbnail trên đĩa sau khi bản ghi đã bị xóa (best effort).
+    // Chỉ đụng tới thư mục upload của người dùng, ảnh seed nằm ngoài nên không bị xóa nhầm.
+    private void XoaFileAnh(string? duongDan)
+    {
+        if (_environment?.WebRootPath is null || string.IsNullOrWhiteSpace(duongDan)) return;
+
+        var goc = Path.GetFullPath(Path.Combine(_environment.WebRootPath, "uploads", "products"));
+        var tuongDoi = duongDan.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var duongDanDia = Path.GetFullPath(Path.Combine(_environment.WebRootPath, tuongDoi));
+        if (!duongDanDia.StartsWith(goc + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return;
+
+        var thumbPath = Path.Combine(Path.GetDirectoryName(duongDanDia)!,
+            Path.GetFileNameWithoutExtension(duongDanDia) + "-thumb.webp");
+        try
+        {
+            if (System.IO.File.Exists(duongDanDia)) System.IO.File.Delete(duongDanDia);
+            if (System.IO.File.Exists(thumbPath)) System.IO.File.Delete(thumbPath);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
     public async Task<ProductDetailVm?> GetDetailAsync(int id)
     {
         // Giống view vw_SanPhamChiTietCongKhai: xem được ACTIVE, RESERVED, SOLD.
@@ -207,7 +247,7 @@ public class ProductService : IProductService
                 ShopDescription = p.CuaHang.MoTa,
                 ShopLogo = p.CuaHang.Logo,
                 ShopKhuVuc = p.CuaHang.KhuVucHienThi,
-                ImageUrls = p.Anh.OrderBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()
+                ImageUrls = p.Anh.OrderByDescending(a => a.LaAnhChinh).ThenBy(a => a.ThuTu).Select(a => a.DuongDan).ToList()
             })
             .FirstOrDefaultAsync();
 
@@ -386,10 +426,13 @@ public class ProductService : IProductService
         sp.Gia = form.Gia;
         sp.NgayCapNhat = DateTime.UtcNow;
 
-        var thuTu = sp.Anh.Count;
-        if (thuTu < SoAnhToiDa)
+        // Đếm theo số ảnh để giới hạn 10, nhưng thứ tự mới phải nối sau ThuTu lớn nhất:
+        // xóa một ảnh ở giữa để lại khoảng trống (2,3,4) nên Count+1 sẽ trùng unique key.
+        var soAnhHienCo = sp.Anh.Count;
+        var thuTu = soAnhHienCo == 0 ? 0 : sp.Anh.Max(a => a.ThuTu);
+        if (soAnhHienCo < SoAnhToiDa)
         {
-            foreach (var a in anhMoi.Take(SoAnhToiDa - thuTu))
+            foreach (var a in anhMoi.Take(SoAnhToiDa - soAnhHienCo))
             {
                 thuTu++;
                 sp.Anh.Add(new AnhSanPham
@@ -564,23 +607,26 @@ public class ProductService : IProductService
         return (true, null);
     }
 
-    public async Task<(bool Success, string? Error)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default)
+    public async Task<(bool Success, string? Error, int? MaAnhChinhMoi)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default)
     {
         var (loi, shop) = await KiemTraTruDangBanAsync(maNguoiDung, cancellationToken);
-        if (loi is not null) return (false, loi);
+        if (loi is not null) return (false, loi, null);
 
         var anh = await _db.AnhSanPhams
             .Include(a => a.SanPham)
             .FirstOrDefaultAsync(a => a.MaAnhSP == maAnh && a.MaSanPham == maSanPham
                                       && a.SanPham.MaCuaHang == shop!.MaCuaHang && !a.SanPham.DaXoa, cancellationToken);
-        if (anh is null) return (false, "Không tìm thấy ảnh.");
+        if (anh is null) return (false, "Không tìm thấy ảnh.", null);
         var loiTrangThai = LoiTrangThaiKhongChoSuaAnh(anh.SanPham.TrangThai);
-        if (loiTrangThai is not null) return (false, loiTrangThai);
+        if (loiTrangThai is not null) return (false, loiTrangThai, null);
 
         var wasMain = anh.LaAnhChinh;
+        var duongDanAnh = anh.DuongDan;
         _db.AnhSanPhams.Remove(anh);
         await _db.SaveChangesAsync(cancellationToken);
+        XoaFileAnh(duongDanAnh);
 
+        int? maAnhChinhMoi = null;
         if (wasMain)
         {
             var keo = await _db.AnhSanPhams
@@ -591,9 +637,10 @@ public class ProductService : IProductService
             {
                 keo.LaAnhChinh = true;
                 await _db.SaveChangesAsync(cancellationToken);
+                maAnhChinhMoi = keo.MaAnhSP;
             }
         }
-        return (true, null);
+        return (true, null, maAnhChinhMoi);
     }
 
     private static string? LoiTrangThaiKhongChoSuaAnh(string trangThai) => trangThai switch

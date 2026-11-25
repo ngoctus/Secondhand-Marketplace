@@ -1,7 +1,7 @@
 @model List<SecondHandMarketplace.Web.Models.ViewModels.Orders.DonHangItemViewModel>?
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 @{
-    ViewData["Title"] = "Đặt hàng thành công";
+    ViewData["Title"] = L["OrderConfirm_Title"];
     var danhSachMaDon = ViewBag.DanhSachMaDon as string[] ?? Array.Empty<string>();
     var orders = Model ?? new();
     var unpaidBankOrders = orders.Where(d => d.PhuongThucThanhToan == "BANK_TRANSFER" && d.TrangThaiThanhToan is not ("PAID" or "REFUNDED") && d.TrangThai != "CANCELLED").ToList();
@@ -20,15 +20,15 @@
                 <i class="bi bi-check-lg"></i>
             </span>
         </div>
-        <h2 class="fw-bold text-dark mb-2" style="font-family: 'Playfair Display', serif;">Đặt hàng thành công!</h2>
+        <h2 class="fw-bold text-dark mb-2" style="font-family: 'Playfair Display', serif;">@L["OrderConfirm_Title"]</h2>
         <p class="text-secondary small mb-4" style="max-width: 540px; margin: 0 auto;">
-            Cảm ơn bạn đã lựa chọn mua sắm cùng <strong>Re:Market</strong>. @if (unpaidBankOrders.Count > 0) { <text>Đơn hàng đã được ghi nhận; shop sẽ xác nhận thanh toán trước khi chuẩn bị gửi hàng.</text> } else { <text>Đơn hàng đã được ghi nhận và shop sẽ chuẩn bị bước tiếp theo.</text> }
+            @L["OrderConfirm_ThankYou"] <strong>Re:Market</strong>. @if (unpaidBankOrders.Count > 0) { <text>@L["OrderConfirm_BankMsg"]</text> } else { <text>@L["OrderConfirm_CodMsg"]</text> }
         </p>
 
         @if (danhSachMaDon.Length > 0)
         {
             <div class="p-3 bg-light rounded-4 border text-center mb-0 d-inline-block mx-auto" style="min-width: 280px;">
-                <div class="text-muted small mb-1"><i class="bi bi-receipt text-success me-1"></i> Mã đơn hàng:</div>
+                <div class="text-muted small mb-1"><i class="bi bi-receipt text-success me-1"></i> @L["OrderConfirm_OrderCodes"]</div>
                 <div class="d-flex flex-wrap gap-2 justify-content-center">
                     @foreach (var ma in danhSachMaDon)
                     {
@@ -37,7 +37,7 @@
                         {
                             <a asp-area="User" asp-controller="Orders" asp-action="ChiTiet" asp-route-id="@don.MaDonHang" 
                                class="badge bg-white text-dark border text-decoration-none font-monospace px-3 py-2 fs-6 shadow-sm"
-                               title="Nhấn để xem chi tiết đơn hàng">
+                               title="@L["OrderConfirm_ViewDetailTip"]">
                                 #@ma <i class="bi bi-box-arrow-up-right ms-1 text-muted" style="font-size: 11px;"></i>
                             </a>
                         }
@@ -58,32 +58,19 @@
         @if (unpaidBankOrders.Count > 0)
         {
             <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-qr-code-scan fs-4 text-primary"></i>
-                        <div>
-                            <h5 class="fw-bold text-dark mb-0">Thanh toán chuyển khoản VietQR</h5>
-                            <div class="text-muted small">Mỗi đơn được thanh toán riêng cho cửa hàng tương ứng. Shop cập nhật trạng thái sau khi kiểm tra giao dịch.</div>
-                        </div>
+                <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                    <i class="bi bi-qr-code-scan fs-4 text-primary"></i>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0">@L["OrderConfirm_VietQrHeader"]</h5>
+                        <div class="text-muted small">@L["OrderConfirm_VietQrSubtitle"]</div>
                     </div>
-                    @if (Env.IsDevelopment() && unpaidBankOrders.Count > 1)
-                    {
-                        <form asp-area="User" asp-controller="Orders" asp-action="MoPhongThanhToanDemo" method="post" class="d-inline">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="dsMaDonHang" value="@string.Join(",", unpaidBankOrders.Select(d => d.MaDonHang))" />
-                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
-                            <button type="submit" class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm">
-                                <i class="bi bi-lightning-fill me-1"></i> [Demo] Thanh toán tất cả (@unpaidBankOrders.Count đơn)
-                            </button>
-                        </form>
-                    }
                 </div>
 
                 @foreach (var don in unpaidBankOrders)
                 {
                     <div class="border rounded-3 p-3 mb-3">
                         <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
-                            <strong>Đơn #@don.MaDon · @don.TenShop</strong>
+                            <strong>@string.Format(L["OrderConfirm_OrderShopLabel"].Value, don.MaDon, don.TenShop)</strong>
                             <strong class="text-success">@don.TongTien.ToString("N0") ₫</strong>
                         </div>
                         @if (don.ThanhToanShop?.CoTheChuyenKhoan == true)
@@ -97,7 +84,7 @@
                                 ChuTaiKhoan = don.ThanhToanShop.TenChuTaiKhoan!,
                                 MaDonHang = don.MaDonHang,
                                 MaDon = don.MaDon,
-                                ChoPhepXacNhan = false,
+                                ChoPhepXacNhan = true,
                                 ReturnUrl = Context.Request.Path + Context.Request.QueryString
                             }' />
                         }
@@ -112,7 +99,7 @@
                                 ChuTaiKhoan = "PHAN HIEU TRUONG DH GTVT TAI TPHCM",
                                 MaDonHang = don.MaDonHang,
                                 MaDon = don.MaDon,
-                                ChoPhepXacNhan = false,
+                                ChoPhepXacNhan = true,
                                 ReturnUrl = Context.Request.Path + Context.Request.QueryString
                             }' />
                         }
@@ -125,8 +112,8 @@
             <div class="alert alert-success d-flex align-items-center gap-3 rounded-4 p-4 shadow-sm mb-4 border-0">
                 <i class="bi bi-check-circle-fill text-success fs-1"></i>
                 <div>
-                    <h6 class="fw-bold mb-1 text-success">Đã xác nhận thanh toán chuyển khoản thành công!</h6>
-                    <div class="small text-secondary">Shop đã xác nhận thanh toán. Bạn có thể theo dõi tiến độ trong chi tiết đơn hàng.</div>
+                    <h6 class="fw-bold mb-1 text-success">@L["OrderConfirm_PaidAlertTitle"]</h6>
+                    <div class="small text-secondary">@L["OrderConfirm_PaidAlertDesc"]</div>
                 </div>
             </div>
         }
@@ -140,9 +127,9 @@
                     <i class="bi bi-cash-coin fs-4"></i>
                 </div>
                 <div>
-                    <h6 class="fw-bold text-dark mb-1">Thanh toán khi nhận hàng (COD)</h6>
+                    <h6 class="fw-bold text-dark mb-1">@L["OrderConfirm_CodTitle"]</h6>
                     <p class="text-secondary small mb-0">
-                        Đơn hàng của bạn sẽ được giao tới địa chỉ đã đăng ký. Bạn hãy chuẩn bị tiền mặt để thanh toán cho shipper sau khi nhận và kiểm tra gói hàng.
+                        @L["OrderConfirm_CodDesc"]
                     </p>
                 </div>
             </div>
@@ -154,8 +141,8 @@
     {
         <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
             <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-card-checklist text-success me-2"></i>Danh sách kiện hàng đã tạo</span>
-                <span class="badge bg-light text-secondary border small">@orders.Count kiện</span>
+                <span><i class="bi bi-card-checklist text-success me-2"></i>@L["OrderConfirm_PackagesList"]</span>
+                <span class="badge bg-light text-secondary border small">@string.Format(L["OrderConfirm_PackageCount"].Value, orders.Count)</span>
             </h6>
 
             <div class="d-flex flex-column gap-3">
@@ -198,8 +185,8 @@
 
                         <div class="text-end pt-2 border-top">
                             <a asp-area="User" asp-controller="Orders" asp-action="ChiTiet" asp-route-id="@don.MaDonHang"
-                               class="btn btn-outline-success btn-sm rounded-pill px-3" style="font-size: 12px;">
-                                Chi tiết đơn này &rarr;
+                               class="btn btn-rm-outline btn-sm rounded-pill px-3" style="font-size: 12px;">
+                                @L["OrderConfirm_ViewThisOrder"] &rarr;
                             </a>
                         </div>
                     </div>
@@ -210,12 +197,11 @@
 
     <!-- Điều hướng chân trang -->
     <div class="d-flex justify-content-center gap-3 flex-wrap">
-        <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-success px-4 py-2 rounded-pill fw-semibold shadow-sm"
-           style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
-            <i class="bi bi-box-seam me-1"></i> Quản lý đơn mua
+        <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-rm-primary px-4 py-2 rounded-pill fw-semibold shadow-sm">
+            <i class="bi bi-box-seam me-1"></i> @L["OrderConfirm_ManageOrders"]
         </a>
-        <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-semibold">
-            <i class="bi bi-arrow-left me-1"></i> Tiếp tục khám phá
+        <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-rm-secondary px-4 py-2 rounded-pill fw-semibold">
+            <i class="bi bi-arrow-left me-1"></i> @L["OrderConfirm_ContinueShopping"]
         </a>
     </div>
 </div>

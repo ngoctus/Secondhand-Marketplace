@@ -14,18 +14,36 @@ public sealed class AuthService(
     ILogger<AuthService> logger) : IAuthService
 {
     private const string DummyHash = "$2a$11$0000000000000000000000uL1y6E0j5bVvL9tWj4K6M2EaN.aL0u6";
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int FailedCount, DateTime LockoutEnd)> AccountLockouts = new(StringComparer.OrdinalIgnoreCase);
+    internal static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int FailedCount, DateTime LockoutEnd)> AccountLockouts = new(StringComparer.OrdinalIgnoreCase);
     private const int MaxFailedAttempts = 5;
     private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
 
     public async Task<NguoiDung?> AuthenticateAsync(string email, string password, CancellationToken cancellationToken = default)
     {
+        var result = await AuthenticateWithStatusAsync(email, password, cancellationToken);
+        return result.Status == AuthResultStatus.Success ? result.User : null;
+    }
+
+    /// <summary>
+    /// KN-05: Xác thực tài khoản trả về trạng thái chi tiết (Success, InvalidCredentials, TempLockout, AccountLocked).
+    /// Kiểm tra mật khẩu trước khi kiểm tra trạng thái LOCKED để chống rò rỉ trạng thái qua email.
+    /// </summary>
+    public async Task<AuthStatusResult> AuthenticateWithStatusAsync(string email, string password, CancellationToken cancellationToken = default)
+    {
         var normalizedEmail = NormalizeEmail(email);
 
-        if (AccountLockouts.TryGetValue(normalizedEmail, out var lockout) && lockout.LockoutEnd > DateTime.UtcNow)
+        if (AccountLockouts.TryGetValue(normalizedEmail, out var lockout))
         {
-            await GhiNhatKyAsync(null, "LOGIN", null, "LOCKED", $"Tài khoản bị khóa tạm đến {lockout.LockoutEnd:HH:mm:ss} UTC do sai mật khẩu {MaxFailedAttempts} lần liên tiếp.");
-            return null;
+            if (lockout.LockoutEnd > DateTime.UtcNow)
+            {
+                await GhiNhatKyAsync(null, "LOGIN", null, "LOCKED", $"Tài khoản bị khóa tạm đến {lockout.LockoutEnd:HH:mm:ss} UTC do sai mật khẩu {MaxFailedAttempts} lần liên tiếp.");
+                return AuthStatusResult.TempLockout(lockout.LockoutEnd);
+            }
+            if (lockout.LockoutEnd != DateTime.MinValue)
+            {
+                // Khi thời gian khóa tạm đã trôi qua, giải phóng entry để người dùng được cấp lại 5 lượt thử mới
+                AccountLockouts.TryRemove(normalizedEmail, out _);
+            }
         }
 
         var user = await db.NguoiDungs.AsNoTracking()
@@ -35,13 +53,10 @@ public sealed class AuthService(
             // Chống timing attack lộ sự tồn tại của email
             passwordService.KiemTra(password, DummyHash);
             await GhiNhatKyAsync(null, "LOGIN", null, "FAILED", "Email không tồn tại.");
-            return null;
+            return AuthStatusResult.InvalidCredentials();
         }
-        if (!string.Equals(user.TrangThai, "ACTIVE", StringComparison.OrdinalIgnoreCase))
-        {
-            await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "DENIED", "Tài khoản đang bị khóa.");
-            return null;
-        }
+
+        // BẢO MẬT: Kiểm tra mật khẩu TRƯỚC khi kiểm tra trạng thái khóa (chống dò email bị khóa)
         if (!passwordService.KiemTra(password, user.MatKhauBam))
         {
             var attempts = AccountLockouts.AddOrUpdate(
@@ -54,18 +69,34 @@ public sealed class AuthService(
             {
                 logger.LogWarning("Tài khoản {Email} bị khóa tạm thời 15 phút do nhập sai mật khẩu 5 lần liên tiếp.", normalizedEmail);
                 await GhiNhatKyAsync(user.MaNguoiDung, "LOCKOUT", user.MaNguoiDung, "LOCKED", "Khóa tạm 15 phút do nhập sai mật khẩu 5 lần liên tiếp.");
+                return AuthStatusResult.TempLockout(DateTime.UtcNow.Add(LockoutDuration));
             }
-            else
-            {
-                await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "FAILED", $"Mật khẩu không chính xác ({attempts.FailedCount}/{MaxFailedAttempts}).");
-            }
-            return null;
+
+            await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "FAILED", $"Mật khẩu không chính xác ({attempts.FailedCount}/{MaxFailedAttempts}).");
+            return AuthStatusResult.InvalidCredentials();
         }
 
+        // Mật khẩu ĐÚNG: reset bộ đếm khóa tạm do gõ sai
         AccountLockouts.TryRemove(normalizedEmail, out _);
+
+        // Kiểm tra trạng thái tài khoản: Nếu LOCKED -> rẽ sang AccountLocked
+        if (string.Equals(user.TrangThai, "LOCKED", StringComparison.OrdinalIgnoreCase))
+        {
+            await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "DENIED", "Tài khoản đang bị khóa.");
+            return AuthStatusResult.AccountLocked(user);
+        }
+
+        if (!string.Equals(user.TrangThai, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+        {
+            await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "DENIED", $"Tài khoản không ở trạng thái hoạt động ({user.TrangThai}).");
+            return AuthStatusResult.InvalidCredentials();
+        }
+
         await GhiNhatKyAsync(user.MaNguoiDung, "LOGIN", user.MaNguoiDung, "SUCCESS");
-        return user;
+        return AuthStatusResult.Success(user);
     }
+
+    internal static void ResetLockouts() => AccountLockouts.Clear();
 
     public async Task<(bool Success, string? Error, NguoiDung? User)> RegisterAsync(
         string fullName, string email, string phone, string password, CancellationToken cancellationToken = default)
@@ -113,7 +144,7 @@ public sealed class AuthService(
         var user = await db.NguoiDungs.SingleOrDefaultAsync(x => x.MaNguoiDung == userId, cancellationToken);
         if (user is null) return (false, "Không tìm thấy tài khoản.");
         if (!string.IsNullOrWhiteSpace(avatar) && !UrlAnToan.HopLe(avatar))
-            return (false, "Ảnh đại diện phải là URL http/https.");
+            return (false, "Ảnh đại diện phải là URL http/https hoặc đường dẫn hợp lệ.");
         var normalizedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
         if (normalizedPhone is not null && await db.NguoiDungs.AnyAsync(x => x.MaNguoiDung != userId && x.SoDienThoai == normalizedPhone, cancellationToken))
             return (false, "Số điện thoại đã được sử dụng.");
@@ -121,7 +152,7 @@ public sealed class AuthService(
         user.HoTen = fullName.Trim();
         user.SoDienThoai = normalizedPhone;
         user.DiaChiMacDinh = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
-        if (!string.IsNullOrWhiteSpace(avatar)) user.AnhDaiDien = avatar.Trim();
+        user.AnhDaiDien = string.IsNullOrWhiteSpace(avatar) ? null : avatar.Trim();
         user.NgayCapNhat = DateTime.UtcNow;
         try { await db.SaveChangesAsync(cancellationToken); return (true, null); }
         catch (DbUpdateException) { return (false, "Thông tin cập nhật không hợp lệ hoặc số điện thoại đã được sử dụng."); }

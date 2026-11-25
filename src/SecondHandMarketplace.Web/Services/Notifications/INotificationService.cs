@@ -55,4 +55,14 @@ public interface INotificationService
     /// Đánh dấu đã đọc. Chỉ thành công khi thông báo thuộc về userId; thông báo của người khác hoặc không tồn tại đều trả false.
     /// </summary>
     Task<bool> MarkAsReadAsync(int userId, int notificationId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Đánh dấu tất cả thông báo của userId là đã đọc (Task C-02). Trả về số thông báo vừa được đánh dấu.
+    /// </summary>
+    Task<int> MarkAllAsReadAsync(int userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Phân giải URL điều hướng đích của thông báo dựa theo vai trò của người nhận (Người mua hay Người bán).
+    /// </summary>
+    Task<string> ResolveTargetUrlAsync(int userId, int notificationId, CancellationToken cancellationToken = default);
 }

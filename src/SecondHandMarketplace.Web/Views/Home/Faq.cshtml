@@ -1,42 +1,42 @@
 @{
-    ViewData["Title"] = "Câu hỏi thường gặp & Hướng dẫn - Re:Market";
+    ViewData["Title"] = HienThi.Chon("Câu hỏi thường gặp & Hướng dẫn - Re:Market", "FAQ & Safe Trading Guide - Re:Market");
 }
 
 <div class="container py-5" style="max-width: 960px;">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb" style="font-size: 14px;">
-            <li class="breadcrumb-item"><a asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Hỗ trợ & FAQ</li>
+            <li class="breadcrumb-item"><a asp-area="" asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@HienThi.Chon("Hỗ trợ & FAQ", "Support & FAQ")</li>
         </ol>
     </nav>
 
     <!-- Section: Hướng dẫn giao dịch -->
     <section id="huong-dan-giao-dich" class="mb-5">
         <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h1 class="h2 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">Hướng dẫn giao dịch an toàn</h1>
-            <p class="text-muted mb-4">Để đảm bảo quyền lợi tối đa cho cả người mua và người bán, Re:Market khuyến nghị quy trình mua bán chuẩn:</p>
+            <h1 class="h2 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">@L["Footer_SafeTrading"]</h1>
+            <p class="text-muted mb-4">@HienThi.Chon("Để đảm bảo quyền lợi tối đa cho cả người mua và người bán, Re:Market khuyến nghị quy trình mua bán chuẩn:", "To ensure the best experience for both buyers and sellers, Re:Market recommends the following standard trading workflow:")</p>
 
             <div class="row g-4">
                 <div class="col-md-4">
                     <div class="border rounded-3 p-3 h-100">
-                        <div class="badge bg-success mb-2">Bước 1</div>
-                        <h6 class="fw-bold">Kiểm tra thông tin món đồ</h6>
-                        <p class="small text-muted mb-0">Đọc kỹ mô tả, hình ảnh thật và độ mới của sản phẩm. Trao đổi với người bán qua tin nhắn nếu có thắc mắc.</p>
+                        <div class="badge bg-success mb-2">@HienThi.Chon("Bước 1", "Step 1")</div>
+                        <h6 class="fw-bold">@HienThi.Chon("Kiểm tra thông tin món đồ", "Inspect Item Details")</h6>
+                        <p class="small text-muted mb-0">@HienThi.Chon("Đọc kỹ mô tả, hình ảnh thật và độ mới của sản phẩm. Trao đổi với người bán qua tin nhắn nếu có thắc mắc.", "Review the description, real photos, and condition carefully. Chat with the seller if you have questions.")</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="border rounded-3 p-3 h-100">
-                        <div class="badge bg-success mb-2">Bước 2</div>
-                        <h6 class="fw-bold">Đặt hàng & Khung giờ nhận</h6>
-                        <p class="small text-muted mb-0">Chọn địa chỉ và khung giờ nhận hàng phù hợp. Hệ thống hỗ trợ thanh toán linh hoạt qua chuyển khoản hoặc COD.</p>
+                        <div class="badge bg-success mb-2">@HienThi.Chon("Bước 2", "Step 2")</div>
+                        <h6 class="fw-bold">@HienThi.Chon("Đặt hàng & Khung giờ nhận", "Place Order & Delivery Window")</h6>
+                        <p class="small text-muted mb-0">@HienThi.Chon("Chọn địa chỉ và khung giờ nhận hàng phù hợp. Hệ thống hỗ trợ thanh toán linh hoạt qua chuyển khoản hoặc COD.", "Select your delivery address and preferred time window. Pay via Bank Transfer (VietQR) or Cash on Delivery (COD).")</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="border rounded-3 p-3 h-100">
-                        <div class="badge bg-success mb-2">Bước 3</div>
-                        <h6 class="fw-bold">Đồng kiểm & Đánh giá</h6>
-                        <p class="small text-muted mb-0">Khi nhận hàng, đồng kiểm ngoại quan. Sau khi hoàn tất đơn hàng, bạn có thể khiếu nại nếu sản phẩm không đúng mô tả.</p>
+                        <div class="badge bg-success mb-2">@HienThi.Chon("Bước 3", "Step 3")</div>
+                        <h6 class="fw-bold">@HienThi.Chon("Đồng kiểm & Đánh giá", "Verify & Review")</h6>
+                        <p class="small text-muted mb-0">@HienThi.Chon("Khi nhận hàng, đồng kiểm ngoại quan. Sau khi hoàn tất đơn hàng, bạn có thể khiếu nại nếu sản phẩm không đúng mô tả.", "Inspect your item upon delivery. If the item does not match its description, you can file a dispute before completing the order.")</p>
                     </div>
                 </div>
             </div>
@@ -46,41 +46,47 @@
     <!-- Section: FAQ -->
     <section id="faq" class="mb-5">
         <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h2 class="h3 fw-bold mb-4" style="color: var(--color-primary-dark, #1B4332);">Câu hỏi thường gặp (FAQ)</h2>
+            <h2 class="h3 fw-bold mb-4" style="color: var(--color-primary-dark, #1B4332);">@HienThi.Chon("Câu hỏi thường gặp (FAQ)", "Frequently Asked Questions (FAQ)")</h2>
             <div class="accordion accordion-flush" id="faqAccordion">
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingOne">
                         <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                            1. Làm thế nào để đăng bán sản phẩm trên Re:Market?
+                            @HienThi.Chon("1. Làm thế nào để đăng bán sản phẩm trên Re:Market?", "1. How do I list an item for sale on Re:Market?")
                         </button>
                     </h2>
                     <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
                         <div class="accordion-body text-secondary">
-                            Bạn chỉ cần đăng nhập tài khoản, nhấn vào nút "Đăng bán" ở góc trên bên phải hoặc vào mục Cửa hàng của tôi. Điền tiêu đề, chọn danh mục, tải ảnh thật của món đồ và thiết lập giá bán. Tin đăng sẽ được kiểm duyệt trước khi hiển thị công khai.
+                            @HienThi.Chon(
+                                "Bạn chỉ cần đăng nhập tài khoản, nhấn vào nút \"Đăng bán\" ở góc trên bên phải hoặc vào mục Cửa hàng của tôi. Điền tiêu đề, chọn danh mục, tải ảnh thật của món đồ và thiết lập giá bán. Tin đăng sẽ được kiểm duyệt trước khi hiển thị công khai.",
+                                "Simply sign in, click \"Sell Now\" in the top right corner or open My Shop. Enter the title, choose a category, upload real photos, and set your price. Your listing will be reviewed before appearing publicly.")
                         </div>
                     </div>
                 </div>
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingTwo">
                         <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                            2. Thời gian kiểm duyệt tin đăng là bao lâu?
+                            @HienThi.Chon("2. Thời gian kiểm duyệt tin đăng là bao lâu?", "2. How long does product moderation take?")
                         </button>
                     </h2>
                     <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
                         <div class="accordion-body text-secondary">
-                            Re:Market ứng dụng hệ thống lọc từ khóa vi phạm tự động và đội ngũ quản trị viên kiểm duyệt liên tục. Hầu hết tin đăng hợp lệ sẽ được duyệt trong vòng vài phút đến tối đa 2 giờ làm việc.
+                            @HienThi.Chon(
+                                "Re:Market ứng dụng hệ thống lọc từ khóa vi phạm kết hợp AI kiểm duyệt 2 tầng và đội ngũ quản trị viên. Hầu hết tin đăng hợp lệ sẽ được duyệt trong vòng vài phút đến tối đa 2 giờ làm việc.",
+                                "Re:Market uses automated keyword filtering combined with 2-tier hybrid AI moderation and admin review. Most valid listings are approved within minutes up to 2 business hours.")
                         </div>
                     </div>
                 </div>
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingThree">
                         <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                            3. Nếu hàng nhận được không đúng mô tả thì phải làm sao?
+                            @HienThi.Chon("3. Nếu hàng nhận được không đúng mô tả thì phải làm sao?", "3. What should I do if the received item doesn't match the description?")
                         </button>
                     </h2>
                     <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
                         <div class="accordion-body text-secondary">
-                            Bạn có quyền gửi yêu cầu Khiếu nại / Tranh chấp trong vòng 48 giờ kể từ khi nhận hàng. Đính kèm hình ảnh bằng chứng rõ ràng. Đội ngũ Re:Market sẽ trung gian giải quyết và hoàn tiền nếu người bán vi phạm cam kết mô tả.
+                            @HienThi.Chon(
+                                "Bạn có quyền gửi yêu cầu Khiếu nại / Tranh chấp trong chi tiết đơn hàng kèm hình ảnh bằng chứng rõ ràng. Đội ngũ Re:Market sẽ trung gian giải quyết công bằng cho cả hai bên.",
+                                "You can submit a Dispute / Claim from the order details page along with clear photo evidence. The Re:Market admin team will review and mediate fairly.")
                         </div>
                     </div>
                 </div>
@@ -92,19 +98,24 @@
     <section id="bao-cao-vi-pham">
         <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
-                <h2 class="h3 fw-bold mb-0 text-danger"><i class="bi bi-flag-fill me-2"></i>Báo cáo vi phạm cộng đồng</h2>
+                <h2 class="h3 fw-bold mb-0 text-danger"><i class="bi bi-flag-fill me-2"></i>@HienThi.Chon("Báo cáo vi phạm cộng đồng", "Report Community Violations")</h2>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a asp-area="User" asp-controller="Reports" asp-action="Index" class="btn btn-outline-danger btn-sm">Xem lịch sử báo cáo của bạn</a>
+                    <a asp-area="User" asp-controller="Reports" asp-action="Index" class="btn btn-outline-danger btn-sm">@HienThi.Chon("Xem lịch sử báo cáo của bạn", "View your report history")</a>
                 }
             </div>
             <p class="text-muted">
-                Nếu bạn phát hiện hàng giả, hàng cấm, nội dung lừa đảo hoặc hành vi quấy rối, vui lòng báo cáo ngay để ban quản trị kịp thời xử lý và khóa tài khoản vi phạm.
+                @HienThi.Chon(
+                    "Nếu bạn phát hiện hàng giả, hàng cấm, nội dung lừa đảo hoặc hành vi quấy rối, vui lòng báo cáo ngay để ban quản trị kịp thời xử lý và khóa tài khoản vi phạm.",
+                    "If you spot counterfeit goods, prohibited items, scams, or harassment, please report them immediately so our moderation team can take action.")
             </p>
             <div class="alert alert-warning border-0 rounded-3 d-flex align-items-center gap-3">
                 <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
                 <div>
-                    <strong>Cách gửi báo cáo:</strong> Trên từng trang chi tiết sản phẩm hoặc trang cửa hàng của người bán, nhấn vào nút "Báo cáo tin đăng" hoặc "Báo cáo người bán" để gửi khiếu nại kèm lý do cụ thể.
+                    <strong>@HienThi.Chon("Cách gửi báo cáo:", "How to report:")</strong>
+                    @HienThi.Chon(
+                        "Trên từng trang chi tiết sản phẩm hoặc trang cửa hàng của người bán, nhấn vào nút \"Báo cáo tin đăng vi phạm\" để gửi khiếu nại kèm lý do cụ thể.",
+                        "On any product detail page or shop page, click the \"Report Violation\" link to submit a report with specific details.")
                 </div>
             </div>
         </div>

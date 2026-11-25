@@ -29,9 +29,10 @@ DECLARE @Now datetime2(3) = SYSUTCDATETIME();
 DECLARE @AdminId int;
 BEGIN TRANSACTION;
 
-INSERT NguoiDung (HoTen, Email, SoDienThoai, MatKhauBam, VaiTro, TrangThai, LyDoKhoa, ThoiGianKhoa, DiaChiMacDinh)
+INSERT NguoiDung (HoTen, Email, SoDienThoai, MatKhauBam, VaiTro, TrangThai, LyDoKhoa, ThoiGianKhoa, DiaChiMacDinh, SoLanBiKhoa)
 SELECT v.HoTen, v.Email, v.SoDienThoai, @MatKhauHash, v.VaiTro, v.TrangThai, v.LyDoKhoa,
-       CASE WHEN v.TrangThai = 'LOCKED' THEN @Now END, v.DiaChi
+       CASE WHEN v.TrangThai = 'LOCKED' THEN @Now END, v.DiaChi,
+       CASE WHEN v.TrangThai = 'LOCKED' THEN 1 ELSE 0 END
 FROM (VALUES
     (N'Quản trị viên',   'admin@secondhand.local',   NULL,         'ADMIN', 'ACTIVE', NULL, NULL),
     (N'Nguyễn Văn An',   'an.seller@demo.local',      '0901000001', 'USER',  'ACTIVE', NULL, N'25 Lê Lợi, Quận 1, TP. Hồ Chí Minh'),
@@ -445,7 +446,7 @@ GO
 --   - Gắn vào 13 shop: 2 shop của 29_seed_demo_goc.sql + 11 shop của 30_seed_dia_chi_shop.sql.
 --     Shop nguoiban12 cố ý để trống để test trang shop chưa có sản phẩm.
 --   - Ảnh thực (Wikimedia Commons, xem CREDITS.json) khớp đúng từng sản phẩm, mỗi tin 2 ảnh,
---     ảnh 1 là ảnh chính; dùng dải mã sp001..sp112 trong wwwroot/uploads/seed.
+--     ảnh 1 là ảnh chính; dùng dải mã sp001..sp130 trong wwwroot/uploads/seed.
 --   - Chạy sau 29 và 30. Chạy lại không nhân đôi (đối chiếu theo MaCuaHang + Ten).
 -- =============================================================================
 
@@ -486,16 +487,16 @@ INSERT #SeedSp (Stt, EmailChuShop, TenDanhMuc, CodeTinhTrang, Ten, MoTa, Gia, Tr
 -- Hà Vintage Closet (nguoiban02) - thời trang
  (8,  'nguoiban02@demo.local', N'Thời trang',             'LIKE_NEW', N'Áo khoác denim vintage Levi''s dáng suông size L',            N'Vải bò cotton dày dặn, form suông phong cách bụi bặm retro, giặt sạch sẽ thơm tho không sờn rách.', 320000, 'ACTIVE',         140, 'sp001'),
  (9,  'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Áo khoác gió nữ chống nước 2 lớp có lót lưới size M',          N'Khóa kéo chống thấm nước, mũ trùm gấp gọn được, vải nhẹ giữ ấm tốt cho thời tiết se lạnh.', 280000, 'ACTIVE',         260, 'sp059'),
- (10, 'nguoiban02@demo.local', N'Thời trang',             'FAIR',     N'Túi xách nữ da thật quai đeo chéo màu nâu cổ điển',          N'Chất da bò thật vân xước tự nhiên, form cứng cáp, khóa kim loại mạ đồng sáng đẹp, nhiều ngăn đựng đồ.', 450000, 'ACTIVE',         300, 'sp010'),
+ (10, 'nguoiban02@demo.local', N'Thời trang',             'FAIR',     N'Túi xách nữ da thật quai đeo chéo màu nâu cổ điển',          N'Chất da bò thật vân xước tự nhiên, form cứng cáp, khóa kim loại mạ đồng sáng đẹp, nhiều ngăn đựng đồ.', 450000, 'ACTIVE',         300, 'sp118'),
  (11, 'nguoiban02@demo.local', N'Thời trang',             'LIKE_NEW', N'Giày sneaker Converse Jack Purcell trắng cổ thấp size 42',     N'Đế cao su lưu hóa đầm chắc, mũi giày mặt cười đặc trưng, lót giày êm ái, mới mang thử 2 lần.', 450000, 'RESERVED',       180, 'sp002'),
  (12, 'nguoiban02@demo.local', N'Thời trang',             'WORN',     N'Áo len cashmere ấm áp cổ tròn màu xám nhạt size M',           N'Sợi len lông cừu tự nhiên mềm mịn giữ nhiệt cực tốt, dáng basic dễ phối đồ mùa đông.', 180000, 'PENDING_REVIEW', 20, 'sp085'),
  (13, 'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Quần kaki nam ống suông màu be nhạt size 32',                N'Vải kaki co giãn nhẹ thoáng mát, đường may kỹ càng, form đứng tôn dáng, phù hợp đi làm đi chơi.', 200000, 'SOLD',           640, 'sp086'),
- (14, 'nguoiban02@demo.local', N'Thời trang',             'NEW',      N'Khăn lụa vuông cao cấp họa tiết hoa sen kích thước 70cm',     N'Lụa mềm mại trơn mướt, viền cuốn mép tay thủ công, quà tặng nguyên hộp chưa sử dụng.', 120000, 'ACTIVE',         70, 'sp014'),
+ (14, 'nguoiban02@demo.local', N'Thời trang',             'NEW',      N'Khăn lụa vuông cao cấp họa tiết hoa sen kích thước 70cm',     N'Lụa mềm mại trơn mướt, viền cuốn mép tay thủ công, quà tặng nguyên hộp chưa sử dụng.', 120000, 'ACTIVE',         70, 'sp120'),
 -- Huy Gia Dụng (nguoiban03) - đồ gia dụng
  (15, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Quạt tháp và lọc không khí gia đình phòng dưới 40m2',         N'Tấm lọc HEPA còn mới, lọc sạch bụi mịn và khử mùi hôi, máy vận hành êm ái không gây ồn khi ngủ.', 1600000, 'ACTIVE',         230, 'sp087'),
  (16, 'nguoiban03@demo.local', N'Đồ gia dụng',            'FAIR',     N'Bộ nồi chảo inox đáy từ cao cấp 3 đáy sáng bóng',             N'Chất liệu inox 304 không gỉ an toàn cho sức khỏe, truyền nhiệt nhanh và giữ nhiệt lâu trên bếp từ.', 1300000, 'ACTIVE',       280, 'sp019'),
  (17, 'nguoiban03@demo.local', N'Đồ gia dụng',            'LIKE_NEW', N'Nồi chiên không dầu Philips 4.5L lòng nồi chống dính',         N'Công nghệ nhiệt đối lưu Rapid Air giòn ngoài mềm trong, núm vặn cơ bền bỉ dễ thao tác, lòng nồi tháo rời.', 750000, 'PENDING_REVIEW', 16, 'sp006'),
- (18, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bộ 6 hộp thủy tinh chịu nhiệt có nắp khóa khí kín',          N'Thủy tinh borosilicate chịu sốc nhiệt cao từ ngăn đá sang lò vi sóng, nắp gioăng silicone kín nước.', 190000, 'ACTIVE',         150, 'sp018'),
+ (18, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bộ 6 hộp thủy tinh chịu nhiệt có nắp khóa khí kín',          N'Thủy tinh borosilicate chịu sốc nhiệt cao từ ngăn đá sang lò vi sóng, nắp gioăng silicone kín nước.', 190000, 'ACTIVE',         150, 'sp122'),
  (19, 'nguoiban03@demo.local', N'Đồ gia dụng',            'WORN',     N'Bộ nồi inox 3 món kèm nắp vung kính cường lực',               N'Bộ gồm 3 nồi size 16-20-24cm tiện lợi, dùng được bếp từ và bếp gas, quai cầm chắc chắn.', 600000, 'SOLD',           720, 'sp019'),
  (20, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bàn ủi hơi nước cầm tay Tefal mặt đế chống dính',            N'Phun hơi mạnh mẽ làm phẳng nhanh quần áo công sở, gọn nhẹ dễ mang theo đi du lịch hoặc công tác.', 230000, 'ACTIVE',         190, 'sp052'),
 -- Mai Books (nguoiban04) - sách và văn phòng phẩm
@@ -503,9 +504,9 @@ INSERT #SeedSp (Stt, EmailChuShop, TenDanhMuc, CodeTinhTrang, Ten, MoTa, Gia, Tr
  (22, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'LIKE_NEW', N'Sách Tư duy phản biện bản in mới xuất bản',                  N'Mới đọc một lần, các trang sạch sẽ không nếp gấp mép, không gạch chân hay ghi chú bẩn.', 65000, 'ACTIVE',         110, 'sp089'),
  (23, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'FAIR',     N'Truyện Sherlock Holmes trọn bộ bốn tập kinh điển',            N'Bản dịch chuẩn của Hội Nhà văn, giấy vàng chống mỏi mắt, bìa gáy còn chắc.', 120000, 'ACTIVE',         400, 'sp090'),
  (24, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Bộ sách giáo trình Lập trình căn bản và Cấu trúc dữ liệu',    N'Tập hợp các cuốn kinh điển ngành lập trình, minh họa rõ ràng, phù hợp cho sinh viên CNTT.', 160000, 'ACTIVE',         80, 'sp007'),
- (25, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'LIKE_NEW', N'Bút máy nắp bấm Jinhao ngòi M kèm piston hút mực',           N'Thân bút kim loại đầm tay, ngòi trơn đều nét êm, đã vệ sinh sạch sẽ, tặng kèm lọ mực xanh.', 280000, 'RESERVED',       170, 'sp025'),
+ (25, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'LIKE_NEW', N'Bút máy nắp bấm Jinhao ngòi M kèm piston hút mực',           N'Thân bút kim loại đầm tay, ngòi trơn đều nét êm, đã vệ sinh sạch sẽ, tặng kèm lọ mực xanh.', 280000, 'RESERVED',       170, 'sp126'),
  (26, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'FAIR',     N'Kệ sách gỗ thông để bàn 3 tầng lắp ghép nhỏ gọn',             N'Kệ mini để bàn học, đựng được 20-30 cuốn sách và phụ kiện học tập, gỗ thông tự nhiên đã sơn phủ.', 175000, 'ACTIVE',         240, 'sp015'),
- (27, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Bộ tài liệu luyện thi IELTS Cambridge trọn bộ kèm audio',      N'Bao gồm các đề thi mẫu mới nhất kèm giải chi tiết và link tải file nghe chất lượng cao.', 210000, 'SOLD',           610, 'sp007'),
+ (27, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Bộ tài liệu luyện thi IELTS Cambridge trọn bộ kèm audio',      N'Bao gồm các đề thi mẫu mới nhất kèm giải chi tiết và link tải file nghe chất lượng cao.', 210000, 'SOLD',           610, 'sp127'),
 -- Khôi Sport (nguoiban05) - thể thao và dã ngoại
  (28, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Máy chạy bộ điện trong nhà gập được',                         N'Chạy êm, bảng mạch còn tốt, băng tải có vết mòn nhẹ ở giữa. Người mua tự thuê xe chở trong nội thành.', 6500000, 'ACTIVE',        350, 'sp028'),
  (29, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'LIKE_NEW', N'Thảm tập yoga 6mm kèm dây kháng lực',                         N'Dùng vài buổi ở nhà, không rách, cuộn lại vẫn gọn. Kèm hai dây kháng lực và túi đựng.', 150000, 'ACTIVE',         90, 'sp029'),
@@ -596,7 +597,7 @@ BEGIN
     THROW 51093, N'Seed B8: khong insert du 80 san pham, kiem tra ten danh muc, tinh trang hoac shop.', 1;
 END;
 
--- 3. Ảnh: khớp ảnh thực tế chính xác từng sản phẩm (sp001..sp080) ----------------
+-- 3. Ảnh: khớp ảnh thực tế chính xác từng sản phẩm (sp001..sp127) ----------------
 INSERT AnhSanPham (MaSanPham, DuongDan, ThuTu, LaAnhChinh, DungLuong)
 SELECT x.MaSanPham,
        N'/uploads/seed/' + s.SeedImg + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
@@ -1074,7 +1075,7 @@ FROM (
 JOIN SanPham sp ON sp.MaCuaHang = ordSp.MaCuaHang AND sp.Ten = ordSp.TenSanPham
 CROSS APPLY (
     SELECT CASE
-        WHEN sp.Ten LIKE N'%Giải tích%'          THEN 'sp007'
+        WHEN sp.Ten LIKE N'%Giải tích%'          THEN 'sp128'
         WHEN sp.Ten LIKE N'%Cấu trúc dữ liệu%'   THEN 'sp007'
         WHEN sp.Ten LIKE N'%Áo thun polo%'       THEN 'sp106'
         WHEN sp.Ten LIKE N'%Quần jean Levis%'    THEN 'sp104'
@@ -1082,13 +1083,13 @@ CROSS APPLY (
         WHEN sp.Ten LIKE N'%Bàn phím DareU%'     THEN 'sp103'
         WHEN sp.Ten LIKE N'%Tai nghe gaming%'    THEN 'sp009'
         WHEN sp.Ten LIKE N'%Ấm siêu tốc%'        THEN 'sp107'
-        WHEN sp.Ten LIKE N'%Quạt bàn mini%'      THEN 'sp026'
+        WHEN sp.Ten LIKE N'%Quạt bàn mini%'      THEN 'sp129'
         WHEN sp.Ten LIKE N'%Balo đi học%'        THEN 'sp102'
         WHEN sp.Ten LIKE N'%Đồng hồ thể thao%'   THEN 'sp012'
         WHEN sp.Ten LIKE N'%Máy tính bỏ túi%'    THEN 'sp108'
         WHEN sp.Ten LIKE N'%Đèn học%'            THEN 'sp084'
         WHEN sp.Ten LIKE N'%Nồi cơm điện%'       THEN 'sp112'
-        WHEN sp.Ten LIKE N'%Loa kéo%'            THEN 'sp013'
+        WHEN sp.Ten LIKE N'%Loa kéo%'            THEN 'sp114'
         ELSE 'sp007'
     END AS SeedImg
 ) m
@@ -1152,7 +1153,9 @@ SELECT
     sp.MaSanPham,
     sp.Ten,
     COALESCE(
-        (SELECT TOP 1 a.DuongDan FROM AnhSanPham a WHERE a.MaSanPham = sp.MaSanPham AND a.LaAnhChinh = 1),
+        (SELECT TOP 1 a.DuongDan FROM AnhSanPham a
+         WHERE a.MaSanPham = sp.MaSanPham
+         ORDER BY a.LaAnhChinh DESC, a.ThuTu),
         '/uploads/seed/sp007-1.jpg'
     ),
     sp.Gia,
@@ -1372,6 +1375,26 @@ BEGIN
     IF @ShopId3 IS NOT NULL AND @ReporterId8 IS NOT NULL
         INSERT BaoCao (LoaiDoiTuong, MaDoiTuong, MaNguoiBaoCao, LyDo, MoTa, TrangThai, NguoiXuLyId, GhiChuXuLy, NgayTao, NgayXuLy)
         VALUES ('SHOP', @ShopId3, @ReporterId8, N'Địa chỉ cửa hàng không đúng', N'Tìm đến địa chỉ shop không thấy biển hiệu.', 'DISMISSED', @AdminId, N'Cửa hàng online cá nhân bán tại nhà trọ, không bắt buộc biển hiệu.', DATEADD(DAY, -5, @Now), DATEADD(DAY, -4, @Now));
+END;
+
+-- Đơn khiếu nại tài khoản mẫu (KN-08 demo)
+IF NOT EXISTS (SELECT 1 FROM KhieuNaiTaiKhoan WHERE MaNguoiDung = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'locked@demo.local'))
+BEGIN
+    DECLARE @LockedUserId int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'locked@demo.local');
+    IF @LockedUserId IS NOT NULL
+    BEGIN
+        INSERT KhieuNaiTaiKhoan (
+            MaNguoiDung, LoaiYeuCau, LanKhoaThu, LyDoKhoaLucGui, NoiDung,
+            BangChungAnh, YeuCauPhi, SoTienPhi, MaGiaoDichThamChieu, TrangThai,
+            GhiChuAdmin, NguoiXuLyId, NgayTao, NgayXuLy
+        )
+        VALUES (
+            @LockedUserId, 'APPEAL', 1, N'Vi phạm quy định: đăng bán hàng giả nhiều lần.',
+            N'Tôi xin giải trình rằng các sản phẩm đăng bán là đồ thanh lý của gia đình, có hóa đơn mua hàng chính hãng từ trước, không phải hàng giả. Kính mong Ban quản trị xem xét mở lại tài khoản.',
+            NULL, 0, 0, NULL, 'PENDING',
+            NULL, NULL, DATEADD(HOUR, -2, @Now), NULL
+        );
+    END;
 END;
 
 COMMIT TRANSACTION;
@@ -1761,241 +1784,528 @@ GO
 GO
 
 -- =============================================================================
--- 5. ĐỒNG BỘ ĐƯỜNG DẪN ẢNH SẢN PHẨM VỚI THƯ MỤC wwwroot/uploads/products/<Folder>
+-- Seed bổ sung đợt 2 (sáp nhập): 30 sản phẩm sp131..sp160, 40 đơn, 15 đánh giá,
+-- yêu thích và thông báo. Chỉ DEV/TEST; chạy ngay sau phần seed ở trên.
 -- =============================================================================
-BEGIN TRANSACTION;
 
-IF OBJECT_ID('tempdb..#ProductImageMap') IS NOT NULL DROP TABLE #ProductImageMap;
-CREATE TABLE #ProductImageMap (
-    MaSanPham int NOT NULL PRIMARY KEY,
-    BaseDir   nvarchar(300) NOT NULL,
-    IsFolder  bit NOT NULL
-);
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
 
-INSERT INTO #ProductImageMap (MaSanPham, BaseDir, IsFolder)
-SELECT sp.MaSanPham, m.BaseDir, m.IsFolder
-FROM SanPham sp
-CROSS APPLY (
+IF DB_NAME() <> N'SecondHandMarketplace'
+    THROW 51101, N'Seed bổ sung đợt 2: chỉ chạy trong database SecondHandMarketplace.', 1;
+
+IF NOT EXISTS (SELECT 1 FROM NguoiDung WHERE Email = 'nguoiban01@demo.local')
+    THROW 51102, N'Seed bổ sung đợt 2: chưa có dữ liệu demo. Hãy chạy phần seed chính trước.', 1;
+
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    DECLARE @Now datetime2(3) = SYSUTCDATETIME();
+
+    IF OBJECT_ID('tempdb..#SeedSpExtra') IS NOT NULL DROP TABLE #SeedSpExtra;
+    IF OBJECT_ID('tempdb..#SeedOrdersExtra') IS NOT NULL DROP TABLE #SeedOrdersExtra;
+
+    -- -------------------------------------------------------------------------
+    -- 1. Danh sách 30 sản phẩm mới
+    -- -------------------------------------------------------------------------
+    CREATE TABLE #SeedSpExtra (
+        Stt          int            PRIMARY KEY,
+        EmailChuShop varchar(100)   NOT NULL,
+        TenDanhMuc   nvarchar(100)  NOT NULL,
+        CodeTinhTrang varchar(20)   NOT NULL,
+        Ten          nvarchar(200)  NOT NULL,
+        MoTa         nvarchar(500)  NOT NULL,
+        Gia          decimal(18,2)  NOT NULL,
+        TrangThai    varchar(20)    NOT NULL,
+        NgayTruoc    int            NOT NULL,
+        SeedImg      varchar(10)    NOT NULL
+    );
+
+    INSERT #SeedSpExtra (Stt, EmailChuShop, TenDanhMuc, CodeTinhTrang, Ten, MoTa, Gia, TrangThai, NgayTruoc, SeedImg) VALUES
+    (1,  'nguoiban01@demo.local', N'Đồ điện tử',             'LIKE_NEW', N'Tai nghe chụp tai Sony MDR-7506',             N'Tai nghe studio chụp tai, dây xoắn chắc chắn, đệm tai mới thay, âm thanh chi tiết, kèm túi vải.', 550000,  'SOLD',     63, 'sp131'),
+    (2,  'nguoiban01@demo.local', N'Đồ điện tử',             'GOOD',     N'Điện thoại Xiaomi Redmi Note 12 128GB',       N'Máy nguyên zin, màn hình không trầy, pin còn tốt, kèm ốp lưng và sạc nhanh 33W.',                  2850000, 'SOLD',     61, 'sp132'),
+    (3,  'nguoiban01@demo.local', N'Đồ điện tử',             'GOOD',     N'Loa Bluetooth JBL Charge 4',                  N'Loa bass chắc, pin dùng khoảng 12 giờ, vỏ có vài vết xước nhỏ, chống nước IPX7.',                 1350000, 'SOLD',     58, 'sp133'),
+    (4,  'nguoiban01@demo.local', N'Đồ điện tử',             'GOOD',     N'Đồng hồ Garmin Forerunner 235',               N'Đồng hồ chạy bộ GPS, đo nhịp tim và theo dõi quãng đường, dây silicone còn tốt.',                  1900000, 'SOLD',     55, 'sp134'),
+    (5,  'nguoiban01@demo.local', N'Đồ điện tử',             'LIKE_NEW', N'Máy tính bảng Samsung Galaxy Tab A8',         N'Máy 10.5 inch, RAM 4GB, bộ nhớ 64GB, màn hình sáng đẹp, kèm bao da gập.',                          3200000, 'SOLD',     53, 'sp135'),
+    (6,  'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Áo sơ mi trắng cổ đức nam size M',            N'Áo sơ mi cotton trắng form regular, cổ đức, mặc đi làm lịch sự, đã giặt sạch.',                    150000,  'SOLD',     51, 'sp136'),
+    (7,  'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Đầm vintage họa tiết in',                     N'Đầm vintage họa tiết in nhiều màu, dáng suông dài, chất vải nhẹ, đường may còn đẹp.',               220000,  'SOLD',     49, 'sp137'),
+    (8,  'nguoiban02@demo.local', N'Thời trang',             'LIKE_NEW', N'Quần short jean nữ size 27',                  N'Short jean xanh nhạt cạp cao, ống rộng, mới mặc vài lần, không sờn chỉ.',                          180000,  'SOLD',     47, 'sp138'),
+    (9,  'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Áo hoodie nỉ có mũ',                          N'Hoodie nỉ bông dày dặn, có mũ và túi kangaroo, form rộng thoải mái.',                              190000,  'SOLD',     46, 'sp139'),
+    (10, 'nguoiban02@demo.local', N'Thời trang',             'GOOD',     N'Túi tote vải canvas in chữ',                  N'Túi tote canvas dày, quai dài đeo vai, đựng vừa laptop 14 inch, ít dấu sử dụng.',                  120000,  'SOLD',     44, 'sp140'),
+    (11, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Nồi áp suất điện đa năng',                    N'Nồi áp suất điện đa năng 6 lít, nhiều chế độ nấu, van xả còn tốt, lòng nồi sạch.',                 650000,  'SOLD',     27, 'sp141'),
+    (12, 'nguoiban03@demo.local', N'Đồ gia dụng',            'LIKE_NEW', N'Máy xay sinh tố cầm tay',                     N'Máy xay cầm tay kèm cối đo, xay sinh tố và cháo mịn, hoạt động êm, vệ sinh dễ.',                   420000,  'SOLD',     25, 'sp142'),
+    (13, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Bộ chảo chống dính Tefal 3 món',              N'Bộ ba chảo đường kính 20, 24 và 28 cm, đáy từ dùng được bếp điện từ, lớp chống dính còn tốt.',    480000,  'SOLD',     23, 'sp143'),
+    (14, 'nguoiban03@demo.local', N'Đồ gia dụng',            'GOOD',     N'Máy hút bụi không dây Dyson',                 N'Máy hút bụi không dây chạy pin, lực hút tốt, kèm đầu hút ghế và khe hẹp, pin còn khoảng 30 phút.', 890000, 'SOLD',     21, 'sp144'),
+    (15, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Combo 5 sách văn học cũ',                     N'Gồm 5 cuốn tiểu thuyết văn học kinh điển bản cũ, gáy chắc, không mất trang.',                      120000,  'SOLD',     19, 'sp145'),
+    (16, 'nguoiban09@demo.local', N'Khác',                   'GOOD',     N'Máy đánh chữ cơ vintage',                     N'Máy đánh chữ cơ học, phím bấm êm, còn dùng tốt, kèm hộp đựng chống bụi.',                          1450000, 'RESERVED', 8,  'sp146'),
+    (17, 'an.seller@demo.local',  N'Khác',                   'GOOD',     N'Đàn guitar acoustic Yamaha',                  N'Đàn gỗ mặt thông, âm thanh ấm, dây mới thay, kèm bao đàn.',                                        1350000, 'RESERVED', 9,  'sp147'),
+    (18, 'nguoiban04@demo.local', N'Sách & văn phòng phẩm',  'GOOD',     N'Sách Đắc nhân tâm bản cũ',                    N'Bản dịch cũ của Dale Carnegie, sách còn nguyên, có vài dòng gạch chân bút chì.',                   60000,   'RESERVED', 7,  'sp148'),
+    (19, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Bóng đá size 5 Adidas',                       N'Bóng thi đấu size 5 khâu tay, da còn tốt, đã bơm sẵn, lăn êm.',                                    250000,  'RESERVED', 10, 'sp149'),
+    (20, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Vợt tennis carbon',                           N'Vợt carbon khung nhẹ, lưới căng đều, cán mới quấn grip, kèm bao vợt.',                             1200000, 'RESERVED', 8,  'sp150'),
+    (21, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'GOOD',     N'Giày chạy bộ Nike Air Zoom size 42',          N'Giày chạy bộ đệm Air Zoom, đế còn dày, upper sạch, đã vệ sinh kỹ.',                                950000,  'RESERVED', 7,  'sp151'),
+    (22, 'nguoiban05@demo.local', N'Thể thao & dã ngoại',    'LIKE_NEW', N'Bình nước thể thao inox 1L',                  N'Bình inox 304 giữ nhiệt 12 giờ, nắp khóa chống rò, kèm túi đeo.',                                  90000,   'RESERVED', 6,  'sp152'),
+    (23, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'GOOD',     N'Xe đạp trẻ em',                               N'Xe đạp cho bé 4-6 tuổi, khung sắt chắc, có bánh phụ, phanh chữ A an toàn.',                        750000,  'RESERVED', 5,  'sp153'),
+    (24, 'nguoiban06@demo.local', N'Đồ chơi & mẹ bé',        'GOOD',     N'Bộ xếp hình Lego Classic 500 chi tiết',       N'Bộ gạch màu cơ bản hơn 500 chi tiết, đủ bộ, đã vệ sinh, kèm hộp đựng.',                            450000,  'RESERVED', 4,  'sp154'),
+    (25, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Ghế xoay văn phòng lưng lưới',                N'Ghế lưới thoáng lưng, có tựa đầu và tay vịn, piston nâng hạ còn êm.',                              850000,  'RESERVED', 3,  'sp155'),
+    (26, 'nguoiban07@demo.local', N'Nội thất',               'GOOD',     N'Bàn gỗ tròn',                                 N'Bàn tròn đường kính 70 cm chân gỗ chắc chắn, mặt gỗ còn đẹp, phù hợp phòng khách nhỏ.',             1200000, 'ACTIVE',   15, 'sp156'),
+    (27, 'nguoiban07@demo.local', N'Nội thất',               'LIKE_NEW', N'Đèn sàn trang trí chao vải',                  N'Đèn sàn cao 1m6 chao vải trắng, ánh sáng ấm, công tắc chân tiện dùng.',                            550000,  'ACTIVE',   13, 'sp157'),
+    (28, 'nguoiban08@demo.local', N'Đồ điện tử',             'GOOD',     N'Máy ảnh Fujifilm X-T20 kèm lens 18-55mm',     N'Máy mirrorless cảm biến APS-C, kèm lens kit 18-55mm, pin và sạc theo máy.',                        10500000,'ACTIVE',   11, 'sp158'),
+    (29, 'nguoiban08@demo.local', N'Đồ điện tử',             'GOOD',     N'Chân máy ảnh tripod Manfrotto',               N'Tripod nhôm 3 chân, đầu bi giữ chắc, khóa chân còn tốt, kèm túi đựng.',                            1500000, 'ACTIVE',   9,  'sp159'),
+    (30, 'nguoiban09@demo.local', N'Khác',                   'GOOD',     N'Bình gốm Bát Tràng',                          N'Bình gốm vẽ tay men lam, cao 35 cm, không sứt mẻ, phù hợp trang trí phòng khách.',                 700000,  'ACTIVE',   7,  'sp160');
+
+    -- -------------------------------------------------------------------------
+    -- 2. Sản phẩm: thêm nếu chưa có (đối chiếu shop + tên)
+    -- -------------------------------------------------------------------------
+    INSERT SanPham (MaCuaHang, MaDanhMuc, MaTinhTrang, Ten, ChuoiTimKiem, MoTa, Gia, TrangThai, NgayTao, NgayCapNhat)
+    SELECT ch.MaCuaHang, dm.MaDanhMuc, tt.MaTinhTrang, sp.Ten, dbo.fn_ChuanHoaChuoi(sp.Ten), sp.MoTa, sp.Gia, sp.TrangThai,
+           DATEADD(DAY, -sp.NgayTruoc, @Now), DATEADD(HOUR, 1, DATEADD(DAY, -sp.NgayTruoc, @Now))
+    FROM #SeedSpExtra sp
+    JOIN NguoiDung nd ON nd.Email = sp.EmailChuShop
+    JOIN CuaHang ch   ON ch.MaNguoiDung = nd.MaNguoiDung
+    JOIN DanhMuc dm   ON dm.Ten = sp.TenDanhMuc
+    JOIN TinhTrangSanPham tt ON tt.Ma = sp.CodeTinhTrang
+    WHERE NOT EXISTS (
+        SELECT 1 FROM SanPham x WHERE x.MaCuaHang = ch.MaCuaHang AND x.Ten = sp.Ten
+    );
+
+    -- -------------------------------------------------------------------------
+    -- 3. Ảnh sản phẩm: 2 ảnh/sản phẩm, ảnh 1 là ảnh chính
+    -- -------------------------------------------------------------------------
+    INSERT AnhSanPham (MaSanPham, DuongDan, ThuTu, LaAnhChinh, DungLuong)
+    SELECT sp.MaSanPham,
+           N'/uploads/seed/' + x.SeedImg + N'-' + CAST(n.ThuTu AS varchar(1)) + N'.jpg',
+           n.ThuTu,
+           CASE WHEN n.ThuTu = 1 THEN 1 ELSE 0 END,
+           300000 + x.Stt * 1000 + n.ThuTu * 100
+    FROM #SeedSpExtra x
+    JOIN NguoiDung nd ON nd.Email = x.EmailChuShop
+    JOIN CuaHang ch   ON ch.MaNguoiDung = nd.MaNguoiDung
+    JOIN SanPham sp   ON sp.MaCuaHang = ch.MaCuaHang AND sp.Ten = x.Ten
+    CROSS JOIN (VALUES (1), (2)) n (ThuTu)
+    WHERE NOT EXISTS (
+        SELECT 1 FROM AnhSanPham a WHERE a.MaSanPham = sp.MaSanPham AND a.ThuTu = n.ThuTu
+    );
+
+    -- Đồng bộ lại đường dẫn nếu ảnh đã tồn tại nhưng trỏ sai mã (chạy lại sau khi đổi mã ảnh)
+    UPDATE a
+    SET a.DuongDan = N'/uploads/seed/' + x.SeedImg + N'-' + CAST(a.ThuTu AS varchar(1)) + N'.jpg'
+    FROM AnhSanPham a
+    JOIN SanPham sp ON sp.MaSanPham = a.MaSanPham
+    JOIN CuaHang ch ON ch.MaCuaHang = sp.MaCuaHang
+    JOIN NguoiDung nd ON nd.MaNguoiDung = ch.MaNguoiDung
+    JOIN #SeedSpExtra x ON x.EmailChuShop = nd.Email AND x.Ten = sp.Ten
+    WHERE a.ThuTu IN (1, 2)
+      AND a.DuongDan <> N'/uploads/seed/' + x.SeedImg + N'-' + CAST(a.ThuTu AS varchar(1)) + N'.jpg';
+
+    -- Lịch sử trạng thái tin đăng (1 dòng/sản phẩm, đủ để trang lịch sử có dữ liệu)
+    INSERT LichSuTrangThaiSanPham (MaSanPham, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
+    SELECT sp.MaSanPham, NULL, sp.TrangThai, 'SELLER', ch.MaNguoiDung, N'Đăng tin và được duyệt tự động', DATEADD(HOUR, 2, sp.NgayTao)
+    FROM #SeedSpExtra x
+    JOIN NguoiDung nd ON nd.Email = x.EmailChuShop
+    JOIN CuaHang ch   ON ch.MaNguoiDung = nd.MaNguoiDung
+    JOIN SanPham sp   ON sp.MaCuaHang = ch.MaCuaHang AND sp.Ten = x.Ten
+    WHERE NOT EXISTS (
+        SELECT 1 FROM LichSuTrangThaiSanPham ls WHERE ls.MaSanPham = sp.MaSanPham
+    );
+
+    -- -------------------------------------------------------------------------
+    -- 4. Danh sách 40 đơn hàng mới (15 hoàn tất, 10 đang xử lý, 5 hủy, 10 hủy trước đó)
+    -- -------------------------------------------------------------------------
+    CREATE TABLE #SeedOrdersExtra (
+        Stt        int           PRIMARY KEY,
+        MaDon      varchar(30)   NOT NULL,
+        TrangThai  varchar(15)   NOT NULL,
+        HinhThucNhan varchar(20) NOT NULL,
+        PhuongThucThanhToan varchar(20) NOT NULL,
+        NgayTruoc  int           NOT NULL,
+        BuyerEmail varchar(100)  NOT NULL,
+        SellerEmail varchar(100) NOT NULL,
+        TenSanPham nvarchar(200) NOT NULL,
+        Gia        decimal(18,2) NOT NULL,
+        TenDanhMuc nvarchar(100) NOT NULL,
+        TinhTrang  varchar(20)   NOT NULL,
+        MoTaSP     nvarchar(500) NOT NULL
+    );
+
+    INSERT #SeedOrdersExtra (Stt, MaDon, TrangThai, HinhThucNhan, PhuongThucThanhToan, NgayTruoc, BuyerEmail, SellerEmail, TenSanPham, Gia, TenDanhMuc, TinhTrang, MoTaSP) VALUES
+    (1,  'DH202611-000071', 'COMPLETED', 'GIAO_HANG',    'COD',           45, 'nguoimua01@demo.local', 'nguoiban01@demo.local', N'Tai nghe chụp tai Sony MDR-7506',           550000,  N'Đồ điện tử',            'LIKE_NEW', N'Tai nghe studio còn tốt, đệm tai mới thay.'),
+    (2,  'DH202611-000072', 'COMPLETED', 'GAP_TRUC_TIEP','BANK_TRANSFER', 42, 'nguoimua02@demo.local', 'nguoiban01@demo.local', N'Điện thoại Xiaomi Redmi Note 12 128GB',     2850000, N'Đồ điện tử',            'GOOD',     N'Máy nguyên zin, pin tốt, kèm sạc nhanh.'),
+    (3,  'DH202611-000073', 'COMPLETED', 'GIAO_HANG',    'COD',           40, 'nguoimua03@demo.local', 'nguoiban01@demo.local', N'Loa Bluetooth JBL Charge 4',                1350000, N'Đồ điện tử',            'GOOD',     N'Loa bass chắc, pin trâu, chống nước tốt.'),
+    (4,  'DH202611-000074', 'COMPLETED', 'GAP_TRUC_TIEP','COD',           38, 'nguoimua04@demo.local', 'nguoiban01@demo.local', N'Đồng hồ Garmin Forerunner 235',             1900000, N'Đồ điện tử',            'GOOD',     N'Đồng hồ GPS, đo nhịp tim, dây còn đẹp.'),
+    (5,  'DH202611-000075', 'COMPLETED', 'GIAO_HANG',    'BANK_TRANSFER', 36, 'nguoimua05@demo.local', 'nguoiban01@demo.local', N'Máy tính bảng Samsung Galaxy Tab A8',       3200000, N'Đồ điện tử',            'LIKE_NEW', N'Máy 10.5 inch, RAM 4GB, kèm bao da.'),
+    (6,  'DH202611-000076', 'COMPLETED', 'GIAO_HANG',    'COD',           34, 'chi.buyer@demo.local',  'nguoiban02@demo.local', N'Áo sơ mi trắng cổ đức nam size M',          150000,  N'Thời trang',            'GOOD',     N'Áo cotton trắng, form regular, đã giặt sạch.'),
+    (7,  'DH202611-000077', 'COMPLETED', 'GAP_TRUC_TIEP','COD',           32, 'nguoimua07@demo.local', 'nguoiban02@demo.local', N'Đầm vintage họa tiết in',                   220000,  N'Thời trang',            'GOOD',     N'Đầm vintage dáng suông, họa tiết in đẹp.'),
+    (8,  'DH202611-000078', 'COMPLETED', 'GIAO_HANG',    'BANK_TRANSFER', 30, 'dung.buyer@demo.local', 'nguoiban02@demo.local', N'Quần short jean nữ size 27',                180000,  N'Thời trang',            'LIKE_NEW', N'Short jean cạp cao, mới mặc vài lần.'),
+    (9,  'DH202611-000079', 'COMPLETED', 'GIAO_HANG',    'COD',           28, 'nguoimua09@demo.local', 'nguoiban02@demo.local', N'Áo hoodie nỉ có mũ',                        190000,  N'Thời trang',            'GOOD',     N'Hoodie nỉ dày, có mũ, form rộng.'),
+    (10, 'DH202611-000080', 'COMPLETED', 'GAP_TRUC_TIEP','COD',           26, 'nguoimua10@demo.local', 'nguoiban02@demo.local', N'Túi tote vải canvas in chữ',                120000,  N'Thời trang',            'GOOD',     N'Túi canvas dày, đựng vừa laptop 14 inch.'),
+    (11, 'DH202611-000081', 'COMPLETED', 'GIAO_HANG',    'COD',           24, 'nguoimua11@demo.local', 'nguoiban03@demo.local', N'Nồi áp suất điện đa năng',                  650000,  N'Đồ gia dụng',           'GOOD',     N'Nồi 6 lít, nhiều chế độ nấu, van xả tốt.'),
+    (12, 'DH202611-000082', 'COMPLETED', 'GAP_TRUC_TIEP','BANK_TRANSFER', 22, 'nguoimua12@demo.local', 'nguoiban03@demo.local', N'Máy xay sinh tố cầm tay',                   420000,  N'Đồ gia dụng',           'LIKE_NEW', N'Máy xay cầm tay, kèm cối đo, hoạt động êm.'),
+    (13, 'DH202611-000083', 'COMPLETED', 'GIAO_HANG',    'COD',           20, 'nguoimua13@demo.local', 'nguoiban03@demo.local', N'Bộ chảo chống dính Tefal 3 món',            480000,  N'Đồ gia dụng',           'GOOD',     N'Bộ 3 chảo đáy từ, lớp chống dính còn tốt.'),
+    (14, 'DH202611-000084', 'COMPLETED', 'GAP_TRUC_TIEP','COD',           18, 'nguoimua14@demo.local', 'nguoiban03@demo.local', N'Máy hút bụi không dây Dyson',               890000,  N'Đồ gia dụng',           'GOOD',     N'Máy hút bụi không dây, pin còn khoảng 30 phút.'),
+    (15, 'DH202611-000085', 'COMPLETED', 'GIAO_HANG',    'BANK_TRANSFER', 16, 'nguoimua15@demo.local', 'nguoiban04@demo.local', N'Combo 5 sách văn học cũ',                   120000,  N'Sách & văn phòng phẩm', 'GOOD',     N'Combo 5 cuốn tiểu thuyết cũ, gáy chắc, đủ trang.'),
+
+    (16, 'DH202611-000086', 'SHIPPING',  'GIAO_HANG',    'COD',            3, 'nguoimua16@demo.local', 'nguoiban09@demo.local', N'Máy đánh chữ cơ vintage',                   1450000, N'Khác',                  'GOOD',     N'Máy đánh chữ cơ học, phím êm, kèm hộp đựng.'),
+    (17, 'DH202611-000087', 'SHIPPING',  'GIAO_HANG',    'BANK_TRANSFER',  4, 'nguoimua17@demo.local', 'an.seller@demo.local',  N'Đàn guitar acoustic Yamaha',                1350000, N'Khác',                  'GOOD',     N'Đàn gỗ mặt thông, dây mới thay, kèm bao.'),
+    (18, 'DH202611-000088', 'SHIPPING',  'GIAO_HANG',    'COD',            2, 'nguoimua18@demo.local', 'nguoiban04@demo.local', N'Sách Đắc nhân tâm bản cũ',                  60000,   N'Sách & văn phòng phẩm', 'GOOD',     N'Bản dịch cũ, còn nguyên, vài dòng gạch chân.'),
+    (19, 'DH202611-000089', 'SHIPPING',  'GIAO_HANG',    'COD',            5, 'chi.buyer@demo.local',  'nguoiban05@demo.local', N'Bóng đá size 5 Adidas',                     250000,  N'Thể thao & dã ngoại',   'GOOD',     N'Bóng size 5, da còn tốt, đã bơm sẵn.'),
+    (20, 'DH202611-000090', 'CONFIRMED', 'GAP_TRUC_TIEP','COD',            3, 'nguoimua20@demo.local', 'nguoiban05@demo.local', N'Vợt tennis carbon',                          1200000, N'Thể thao & dã ngoại',   'GOOD',     N'Vợt carbon nhẹ, lưới căng đều, kèm bao.'),
+    (21, 'DH202611-000091', 'CONFIRMED', 'GIAO_HANG',    'BANK_TRANSFER',  2, 'nguoimua21@demo.local', 'nguoiban05@demo.local', N'Giày chạy bộ Nike Air Zoom size 42',         950000,  N'Thể thao & dã ngoại',   'GOOD',     N'Giày chạy bộ đệm êm, upper sạch, size 42.'),
+    (22, 'DH202611-000092', 'CONFIRMED', 'GAP_TRUC_TIEP','COD',            1, 'nguoimua22@demo.local', 'nguoiban05@demo.local', N'Bình nước thể thao inox 1L',                 90000,   N'Thể thao & dã ngoại',   'LIKE_NEW', N'Bình inox giữ nhiệt, nắp khóa chống rò.'),
+    (23, 'DH202611-000093', 'PENDING',   'GIAO_HANG',    'COD',            1, 'nguoimua23@demo.local', 'nguoiban06@demo.local', N'Xe đạp trẻ em',                             750000,  N'Đồ chơi & mẹ bé',       'GOOD',     N'Xe đạp cho bé 4-6 tuổi, có bánh phụ.'),
+    (24, 'DH202611-000094', 'PENDING',   'GAP_TRUC_TIEP','COD',            1, 'nguoimua24@demo.local', 'nguoiban06@demo.local', N'Bộ xếp hình Lego Classic 500 chi tiết',      450000,  N'Đồ chơi & mẹ bé',       'GOOD',     N'Bộ gạch màu hơn 500 chi tiết, kèm hộp đựng.'),
+    (25, 'DH202611-000095', 'PENDING',   'GIAO_HANG',    'BANK_TRANSFER',  0, 'nguoimua25@demo.local', 'nguoiban07@demo.local', N'Ghế xoay văn phòng lưng lưới',               850000,  N'Nội thất',              'GOOD',     N'Ghế lưới thoáng lưng, có tựa đầu, piston êm.'),
+
+    (26, 'DH202611-000096', 'CANCELLED', 'GIAO_HANG',    'COD',           12, 'nguoimua01@demo.local', 'nguoiban07@demo.local', N'Bàn gỗ tròn',                                1200000, N'Nội thất',              'GOOD',     N'Bàn tròn 70cm, chân gỗ chắc chắn.'),
+    (27, 'DH202611-000097', 'CANCELLED', 'GAP_TRUC_TIEP','BANK_TRANSFER', 10, 'nguoimua02@demo.local', 'nguoiban07@demo.local', N'Đèn sàn trang trí chao vải',                 550000,  N'Nội thất',              'LIKE_NEW', N'Đèn sàn cao 1m6, chao vải trắng, ánh sáng ấm.'),
+    (28, 'DH202611-000098', 'CANCELLED', 'GIAO_HANG',    'COD',            8, 'dung.buyer@demo.local', 'nguoiban08@demo.local', N'Máy ảnh Fujifilm X-T20 kèm lens 18-55mm',    10500000,N'Đồ điện tử',            'GOOD',     N'Máy mirrorless APS-C, kèm lens kit 18-55mm.'),
+    (29, 'DH202611-000099', 'CANCELLED', 'GAP_TRUC_TIEP','COD',            6, 'nguoimua04@demo.local', 'nguoiban08@demo.local', N'Chân máy ảnh tripod Manfrotto',               1500000, N'Đồ điện tử',            'GOOD',     N'Tripod nhôm 3 chân, đầu bi giữ chắc, kèm túi.'),
+    (30, 'DH202611-000100', 'CANCELLED', 'GIAO_HANG',    'BANK_TRANSFER',  4, 'chi.buyer@demo.local',  'nguoiban09@demo.local', N'Bình gốm Bát Tràng',                         700000,  N'Khác',                  'GOOD',     N'Bình gốm men lam vẽ tay, cao 35 cm.'),
+
+    (31, 'DH202611-000101', 'CANCELLED', 'GIAO_HANG',    'COD',           60, 'nguoimua05@demo.local', 'nguoiban01@demo.local', N'Tai nghe chụp tai Sony MDR-7506',           550000,  N'Đồ điện tử',            'LIKE_NEW', N'Tai nghe studio còn tốt, đệm tai mới thay.'),
+    (32, 'DH202611-000102', 'CANCELLED', 'GAP_TRUC_TIEP','BANK_TRANSFER', 58, 'nguoimua06@demo.local', 'nguoiban01@demo.local', N'Điện thoại Xiaomi Redmi Note 12 128GB',     2850000, N'Đồ điện tử',            'GOOD',     N'Máy nguyên zin, pin tốt, kèm sạc nhanh.'),
+    (33, 'DH202611-000103', 'CANCELLED', 'GIAO_HANG',    'COD',           55, 'nguoimua07@demo.local', 'nguoiban01@demo.local', N'Loa Bluetooth JBL Charge 4',                1350000, N'Đồ điện tử',            'GOOD',     N'Loa bass chắc, pin trâu, chống nước tốt.'),
+    (34, 'DH202611-000104', 'CANCELLED', 'GAP_TRUC_TIEP','COD',           52, 'nguoimua08@demo.local', 'nguoiban01@demo.local', N'Đồng hồ Garmin Forerunner 235',             1900000, N'Đồ điện tử',            'GOOD',     N'Đồng hồ GPS, đo nhịp tim, dây còn đẹp.'),
+    (35, 'DH202611-000105', 'CANCELLED', 'GIAO_HANG',    'BANK_TRANSFER', 50, 'nguoimua09@demo.local', 'nguoiban01@demo.local', N'Máy tính bảng Samsung Galaxy Tab A8',       3200000, N'Đồ điện tử',            'LIKE_NEW', N'Máy 10.5 inch, RAM 4GB, kèm bao da.'),
+    (36, 'DH202611-000106', 'CANCELLED', 'GIAO_HANG',    'COD',           48, 'nguoimua10@demo.local', 'nguoiban02@demo.local', N'Áo sơ mi trắng cổ đức nam size M',          150000,  N'Thời trang',            'GOOD',     N'Áo cotton trắng, form regular, đã giặt sạch.'),
+    (37, 'DH202611-000107', 'CANCELLED', 'GAP_TRUC_TIEP','COD',           46, 'nguoimua11@demo.local', 'nguoiban02@demo.local', N'Đầm vintage họa tiết in',                   220000,  N'Thời trang',            'GOOD',     N'Đầm vintage dáng suông, họa tiết in đẹp.'),
+    (38, 'DH202611-000108', 'CANCELLED', 'GIAO_HANG',    'BANK_TRANSFER', 44, 'nguoimua12@demo.local', 'nguoiban02@demo.local', N'Quần short jean nữ size 27',                180000,  N'Thời trang',            'LIKE_NEW', N'Short jean cạp cao, mới mặc vài lần.'),
+    (39, 'DH202611-000109', 'CANCELLED', 'GAP_TRUC_TIEP','COD',           43, 'nguoimua13@demo.local', 'nguoiban02@demo.local', N'Áo hoodie nỉ có mũ',                        190000,  N'Thời trang',            'GOOD',     N'Hoodie nỉ dày, có mũ, form rộng.'),
+    (40, 'DH202611-000110', 'CANCELLED', 'GIAO_HANG',    'COD',           41, 'nguoimua14@demo.local', 'nguoiban02@demo.local', N'Túi tote vải canvas in chữ',                120000,  N'Thời trang',            'GOOD',     N'Túi canvas dày, đựng vừa laptop 14 inch.');
+
+    -- -------------------------------------------------------------------------
+    -- 5. Đơn hàng
+    -- -------------------------------------------------------------------------
+    INSERT DonHang (
+        MaDon, MaNguoiDung, MaCuaHang, TenNguoiNhan, SoDienThoaiNhan, DiaChiNhan,
+        TienHang, PhiVanChuyen, TongTien, PhuongThucThanhToan, TrangThaiThanhToan,
+        TrangThai, HinhThucNhan, NguoiHuy, LyDoHuy, ThoiGianHuy,
+        ThoiGianXacNhan, ThoiGianBatDauGiao, ThoiGianDaGiao, ThoiGianHoanTat,
+        NgayTao, NgayCapNhat
+    )
     SELECT
+        so.MaDon,
+        ndBuyer.MaNguoiDung,
+        ch.MaCuaHang,
+        ndBuyer.HoTen,
+        COALESCE(ndBuyer.SoDienThoai, '0909000099'),
         CASE
-            -- 1. 119 sản phẩm có thư mục riêng trong wwwroot/uploads/products/<Folder>
-            WHEN sp.Ten = N'Ấm siêu tốc inox 1.7L'                           THEN N'/uploads/products/Am-sieu-toc-inox-1-7L'
-            WHEN sp.Ten = N'Áo hoodie nỉ màu kem size M'                     THEN N'/uploads/products/Ao-hoodie-ni-mau-kem-size-M'
-            WHEN sp.Ten = N'Áo khoác bomber đen size M'                      THEN N'/uploads/products/Ao-khoac-bomber-den-size-M'
-            WHEN sp.Ten = N'Áo khoác denim nam size L'                       THEN N'/uploads/products/Ao-khoac-denim-nam-size-L'
-            WHEN sp.Ten = N'Áo sơ mi linen trắng size L'                     THEN N'/uploads/products/Ao-so-mi-linen-trang-size-L'
-            WHEN sp.Ten = N'Áo thun cotton xanh navy size L'                 THEN N'/uploads/products/Ao-thun-cotton-xanh-navy-size-L'
-            WHEN sp.Ten = N'Ba lô trekking 35L'                              THEN N'/uploads/products/Ba-lo-trekking-35L'
-            WHEN sp.Ten = N'Baga sau xe đạp nhôm'                            THEN N'/uploads/products/Baga-sau-xe-dap-nhom'
-            WHEN sp.Ten = N'Balo Herschel 15 inch màu xám'                   THEN N'/uploads/products/Balo-Herschel-15-inch-mau-xam'
-            WHEN sp.Ten = N'Balo laptop chống nước'                          THEN N'/uploads/products/Balo-laptop-chong-nuoc'
-            WHEN sp.Ten = N'Bàn học gỗ kèm ghế'                              THEN N'/uploads/products/Ban-hoc-go-kem-ghe'
-            WHEN sp.Ten = N'Bàn là khô Panasonic'                            THEN N'/uploads/products/Ban-la-kho-Panasonic'
-            WHEN sp.Ten = N'Bàn phím cơ Keychron K2'                         THEN N'/uploads/products/Ban-phim-co-Keychron-K2'
-            WHEN sp.Ten = N'Bàn phím Logitech K380'                          THEN N'/uploads/products/Ban-phim-Logitech-K380'
-            WHEN sp.Ten = N'Bàn trà gỗ thấp 80cm'                            THEN N'/uploads/products/Ban-tra-go-thap-80cm'
-            WHEN sp.Ten = N'Bàn ủi hơi nước Tefal'                           THEN N'/uploads/products/Ban-ui-hoi-nuoc-Tefal'
-            WHEN sp.Ten = N'Bảng vẽ Wacom One Small'                         THEN N'/uploads/products/Bang-ve-Wacom-One-Small'
-            WHEN sp.Ten = N'Bình giữ nhiệt inox 750ml'                       THEN N'/uploads/products/Binh-giu-nhiet-inox-750ml'
-            WHEN sp.Ten = N'Bình hoa gốm trang trí men xanh'                 THEN N'/uploads/products/Binh-hoa-gom-trang-tri-men-xanh'
-            WHEN sp.Ten = N'Bộ bút highlight pastel 6 màu'                   THEN N'/uploads/products/Bo-but-highlight-pastel-6-mau'
-            WHEN sp.Ten = N'Bộ cờ vua nam châm du lịch'                      THEN N'/uploads/products/Bo-co-vua-nam-cham-du-lich'
-            WHEN sp.Ten = N'Bộ dụng cụ sửa xe đạp 16 món'                    THEN N'/uploads/products/Bo-dung-cu-sua-xe-dap-16-mon'
-            WHEN sp.Ten = N'Bộ ly thủy tinh 6 chiếc'                         THEN N'/uploads/products/Bo-ly-thuy-tinh-6-chiec'
-            WHEN sp.Ten = N'Bộ nồi inox 3 món'                               THEN N'/uploads/products/Bo-noi-inox-3-mon'
-            WHEN sp.Ten = N'Bộ từ điển Anh Việt mini'                        THEN N'/uploads/products/Bo-tu-dien-Anh-Viet-mini'
-            WHEN sp.Ten = N'Bộ xếp hình khối gỗ 50 chi tiết'                 THEN N'/uploads/products/Bo-xep-hinh-khoi-go-50-chi-tiet'
-            WHEN sp.Ten = N'Bộ xếp hình Lego City'                           THEN N'/uploads/products/Bo-xep-hinh-Lego-City'
-            WHEN sp.Ten = N'Bơm xe đạp mini hợp kim'                         THEN N'/uploads/products/Bom-xe-dap-mini-hop-kim'
-            WHEN sp.Ten = N'Bóng đá size 5'                                  THEN N'/uploads/products/Bong-da-size-5'
-            WHEN sp.Ten = N'Cây trầu bà lá xẻ chậu sứ'                       THEN N'/uploads/products/Cay-trau-ba-la-xe-chau-su'
-            WHEN sp.Ten = N'Chân váy chữ A màu be size M'                    THEN N'/uploads/products/Chan-vay-chu-A-mau-be-size-M'
-            WHEN sp.Ten = N'Chuột Logitech MX Master 2S'                     THEN N'/uploads/products/Chuot-Logitech-MX-Master-2S'
-            WHEN sp.Ten = N'Combo 5 sách kỹ năng sống'                       THEN N'/uploads/products/Combo-5-sach-ky-nang-song'
-            WHEN sp.Ten = N'Đàn ukulele soprano'                             THEN N'/uploads/products/Dan-ukulele-soprano'
-            WHEN sp.Ten = N'Dây nhảy thể thao điều chỉnh'                    THEN N'/uploads/products/Day-nhay-the-thao-dieu-chinh'
-            WHEN sp.Ten = N'Đèn bàn LED chống cận'                           THEN N'/uploads/products/Den-ban-LED-chong-can'
-            WHEN sp.Ten = N'Đèn học chống cận kèm kẹp bàn'                   THEN N'/uploads/products/Den-hoc-chong-can-kem-kep-ban'
-            WHEN sp.Ten = N'Đèn ngủ cảm ứng để bàn'                          THEN N'/uploads/products/Den-ngu-cam-ung-de-ban'
-            WHEN sp.Ten = N'Đèn sàn phòng khách'                             THEN N'/uploads/products/Den-san-phong-khach'
-            WHEN sp.Ten = N'Đèn xe đạp sạc USB'                              THEN N'/uploads/products/Den-xe-dap-sac-USB'
-            WHEN sp.Ten = N'Địu em bé trợ lực'                               THEN N'/uploads/products/Diu-em-be-tro-luc'
-            WHEN sp.Ten = N'Đồng hồ Casio F-91W'                             THEN N'/uploads/products/Dong-ho-Casio-F-91W'
-            WHEN sp.Ten = N'Đồng hồ Casio vintage'                           THEN N'/uploads/products/Dong-ho-Casio-vintage'
-            WHEN sp.Ten = N'Ghế ăn dặm gấp gọn cho bé'                       THEN N'/uploads/products/Ghe-an-dam-gap-gon-cho-be'
-            WHEN sp.Ten = N'Ghế xoay văn phòng lưới'                         THEN N'/uploads/products/Ghe-xoay-van-phong-luoi'
-            WHEN sp.Ten = N'Giá đỡ điện thoại xe máy'                        THEN N'/uploads/products/Gia-do-dien-thoai-xe-may'
-            WHEN sp.Ten = N'Giá đỡ laptop nhôm gấp gọn'                      THEN N'/uploads/products/Gia-do-laptop-nhom-gap-gon'
-            WHEN sp.Ten = N'Giá vẽ tranh gỗ gấp gọn'                         THEN N'/uploads/products/Gia-ve-tranh-go-gap-gon'
-            WHEN sp.Ten = N'Giáo trình Lập trình Web trọn bộ'                THEN N'/uploads/products/Giao-trinh-Lap-trinh-Web-tron-bo'
-            WHEN sp.Ten = N'Giày chạy bộ Adidas size 41'                     THEN N'/uploads/products/Giay-chay-bo-Adidas-size-41'
-            WHEN sp.Ten = N'Giày Converse cổ thấp size 39'                   THEN N'/uploads/products/Giay-Converse-co-thap-size-39'
-            WHEN sp.Ten = N'Giày sneaker trắng size 42'                      THEN N'/uploads/products/Giay-sneaker-trang-size-42'
-            WHEN sp.Ten = N'Gối ôm và chăn mỏng'                             THEN N'/uploads/products/Goi-om-va-chan-mong'
-            WHEN sp.Ten = N'Gương đứng khung gỗ'                             THEN N'/uploads/products/Guong-dung-khung-go'
-            WHEN sp.Ten = N'Hộp đựng đồ nhựa 3 tầng'                         THEN N'/uploads/products/Hop-dung-do-nhua-3-tang'
-            WHEN sp.Ten = N'iPad Gen 9 Wi-Fi 64GB'                           THEN N'/uploads/products/iPad-Gen-9-Wi-Fi-64GB'
-            WHEN sp.Ten = N'iPhone 11 64GB màu đen'                          THEN N'/uploads/products/iPhone-11-64GB-mau-den'
-            WHEN sp.Ten = N'iPhone 12 128GB màu xanh'                        THEN N'/uploads/products/iPhone-12-128GB-mau-xanh'
-            WHEN sp.Ten = N'Kệ giày 4 tầng bằng thép'                        THEN N'/uploads/products/Ke-giay-4-tang-bang-thep'
-            WHEN sp.Ten = N'Kệ sách 5 tầng'                                  THEN N'/uploads/products/Ke-sach-5-tang'
-            WHEN sp.Ten = N'Kệ tivi gỗ công nghiệp 1m2'                      THEN N'/uploads/products/Ke-tivi-go-cong-nghiep-1m2'
-            WHEN sp.Ten = N'Laptop Dell Latitude 7490 i5'                    THEN N'/uploads/products/Laptop-Dell-Latitude-7490-i5'
-            WHEN sp.Ten = N'Laptop Lenovo ThinkPad T480'                     THEN N'/uploads/products/Laptop-Lenovo-ThinkPad-T480'
-            WHEN sp.Ten = N'Lều cắm trại 2 người'                            THEN N'/uploads/products/Leu-cam-trai-2-nguoi'
-            WHEN sp.Ten = N'Lò vi sóng Panasonic 20L'                        THEN N'/uploads/products/Lo-vi-song-Panasonic-20L'
-            WHEN sp.Ten = N'Loa Bluetooth JBL Flip 4'                        THEN N'/uploads/products/Loa-Bluetooth-JBL-Flip-4'
-            WHEN sp.Ten = N'Loa JBL Charge 4 màu đen'                        THEN N'/uploads/products/Loa-JBL-Charge-4-mau-den'
-            WHEN sp.Ten = N'MacBook Air M1 8GB 256GB'                        THEN N'/uploads/products/MacBook-Air-M1-8GB-256GB'
-            WHEN sp.Ten = N'Màn hình Dell 24 inch IPS'                       THEN N'/uploads/products/Man-hinh-Dell-24-inch-IPS'
-            WHEN sp.Ten = N'Máy ảnh Canon EOS 700D kèm lens kit'             THEN N'/uploads/products/May-anh-Canon-EOS-700D-kem-lens-kit'
-            WHEN sp.Ten = N'Máy ảnh Fujifilm X-T20 body'                     THEN N'/uploads/products/May-anh-Fujifilm-X-T20-body'
-            WHEN sp.Ten = N'Máy chiếu mini Wanbo T2 Max'                     THEN N'/uploads/products/May-chieu-mini-Wanbo-T2-Max'
-            WHEN sp.Ten = N'Máy chơi game Nintendo Switch Lite'              THEN N'/uploads/products/May-choi-game-Nintendo-Switch-Lite'
-            WHEN sp.Ten = N'Máy ép trái cây Philips HR1811'                  THEN N'/uploads/products/May-ep-trai-cay-Philips-HR1811'
-            WHEN sp.Ten = N'Máy hút bụi cầm tay Deerma DX700'                THEN N'/uploads/products/May-hut-bui-cam-tay-Deerma-DX700'
-            WHEN sp.Ten = N'Máy lọc không khí Xiaomi 3H'                     THEN N'/uploads/products/May-loc-khong-khi-Xiaomi-3H'
-            WHEN sp.Ten = N'Máy may mini gia đình'                           THEN N'/uploads/products/May-may-mini-gia-dinh'
-            WHEN sp.Ten = N'Máy pha cà phê Delonghi nhỏ gọn'                 THEN N'/uploads/products/May-pha-ca-phe-Delonghi-nho-gon'
-            WHEN sp.Ten = N'Máy sấy tóc Philips 1600W'                       THEN N'/uploads/products/May-say-toc-Philips-1600W'
-            WHEN sp.Ten = N'Máy tính Casio FX-570VN Plus'                    THEN N'/uploads/products/May-tinh-Casio-FX-570VN-Plus'
-            WHEN sp.Ten = N'Máy xay cầm tay LocknLock'                       THEN N'/uploads/products/May-xay-cam-tay-LocknLock'
-            WHEN sp.Ten = N'Máy xay sinh tố Philips'                         THEN N'/uploads/products/May-xay-sinh-to-Philips'
-            WHEN sp.Ten = N'Mũ bảo hiểm 3/4 màu xám'                         THEN N'/uploads/products/Mu-bao-hiem-3-4-mau-xam'
-            WHEN sp.Ten = N'Mũ lưỡi trai màu đen'                            THEN N'/uploads/products/Mu-luoi-trai-mau-den'
-            WHEN sp.Ten = N'Nệm topper cao su 1m6'                           THEN N'/uploads/products/Nem-topper-cao-su-1m6'
-            WHEN sp.Ten = N'Nồi chiên không dầu 5L'                          THEN N'/uploads/products/Noi-chien-khong-dau-5L'
-            WHEN sp.Ten = N'Nồi cơm điện Sharp 1.8L'                         THEN N'/uploads/products/Noi-com-dien-Sharp-1-8L'
-            WHEN sp.Ten = N'Nôi em bé vải lưới di động'                      THEN N'/uploads/products/Noi-em-be-vai-luoi-di-dong'
-            WHEN sp.Ten = N'Ổ cứng SSD Samsung 970 EVO 500GB'                THEN N'/uploads/products/O-cung-SSD-Samsung-970-EVO-500GB'
-            WHEN sp.Ten = N'Ống kính Canon EF 50mm f1.8'                     THEN N'/uploads/products/Ong-kinh-Canon-EF-50mm-f1-8'
-            WHEN sp.Ten = N'Quần jean xanh ống đứng size 30'                 THEN N'/uploads/products/Quan-jean-xanh-ong-dung-size-30'
-            WHEN sp.Ten = N'Quạt bàn Toshiba 30cm'                           THEN N'/uploads/products/Quat-ban-Toshiba-30cm'
-            WHEN sp.Ten = N'Quạt đứng Senko'                                 THEN N'/uploads/products/Quat-dung-Senko'
-            WHEN sp.Ten = N'Rèm cửa màu kem 2 tấm'                           THEN N'/uploads/products/Rem-cua-mau-kem-2-tam'
-            WHEN sp.Ten = N'Router Wi-Fi TP-Link Archer C6'                  THEN N'/uploads/products/Router-Wi-Fi-TP-Link-Archer-C6'
-            WHEN sp.Ten = N'Sách Atomic Habits bản tiếng Việt'               THEN N'/uploads/products/Sach-Atomic-Habits-ban-tieng-Viet'
-            WHEN sp.Ten = N'Samsung Galaxy S21 FE 5G'                        THEN N'/uploads/products/Samsung-Galaxy-S21-FE-5G'
-            WHEN sp.Ten = N'Sổ planner A5 chưa dùng hết'                     THEN N'/uploads/products/So-planner-A5-chua-dung-het'
-            WHEN sp.Ten = N'Tạ tay bọc cao su 5kg đôi'                       THEN N'/uploads/products/Ta-tay-boc-cao-su-5kg-doi'
-            WHEN sp.Ten = N'Tai nghe AirPods Pro thế hệ 1'                   THEN N'/uploads/products/Tai-nghe-AirPods-Pro-the-he-1'
-            WHEN sp.Ten = N'Tai nghe Sony WH-1000XM3'                        THEN N'/uploads/products/Tai-nghe-Sony-WH-1000XM3'
-            WHEN sp.Ten = N'Tay cầm DualSense PS5 trắng'                     THEN N'/uploads/products/Tay-cam-DualSense-PS5-trang'
-            WHEN sp.Ten = N'Thảm chơi gấp gọn 2 mặt'                         THEN N'/uploads/products/Tham-choi-gap-gon-2-mat'
-            WHEN sp.Ten = N'Thảm yoga TPE 6mm'                               THEN N'/uploads/products/Tham-yoga-TPE-6mm'
-            WHEN sp.Ten = N'Thắt lưng da nâu bản 3cm'                        THEN N'/uploads/products/That-lung-da-nau-ban-3cm'
-            WHEN sp.Ten = N'Truyện Harry Potter tập 1-3'                     THEN N'/uploads/products/Truyen-Harry-Potter-tap-1-3'
-            WHEN sp.Ten = N'Truyện tranh Doraemon trọn bộ'                   THEN N'/uploads/products/Truyen-tranh-Doraemon-tron-bo'
-            WHEN sp.Ten = N'Tủ đầu giường 2 ngăn kéo'                        THEN N'/uploads/products/Tu-dau-giuong-2-ngan-keo'
-            WHEN sp.Ten = N'Tủ quần áo vải 3 ngăn'                           THEN N'/uploads/products/Tu-quan-ao-vai-3-ngan'
-            WHEN sp.Ten = N'Túi đeo chéo da nâu'                             THEN N'/uploads/products/Tui-deo-cheo-da-nau'
-            WHEN sp.Ten = N'Túi tote canvas màu xanh rêu'                    THEN N'/uploads/products/Tui-tote-canvas-mau-xanh-reu'
-            WHEN sp.Ten = N'Váy midi hoa nhí size S'                         THEN N'/uploads/products/Vay-midi-hoa-nhi-size-S'
-            WHEN sp.Ten = N'Vợt cầu lông Yonex Astrox'                       THEN N'/uploads/products/Vot-cau-long-Yonex-Astrox'
-            WHEN sp.Ten = N'Vợt tennis Wilson cũ'                            THEN N'/uploads/products/Vot-tennis-Wilson-cu'
-            WHEN sp.Ten = N'Xe chòi chân trẻ em màu xanh'                    THEN N'/uploads/products/Xe-choi-chan-tre-em-mau-xanh'
-            WHEN sp.Ten = N'Xe đạp địa hình Giant ATX'                       THEN N'/uploads/products/Xe-dap-dia-hinh-Giant-ATX'
-            WHEN sp.Ten = N'Xe đạp gấp mini 20 inch'                         THEN N'/uploads/products/Xe-dap-gap-mini-20-inch'
-            WHEN sp.Ten = N'Xe đẩy em bé gấp gọn'                            THEN N'/uploads/products/Xe-day-em-be-gap-gon'
-            WHEN sp.Ten = N'Xiaomi Redmi Note 11 128GB'                      THEN N'/uploads/products/Xiaomi-Redmi-Note-11-128GB'
-
-            -- 2. Các sản phẩm B8 khớp trực tiếp với thư mục ảnh trong wwwroot/uploads/products
-            WHEN sp.Ten IN (N'Điện thoại Samsung Galaxy A54 128GB')          THEN N'/uploads/products/Samsung-Galaxy-S21-FE-5G'
-            WHEN sp.Ten IN (N'Laptop Asus VivoBook 14 Ryzen 5 RAM 8GB')      THEN N'/uploads/products/Laptop-Lenovo-ThinkPad-T480'
-            WHEN sp.Ten IN (N'Laptop Dell Latitude 7490 Core i5 RAM 8GB SSD 256GB') THEN N'/uploads/products/Laptop-Dell-Latitude-7490-i5'
-            WHEN sp.Ten IN (N'iPad Gen 9 64GB WiFi viền bạc', N'Máy tính bảng iPad Gen 9 64GB WiFi viền bạc', N'iPad Pro 11 inch WiFi 128GB màu xám không gian') THEN N'/uploads/products/iPad-Gen-9-Wi-Fi-64GB'
-            WHEN sp.Ten IN (N'Màn hình Dell 24 inch Full HD 75Hz', N'Màn hình vi tính Dell 24 inch Full HD chống lóa') THEN N'/uploads/products/Man-hinh-Dell-24-inch-IPS'
-            WHEN sp.Ten IN (N'Đèn để bàn cảm ứng ba mức sáng', N'Đèn LED để bàn cảm ứng ba mức sáng chống cận') THEN N'/uploads/products/Den-ngu-cam-ung-de-ban'
-            WHEN sp.Ten IN (N'Áo khoác denim vintage Levi''s dáng suông size L') THEN N'/uploads/products/Ao-khoac-denim-nam-size-L'
-            WHEN sp.Ten IN (N'Váy denim chữ A cạp cao size S')               THEN N'/uploads/products/Chan-vay-chu-A-mau-be-size-M'
-            WHEN sp.Ten IN (N'Áo blazer nữ công sở màu be size M')           THEN N'/uploads/products/Ao-khoac-bomber-den-size-M'
-            WHEN sp.Ten IN (N'Túi xách da thật màu nâu quai đeo chéo', N'Túi xách nữ da thật quai đeo chéo màu nâu cổ điển') THEN N'/uploads/products/Tui-deo-cheo-da-nau'
-            WHEN sp.Ten IN (N'Giày cao gót mũi nhọn 5cm size 37', N'Giày sneaker Converse Jack Purcell trắng cổ thấp size 42') THEN N'/uploads/products/Giay-Converse-co-thap-size-39'
-            WHEN sp.Ten IN (N'Máy lọc không khí phòng dưới 40m2', N'Quạt tháp và lọc không khí gia đình phòng dưới 40m2') THEN N'/uploads/products/May-loc-khong-khi-Xiaomi-3H'
-            WHEN sp.Ten IN (N'Bếp từ đôi bảng điều khiển rời', N'Bộ nồi chảo inox đáy từ cao cấp 3 đáy sáng bóng', N'Bộ nồi inox 3 món kèm nắp vung kính cường lực') THEN N'/uploads/products/Bo-noi-inox-3-mon'
-            WHEN sp.Ten IN (N'Nồi chiên không dầu Philips 4.5L lòng nồi chống dính') THEN N'/uploads/products/Noi-chien-khong-dau-5L'
-            WHEN sp.Ten IN (N'Ấm đun nước siêu tốc 1.7L tự ngắt')            THEN N'/uploads/products/Am-sieu-toc-inox-1-7L'
-            WHEN sp.Ten IN (N'Máy hút bụi dạng đứng công suất lớn')          THEN N'/uploads/products/May-hut-bui-cam-tay-Deerma-DX700'
-            WHEN sp.Ten IN (N'Bàn ủi khô đế chống dây nhiệt ổn')             THEN N'/uploads/products/Ban-la-kho-Panasonic'
-            WHEN sp.Ten IN (N'Bàn ủi hơi nước cầm tay Tefal mặt đế chống dính') THEN N'/uploads/products/Ban-ui-hoi-nuoc-Tefal'
-            WHEN sp.Ten IN (N'Trọn bộ truyện tranh Doraemon 45 tập tuổi thơ') THEN N'/uploads/products/Truyen-tranh-Doraemon-tron-bo'
-            WHEN sp.Ten IN (N'Bộ giáo trình Kinh tế học vĩ mô hai tập', N'Bộ sách giáo trình Lập trình căn bản và Cấu trúc dữ liệu') THEN N'/uploads/products/Giao-trinh-Lap-trinh-Web-tron-bo'
-            WHEN sp.Ten IN (N'Sách Tư duy phản biện bản in 2024', N'Sách Tư duy phản biện bản in mới xuất bản') THEN N'/uploads/products/Sach-Atomic-Habits-ban-tieng-Viet'
-            WHEN sp.Ten IN (N'Truyện Sherlock Holmes trọn bộ bốn tập', N'Truyện Sherlock Holmes trọn bộ bốn tập kinh điển') THEN N'/uploads/products/Truyen-Harry-Potter-tap-1-3'
-            WHEN sp.Ten IN (N'Combo năm vở kẻ ngang bìa cứng 200 trang')     THEN N'/uploads/products/So-planner-A5-chua-dung-het'
-            WHEN sp.Ten IN (N'Giá sách gỗ thông để bàn ba tầng', N'Kệ sách gỗ thông để bàn 3 tầng lắp ghép nhỏ gọn') THEN N'/uploads/products/Ke-sach-5-tang'
-            WHEN sp.Ten IN (N'Bộ tài liệu luyện thi IELTS 18 kèm mã file nghe', N'Bộ tài liệu luyện thi IELTS Cambridge trọn bộ kèm audio') THEN N'/uploads/products/Combo-5-sach-ky-nang-song'
-            WHEN sp.Ten IN (N'Thảm tập yoga 6mm kèm dây kháng lực')          THEN N'/uploads/products/Tham-yoga-TPE-6mm'
-            WHEN sp.Ten IN (N'Bộ ba tạ tay bọc gang mỗi bên năm ký')         THEN N'/uploads/products/Ta-tay-boc-cao-su-5kg-doi'
-            WHEN sp.Ten IN (N'Lều du lịch hai người chống mưa')              THEN N'/uploads/products/Leu-cam-trai-2-nguoi'
-            WHEN sp.Ten IN (N'Xe đạp gấp bánh 20 inch đã bảo dưỡng')         THEN N'/uploads/products/Xe-dap-gap-mini-20-inch'
-            WHEN sp.Ten IN (N'Đồ chơi gỗ xếp hình 100 chi tiết')             THEN N'/uploads/products/Bo-xep-hinh-khoi-go-50-chi-tiet'
-            WHEN sp.Ten IN (N'Ghế ăn dặm nhựa nguyên khối có khay rời')      THEN N'/uploads/products/Ghe-an-dam-gap-gon-cho-be'
-            WHEN sp.Ten IN (N'Lắp ráp kiểu 500 mảnh mô hình lâu đài có hộp') THEN N'/uploads/products/Bo-xep-hinh-Lego-City'
-            WHEN sp.Ten IN (N'Nôi điện tự đưa kèm màn chống muỗi')           THEN N'/uploads/products/Noi-em-be-vai-luoi-di-dong'
-            WHEN sp.Ten IN (N'Kệ tivi gỗ xoan đào dài một mét sáu')          THEN N'/uploads/products/Ke-tivi-go-cong-nghiep-1m2'
-            WHEN sp.Ten IN (N'Ghế công thái học lưng lưới có tựa đầu')       THEN N'/uploads/products/Ghe-xoay-van-phong-luoi'
-            WHEN sp.Ten IN (N'Ống kính 50mm f/1.8 lấy nét tự động')          THEN N'/uploads/products/Ong-kinh-Canon-EF-50mm-f1-8'
-            WHEN sp.Ten IN (N'Bình gốm men rạn cao 40cm')                    THEN N'/uploads/products/Binh-hoa-gom-trang-tri-men-xanh'
-            WHEN sp.Ten IN (N'Bàn trà gỗ hương kèm hai đôn nhỏ')             THEN N'/uploads/products/Ban-tra-go-thap-80cm'
-            WHEN sp.Ten IN (N'Mũ bảo hiểm ba phần tư có kính chắn gió size L') THEN N'/uploads/products/Mu-bao-hiem-3-4-mau-xam'
-            WHEN sp.Ten IN (N'Giá đỡ điện thoại gắn xe máy có cổng USB')     THEN N'/uploads/products/Gia-do-dien-thoai-xe-may'
-            WHEN sp.Ten IN (N'Bơm lốp xe mini chạy điện 12V có đồng hồ')     THEN N'/uploads/products/Bom-xe-dap-mini-hop-kim'
-            WHEN sp.Ten IN (N'Loa Bluetooth cỡ lớn pin khoảng sáu tiếng')    THEN N'/uploads/products/Loa-JBL-Charge-4-mau-den'
-            WHEN sp.Ten IN (N'Xe đạp thể thao khung nhôm bánh 26 inch')      THEN N'/uploads/products/Xe-dap-dia-hinh-Giant-ATX'
-
-            -- 3. Các sản phẩm sinh từ 32_seed_don_hang (70 đơn hàng mẫu)
-            WHEN sp.Ten LIKE N'%Giải tích%'                                  THEN N'/uploads/products/Giao-trinh-Lap-trinh-Web-tron-bo'
-            WHEN sp.Ten LIKE N'%Cấu trúc dữ liệu%'                           THEN N'/uploads/products/Giao-trinh-Lap-trinh-Web-tron-bo'
-            WHEN sp.Ten LIKE N'%Áo thun polo%'                               THEN N'/uploads/products/Ao-thun-cotton-xanh-navy-size-L'
-            WHEN sp.Ten LIKE N'%Quần jean Levis%'                            THEN N'/uploads/products/Quan-jean-xanh-ong-dung-size-30'
-            WHEN sp.Ten LIKE N'%Chuột không dây%'                            THEN N'/uploads/products/Chuot-Logitech-MX-Master-2S'
-            WHEN sp.Ten LIKE N'%Bàn phím DareU%'                             THEN N'/uploads/products/Ban-phim-co-Keychron-K2'
-            WHEN sp.Ten LIKE N'%Tai nghe gaming%'                            THEN N'/uploads/products/Tai-nghe-Sony-WH-1000XM3'
-            WHEN sp.Ten LIKE N'%Ấm siêu tốc%'                                THEN N'/uploads/products/Am-sieu-toc-inox-1-7L'
-            WHEN sp.Ten LIKE N'%Quạt bàn mini%'                              THEN N'/uploads/products/Quat-ban-Toshiba-30cm'
-            WHEN sp.Ten LIKE N'%Balo đi học%'                                THEN N'/uploads/products/Ba-lo-trekking-35L'
-            WHEN sp.Ten LIKE N'%Đồng hồ thể thao%'                           THEN N'/uploads/products/Dong-ho-Casio-F-91W'
-            WHEN sp.Ten LIKE N'%Máy tính bỏ túi%'                            THEN N'/uploads/products/May-tinh-Casio-FX-570VN-Plus'
-            WHEN sp.Ten LIKE N'%Đèn học%'                                    THEN N'/uploads/products/Den-hoc-chong-can-kem-kep-ban'
-            WHEN sp.Ten LIKE N'%Nồi cơm điện%'                               THEN N'/uploads/products/Noi-com-dien-Sharp-1-8L'
-            WHEN sp.Ten LIKE N'%Loa kéo%'                                    THEN N'/uploads/products/Loa-JBL-Charge-4-mau-den'
+            WHEN so.HinhThucNhan = 'GAP_TRUC_TIEP' THEN N'Cổng trường UTC2 - Số 450 Lê Văn Việt, Tăng Nhơn Phú A, TP. Thủ Đức'
+            ELSE COALESCE(ndBuyer.DiaChiMacDinh, N'123 Lê Lợi, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh')
+        END,
+        so.Gia, 0, so.Gia,
+        so.PhuongThucThanhToan,
+        CASE
+            WHEN so.TrangThai = 'COMPLETED' THEN 'PAID'
+            WHEN so.TrangThai = 'CANCELLED' THEN 'UNPAID'
+            WHEN so.TrangThai IN ('CONFIRMED', 'SHIPPING', 'DELIVERED') AND so.PhuongThucThanhToan = 'BANK_TRANSFER' THEN 'PAID'
+            ELSE 'UNPAID'
+        END,
+        so.TrangThai,
+        so.HinhThucNhan,
+        CASE
+            WHEN so.TrangThai = 'CANCELLED' AND so.Stt % 2 = 1 THEN 'BUYER'
+            WHEN so.TrangThai = 'CANCELLED' AND so.Stt % 2 = 0 THEN 'SELLER'
             ELSE NULL
-        END AS BaseDir
-) rawMap
-CROSS APPLY (
+        END,
+        CASE
+            WHEN so.TrangThai = 'CANCELLED' AND so.Stt % 2 = 1 THEN N'Thay đổi kế hoạch cá nhân, không có nhu cầu nhận đồ nữa.'
+            WHEN so.TrangThai = 'CANCELLED' AND so.Stt % 2 = 0 THEN N'Sản phẩm bị thất lạc trong kho, xin lỗi người mua.'
+            ELSE NULL
+        END,
+        CASE WHEN so.TrangThai = 'CANCELLED' THEN DATEADD(HOUR, 4, DATEADD(DAY, -so.NgayTruoc, @Now)) END,
+        CASE WHEN so.TrangThai IN ('CONFIRMED', 'SHIPPING', 'DELIVERED', 'COMPLETED')
+             THEN DATEADD(HOUR, 2, DATEADD(DAY, -so.NgayTruoc, @Now)) END,
+        CASE WHEN so.TrangThai IN ('SHIPPING', 'DELIVERED', 'COMPLETED')
+             THEN DATEADD(HOUR, 20, DATEADD(DAY, -so.NgayTruoc, @Now)) END,
+        CASE WHEN so.TrangThai IN ('DELIVERED', 'COMPLETED')
+             THEN DATEADD(HOUR, 32, DATEADD(DAY, -so.NgayTruoc, @Now)) END,
+        CASE WHEN so.TrangThai = 'COMPLETED'
+             THEN DATEADD(HOUR, 40, DATEADD(DAY, -so.NgayTruoc, @Now)) END,
+        DATEADD(DAY, -so.NgayTruoc, @Now),
+        CASE WHEN so.TrangThai = 'PENDING'
+             THEN DATEADD(DAY, -so.NgayTruoc, @Now)
+             ELSE DATEADD(HOUR, 4, DATEADD(DAY, -so.NgayTruoc, @Now)) END
+    FROM #SeedOrdersExtra so
+    JOIN NguoiDung ndBuyer ON ndBuyer.Email = so.BuyerEmail
+    JOIN NguoiDung ndSeller ON ndSeller.Email = so.SellerEmail
+    JOIN CuaHang ch ON ch.MaNguoiDung = ndSeller.MaNguoiDung
+    WHERE NOT EXISTS (SELECT 1 FROM DonHang dh WHERE dh.MaDon = so.MaDon);
+
+    -- -------------------------------------------------------------------------
+    -- 6. Chi tiết đơn hàng
+    -- -------------------------------------------------------------------------
+    INSERT ChiTietDonHang (MaDonHang, MaSanPham, TenSanPham, AnhDaiDien, Gia, DangGiuCho)
     SELECT
-        rawMap.BaseDir,
-        CASE WHEN rawMap.BaseDir LIKE N'/uploads/products/%' THEN CAST(1 AS bit) ELSE CAST(0 AS bit) END AS IsFolder
-) m
-WHERE rawMap.BaseDir IS NOT NULL;
+        dh.MaDonHang,
+        sp.MaSanPham,
+        sp.Ten,
+        COALESCE(
+            (SELECT TOP 1 a.DuongDan FROM AnhSanPham a
+             WHERE a.MaSanPham = sp.MaSanPham
+             ORDER BY a.LaAnhChinh DESC, a.ThuTu),
+            '/uploads/seed/sp001-1.jpg'
+        ),
+        sp.Gia,
+        CASE WHEN dh.TrangThai IN ('COMPLETED', 'CANCELLED') THEN 0 ELSE 1 END
+    FROM #SeedOrdersExtra so
+    JOIN DonHang dh ON dh.MaDon = so.MaDon
+    JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
+    JOIN SanPham sp ON sp.MaCuaHang = ch.MaCuaHang AND sp.Ten = so.TenSanPham
+    WHERE NOT EXISTS (SELECT 1 FROM ChiTietDonHang ct WHERE ct.MaDonHang = dh.MaDonHang);
 
-UPDATE a
-SET a.DuongDan = CASE
-    WHEN m.IsFolder = 1 THEN m.BaseDir + N'/' + CAST(CASE WHEN a.ThuTu BETWEEN 1 AND 3 THEN a.ThuTu ELSE 1 END AS nvarchar(10)) + N'.jpg'
-    ELSE m.BaseDir + N'-' + CAST(CASE WHEN a.ThuTu BETWEEN 1 AND 2 THEN a.ThuTu ELSE 1 END AS nvarchar(10)) + N'.jpg'
-END
+    -- -------------------------------------------------------------------------
+    -- 7. Thanh toán
+    -- -------------------------------------------------------------------------
+    INSERT ThanhToan (MaDonHang, MaGiaoDich, PhuongThucThanhToan, SoTien, TrangThaiThanhToan, ThoiGianThanhToan, NgayTao)
+    SELECT
+        dh.MaDonHang,
+        'TXN_' + dh.MaDon,
+        dh.PhuongThucThanhToan,
+        dh.TongTien,
+        CASE
+            WHEN dh.TrangThaiThanhToan = 'PAID' THEN 'SUCCESS'
+            WHEN dh.TrangThai = 'CANCELLED' THEN 'FAILED'
+            ELSE 'PENDING'
+        END,
+        CASE WHEN dh.TrangThaiThanhToan = 'PAID' THEN DATEADD(HOUR, 1, dh.NgayTao) END,
+        dh.NgayTao
+    FROM DonHang dh
+    JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    WHERE NOT EXISTS (SELECT 1 FROM ThanhToan tt WHERE tt.MaDonHang = dh.MaDonHang);
+
+    -- -------------------------------------------------------------------------
+    -- 8. Lịch sử trạng thái đơn hàng
+    -- -------------------------------------------------------------------------
+    INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
+    SELECT dh.MaDonHang, NULL, 'PENDING', 'BUYER', dh.MaNguoiDung, N'Khách hàng đặt hàng trực tuyến', dh.NgayTao
+    FROM DonHang dh JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    WHERE NOT EXISTS (
+        SELECT 1 FROM LichSuTrangThaiDonHang ls WHERE ls.MaDonHang = dh.MaDonHang AND ls.TrangThaiMoi = 'PENDING'
+    );
+
+    INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
+    SELECT dh.MaDonHang, 'PENDING', 'CONFIRMED', 'SELLER', ch.MaNguoiDung, N'Shop xác nhận đơn hàng và chuẩn bị giao dịch', DATEADD(HOUR, 2, dh.NgayTao)
+    FROM DonHang dh
+    JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
+    WHERE dh.TrangThai IN ('CONFIRMED', 'SHIPPING', 'DELIVERED', 'COMPLETED')
+      AND NOT EXISTS (
+          SELECT 1 FROM LichSuTrangThaiDonHang ls WHERE ls.MaDonHang = dh.MaDonHang AND ls.TrangThaiMoi = 'CONFIRMED'
+      );
+
+    INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
+    SELECT dh.MaDonHang, 'CONFIRMED', 'SHIPPING', 'SELLER', ch.MaNguoiDung,
+           CASE WHEN dh.HinhThucNhan = 'GAP_TRUC_TIEP' THEN N'Người bán đang trên đường đến điểm hẹn gặp' ELSE N'Người bán đã bàn giao gói hàng cho đơn vị vận chuyển' END,
+           DATEADD(HOUR, 6, dh.NgayTao)
+    FROM DonHang dh
+    JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
+    WHERE dh.TrangThai IN ('SHIPPING', 'DELIVERED', 'COMPLETED')
+      AND NOT EXISTS (
+          SELECT 1 FROM LichSuTrangThaiDonHang ls WHERE ls.MaDonHang = dh.MaDonHang AND ls.TrangThaiMoi = 'SHIPPING'
+      );
+
+    INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
+    SELECT dh.MaDonHang, 'SHIPPING', 'DELIVERED', 'SELLER', ch.MaNguoiDung,
+           CASE WHEN dh.HinhThucNhan = 'GAP_TRUC_TIEP' THEN N'Hai bên đã gặp mặt và kiểm tra sản phẩm' ELSE N'Đơn vị vận chuyển đã giao kiện hàng đến địa chỉ nhận' END,
+           DATEADD(HOUR, 24, dh.NgayTao)
+    FROM DonHang dh
+    JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
+    WHERE dh.TrangThai IN ('DELIVERED', 'COMPLETED')
+      AND NOT EXISTS (
+          SELECT 1 FROM LichSuTrangThaiDonHang ls WHERE ls.MaDonHang = dh.MaDonHang AND ls.TrangThaiMoi = 'DELIVERED'
+      );
+
+    INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
+    SELECT dh.MaDonHang, 'DELIVERED', 'COMPLETED', 'BUYER', dh.MaNguoiDung, N'Người mua xác nhận đã nhận hàng thành công và hài lòng', DATEADD(HOUR, 28, dh.NgayTao)
+    FROM DonHang dh JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    WHERE dh.TrangThai = 'COMPLETED'
+      AND NOT EXISTS (
+          SELECT 1 FROM LichSuTrangThaiDonHang ls WHERE ls.MaDonHang = dh.MaDonHang AND ls.TrangThaiMoi = 'COMPLETED'
+      );
+
+    INSERT LichSuTrangThaiDonHang (MaDonHang, TrangThaiCu, TrangThaiMoi, LoaiNguoiThucHien, NguoiThucHienId, LyDo, ThoiGian)
+    SELECT dh.MaDonHang, 'PENDING', 'CANCELLED', COALESCE(dh.NguoiHuy, 'BUYER'),
+           CASE WHEN dh.NguoiHuy = 'SELLER' THEN ch.MaNguoiDung ELSE dh.MaNguoiDung END,
+           dh.LyDoHuy, DATEADD(HOUR, 4, dh.NgayTao)
+    FROM DonHang dh
+    JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
+    WHERE dh.TrangThai = 'CANCELLED'
+      AND NOT EXISTS (
+          SELECT 1 FROM LichSuTrangThaiDonHang ls WHERE ls.MaDonHang = dh.MaDonHang AND ls.TrangThaiMoi = 'CANCELLED'
+      );
+
+    -- -------------------------------------------------------------------------
+    -- 9. Đánh giá cho 15 đơn đã hoàn tất
+    -- -------------------------------------------------------------------------
+    DECLARE @SeedDanhGiaExtra TABLE (
+        MaDon varchar(30) NOT NULL PRIMARY KEY,
+        SoSao tinyint NOT NULL,
+        NoiDung nvarchar(1000) NULL,
+        TrangThai varchar(10) NOT NULL,
+        GioSauDon smallint NOT NULL
+    );
+
+    INSERT @SeedDanhGiaExtra (MaDon, SoSao, NoiDung, TrangThai, GioSauDon) VALUES
+    ('DH202611-000071', 5, N'Tai nghe đúng mô tả, đệm tai mới thay, âm thanh chi tiết. Shop giao nhanh trong buổi sáng.', 'VISIBLE', 34),
+    ('DH202611-000072', 4, N'Máy đẹp, pin dùng tốt, chỉ hơi trầy viền máy. Shop đóng gói kỹ và giao đúng hẹn.', 'VISIBLE', 36),
+    ('DH202611-000073', 5, N'Loa bass chắc, pin trâu đúng như mô tả. Shop thân thiện, còn tặng kèm cáp sạc.', 'VISIBLE', 32),
+    ('DH202611-000074', 4, N'Đồng hồ chạy chính xác, GPS bắt nhanh, dây còn đẹp. Hộp hơi móp nhưng máy không sao.', 'VISIBLE', 35),
+    ('DH202611-000075', 5, N'Máy tính bảng mượt, màn hình sáng đẹp, kèm bao da đúng mô tả. Rất đáng tiền.', 'VISIBLE', 33),
+    ('DH202611-000076', 4, N'Áo vải đẹp, form chuẩn size M, giặt xong không nhăn. Shop gói hàng gọn gàng.', 'VISIBLE', 31),
+    ('DH202611-000077', 5, N'Đầm vintage xinh hơn mong đợi, màu giống ảnh, shop gói cẩn thận và giao nhanh.', 'VISIBLE', 34),
+    ('DH202611-000078', 3, N'Short đẹp nhưng hơi rộng so với size ghi. Shop có nhắn trước nên mình vẫn nhận hàng.', 'VISIBLE', 37),
+    ('DH202611-000079', 5, N'Hoodie dày, ấm và form rộng thoải mái. Giao đúng hẹn, đóng gói chắc chắn.', 'VISIBLE', 30),
+    ('DH202611-000080', 4, N'Túi chắc chắn, đựng vừa laptop 14 inch. Quai hơi cứng một chút nhưng tổng thể tốt.', 'VISIBLE', 32),
+    ('DH202611-000081', 4, N'Nồi nấu nhanh, van xả tốt, lòng nồi sạch. Shop dặn kỹ cách vệ sinh, rất chu đáo.', 'VISIBLE', 33),
+    ('DH202611-000082', 5, N'Máy xay êm, xay mịn, phụ kiện đầy đủ. Shop tư vấn nhiệt tình, giao hàng nhanh.', 'VISIBLE', 35),
+    ('DH202611-000083', 4, N'Chảo đáy từ dùng tốt, lớp chống dính còn đẹp. Hàng đúng mô tả, giao trễ nửa ngày.', 'VISIBLE', 36),
+    ('DH202611-000084', 5, N'Máy hút bụi khỏe, pin đủ dùng cho cả nhà, kèm đủ đầu hút. Shop rất uy tín.', 'VISIBLE', 31),
+    ('DH202611-000085', 3, N'Sách đóng gói tốt nhưng giấy hơi ố vàng, đúng như mô tả là sách cũ. Giao hàng ổn.', 'VISIBLE', 34);
+
+    INSERT INTO DanhGia (MaDonHang, MaNguoiMua, MaCuaHang, SoSao, NoiDung, TrangThai, NgayTao)
+    SELECT dh.MaDonHang, dh.MaNguoiDung, dh.MaCuaHang, sd.SoSao, sd.NoiDung, sd.TrangThai,
+           CASE WHEN DATEADD(HOUR, sd.GioSauDon, dh.NgayTao) > @Now THEN @Now
+                ELSE DATEADD(HOUR, sd.GioSauDon, dh.NgayTao) END
+    FROM @SeedDanhGiaExtra sd
+    JOIN DonHang dh ON dh.MaDon = sd.MaDon
+    WHERE dh.TrangThai = 'COMPLETED'
+      AND NOT EXISTS (SELECT 1 FROM DanhGia dg WHERE dg.MaDonHang = dh.MaDonHang);
+
+    -- -------------------------------------------------------------------------
+    -- 10. Danh sách yêu thích
+    -- -------------------------------------------------------------------------
+    INSERT YeuThich (MaNguoiDung, MaSanPham, NgayTao)
+    SELECT nd.MaNguoiDung, sp.MaSanPham, DATEADD(HOUR, -v.GioTruoc, @Now)
+    FROM (VALUES
+        ('chi.buyer@demo.local',  N'Tai nghe chụp tai Sony MDR-7506',       20),
+        ('chi.buyer@demo.local',  N'Đồng hồ Garmin Forerunner 235',        18),
+        ('chi.buyer@demo.local',  N'Đầm vintage họa tiết in',              15),
+        ('chi.buyer@demo.local',  N'Ghế xoay văn phòng lưng lưới',         12),
+        ('chi.buyer@demo.local',  N'Máy ảnh Fujifilm X-T20 kèm lens 18-55mm', 8),
+        ('dung.buyer@demo.local', N'Điện thoại Xiaomi Redmi Note 12 128GB', 22),
+        ('dung.buyer@demo.local', N'Túi tote vải canvas in chữ',           16),
+        ('dung.buyer@demo.local', N'Giày chạy bộ Nike Air Zoom size 42',   10),
+        ('dung.buyer@demo.local', N'Bộ xếp hình Lego Classic 500 chi tiết', 6),
+        ('dung.buyer@demo.local', N'Bình gốm Bát Tràng',                    4)
+    ) v (Email, TenSP, GioTruoc)
+    JOIN NguoiDung nd ON nd.Email = v.Email
+    JOIN SanPham sp ON sp.Ten = v.TenSP
+    WHERE NOT EXISTS (
+        SELECT 1 FROM YeuThich y WHERE y.MaNguoiDung = nd.MaNguoiDung AND y.MaSanPham = sp.MaSanPham
+    );
+
+    -- -------------------------------------------------------------------------
+    -- 11. Thông báo
+    -- -------------------------------------------------------------------------
+    -- 11a. Người bán nhận thông báo đơn mới
+    INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu, DaDoc, NgayTao)
+    SELECT ch.MaNguoiDung, 'ORDER',
+           CONCAT(N'Đơn hàng mới ', dh.MaDon),
+           CONCAT(N'Đơn ', dh.MaDon, N' vừa được tạo cho sản phẩm "', ct.TenSanPham, N'". Vui lòng xác nhận đơn trong mục Đơn bán.'),
+           dh.MaDonHang,
+           CASE WHEN dh.TrangThai IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END,
+           dh.NgayTao
+    FROM DonHang dh
+    JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
+    CROSS APPLY (SELECT TOP 1 TenSanPham FROM ChiTietDonHang WHERE MaDonHang = dh.MaDonHang) ct
+    WHERE NOT EXISTS (
+        SELECT 1 FROM ThongBao t WHERE t.MaNguoiDung = ch.MaNguoiDung AND t.TieuDe = CONCAT(N'Đơn hàng mới ', dh.MaDon)
+    );
+
+    -- 11b. Người mua nhận thông báo hoàn tất / đang giao
+    INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu, DaDoc, NgayTao)
+    SELECT dh.MaNguoiDung, 'ORDER',
+           CASE WHEN dh.TrangThai = 'COMPLETED' THEN CONCAT(N'Đơn hàng đã hoàn tất ', dh.MaDon)
+                ELSE CONCAT(N'Đơn hàng đang giao ', dh.MaDon) END,
+           CASE WHEN dh.TrangThai = 'COMPLETED'
+                THEN CONCAT(N'Đơn ', dh.MaDon, N' đã hoàn tất. Hãy đánh giá người bán để giúp cộng đồng mua sắm an toàn hơn.')
+                ELSE CONCAT(N'Đơn ', dh.MaDon, N' đã được người bán bàn giao cho đơn vị vận chuyển.') END,
+           dh.MaDonHang,
+           CASE WHEN dh.TrangThai = 'COMPLETED' THEN 1 ELSE 0 END,
+           COALESCE(dh.ThoiGianBatDauGiao, dh.NgayTao)
+    FROM DonHang dh
+    JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    WHERE dh.TrangThai IN ('COMPLETED', 'SHIPPING')
+      AND NOT EXISTS (
+          SELECT 1 FROM ThongBao t
+          WHERE t.MaNguoiDung = dh.MaNguoiDung
+            AND t.TieuDe = CASE WHEN dh.TrangThai = 'COMPLETED' THEN CONCAT(N'Đơn hàng đã hoàn tất ', dh.MaDon) ELSE CONCAT(N'Đơn hàng đang giao ', dh.MaDon) END
+      );
+
+    -- 11c. Thông báo hủy đơn cho bên còn lại
+    INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu, DaDoc, NgayTao)
+    SELECT
+        CASE WHEN dh.NguoiHuy = 'BUYER' THEN ch.MaNguoiDung ELSE dh.MaNguoiDung END,
+        'ORDER',
+        CONCAT(N'Đơn hàng đã hủy ', dh.MaDon),
+        CONCAT(N'Đơn ', dh.MaDon, N' đã bị hủy bởi ', CASE WHEN dh.NguoiHuy = 'BUYER' THEN N'người mua' ELSE N'người bán' END, N'.'),
+        dh.MaDonHang, 1, DATEADD(HOUR, 4, dh.NgayTao)
+    FROM DonHang dh
+    JOIN #SeedOrdersExtra so ON so.MaDon = dh.MaDon
+    JOIN CuaHang ch ON ch.MaCuaHang = dh.MaCuaHang
+    WHERE dh.TrangThai = 'CANCELLED'
+      AND NOT EXISTS (
+          SELECT 1 FROM ThongBao t
+          WHERE t.MaNguoiDung = CASE WHEN dh.NguoiHuy = 'BUYER' THEN ch.MaNguoiDung ELSE dh.MaNguoiDung END
+            AND t.TieuDe = CONCAT(N'Đơn hàng đã hủy ', dh.MaDon)
+      );
+
+    -- 11d. Tin đăng mới được duyệt
+    INSERT ThongBao (MaNguoiDung, Loai, TieuDe, NoiDung, MaThamChieu, DaDoc, NgayTao)
+    SELECT ch.MaNguoiDung, 'PRODUCT',
+           CONCAT(N'Tin đăng đã được duyệt: ', sp.Ten),
+           CONCAT(N'Tin "', sp.Ten, N'" đã được kiểm duyệt và hiển thị công khai trên Re:Market.'),
+           sp.MaSanPham, 0, DATEADD(HOUR, 2, sp.NgayTao)
+    FROM #SeedSpExtra x
+    JOIN NguoiDung nd ON nd.Email = x.EmailChuShop
+    JOIN CuaHang ch ON ch.MaNguoiDung = nd.MaNguoiDung
+    JOIN SanPham sp ON sp.MaCuaHang = ch.MaCuaHang AND sp.Ten = x.Ten
+    WHERE NOT EXISTS (
+        SELECT 1 FROM ThongBao t
+        WHERE t.MaNguoiDung = ch.MaNguoiDung AND t.TieuDe = CONCAT(N'Tin đăng đã được duyệt: ', sp.Ten)
+    );
+
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;
+GO
+
+-- =============================================================================
+-- Kiểm tra nhanh sau khi seed
+-- =============================================================================
+SELECT N'Sản phẩm mới (sp131..sp160)' AS HangMuc, COUNT(*) AS SoLuong
+FROM SanPham WHERE Ten IN (
+    N'Tai nghe chụp tai Sony MDR-7506', N'Điện thoại Xiaomi Redmi Note 12 128GB', N'Loa Bluetooth JBL Charge 4',
+    N'Đồng hồ Garmin Forerunner 235', N'Máy tính bảng Samsung Galaxy Tab A8', N'Áo sơ mi trắng cổ đức nam size M',
+    N'Đầm vintage họa tiết in', N'Quần short jean nữ size 27', N'Áo hoodie nỉ có mũ', N'Túi tote vải canvas in chữ',
+    N'Nồi áp suất điện đa năng', N'Máy xay sinh tố cầm tay', N'Bộ chảo chống dính Tefal 3 món', N'Máy hút bụi không dây Dyson',
+    N'Combo 5 sách văn học cũ', N'Máy đánh chữ cơ vintage', N'Đàn guitar acoustic Yamaha', N'Sách Đắc nhân tâm bản cũ',
+    N'Bóng đá size 5 Adidas', N'Vợt tennis carbon', N'Giày chạy bộ Nike Air Zoom size 42', N'Bình nước thể thao inox 1L',
+    N'Xe đạp trẻ em', N'Bộ xếp hình Lego Classic 500 chi tiết', N'Ghế xoay văn phòng lưng lưới', N'Bàn gỗ tròn',
+    N'Đèn sàn trang trí chao vải', N'Máy ảnh Fujifilm X-T20 kèm lens 18-55mm', N'Chân máy ảnh tripod Manfrotto', N'Bình gốm Bát Tràng'
+)
+UNION ALL
+SELECT N'Đơn hàng mới (000071..000110)', COUNT(*) FROM DonHang WHERE MaDon BETWEEN 'DH202611-000071' AND 'DH202611-000110'
+UNION ALL
+SELECT N'Đánh giá mới', COUNT(*) FROM DanhGia dg JOIN DonHang dh ON dh.MaDonHang = dg.MaDonHang
+    WHERE dh.MaDon BETWEEN 'DH202611-000071' AND 'DH202611-000110'
+UNION ALL
+SELECT N'Thông báo mới', COUNT(*) FROM ThongBao WHERE NgayTao >= DATEADD(DAY, -70, SYSUTCDATETIME())
+    AND (TieuDe LIKE N'%DH202611-0000%' OR TieuDe LIKE N'%DH202611-0001%' OR TieuDe LIKE N'Tin đăng đã được duyệt: %');
+GO
+
+-- Ảnh thiếu file (đối chiếu với wwwroot/uploads/seed)
+SELECT sp.MaSanPham, sp.Ten, a.DuongDan
 FROM AnhSanPham a
-JOIN #ProductImageMap m ON m.MaSanPham = a.MaSanPham;
-
-INSERT INTO AnhSanPham (MaSanPham, DuongDan, ThuTu, LaAnhChinh, DungLuong)
-SELECT
-    m.MaSanPham,
-    CASE
-        WHEN m.IsFolder = 1 THEN m.BaseDir + N'/' + CAST(n.ThuTu AS nvarchar(10)) + N'.jpg'
-        ELSE m.BaseDir + N'-' + CAST(n.ThuTu AS nvarchar(10)) + N'.jpg'
-    END,
-    n.ThuTu,
-    CASE WHEN n.ThuTu = 1 THEN 1 ELSE 0 END,
-    210000 + (m.MaSanPham % 50) * 1000 + n.ThuTu * 100
-FROM #ProductImageMap m
-JOIN SanPham sp ON sp.MaSanPham = m.MaSanPham
-CROSS JOIN (VALUES (1), (2), (3)) n (ThuTu)
-WHERE sp.TrangThai <> 'DRAFT'
-  AND (m.IsFolder = 1 OR n.ThuTu <= 2)
-  AND NOT EXISTS (
-      SELECT 1 FROM AnhSanPham a WHERE a.MaSanPham = m.MaSanPham AND a.ThuTu = n.ThuTu
-  );
-
-COMMIT TRANSACTION;
+JOIN SanPham sp ON sp.MaSanPham = a.MaSanPham
+WHERE a.DuongDan LIKE '/uploads/seed/sp13%' OR a.DuongDan LIKE '/uploads/seed/sp14%'
+   OR a.DuongDan LIKE '/uploads/seed/sp15%' OR a.DuongDan LIKE '/uploads/seed/sp160%'
+ORDER BY sp.MaSanPham, a.ThuTu;
 GO

@@ -1,49 +1,125 @@
 @model SecondHandMarketplace.Web.Services.ProductReview.ViolationPage
-@{ ViewData["Title"] = "Lịch sử vi phạm"; }
+@{
+    ViewData["Title"] = L["Admin_Violations"].Value;
+}
 <div class="container-fluid py-4">
-    <h2>Lịch sử vi phạm kiểm duyệt</h2>
-    <p class="text-muted">
-        Mỗi dòng là một vi phạm tính vào bộ đếm của người bán (đủ @Model.Threshold vi phạm tài khoản bị khóa tự động).
-        HIGH: hệ thống tự ghi khi từ chối tự động. LOW: ghi khi Admin từ chối sản phẩm có cảnh báo LOW.
-        Mở khóa tài khoản không xóa lịch sử.
-    </p>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="h4 fw-bold mb-1">@L["AdminVio_Title"]</h2>
+            <p class="text-muted small mb-0">@L["AdminVio_Desc", Model.Threshold]</p>
+        </div>
+        <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 rounded-pill">
+            @L["AdminVio_TotalCount", Model.TotalItems]
+        </span>
+    </div>
+
     @if (Model.SellerId is not null)
     {
-        <div class="alert alert-info d-flex justify-content-between">
-            <span>Đang lọc theo người bán: <strong>@Model.SellerName</strong> (#@Model.SellerId)</span>
-            <a asp-action="Index">Xem tất cả</a>
+        <div class="alert alert-info rounded-4 border-0 shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <div>
+                <span>@L["AdminVio_FilterSeller"] <strong>@Model.SellerName</strong> (#@Model.SellerId)</span>
+                @if (Model.SellerEffectiveViolations is not null && Model.SellerTotalViolations is not null)
+                {
+                    <span class="ms-2">
+                        · @L["AdminVio_Effective"] <strong>@Model.SellerEffectiveViolations / @Model.Threshold</strong>
+                        · @L["AdminVio_TotalHistory"] <strong>@Model.SellerTotalViolations</strong>
+                    </span>
+                }
+                @if (Model.SellerViolationResetAt is not null)
+                {
+                    <span class="ms-2 small text-muted">@L["AdminVio_ResetAt", HienThi.NgayGio(Model.SellerViolationResetAt.Value)]</span>
+                }
+            </div>
+            <a asp-action="Index" class="btn btn-sm btn-outline-primary rounded-pill px-3">@L["AdminVio_ViewAll"]</a>
         </div>
     }
-    <div class="table-responsive">
-        <table class="table table-striped align-middle">
-            <thead><tr><th>Thời gian</th><th>Người bán</th><th>Tài khoản</th><th>Tổng vi phạm</th><th>Sản phẩm</th><th>Mức / Nguồn</th><th>Từ khóa</th><th>Người xác nhận</th></tr></thead>
-            <tbody>
-            @foreach (var v in Model.Items)
-            {
-                <tr>
-                    <td>@HienThi.NgayGio(v.ThoiGian)</td>
-                    <td><a asp-action="Index" asp-route-sellerId="@v.MaNguoiBan">@v.TenNguoiBan</a><div class="small text-muted">@v.EmailNguoiBan</div></td>
-                    <td>
-                        <span class="badge @(v.TrangThaiNguoiBan == "ACTIVE" ? "bg-success" : "bg-secondary")">@v.TrangThaiNguoiBan</span>
-                        @if (v.TrangThaiNguoiBan == "LOCKED") { <div><a class="small" asp-controller="Users" asp-action="Index" asp-route-search="@v.EmailNguoiBan">Mở khóa tại Quản lý người dùng</a></div> }
-                    </td>
-                    <td>@v.TongViPham / @Model.Threshold</td>
-                    <td><a asp-controller="Products" asp-action="Details" asp-route-id="@v.MaSanPham">@v.TenSanPham</a><div class="small text-muted">Lượt #@v.MaLuotKiemDuyet</div></td>
-                    <td><span class="badge @(v.MucDo == "HIGH" ? "bg-danger" : "bg-warning text-dark")">@v.MucDo</span><div class="small text-muted">@(v.NguonGhiNhan == "AUTO_HIGH" ? "Hệ thống tự động" : "Admin từ chối")</div></td>
-                    <td>@string.Join(", ", v.Matches.Select(m => m.Phrase).Distinct())</td>
-                    <td>@(v.TenQuanTriVien ?? "—")</td>
-                </tr>
-            }
-            @if (Model.Items.Count == 0) { <tr><td colspan="8" class="text-center text-muted">Chưa có vi phạm nào.</td></tr> }
-            </tbody>
-        </table>
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th class="ps-3">@L["Admin_Time"]</th>
+                        <th>@L["AdminMod_Seller"]</th>
+                        <th>@L["AdminVio_ColAccount"]</th>
+                        <th>@L["AdminVio_ColCount"]</th>
+                        <th>@L["AdminMod_ColProduct"]</th>
+                        <th>@L["AdminVio_ColLevelSource"]</th>
+                        <th>@L["AdminMod_ColKeyword"]</th>
+                        <th class="pe-3">@L["AdminVio_ColConfirmedBy"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var v in Model.Items)
+                {
+                    <tr>
+                        <td class="ps-3">
+                            <div class="small text-nowrap">@HienThi.NgayGio(v.ThoiGian)</div>
+                            @if (v.LaViPhamHieuLuc)
+                            {
+                                <span class="badge bg-warning text-dark mt-1">@L["AdminVio_BadgeEffective"]</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted border mt-1">@L["AdminVio_BadgeBeforeUnlock"]</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Index" asp-route-sellerId="@v.MaNguoiBan" class="fw-semibold text-decoration-none">@v.TenNguoiBan</a>
+                            <div class="small text-muted">@v.EmailNguoiBan</div>
+                        </td>
+                        <td>
+                            <span class="badge @(v.TrangThaiNguoiBan == "ACTIVE" ? "bg-success" : "bg-danger")">
+                                @HienThi.TrangThaiTaiKhoan(v.TrangThaiNguoiBan)
+                            </span>
+                            @if (v.TrangThaiNguoiBan == "LOCKED")
+                            {
+                                <div class="mt-1">
+                                    <a class="small" asp-controller="Users" asp-action="Index" asp-route-search="@v.EmailNguoiBan">@L["AdminVio_UnlockLink"]</a>
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            <div><strong>@v.ViPhamHieuLuc / @Model.Threshold</strong> <span class="small text-muted">@L["AdminVio_EffectiveUnit"]</span></div>
+                            <div class="small text-muted">@L["AdminVio_TotalHistoryRow", v.TongViPham]</div>
+                            @if (v.MocTinhViPham is not null)
+                            {
+                                <div class="small text-muted">Reset: @HienThi.NgayGio(v.MocTinhViPham.Value)</div>
+                            }
+                        </td>
+                        <td>
+                            <a asp-controller="Products" asp-action="Details" asp-route-id="@v.MaSanPham" class="fw-semibold text-decoration-none">@v.TenSanPham</a>
+                            <div class="small text-muted">@L["AdminVio_TurnLabel", v.MaLuotKiemDuyet]</div>
+                        </td>
+                        <td>
+                            <span class="badge @(v.MucDo == "HIGH" ? "bg-danger" : "bg-warning text-dark")">@v.MucDo</span>
+                            <div class="small text-muted mt-1">@(v.NguonGhiNhan == "AUTO_HIGH" ? L["AdminVio_SourceAutoHigh"].Value : L["AdminVio_SourceAdminReject"].Value)</div>
+                        </td>
+                        <td class="small">@string.Join(", ", v.Matches.Select(m => m.Phrase).Distinct())</td>
+                        <td class="pe-3 small">@(v.TenQuanTriVien ?? "—")</td>
+                    </tr>
+                }
+                @if (Model.Items.Count == 0)
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-5">@L["AdminVio_Empty"]</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
     </div>
-    <div class="d-flex justify-content-between">
-        <span>Tổng @Model.TotalItems vi phạm</span>
-        <div class="d-flex gap-2">
-            @if (Model.Page > 1) { <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-sellerId="@Model.SellerId" asp-route-page="@(Model.Page - 1)">Trước</a> }
-            <span class="align-self-center">Trang @Model.Page / @Math.Max(1, Model.TotalPages)</span>
-            @if (Model.Page < Model.TotalPages) { <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-sellerId="@Model.SellerId" asp-route-page="@(Model.Page + 1)">Sau</a> }
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <span class="small text-muted">@L["AdminVio_TotalCount", Model.TotalItems]</span>
+        <div class="d-flex gap-2 align-items-center">
+            @if (Model.Page > 1)
+            {
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-sellerId="@Model.SellerId" asp-route-page="@(Model.Page - 1)">@L["Btn_Prev"]</a>
+            }
+            <span class="small">@L["Common_Page"] @Model.Page / @Math.Max(1, Model.TotalPages)</span>
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-sellerId="@Model.SellerId" asp-route-page="@(Model.Page + 1)">@L["Btn_Next"]</a>
+            }
         </div>
     </div>
 </div>

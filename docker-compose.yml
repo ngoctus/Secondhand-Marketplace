@@ -14,6 +14,8 @@ services:
       ConnectionStrings__DefaultConnection: "Server=${DB_SERVER:?Set DB_SERVER};Database=${DB_NAME:-SecondHandMarketplace};User Id=${DB_USER:?Set DB_USER};Password=${DB_PASSWORD:?Set DB_PASSWORD};Encrypt=True;TrustServerCertificate=${DB_TRUST_CERT:-True};MultipleActiveResultSets=True"
       Jwt__Key: ${JWT_KEY:?Set JWT_KEY to a random secret of at least 32 bytes}
       Ai__ApiKey: ${AI_API_KEY:-}
+      Ai__ModerationApiKey: ${AI_MODERATION_API_KEY:-}
+      Ai__FallbackApiKey: ${AI_FALLBACK_API_KEY:-}
     volumes:
       - product_uploads:/app/wwwroot/uploads/products
       - dispute_uploads:/app/wwwroot/uploads/disputes

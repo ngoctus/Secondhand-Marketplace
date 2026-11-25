@@ -1,0 +1,21 @@
+@using System.Globalization
+@{
+    var currentCulture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLowerInvariant();
+    var isEn = currentCulture == "en";
+    var returnUrl = string.IsNullOrEmpty(Context.Request.Path)
+        ? "~/"
+        : $"{Context.Request.PathBase}{Context.Request.Path}{Context.Request.QueryString}";
+}
+@* B-05: bo toan bo style="..." trong partial, class nam trong site.css muc 14. *@
+<div class="rm-lang-switcher" role="group" aria-label="@(isEn ? "Language switcher" : "Chuyển ngôn ngữ")">
+    <form asp-area="" asp-controller="Language" asp-action="SetLanguage" method="post">
+        <input type="hidden" name="culture" value="vi-VN" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <button type="submit" class="rm-lang-btn @(isEn ? "" : "is-active")" aria-pressed="@(!isEn)" title="Tiếng Việt">VI</button>
+    </form>
+    <form asp-area="" asp-controller="Language" asp-action="SetLanguage" method="post">
+        <input type="hidden" name="culture" value="en-US" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <button type="submit" class="rm-lang-btn @(isEn ? "is-active" : "")" aria-pressed="@isEn" title="English">EN</button>
+    </form>
+</div>

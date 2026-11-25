@@ -51,21 +51,40 @@ public class DisputesController : UserBaseController
         return View(vm);
     }
 
-    /// <summary>Chủ shop gửi phản hồi đối với khiếu nại của người mua.</summary>
+    /// <summary>Chủ shop gửi phản hồi đối với khiếu nại của người mua kèm ảnh chứng minh nếu có.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> PhanHoi(int id, string phanHoi)
+    public async Task<IActionResult> PhanHoi(int id, string phanHoi, IFormFile? fileDinhKem)
     {
         var userId = User.LayNguoiDungId();
         if (userId == null) return Challenge();
 
-        var (thanhCong, thongBao) = await _disputeService.NguoiBanPhanHoiAsync(userId.Value, id, phanHoi);
+        string? createdFilePath = null;
+        string? anhPhanHoi = null;
+
+        if (fileDinhKem != null && fileDinhKem.Length > 0)
+        {
+            var (hopLe, loi, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(fileDinhKem);
+            if (!hopLe)
+            {
+                this.ThongBaoLoi(loi ?? "Tệp ảnh không hợp lệ.");
+                return RedirectToAction(nameof(ChiTiet), new { id });
+            }
+
+            var webRoot = _env?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var (relPath, fullPath) = await UploadAnhAnToan.LuuAnhAsync(fileDinhKem, webRoot, "disputes", ext!);
+            anhPhanHoi = relPath;
+            createdFilePath = fullPath;
+        }
+
+        var (thanhCong, thongBao) = await _disputeService.NguoiBanPhanHoiAsync(userId.Value, id, phanHoi, anhPhanHoi);
         if (thanhCong)
         {
             this.ThongBaoThanhCong(thongBao ?? "Đã gửi phản hồi khiếu nại thành công.");
         }
         else
         {
+            UploadAnhAnToan.XoaAnh(createdFilePath);
             this.ThongBaoLoi(thongBao ?? "Không thể gửi phản hồi.");
         }
 
@@ -106,61 +125,23 @@ public class DisputesController : UserBaseController
         // Xử lý upload tệp ảnh bằng chứng nếu có
         if (vm.FileDinhKem != null && vm.FileDinhKem.Length > 0)
         {
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            var ext = Path.GetExtension(vm.FileDinhKem.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(ext))
+            var (hopLe, loi, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(vm.FileDinhKem);
+            if (!hopLe)
             {
-                ModelState.AddModelError(nameof(vm.FileDinhKem), "Chỉ chấp nhận tệp ảnh JPG, JPEG, PNG hoặc WEBP.");
-            }
-            else if (vm.FileDinhKem.Length > 5 * 1024 * 1024)
-            {
-                ModelState.AddModelError(nameof(vm.FileDinhKem), "Kích thước ảnh không được vượt quá 5MB.");
+                ModelState.AddModelError(nameof(vm.FileDinhKem), loi ?? "Tệp ảnh không hợp lệ.");
             }
             else
             {
-                // Kiểm tra Magic Bytes chống file giả mạo đuôi (đọc 12 bytes)
-                using var readStream = vm.FileDinhKem.OpenReadStream();
-                var header = new byte[12];
-                var readBytes = await readStream.ReadAsync(header, 0, 12);
-                bool isImage = false;
-                if (readBytes >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF) 
-                    isImage = true; // JPEG/JPG
-                else if (readBytes >= 4 && header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47) 
-                    isImage = true; // PNG
-                else if (readBytes >= 12 && header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46
-                                        && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50) 
-                    isImage = true; // WEBP (RIFF....WEBP)
-
-                if (!isImage)
-                {
-                    ModelState.AddModelError(nameof(vm.FileDinhKem), "Nội dung tệp không phải là định dạng hình ảnh hợp lệ.");
-                }
-                else
-                {
-                    var webRoot = _env?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                    var folder = Path.Combine(webRoot, "uploads", "disputes");
-                    if (!Directory.Exists(folder))
-                    {
-                        Directory.CreateDirectory(folder);
-                    }
-                    var fileName = $"{Guid.NewGuid():N}{ext}";
-                    createdFilePath = Path.Combine(folder, fileName);
-                    readStream.Position = 0;
-                    using (var writeStream = new FileStream(createdFilePath, FileMode.Create))
-                    {
-                        await readStream.CopyToAsync(writeStream);
-                    }
-                    vm.BangChungAnh = $"/uploads/disputes/{fileName}";
-                }
+                var webRoot = _env?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var (relPath, fullPath) = await UploadAnhAnToan.LuuAnhAsync(vm.FileDinhKem, webRoot, "disputes", ext!);
+                vm.BangChungAnh = relPath;
+                createdFilePath = fullPath;
             }
         }
 
         if (!ModelState.IsValid)
         {
-            if (createdFilePath != null && System.IO.File.Exists(createdFilePath))
-            {
-                try { System.IO.File.Delete(createdFilePath); } catch { /* Best effort */ }
-            }
+            UploadAnhAnToan.XoaAnh(createdFilePath);
             return View(vm);
         }
 
@@ -171,10 +152,7 @@ public class DisputesController : UserBaseController
             return RedirectToAction(nameof(Index));
         }
 
-        if (createdFilePath != null && System.IO.File.Exists(createdFilePath))
-        {
-            try { System.IO.File.Delete(createdFilePath); } catch { /* Best effort */ }
-        }
+        UploadAnhAnToan.XoaAnh(createdFilePath);
 
         this.ThongBaoLoi(thongBao ?? "Không thể mở khiếu nại.");
         return View(vm);

@@ -1,134 +1,367 @@
+@using System.Text.Json
 @using SecondHandMarketplace.Web.Services.ProductReview
 @model SecondHandMarketplace.Web.Services.ProductReview.ProductReviewDetail
 @{
-    ViewData["Title"] = "Chi tiết kiểm duyệt";
+    ViewData["Title"] = L["AdminMod_DetailTitle"].Value;
     var review = Model.Review;
     var badge = ReviewDisplay.Describe(review?.AnalysisStatus, review?.Level);
+    var lane = ReviewDisplay.DescribeLane(review?.AnalysisStatus, review?.Level, review?.RiskLevel, review?.Recommendation, review?.ModelVersion);
+    var risk = ReviewDisplay.DescribeRisk(review?.RiskLevel);
+    var rec = ReviewDisplay.DescribeRecommendation(review?.Recommendation);
+    var aiSignals = review?.AiSignals ?? Array.Empty<SecondHandMarketplace.Web.Services.Moderation.AiModerationSignal>();
+    var reanalyzingJs = JsonSerializer.Serialize(L["AdminMod_Reanalyzing"].Value);
+    var removeConfirmJs = JsonSerializer.Serialize(L["AdminMod_RemoveConfirm"].Value);
 }
 <div class="container-fluid py-4">
-    <a asp-action="Index" class="small">&larr; Quay lại danh sách</a>
-    <h2 class="mt-2">@Model.Ten <span class="badge bg-secondary fs-6">@ReviewDisplay.StatusText(Model.TrangThai)</span></h2>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <a asp-action="Index" class="small text-decoration-none text-muted">&larr; @L["Form_BackToList"]</a>
+            <h2 class="h4 fw-bold mt-1 mb-0 d-flex flex-wrap align-items-center gap-2">
+                <span>@Model.Ten</span>
+                <span class="badge bg-secondary rounded-pill fs-6 fw-normal">@ReviewDisplay.StatusText(Model.TrangThai)</span>
+            </h2>
+        </div>
+    </div>
 
-    <div class="row g-4">
-        <div class="col-lg-5">
-            @if (Model.Anh.Count == 0) { <div class="text-muted">Sản phẩm chưa có ảnh.</div> }
-            else
-            {
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach (var url in Model.Anh)
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    @if (Model.Anh.Count == 0)
                     {
-                        <a href="@url" target="_blank" rel="noopener"><img src="@url" alt="@Model.Ten" style="width:150px;height:150px;object-fit:cover" class="rounded border" loading="lazy" data-fallback /></a>
+                        <div class="text-muted p-4 rounded-3 bg-light text-center border">@L["AdminMod_NoImages"]</div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var url in Model.Anh)
+                            {
+                                <a href="@url" target="_blank" rel="noopener">
+                                    <img src="@url" alt="@Model.Ten" style="width:140px;height:140px;object-fit:cover" class="rounded-3 border" loading="lazy" data-fallback />
+                                </a>
+                            }
+                        </div>
                     }
                 </div>
-            }
-        </div>
-        <div class="col-lg-7">
-            <table class="table table-sm">
-                <tr><th style="width:170px">Giá</th><td>@(Model.Gia?.ToString("N0"))</td></tr>
-                <tr><th>Danh mục / Tình trạng</th><td>@Model.TenDanhMuc / @Model.TenTinhTrang</td></tr>
-                <tr><th>Shop</th><td>@Model.TenShop <span class="text-muted">(@Model.TrangThaiShop)</span></td></tr>
-                <tr><th>Người bán</th><td>@Model.TenNguoiBan · @Model.EmailNguoiBan <span class="badge @(Model.TrangThaiNguoiBan == "ACTIVE" ? "bg-success" : "bg-secondary")">@Model.TrangThaiNguoiBan</span></td></tr>
-                <tr><th>Vi phạm của người bán</th><td><strong>@Model.SoViPhamNguoiBan / @Model.NguongKhoa</strong> · <a asp-controller="Violations" asp-action="Index" asp-route-sellerId="@Model.MaNguoiBan">xem lịch sử</a></td></tr>
-                <tr><th>Ngày tạo / cập nhật</th><td>@HienThi.NgayGio(Model.NgayTao) / @HienThi.NgayGio(Model.NgayCapNhat)</td></tr>
-                @if (!string.IsNullOrWhiteSpace(Model.LyDoGo)) { <tr><th>Lý do gỡ</th><td>@Model.LyDoGo</td></tr> }
-            </table>
-            <div style="white-space:pre-wrap">@Model.MoTa</div>
+                <div class="col-lg-7">
+                    <table class="table table-sm align-middle mb-3">
+                        <tr>
+                            <th class="text-muted fw-semibold" style="width:190px">@L["AdminMod_ColPrice"]</th>
+                            <td class="fw-bold">@(Model.Gia.HasValue ? HienThi.Tien(Model.Gia.Value) : "—")</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-semibold">@L["AdminMod_CategoryCondition"]</th>
+                            <td>@HienThi.TenDanhMuc(Model.TenDanhMuc) / @HienThi.TenTinhTrang(Model.TenTinhTrang)</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-semibold">@L["Admin_Sellers_ColShop"]</th>
+                            <td>
+                                @Model.TenShop
+                                <span class="badge @(Model.TrangThaiShop == "ACTIVE" ? "bg-success-subtle text-success border border-success-subtle" : "bg-danger-subtle text-danger border border-danger-subtle") ms-1">
+                                    @HienThi.TrangThaiTaiKhoan(Model.TrangThaiShop)
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-semibold">@L["AdminMod_Seller"]</th>
+                            <td>
+                                @Model.TenNguoiBan · @Model.EmailNguoiBan
+                                <span class="badge @(Model.TrangThaiNguoiBan == "ACTIVE" ? "bg-success" : "bg-danger") ms-1">@HienThi.TrangThaiTaiKhoan(Model.TrangThaiNguoiBan)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-semibold">@L["AdminMod_SellerViolations"]</th>
+                            <td>
+                                <strong>@Model.SoViPhamNguoiBan / @Model.NguongKhoa</strong> ·
+                                <a asp-controller="Violations" asp-action="Index" asp-route-sellerId="@Model.MaNguoiBan">@L["AdminMod_ViewHistory"]</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-semibold">@L["AdminMod_CreatedUpdated"]</th>
+                            <td class="small text-muted">@HienThi.NgayGio(Model.NgayTao) / @HienThi.NgayGio(Model.NgayCapNhat)</td>
+                        </tr>
+                        @if (!string.IsNullOrWhiteSpace(Model.LyDoGo))
+                        {
+                            <tr>
+                                <th class="text-muted fw-semibold">@L["AdminMod_RemoveReason"]</th>
+                                <td class="text-danger">@Model.LyDoGo</td>
+                            </tr>
+                        }
+                    </table>
+                    <div class="small text-muted fw-semibold mb-1">@L["AdminMod_Description"]</div>
+                    <div class="p-3 rounded-3 bg-light border" style="white-space:pre-wrap">@Model.MoTa</div>
+                </div>
+            </div>
         </div>
     </div>
 
     @if (review is not null)
     {
-        <hr />
-        <h4>Phân tích cảnh báo <span class="badge @badge.BadgeClass">@badge.Text</span></h4>
-        @if (!string.IsNullOrWhiteSpace(review.Explanation)) { <p>@review.Explanation</p> }
-        @if (review.AnalysisStatus == "FAILED" && !string.IsNullOrWhiteSpace(review.ErrorMessage)) { <div class="alert alert-danger">Lỗi phân tích: @review.ErrorMessage</div> }
-        @if (review.Matches.Count > 0)
-        {
-            <table class="table table-sm w-auto">
-                <thead><tr><th>Từ khóa</th><th>Mức độ</th><th>Trường</th><th>Vị trí</th></tr></thead>
-                <tbody>
-                @foreach (var m in review.Matches)
-                {
-                    <tr><td>@m.Phrase</td><td><span class="badge @(m.Level == "HIGH" ? "bg-danger" : "bg-warning text-dark")">@m.Level</span></td><td>@(m.Field == "Ten" ? "Tên" : "Mô tả")</td><td>@m.Position</td></tr>
-                }
-                </tbody>
-            </table>
-        }
-        @if (Model.IsPending)
-        {
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <form asp-action="Approve" asp-route-id="@Model.MaSanPham" method="post">
-                        <button class="btn btn-success" type="submit" disabled="@(!Model.CanApprove)">Duyệt sản phẩm</button>
-                    </form>
-                    @if (!Model.CanApprove) { <div class="small text-danger mt-1">@Model.ApproveBlockedReason</div> }
-                    else if (review.RejectionRecordsViolation) { <div class="small text-muted mt-1">Cảnh báo LOW: duyệt thì không ghi vi phạm.</div> }
-                </div>
-                <div class="col-md-8">
-                    @if (Model.CanReject)
+        var needsReanalyze = review.IsFallback
+            || review.AnalysisStatus != SecondHandMarketplace.Web.Services.Moderation.ModerationPolicy.AnalysisDone
+            || review.Level is null;
+        <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+            <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-cpu me-1 text-primary"></i>@L["AdminMod_HybridTitle"]</h5>
+                    <span class="badge @lane.BadgeClass rounded-pill px-2 py-1">@lane.Text</span>
+                    @if (badge.Text != lane.Text)
                     {
-                        <form asp-action="Reject" asp-route-id="@Model.MaSanPham" method="post">
-                            <textarea name="Reason" class="form-control mb-2" rows="3" minlength="10" maxlength="500" required placeholder="Lý do từ chối (10–500 ký tự, bắt buộc)"></textarea>
-                            @if (review.RejectionRecordsViolation) { <div class="small text-danger mb-2">Từ chối sản phẩm có cảnh báo LOW sẽ ghi 1 vi phạm cho người bán (đủ @Model.NguongKhoa vi phạm sẽ khóa tài khoản).</div> }
-                            <button class="btn btn-danger" type="submit">Từ chối sản phẩm</button>
-                        </form>
+                        <span class="badge @badge.BadgeClass rounded-pill px-2 py-1">@badge.Text</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(review.RiskLevel))
+                    {
+                        <span class="badge @risk.BadgeClass rounded-pill px-2 py-1">@risk.Text</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(review.Recommendation))
+                    {
+                        <span class="badge @rec.BadgeClass rounded-pill px-2 py-1">@rec.Text</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(review.ModelVersion))
+                    {
+                        <span class="badge bg-light text-dark border rounded-pill">@L["AdminMod_ModelBadge", review.ModelVersion]</span>
+                    }
+                    @if (review.Attempts > 0)
+                    {
+                        <span class="badge bg-light text-muted border rounded-pill">@L["AdminMod_AttemptsBadge", review.Attempts]</span>
                     }
                 </div>
+                @if (Model.CanReanalyze)
+                {
+                    <form asp-action="Reanalyze" asp-route-id="@Model.MaSanPham" method="post" class="m-0"
+                          onsubmit="var b=this.querySelector('button[type=submit]');if(b){b.disabled=true;b.textContent=@reanalyzingJs;}">
+                        <button type="submit" class="btn btn-sm rounded-pill px-3 @(needsReanalyze ? "btn-warning fw-semibold" : "btn-outline-secondary")">
+                            <i class="bi bi-arrow-clockwise me-1"></i>@(review.IsFallback ? L["AdminMod_ReanalyzeAiBtn"].Value : L["AdminMod_ReanalyzeBtn"].Value)
+                        </button>
+                    </form>
+                }
             </div>
-        }
+            <div class="card-body p-4">
+                @if (review.IsFallback)
+                {
+                    <div class="alert alert-warning rounded-3 py-2 mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>@L["AdminMod_FallbackAlert"]
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(review.Explanation))
+                {
+                    <p class="mb-3">@review.Explanation</p>
+                }
+                @if (review.AnalysisStatus == "FAILED" && !string.IsNullOrWhiteSpace(review.ErrorMessage))
+                {
+                    <div class="alert alert-danger rounded-3">@L["AdminMod_AnalysisError", review.ErrorMessage]</div>
+                }
+
+                @if (review.Matches.Count > 0)
+                {
+                    <h6 class="fw-bold mt-3 mb-2">@L["AdminMod_Tier1Heading"]</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light small text-muted">
+                                <tr>
+                                    <th>@L["AdminMod_ColKeyword"]</th>
+                                    <th style="width:120px">@L["AdminMod_ColLevel"]</th>
+                                    <th style="width:160px">@L["AdminMod_ColField"]</th>
+                                    <th style="width:100px">@L["AdminMod_ColPosition"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var m in review.Matches)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@m.Phrase</td>
+                                    <td><span class="badge @(m.Level == "HIGH" ? "bg-danger" : "bg-warning text-dark")">@m.Level</span></td>
+                                    <td>@ReviewDisplay.DescribeField(m.Field)</td>
+                                    <td>@m.Position</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                @if (aiSignals.Count > 0)
+                {
+                    <h6 class="fw-bold mt-3 mb-2">@L["AdminMod_Tier2Heading"]</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light small text-muted">
+                                <tr>
+                                    <th style="width:210px">@L["AdminMod_ColRiskGroup"]</th>
+                                    <th style="width:120px">@L["AdminMod_ColLevel"]</th>
+                                    <th style="width:150px">@L["AdminMod_ColField"]</th>
+                                    <th>@L["AdminMod_ColEvidence"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var s in aiSignals)
+                            {
+                                var sClass = s.Level == "HIGH" ? "bg-danger" : s.Level == "MEDIUM" ? "bg-warning text-dark" : "bg-info text-dark";
+                                <tr>
+                                    <td class="fw-semibold">@ReviewDisplay.DescribeAiSignalGroup(s.Group)</td>
+                                    <td><span class="badge @sClass">@s.Level</span></td>
+                                    <td>@ReviewDisplay.DescribeField(s.Field)</td>
+                                    <td>@s.Evidence</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                @if (Model.IsPending)
+                {
+                    <div class="row g-3 pt-3 mt-3 border-top">
+                        <div class="col-md-4">
+                            <form asp-action="Approve" asp-route-id="@Model.MaSanPham" method="post">
+                                <button class="btn btn-success rounded-pill px-4 fw-semibold" type="submit" disabled="@(!Model.CanApprove)">
+                                    <i class="bi bi-check-lg me-1"></i>@L["AdminMod_ApproveBtn"]
+                                </button>
+                            </form>
+                            @if (!Model.CanApprove)
+                            {
+                                <div class="small text-danger mt-2">@(ReviewDisplay.DescribeApproveBlocked(review) ?? Model.ApproveBlockedReason)</div>
+                            }
+                            else if (review.RejectionRecordsViolation)
+                            {
+                                <div class="small text-muted mt-2">@L["AdminMod_LowApproveHint"]</div>
+                            }
+                        </div>
+                        <div class="col-md-8">
+                            @if (Model.CanReject)
+                            {
+                                <form asp-action="Reject" asp-route-id="@Model.MaSanPham" method="post">
+                                    <textarea name="Reason" class="form-control mb-2" rows="3" minlength="10" maxlength="500" required placeholder="@L["AdminMod_RejectPlaceholder"]"></textarea>
+                                    @if (review.RejectionRecordsViolation)
+                                    {
+                                        <div class="small text-danger mb-2">@L["AdminMod_LowRejectWarn", Model.NguongKhoa]</div>
+                                    }
+                                    <button class="btn btn-danger rounded-pill px-4 fw-semibold" type="submit">
+                                        <i class="bi bi-x-lg me-1"></i>@L["AdminMod_RejectBtn"]
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
     }
 
     @if (Model.CanRemove)
     {
-        <hr />
-        <h4>Gỡ sản phẩm vi phạm</h4>
-        <form asp-action="Remove" asp-route-id="@Model.MaSanPham" method="post" onsubmit="return confirm('Gỡ sản phẩm này khỏi sàn?');">
-            <textarea name="Reason" class="form-control mb-2" rows="2" minlength="10" maxlength="500" required placeholder="Lý do gỡ (10–500 ký tự, bắt buộc)"></textarea>
-            <button class="btn btn-outline-danger" type="submit">Gỡ sản phẩm</button>
-        </form>
+        <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-danger mb-3"><i class="bi bi-trash me-1"></i>@L["AdminMod_RemoveHeading"]</h5>
+                <form asp-action="Remove" asp-route-id="@Model.MaSanPham" method="post" onsubmit="return confirm(@removeConfirmJs);">
+                    <textarea name="Reason" class="form-control mb-2" rows="2" minlength="10" maxlength="500" required placeholder="@L["AdminMod_RemovePlaceholder"]"></textarea>
+                    <button class="btn btn-outline-danger rounded-pill px-4 fw-semibold" type="submit">@L["AdminMod_RemoveBtn"]</button>
+                </form>
+            </div>
+        </div>
     }
 
-    <hr />
-    <h4>Lịch sử các lượt kiểm duyệt</h4>
-    <div class="table-responsive">
-        <table class="table table-sm table-striped">
-            <thead><tr><th>Lượt</th><th>Gửi lúc</th><th>Phân tích</th><th>Quyết định</th><th>Người quyết định</th><th>Lý do</th><th>Vi phạm</th></tr></thead>
-            <tbody>
-            @foreach (var t in Model.Turns)
-            {
-                var b = ReviewDisplay.Describe(t.AnalysisStatus, t.Level);
-                <tr>
-                    <td>#@t.MaLuotKiemDuyet</td>
-                    <td>@HienThi.NgayGio(t.ThoiGianGui)</td>
-                    <td><span class="badge @b.BadgeClass">@b.Text</span>@if (t.Matches.Count > 0) { <div class="small text-muted">@string.Join(", ", t.Matches.Select(m => $"{m.Phrase} ({m.Level})"))</div> }</td>
-                    <td>@(t.QuyetDinh ?? "Đang chờ") @if (t.ThoiGianQuyetDinh is not null) { <div class="small text-muted">@HienThi.NgayGio(t.ThoiGianQuyetDinh.Value)</div> }</td>
-                    <td>@if (t.QuyetDinhTuDong) { <span class="badge bg-info text-dark">Hệ thống (tự động)</span> } else { @t.TenQuanTriVien }</td>
-                    <td>@t.LyDo</td>
-                    <td>@(t.ViolationRecorded ? "Có (+1)" : "")</td>
-                </tr>
-            }
-            @if (Model.Turns.Count == 0) { <tr><td colspan="7" class="text-center text-muted">Chưa có lượt kiểm duyệt.</td></tr> }
-            </tbody>
-        </table>
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden mb-4">
+        <div class="card-header bg-white border-bottom p-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-1"></i>@L["AdminMod_TurnsHeading"]</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th class="ps-3">@L["AdminMod_ColTurn"]</th>
+                        <th>@L["AdminMod_ColSubmitted"]</th>
+                        <th>@L["AdminMod_ColAnalysis"]</th>
+                        <th>@L["AdminMod_ColDecision"]</th>
+                        <th>@L["AdminMod_ColReviewer"]</th>
+                        <th>@L["AdminMod_ColReason"]</th>
+                        <th class="pe-3">@L["AdminMod_ColViolation"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var t in Model.Turns)
+                {
+                    var b = ReviewDisplay.DescribeLane(t.AnalysisStatus, t.Level, t.RiskLevel, t.Recommendation, t.ModelVersion);
+                    <tr>
+                        <td class="ps-3 fw-semibold">#@t.MaLuotKiemDuyet</td>
+                        <td class="small text-muted text-nowrap">@HienThi.NgayGio(t.ThoiGianGui)</td>
+                        <td>
+                            <span class="badge @b.BadgeClass">@b.Text</span>
+                            @if (!string.IsNullOrWhiteSpace(t.ModelVersion))
+                            {
+                                <div class="small text-muted">@t.ModelVersion</div>
+                            }
+                            @if (t.Matches.Count > 0)
+                            {
+                                <div class="small text-muted">@L["AdminMod_KeywordsPrefix"] @string.Join(", ", t.Matches.Select(m => $"{m.Phrase} ({m.Level})"))</div>
+                            }
+                            @if (t.AiSignals is { Count: > 0 })
+                            {
+                                <div class="small text-muted">AI: @string.Join("; ", t.AiSignals.Select(s => $"{ReviewDisplay.DescribeAiSignalGroup(s.Group)} ({s.Level})"))</div>
+                            }
+                        </td>
+                        <td>
+                            @ReviewDisplay.DescribeDecision(t.QuyetDinh)
+                            @if (t.ThoiGianQuyetDinh is not null)
+                            {
+                                <div class="small text-muted">@HienThi.NgayGio(t.ThoiGianQuyetDinh.Value)</div>
+                            }
+                        </td>
+                        <td>
+                            @if (t.QuyetDinhTuDong)
+                            {
+                                <span class="badge bg-info text-dark">@L["AdminMod_SystemAuto"]</span>
+                            }
+                            else
+                            {
+                                @t.TenQuanTriVien
+                            }
+                        </td>
+                        <td class="small">@t.LyDo</td>
+                        <td class="pe-3">@(t.ViolationRecorded ? L["AdminMod_ViolationPlusOne"].Value : "")</td>
+                    </tr>
+                }
+                @if (Model.Turns.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">@L["AdminMod_TurnsEmpty"]</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <h4>Lịch sử trạng thái sản phẩm</h4>
-    <div class="table-responsive">
-        <table class="table table-sm table-striped">
-            <thead><tr><th>Thời gian</th><th>Từ</th><th>Sang</th><th>Thực hiện</th><th>Lý do</th></tr></thead>
-            <tbody>
-            @foreach (var h in Model.StatusHistory)
-            {
-                <tr>
-                    <td>@HienThi.NgayGio(h.ThoiGian)</td>
-                    <td>@ReviewDisplay.StatusText(h.TrangThaiCu)</td>
-                    <td>@ReviewDisplay.StatusText(h.TrangThaiMoi)</td>
-                    <td>@(h.LoaiNguoiThucHien == "SYSTEM" ? "Hệ thống" : h.TenNguoiThucHien ?? h.LoaiNguoiThucHien)</td>
-                    <td>@h.LyDo</td>
-                </tr>
-            }
-            @if (Model.StatusHistory.Count == 0) { <tr><td colspan="5" class="text-center text-muted">Chưa có lịch sử trạng thái.</td></tr> }
-            </tbody>
-        </table>
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="card-header bg-white border-bottom p-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-list-ul me-1"></i>@L["AdminMod_StatusHistoryHeading"]</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th class="ps-3">@L["Admin_Time"]</th>
+                        <th>@L["AdminMod_ColFrom"]</th>
+                        <th>@L["AdminMod_ColTo"]</th>
+                        <th>@L["AdminMod_ColActor"]</th>
+                        <th class="pe-3">@L["AdminMod_ColReason"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var h in Model.StatusHistory)
+                {
+                    <tr>
+                        <td class="ps-3 small text-muted text-nowrap">@HienThi.NgayGio(h.ThoiGian)</td>
+                        <td>@ReviewDisplay.StatusText(h.TrangThaiCu)</td>
+                        <td>@ReviewDisplay.StatusText(h.TrangThaiMoi)</td>
+                        <td>@(h.LoaiNguoiThucHien == "SYSTEM" ? L["Common_System"].Value : h.TenNguoiThucHien ?? HienThi.NguoiThucHien(h.LoaiNguoiThucHien))</td>
+                        <td class="pe-3 small">@h.LyDo</td>
+                    </tr>
+                }
+                @if (Model.StatusHistory.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-4">@L["AdminMod_StatusHistoryEmpty"]</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>

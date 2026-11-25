@@ -14,7 +14,7 @@ public sealed class ShopController(IShopService shops, IKhuVucService khuVuc) : 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        if (!int.TryParse(User.GetUserId(), out var userId)) return Challenge();
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
         var shop = await shops.GetByOwnerAsync(userId, cancellationToken);
         // Shop cũ có các cột địa chỉ/ngân hàng = NULL vẫn mở được form; ô trống sẽ bắt bổ sung khi lưu.
         var model = shop is null ? new ShopVm() : new ShopVm
@@ -42,7 +42,7 @@ public sealed class ShopController(IShopService shops, IKhuVucService khuVuc) : 
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Index(ShopVm model, CancellationToken cancellationToken)
     {
-        if (!int.TryParse(User.GetUserId(), out var userId)) return Challenge();
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
         if (!ModelState.IsValid) return await HienLaiFormAsync(model, cancellationToken);
 
         var result = await shops.SaveAsync(userId, new ShopSaveInput(

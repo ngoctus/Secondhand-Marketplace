@@ -1,6 +1,6 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Disputes.TranhChapDetailViewModel
 @{
-    ViewData["Title"] = $"Chi tiết khiếu nại #{Model.MaTranhChap}";
+    ViewData["Title"] = string.Format(L["Dispute_DetailTitle"].Value, Model.MaTranhChap);
     var userId = User.LayNguoiDungId() ?? 0;
     var isSeller = userId == Model.MaChuShop;
     var isBuyer = userId == Model.MaNguoiTao;
@@ -21,21 +21,21 @@
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb small">
-            <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Khiếu nại & Tranh chấp</a></li>
-            <li class="breadcrumb-item active text-dark" aria-current="page">Khiếu nại #@Model.MaTranhChap</li>
+            <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">@L["Dispute_BreadcrumbRoot"]</a></li>
+            <li class="breadcrumb-item active text-dark" aria-current="page">@string.Format(L["Dispute_BreadcrumbItem"].Value, Model.MaTranhChap)</li>
         </ol>
     </nav>
 
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
             <h2 class="h3 fw-bold text-dark mb-1">
-                Khiếu nại đơn hàng #@Model.MaDon
+                @string.Format(L["Dispute_OrderHeading"].Value, Model.MaDon)
                 <span class="badge @badgeClass rounded-pill fs-6 ms-2">@statusText</span>
             </h2>
-            <p class="text-muted small mb-0">Ngày mở: @HienThi.NgayGio(Model.NgayTao)</p>
+            <p class="text-muted small mb-0">@L["Dispute_OpenDate"] @HienThi.NgayGio(Model.NgayTao)</p>
         </div>
-        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-            &larr; Quay lại danh sách
+        <a asp-action="Index" class="btn btn-rm-secondary btn-sm rounded-pill px-3">
+            &larr; @L["Dispute_BackToList"]
         </a>
     </div>
 
@@ -43,22 +43,22 @@
 
     <!-- Tóm tắt đơn hàng -->
     <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
-        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-receipt text-primary me-1"></i> Thông tin đơn hàng</h6>
+        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-receipt text-primary me-1"></i> @L["Dispute_OrderInfoSection"]</h6>
         <div class="row g-3 small">
             <div class="col-sm-6 col-md-3">
-                <span class="text-muted d-block">Mã đơn hàng:</span>
+                <span class="text-muted d-block">@L["Dispute_ColOrder"]:</span>
                 <strong class="text-dark">#@Model.MaDon</strong>
             </div>
             <div class="col-sm-6 col-md-3">
-                <span class="text-muted d-block">Cửa hàng bán:</span>
+                <span class="text-muted d-block">@L["Dispute_ShopLabel"]</span>
                 <strong class="text-dark">@Model.TenShop</strong>
             </div>
             <div class="col-sm-6 col-md-3">
-                <span class="text-muted d-block">Người mua đặt hàng:</span>
+                <span class="text-muted d-block">@L["Dispute_BuyerLabel"]</span>
                 <strong class="text-dark">@Model.TenNguoiTao</strong>
             </div>
             <div class="col-sm-6 col-md-3">
-                <span class="text-muted d-block">Tổng tiền đơn:</span>
+                <span class="text-muted d-block">@L["Dispute_OrderTotal"]</span>
                 <strong class="text-success fs-6">@Model.TongTien.ToString("N0") ₫</strong>
             </div>
         </div>
@@ -66,16 +66,16 @@
 
     <!-- Nội dung khiếu nại của người mua -->
     <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
-        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-chat-left-dots text-warning me-1"></i> Khiếu nại từ người mua (@Model.TenNguoiTao)</h6>
+        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-chat-left-dots text-warning me-1"></i> @string.Format(L["Dispute_BuyerClaimSection"].Value, Model.TenNguoiTao)</h6>
         <p class="text-dark mb-3" style="line-height: 1.6; white-space: pre-line;">@Model.LyDo</p>
 
         @if (!string.IsNullOrEmpty(Model.BangChungAnh))
         {
             <div class="mt-2">
-                <span class="text-muted small d-block mb-2">Ảnh bằng chứng đính kèm:</span>
+                <span class="text-muted small d-block mb-2">@L["Dispute_EvidencePhotos"]</span>
                 @if (UrlAnToan.HopLe(Model.BangChungAnh))
                 {
-                    <img src="@Model.BangChungAnh" alt="Bằng chứng khiếu nại" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
+                    <img src="@Model.BangChungAnh" alt="@L["Dispute_EvidenceAlt"]" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
                 }
             </div>
         }
@@ -83,34 +83,49 @@
 
     <!-- Phản hồi từ người bán (Shop) -->
     <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
-        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-shop text-info me-1"></i> Phản hồi từ người bán (@Model.TenShop)</h6>
+        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-shop text-info me-1"></i> @string.Format(L["Dispute_SellerResponseSection"].Value, Model.TenShop)</h6>
 
         @if (!string.IsNullOrEmpty(Model.PhanHoiNguoiBan))
         {
             <div class="p-3 bg-light rounded-3 text-dark border" style="line-height: 1.6; white-space: pre-line;">
                 @Model.PhanHoiNguoiBan
             </div>
-            <div class="small text-muted mt-2 text-end">Cập nhật lúc: @HienThi.NgayGio(Model.NgayCapNhat)</div>
+            @if (!string.IsNullOrEmpty(Model.AnhPhanHoi) && UrlAnToan.HopLe(Model.AnhPhanHoi))
+            {
+                <div class="mt-3">
+                    <span class="text-muted small d-block mb-2"><i class="bi bi-image me-1"></i> @L["Dispute_SellerEvidence"]</span>
+                    <a href="@Model.AnhPhanHoi" target="_blank" rel="noopener noreferrer">
+                        <img src="@Model.AnhPhanHoi" alt="@L["Dispute_SellerEvidenceAlt"]" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
+                    </a>
+                </div>
+            }
+            <div class="small text-muted mt-2 text-end">@L["Dispute_UpdatedDate"] @HienThi.NgayGio(Model.NgayCapNhat)</div>
         }
         else
         {
-            <div class="alert alert-secondary small mb-3">Người bán chưa gửi phản hồi giải trình cho khiếu nại này.</div>
+            <div class="alert alert-secondary small mb-3">@L["Dispute_SellerNoResponse"]</div>
         }
 
         <!-- Nếu người xem là Chủ Shop và khiếu nại đang OPEN hoặc PROCESSING (chưa kết thúc), hiển thị form gửi phản hồi -->
         @if (isSeller && (Model.TrangThai == "OPEN" || Model.TrangThai == "PROCESSING"))
         {
             <div class="mt-3 pt-3 border-top">
-                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-reply-fill text-primary"></i> Gửi phản hồi của cửa hàng</h6>
-                <form asp-action="PhanHoi" method="post">
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-reply-fill text-primary"></i> @L["Dispute_SendShopResponse"]</h6>
+                <form asp-action="PhanHoi" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.MaTranhChap" />
                     <div class="mb-3">
+                        <label class="form-label small fw-semibold">@L["Dispute_ShopResponseLabel"] <span class="text-danger">*</span></label>
                         <textarea name="phanHoi" rows="3" class="form-control rounded-3" required
-                                  placeholder="Nhập giải trình của cửa hàng, tình trạng đóng gói, đối soát với bên vận chuyển... (tối đa 1000 ký tự)"></textarea>
+                                  placeholder="@L["Dispute_ShopResponsePlaceholder"].Value"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
-                        <i class="bi bi-send"></i> Gửi phản hồi khiếu nại
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">@L["Dispute_ShopEvidenceLabel"]</label>
+                        <input type="file" name="fileDinhKem" class="form-control form-control-sm rounded-3" accept=".jpg,.jpeg,.png,.webp" />
+                        <div class="form-text small">@L["Dispute_ShopEvidenceHint"]</div>
+                    </div>
+                    <button type="submit" class="btn btn-rm-primary rounded-pill px-4 fw-semibold">
+                        <i class="bi bi-send"></i> @L["Dispute_ShopSubmitResponse"]
                     </button>
                 </form>
             </div>
@@ -121,19 +136,19 @@
     @if (!string.IsNullOrEmpty(Model.PhanQuyet) || Model.TrangThai == "RESOLVED" || Model.TrangThai == "REJECTED")
     {
         <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 border-start border-4 border-success">
-            <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-shield-check text-success me-1"></i> Quyết định của Ban quản trị</h6>
+            <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom"><i class="bi bi-shield-check text-success me-1"></i> @L["Dispute_AdminDecision"]</h6>
             <div class="alert alert-success fw-semibold mb-2">
                 @Model.PhanQuyet
             </div>
             @if (!string.IsNullOrEmpty(Model.GhiChuAdmin))
             {
                 <div class="small text-secondary mb-2">
-                    <strong>Ghi chú từ BQT:</strong> @Model.GhiChuAdmin
+                    <strong>@L["Dispute_AdminNote"]</strong> @Model.GhiChuAdmin
                 </div>
             }
             <div class="small text-muted d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                <span>Người giải quyết: <strong>@(Model.TenNguoiXuLy ?? "Ban quản trị")</strong></span>
-                <span>Thời gian: @HienThi.NgayGio(Model.NgayGiaiQuyet)</span>
+                <span>@L["Dispute_AdminResolver"] <strong>@(Model.TenNguoiXuLy ?? L["Dispute_DefaultResolver"].Value)</strong></span>
+                <span>@L["Dispute_ResolvedDate"] @HienThi.NgayGio(Model.NgayGiaiQuyet)</span>
             </div>
         </div>
     }

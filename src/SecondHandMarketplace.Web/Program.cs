@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -22,7 +24,30 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddControllersWithViews();
+        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+        builder.Services.AddControllersWithViews()
+            .AddViewLocalization()
+            .AddDataAnnotationsLocalization(options =>
+            {
+                options.DataAnnotationLocalizerProvider = (_, factory) =>
+                    factory.Create(typeof(SharedResource));
+            });
+        builder.Services.Configure<RequestLocalizationOptions>(options =>
+        {
+            var supportedCultures = new[]
+            {
+                new CultureInfo("vi-VN"),
+                new CultureInfo("en-US")
+            };
+            options.DefaultRequestCulture = new RequestCulture("vi-VN");
+            options.SupportedCultures = supportedCultures;
+            options.SupportedUICultures = supportedCultures;
+            options.RequestCultureProviders = new IRequestCultureProvider[]
+            {
+                new CookieRequestCultureProvider(),
+                new QueryStringRequestCultureProvider()
+            };
+        });
         builder.Services.AddMemoryCache();
         builder.Services.AddDataProtection();
         builder.Services.AddRateLimiter(options =>
@@ -43,6 +68,15 @@ public class Program
                 {
                     PermitLimit = 5,
                     Window = TimeSpan.FromMinutes(10),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
+            options.AddPolicy("appeal", context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(15),
                     QueueLimit = 0,
                     AutoReplenishment = true
                 }));
@@ -236,6 +270,7 @@ public class Program
         }
 
         var app = builder.Build();
+        EnsureAccountAppealSchema(app);
         var forwardedHeaders = new ForwardedHeadersOptions
         {
             ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
@@ -266,6 +301,7 @@ public class Program
             branch => branch.UseStatusCodePagesWithReExecute("/Home/TrangLoi", "?ma={0}"));
         app.UseHttpsRedirection();
         app.UseStaticFiles();   // Phục vụ file trong wwwroot (ảnh seed, css, js...)
+        app.UseRequestLocalization();
         app.UseRouting();
         app.UseRateLimiter();
         app.UseAuthentication();
@@ -300,5 +336,97 @@ public class Program
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Tự động đồng bộ schema KN-01 (MocTinhViPham, SoLanBiKhoa, KhieuNaiTaiKhoan, CauHinhKhieuNaiTaiKhoan)
+    /// cho các máy thành viên đang chạy DB cũ chưa chạy file migration thủ công.
+    /// </summary>
+    private static void EnsureAccountAppealSchema(WebApplication app)
+    {
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            if (!db.Database.IsRelational()) return;
+
+            const string sql = """
+                IF OBJECT_ID(N'dbo.NguoiDung', N'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH(N'dbo.NguoiDung', N'MocTinhViPham') IS NULL
+                        EXEC(N'ALTER TABLE dbo.NguoiDung ADD MocTinhViPham datetime2(3) NULL;');
+
+                    IF COL_LENGTH(N'dbo.NguoiDung', N'SoLanBiKhoa') IS NULL
+                    BEGIN
+                        EXEC(N'ALTER TABLE dbo.NguoiDung ADD SoLanBiKhoa int NOT NULL CONSTRAINT DF_NguoiDung_SoLanBiKhoa DEFAULT (0);');
+                        EXEC(N'UPDATE dbo.NguoiDung SET SoLanBiKhoa = 1 WHERE TrangThai = ''LOCKED'' AND SoLanBiKhoa = 0;');
+                    END;
+                END;
+
+                IF OBJECT_ID(N'dbo.DanhGia', N'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH(N'dbo.DanhGia', N'PhanHoiShop') IS NULL
+                        EXEC(N'ALTER TABLE dbo.DanhGia ADD PhanHoiShop nvarchar(1000) NULL;');
+
+                    IF COL_LENGTH(N'dbo.DanhGia', N'NgayPhanHoi') IS NULL
+                        EXEC(N'ALTER TABLE dbo.DanhGia ADD NgayPhanHoi datetime2(3) NULL;');
+                END;
+
+                IF OBJECT_ID(N'dbo.TranhChap', N'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH(N'dbo.TranhChap', N'AnhPhanHoi') IS NULL
+                        EXEC(N'ALTER TABLE dbo.TranhChap ADD AnhPhanHoi nvarchar(500) NULL;');
+                END;
+
+                IF OBJECT_ID(N'dbo.KhieuNaiTaiKhoan', N'U') IS NULL AND OBJECT_ID(N'dbo.NguoiDung', N'U') IS NOT NULL
+                BEGIN
+                    CREATE TABLE dbo.KhieuNaiTaiKhoan (
+                        MaKhieuNai          int            IDENTITY(1,1) NOT NULL,
+                        MaNguoiDung         int            NOT NULL,
+                        LoaiYeuCau          varchar(20)    NOT NULL,
+                        LanKhoaThu          int            NOT NULL,
+                        LyDoKhoaLucGui      nvarchar(500)  NOT NULL,
+                        NoiDung             nvarchar(2000) NOT NULL,
+                        BangChungAnh        varchar(500)   NULL,
+                        YeuCauPhi           bit            NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_YeuCauPhi DEFAULT (0),
+                        SoTienPhi           decimal(18,2)  NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_SoTienPhi DEFAULT (0),
+                        MaGiaoDichThamChieu varchar(40)    NULL,
+                        TrangThai           varchar(20)    NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_TrangThai DEFAULT ('PENDING'),
+                        GhiChuAdmin         nvarchar(1000) NULL,
+                        NguoiXuLyId         int            NULL,
+                        NgayTao             datetime2(3)   NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_NgayTao   DEFAULT (SYSUTCDATETIME()),
+                        NgayXuLy            datetime2(3)   NULL,
+                        CONSTRAINT PK_KhieuNaiTaiKhoan PRIMARY KEY CLUSTERED (MaKhieuNai),
+                        CONSTRAINT FK_KhieuNaiTaiKhoan_NguoiDung FOREIGN KEY (MaNguoiDung) REFERENCES dbo.NguoiDung (MaNguoiDung),
+                        CONSTRAINT FK_KhieuNaiTaiKhoan_NguoiXuLy FOREIGN KEY (NguoiXuLyId) REFERENCES dbo.NguoiDung (MaNguoiDung)
+                    );
+                END;
+
+                IF OBJECT_ID(N'dbo.CauHinhKhieuNaiTaiKhoan', N'U') IS NULL AND OBJECT_ID(N'dbo.NguoiDung', N'U') IS NOT NULL
+                BEGIN
+                    CREATE TABLE dbo.CauHinhKhieuNaiTaiKhoan (
+                        Id                int           NOT NULL,
+                        SoLanGuiMoiChuKy  int           NOT NULL CONSTRAINT DF_CauHinhKhieuNai_SoLanGui    DEFAULT (2),
+                        CooldownPhut      int           NOT NULL CONSTRAINT DF_CauHinhKhieuNai_Cooldown    DEFAULT (4320),
+                        PhiMoKhoaLan2     decimal(18,2) NOT NULL CONSTRAINT DF_CauHinhKhieuNai_Phi         DEFAULT (200000),
+                        TenNganHang       nvarchar(100) NOT NULL,
+                        MaNganHang        varchar(20)   NOT NULL,
+                        SoTaiKhoan        varchar(30)   NOT NULL,
+                        ChuTaiKhoan       nvarchar(100) NOT NULL,
+                        NgayCapNhat       datetime2(3)  NOT NULL CONSTRAINT DF_CauHinhKhieuNai_NgayCapNhat DEFAULT (SYSUTCDATETIME()),
+                        NguoiCapNhatId    int           NULL,
+                        CONSTRAINT PK_CauHinhKhieuNaiTaiKhoan PRIMARY KEY CLUSTERED (Id)
+                    );
+                    INSERT INTO dbo.CauHinhKhieuNaiTaiKhoan (Id, SoLanGuiMoiChuKy, CooldownPhut, PhiMoKhoaLan2, TenNganHang, MaNganHang, SoTaiKhoan, ChuTaiKhoan)
+                    VALUES (1, 2, 4320, 200000, N'MB Bank', 'MB', '090123456789', N'RE MARKET PLATFORM');
+                END;
+                """;
+
+            db.Database.ExecuteSqlRaw(sql);
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Không thể tự động kiểm tra/đồng bộ schema Khiếu nại tài khoản khi khởi động.");
+        }
     }
 }

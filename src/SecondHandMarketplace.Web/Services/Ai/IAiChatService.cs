@@ -12,5 +12,15 @@ public interface IAiChatService
     /// </summary>
     /// <param name="userId">Chỉ dùng để ghi log.</param>
     /// <param name="role">USER / ADMIN: quyết định AI được phép gọi công cụ nào.</param>
-    Task<AiChatResult> AskAsync(string userId, string role, string message, CancellationToken cancellationToken = default);
+    /// <param name="language">Ngôn ngữ mong muốn ("vi" | "en"); null thì tự đọc theo CultureInfo.CurrentUICulture.</param>
+    Task<AiChatResult> AskAsync(string userId, string role, string message, string? language, CancellationToken cancellationToken = default);
+
+    /// <summary>Quá tải tương thích ngược: tự lấy ngôn ngữ theo CultureInfo.CurrentUICulture.</summary>
+    Task<AiChatResult> AskAsync(string userId, string role, string message, CancellationToken cancellationToken = default) =>
+        AskAsync(userId, role, message, language: null, cancellationToken);
+
+    /// <summary>
+    /// Gợi ý khoảng giá bán dựa trên dữ liệu sản phẩm thật trên sàn kết hợp nhận xét AI (C-03).
+    /// </summary>
+    Task<AiPriceSuggestionResult> SuggestPriceAsync(string userId, string role, AiPriceSuggestInput input, CancellationToken cancellationToken = default);
 }

@@ -1,0 +1,416 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Account.LockedAccountVm
+@using SecondHandMarketplace.Web.Common
+@using SecondHandMarketplace.Web.Services.Accounts
+@{
+    ViewData["Title"] = L["Locked_PageTitle"];
+    var overview = Model.Overview;
+}
+
+<div class="container py-4" style="max-width: 920px;">
+    @if (Model.RequiresTokenVerification || overview == null)
+    {
+        <div class="card shadow-sm border-0 my-5 text-center p-4 p-md-5 rounded-4 bg-white rm-empty-state">
+            <div class="mb-3">
+                <i class="bi bi-shield-lock text-danger" style="font-size: 3.5rem;"></i>
+            </div>
+            <h3 class="fw-bold mb-2">@L["Locked_VerifyTitle"]</h3>
+            <p class="text-muted mx-auto mb-4" style="max-width: 540px;">
+                @L["Locked_VerifyDesc"]
+            </p>
+            <div>
+                <a asp-action="Login" class="btn btn-rm-primary px-4 py-2 fw-semibold rounded-pill">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> @L["Account_Login_Title"]
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Header Banner -->
+        <div class="card shadow-sm border-0 mb-4 bg-danger bg-opacity-10 border-start border-danger border-4 rounded-4">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-danger fs-6 px-3 py-2 rounded-pill">
+                                <i class="bi bi-lock-fill me-1"></i> @L["Locked_HeaderBadge"]
+                            </span>
+                            @if (overview.LanKhoaHienTai == 1)
+                            {
+                                <span class="badge bg-warning text-dark fs-6 px-3 py-2 rounded-pill">@L["Locked_Tier1Badge"]</span>
+                            }
+                            else if (overview.LanKhoaHienTai == 2)
+                            {
+                                <span class="badge bg-danger fs-6 px-3 py-2 rounded-pill">@L["Locked_Tier2Badge"]</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-dark fs-6 px-3 py-2 rounded-pill">@string.Format(L["Locked_Tier3Badge"].Value, overview.LanKhoaHienTai)</span>
+                            }
+                        </div>
+                        <h4 class="fw-bold text-dark mb-1">@overview.HoTen (@overview.Email)</h4>
+                        <div class="text-muted small">
+                            @L["Locked_LockedAt"] @(overview.ThoiGianKhoa.HasValue ? HienThi.NgayGio(overview.ThoiGianKhoa) : "N/A")
+                        </div>
+                    </div>
+                    <div>
+                        <a asp-action="Login" class="btn btn-rm-secondary btn-sm rounded-pill px-3">
+                            <i class="bi bi-arrow-left me-1"></i> @L["Btn_BackToLogin"]
+                        </a>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(overview.LyDoKhoa))
+                {
+                    <div class="mt-3 p-3 bg-white rounded-3 border">
+                        <div class="fw-semibold text-danger small mb-1"><i class="bi bi-info-circle me-1"></i> @L["Locked_LockReason"]</div>
+                        <div class="text-dark">@overview.LyDoKhoa</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Cột trái: Lịch sử gậy & Thông tin -->
+            <div class="col-12 col-lg-5">
+                <!-- Thẻ Vi phạm hiệu lực -->
+                <div class="card shadow-sm border-0 mb-4 rounded-4 bg-white overflow-hidden">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+                        <span class="fw-bold text-dark"><i class="bi bi-exclamation-octagon text-danger me-1"></i> @L["Locked_StrikesCardTitle"]</span>
+                        <span class="badge @(overview.SoViPhamHieuLuc >= overview.NguongKhoa ? "bg-danger" : "bg-warning text-dark") rounded-pill">
+                            @overview.SoViPhamHieuLuc / @overview.NguongKhoa @L["Locked_StrikesSuffix"]
+                        </span>
+                    </div>
+                    <div class="card-body p-3">
+                        @if (overview.ViPhamHieuLuc.Count == 0)
+                        {
+                            <div class="text-muted small text-center py-3">@L["Locked_NoStrikes"]</div>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var v in overview.ViPhamHieuLuc)
+                                {
+                                    <div class="list-group-item px-0 py-2">
+                                        <div class="d-flex justify-content-between small text-muted">
+                                            <span class="fw-semibold text-dark">[@v.Nguon]</span>
+                                            <span>@HienThi.NgayGio(v.ThoiGian)</span>
+                                        </div>
+                                        <div class="small mt-1 text-secondary">@v.MoTa</div>
+                                    </div>
+                                }
+                            </div>
+                            @if (overview.SoViPhamHieuLuc > overview.ViPhamHieuLuc.Count)
+                            {
+                                <div class="text-muted small text-center pt-2 border-top">
+                                    <em>@(string.Format(HienThi.Chon("(Hiển thị {0} vi phạm gần nhất trong tổng số {1} vi phạm hiệu lực)", "(Showing {0} most recent of {1} active violations)"), overview.ViPhamHieuLuc.Count, overview.SoViPhamHieuLuc))</em>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Thẻ Hướng dẫn chính sách 3 lần khóa -->
+                <div class="card shadow-sm border-0 mb-4 bg-light rounded-4">
+                    <div class="card-body p-3 small">
+                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-shield-check text-primary me-1"></i> @L["Locked_PolicyCardTitle"]</h6>
+                        <ul class="ps-3 mb-0 text-muted">
+                            <li class="mb-1"><strong>@HienThi.Chon("Khóa lần 1:", "1st Lock:")</strong> @L["Locked_PolicyTier1"]</li>
+                            <li class="mb-1"><strong>@HienThi.Chon("Khóa lần 2:", "2nd Lock:")</strong> @L["Locked_PolicyTier2"]</li>
+                            <li><strong>@HienThi.Chon("Khóa lần 3+:", "3rd+ Lock:")</strong> @L["Locked_PolicyTier3"]</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Form khiếu nại / cam kết -->
+            <div class="col-12 col-lg-7">
+                <!-- Thông báo chu kỳ / Cooldown -->
+                @if (overview.CoDonDangCho)
+                {
+                    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4 rounded-4" role="alert">
+                        <i class="bi bi-clock-history fs-4"></i>
+                        <div>
+                            @string.Format(L["Locked_PendingAlert"].Value, HienThi.NgayGio(overview.DonGanNhat?.NgayTao))
+                        </div>
+                    </div>
+                }
+                else if (overview.DangTrongCooldown)
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4 rounded-4" role="alert">
+                        <i class="bi bi-hourglass-split fs-4"></i>
+                        <div>
+                            @string.Format(L["Locked_CooldownAlert"].Value, overview.SoLuotToiDaChuKy) <strong><span id="cooldownTimer" data-ends-at="@(overview.CooldownKetThucUtc.HasValue ? HienThi.Iso(overview.CooldownKetThucUtc.Value) : "")">@(overview.CooldownKetThucUtc.HasValue && overview.CooldownKetThucUtc.Value > DateTime.UtcNow ? AccountAppealRules.FormatRemainingTime(overview.CooldownKetThucUtc.Value - DateTime.UtcNow) : HienThi.Chon("0 phút", "0 minutes"))</span></strong>.
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info d-flex align-items-center justify-content-between mb-4 small py-2 px-3 rounded-4">
+                        <span><i class="bi bi-info-circle me-1"></i> @string.Format(L["Locked_AttemptsRemaining"].Value, overview.SoLuotConLaiChuKy, overview.SoLuotToiDaChuKy)</span>
+                    </div>
+                }
+
+                @if (overview.CoTheGuiDonMoi)
+                {
+                    <div class="card shadow-sm border-0 mb-4 rounded-4 bg-white overflow-hidden">
+                        <div class="card-header bg-white py-3 border-bottom">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-send text-primary me-1"></i> @L["Locked_FormCardTitle"]</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <form asp-action="SubmitAppeal" method="post" enctype="multipart/form-data" id="appealForm">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="Token" value="@Model.Token" />
+
+                                <div asp-validation-summary="All" class="alert alert-danger py-2 small mb-3"></div>
+
+                                <!-- Chọn loại yêu cầu -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">@L["Locked_ReqTypeLabel"] <span class="text-danger">*</span></label>
+                                    <div class="d-flex flex-column gap-2">
+                                        <div class="form-check p-3 border rounded-3 bg-light">
+                                            <input class="form-check-input" type="radio" name="LoaiYeuCau" id="radioAppeal" value="@AccountAppealRules.TypeAppeal" checked />
+                                            <label class="form-check-label fw-semibold text-dark" for="radioAppeal">
+                                                @L["Locked_TypeAppealTitle"]
+                                            </label>
+                                            <div class="text-muted small mt-1">
+                                                @L["Locked_TypeAppealDesc"]
+                                            </div>
+                                        </div>
+
+                                        @if (overview.ChoPhepCamKetMoKhoa)
+                                        {
+                                            <div class="form-check p-3 border rounded-3 bg-light">
+                                                <input class="form-check-input" type="radio" name="LoaiYeuCau" id="radioUnlock" value="@AccountAppealRules.TypeUnlockRequest" />
+                                                <label class="form-check-label fw-semibold text-dark" for="radioUnlock">
+                                                    @L["Locked_TypeUnlockTitle"]
+                                                    @if (overview.YeuCauPhiLan2)
+                                                    {
+                                                        <span class="badge bg-danger ms-1 rounded-pill">@L["Locked_DepositRequiredBadge"]</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success ms-1 rounded-pill">@L["Locked_FreeBadge"]</span>
+                                                    }
+                                                </label>
+                                                <div class="text-muted small mt-1">
+                                                    @L["Locked_TypeUnlockDesc"]
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="p-3 border rounded-3 bg-light opacity-50">
+                                                <div class="fw-semibold text-muted">
+                                                    <i class="bi bi-slash-circle me-1"></i> @L["Locked_PledgeClosedTitle"]
+                                                </div>
+                                                <div class="text-muted small mt-1">
+                                                    @L["Locked_PledgeClosedDesc"]
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <span asp-validation-for="LoaiYeuCau" class="text-danger small d-block mt-1"></span>
+                                </div>
+
+                                <!-- Hộp VietQR (Chỉ hiển thị khi chọn Cam kết mở khóa ở lần 2) -->
+                                @if (overview.YeuCauPhiLan2 && overview.ThongTinPhiQr != null)
+                                {
+                                    <div id="vietQrSection" class="p-3 border rounded-3 bg-light mb-3 d-none">
+                                        <h6 class="fw-bold text-danger mb-2">
+                                            <i class="bi bi-qr-code-scan me-1"></i> @L["Locked_VietQrTitle"]
+                                        </h6>
+                                        <p class="small text-muted mb-3">
+                                            @L["Locked_VietQrDesc"]
+                                        </p>
+                                        <div class="row align-items-center">
+                                            <div class="col-12 col-md-5 text-center mb-3 mb-md-0">
+                                                <img src="@overview.ThongTinPhiQr.QrDataUrl" alt="VietQR Mở Khóa" class="img-fluid rounded border bg-white p-2 shadow-sm" style="max-width: 180px;" />
+                                            </div>
+                                            <div class="col-12 col-md-7 small">
+                                                <div class="mb-1"><strong>@HienThi.Chon("Ngân hàng:", "Bank:")</strong> @overview.ThongTinPhiQr.TenNganHang (@overview.ThongTinPhiQr.MaNganHang)</div>
+                                                <div class="mb-1"><strong>@HienThi.Chon("Số tài khoản:", "Account No:")</strong> <span class="font-monospace fw-bold text-dark">@overview.ThongTinPhiQr.SoTaiKhoan</span></div>
+                                                <div class="mb-1"><strong>@HienThi.Chon("Chủ tài khoản:", "Account Holder:")</strong> @overview.ThongTinPhiQr.ChuTaiKhoan</div>
+                                                <div class="mb-1"><strong>@HienThi.Chon("Số tiền:", "Amount:")</strong> <span class="text-danger fw-bold fs-6">200.000 VNĐ</span></div>
+                                                <div class="mt-2 p-2 bg-white rounded border">
+                                                    <div class="text-muted small">@HienThi.Chon("Nội dung chuyển khoản (bắt buộc):", "Transfer description (required):")</div>
+                                                    <div class="d-flex align-items-center justify-content-between mt-1">
+                                                        <span class="font-monospace fw-bold text-primary" id="qrTransferContent">@overview.ThongTinPhiQr.NoiDungChuyenKhoan</span>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2 rounded-pill" onclick="navigator.clipboard.writeText(document.getElementById('qrTransferContent').innerText); alert('@HienThi.Chon("Đã sao chép nội dung chuyển khoản!", "Copied transfer description!")');">
+                                                            <i class="bi bi-copy"></i> @HienThi.Chon("Sao chép", "Copy")
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Nội dung giải trình / cam kết -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold" for="NoiDung">
+                                        @L["Locked_ContentLabel"] <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea name="NoiDung" id="NoiDung" class="form-control rounded-3" rows="4" placeholder="@L["Locked_ContentPlaceholder"].Value" required minlength="20" maxlength="2000">@Model.NoiDung</textarea>
+                                    <span asp-validation-for="NoiDung" class="text-danger small d-block mt-1"></span>
+                                    <div class="form-text small">@L["Locked_ContentHint"]</div>
+                                </div>
+
+                                <!-- Ảnh bằng chứng / biên lai -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold" for="FileDinhKem" id="evidenceLabel">
+                                        @L["Locked_EvidenceLabel"]
+                                    </label>
+                                    <input type="file" name="FileDinhKem" id="FileDinhKem" class="form-control rounded-3" accept=".jpg,.jpeg,.png,.webp" />
+                                    <span asp-validation-for="FileDinhKem" class="text-danger small d-block mt-1"></span>
+                                    <div class="form-text small" id="evidenceHelp">
+                                        @L["Locked_EvidenceHint"]
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-rm-primary w-100 py-3 fw-bold rounded-pill text-white shadow-sm">
+                                    <i class="bi bi-send me-1"></i> @L["Locked_SubmitBtn"]
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+
+                <!-- Lịch sử các đơn trong đợt khóa này -->
+                @if (overview.LichSuDonDotNay.Count > 0)
+                {
+                    <div class="card shadow-sm border-0 mb-4 rounded-4 bg-white overflow-hidden">
+                        <div class="card-header bg-white py-3 border-bottom">
+                            <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-journal-text me-1"></i> @HienThi.Chon("Lịch sử yêu cầu đợt khóa này", "Request History for Current Lock")</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>@HienThi.Chon("Ngày gửi", "Submitted")</th>
+                                            <th>@HienThi.Chon("Loại", "Type")</th>
+                                            <th>@L["Admin_Status"]</th>
+                                            <th>@HienThi.Chon("Phản hồi quản trị", "Admin Response")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var don in overview.LichSuDonDotNay)
+                                        {
+                                            <tr>
+                                                <td>@HienThi.NgayGio(don.NgayTao)</td>
+                                                <td>
+                                                    @if (don.LoaiYeuCau == AccountAppealRules.TypeAppeal)
+                                                    {
+                                                        <span class="badge bg-secondary rounded-pill">@HienThi.Chon("Khiếu nại", "Appeal")</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-info text-dark rounded-pill">@HienThi.Chon("Cam kết", "Commitment")</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (don.TrangThai == AccountAppealRules.StatusPending)
+                                                    {
+                                                        <span class="badge bg-warning text-dark rounded-pill">@HienThi.Chon("Chờ duyệt", "Pending")</span>
+                                                    }
+                                                    else if (don.TrangThai == AccountAppealRules.StatusApproved)
+                                                    {
+                                                        <span class="badge bg-success rounded-pill">@HienThi.Chon("Đã duyệt", "Approved")</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger rounded-pill">@HienThi.Chon("Bị từ chối", "Rejected")</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrWhiteSpace(don.GhiChuAdmin))
+                                                    {
+                                                        <div class="text-dark">@don.GhiChuAdmin</div>
+                                                        @if (don.NgayXuLy.HasValue)
+                                                        {
+                                                            <div class="text-muted" style="font-size: 0.75rem;">(@HienThi.NgayGio(don.NgayXuLy))</div>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">—</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            const isTier2 = @(overview != null && overview.YeuCauPhiLan2 ? "true" : "false");
+            const vietQrSection = $('#vietQrSection');
+            const evidenceLabel = $('#evidenceLabel');
+            const evidenceInput = $('#FileDinhKem');
+            const evidenceHelp = $('#evidenceHelp');
+
+            function updateFormState() {
+                const selectedType = $('input[name="LoaiYeuCau"]:checked').val();
+                if (selectedType === '@AccountAppealRules.TypeUnlockRequest' && isTier2) {
+                    vietQrSection.removeClass('d-none');
+                    evidenceLabel.html('@Html.Raw(HienThi.Chon("Ảnh biên lai chuyển khoản <span class=\"text-danger\">*</span>", "Transfer Receipt Screenshot <span class=\"text-danger\">*</span>"))');
+                    evidenceInput.attr('required', true);
+                    evidenceHelp.text('@Html.Raw(HienThi.Chon("Bắt buộc tải ảnh chụp biên lai chuyển khoản phí mở khóa 200.000đ.", "Required: upload the 200,000 VND unlock deposit receipt screenshot."))');
+                } else {
+                    vietQrSection.addClass('d-none');
+                    evidenceLabel.text('@Html.Raw(L["Locked_EvidenceLabel"].Value)');
+                    evidenceInput.removeAttr('required');
+                    evidenceHelp.text('@Html.Raw(L["Locked_EvidenceHint"].Value)');
+                }
+            }
+
+            $('input[name="LoaiYeuCau"]').on('change', updateFormState);
+            updateFormState();
+
+            $('#appealForm').on('submit', function () {
+                const noiDung = $('#NoiDung').val().trim();
+                if (noiDung.length < 20) {
+                    alert('@Html.Raw(HienThi.Chon("Nội dung giải trình / cam kết phải có ít nhất 20 ký tự.", "Explanation / commitment must be at least 20 characters."))');
+                    return false;
+                }
+                const btn = $(this).find('button[type="submit"]');
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> @Html.Raw(HienThi.Chon("Đang gửi...", "Submitting..."))');
+            });
+
+            // 3.12: Đếm ngược thời gian Cooldown realtime
+            const timerEl = document.getElementById('cooldownTimer');
+            if (timerEl && timerEl.dataset.endsAt) {
+                const endsAt = new Date(timerEl.dataset.endsAt).getTime();
+                const interval = setInterval(function () {
+                    const diffMs = endsAt - Date.now();
+                    if (diffMs <= 0) {
+                        clearInterval(interval);
+                        timerEl.innerText = "@Html.Raw(HienThi.Chon("0 phút (Chu kỳ mới đã mở)", "0 minutes (New cycle opened)"))";
+                        setTimeout(function () { location.reload(); }, 1500);
+                    } else {
+                        const totalMinutes = Math.ceil(diffMs / 60000);
+                        const days = Math.floor(totalMinutes / (24 * 60));
+                        const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+                        const minutes = totalMinutes % 60;
+                        const parts = [];
+                        if (days > 0) parts.push(days + ' @Html.Raw(HienThi.Chon("ngày", "d"))');
+                        if (hours > 0) parts.push(hours + ' @Html.Raw(HienThi.Chon("giờ", "h"))');
+                        if (minutes > 0 || parts.length === 0) parts.push(minutes + ' @Html.Raw(HienThi.Chon("phút", "m"))');
+                        timerEl.innerText = parts.join(' ');
+                    }
+                }, 10000);
+            }
+        });
+    </script>
+}

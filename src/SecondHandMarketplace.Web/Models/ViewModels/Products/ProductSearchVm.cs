@@ -1,3 +1,4 @@
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Areas;
 using SecondHandMarketplace.Web.Models.ViewModels;
@@ -22,21 +23,26 @@ public class ProductSearchVm
     /// <summary>Mức phân trang dùng khi caller (API, AI tool, trang chủ) không tự chỉ định (3 hàng x 3 cột = 9 sản phẩm/trang).</summary>
     public const int DefaultPageSize = 9;
 
-    public static readonly PriceRangeOption[] KhoPhanGia =
+    /// <summary>
+    /// Phân khúc giá đọc theo ngôn ngữ hiện tại, nên phải là property: mảng static sẽ đóng băng
+    /// nhãn của văn hóa đầu tiên chạm tới và dính sang mọi request sau đó.
+    /// </summary>
+    public static PriceRangeOption[] KhoPhanGia =>
     [
-        new(null, null, "Tất cả mức giá"),
-        new(0, 100_000, "Dưới 100.000đ"),
-        new(100_000, 350_000, "100.000đ - 350.000đ"),
-        new(350_000, 1_000_000, "350.000đ - 1.000.000đ"),
-        new(1_000_000, 5_000_000, "1.000.000đ - 5.000.000đ"),
-        new(5_000_000, null, "Trên 5.000.000đ")
+        new(null, null, HienThi.Chon("Tất cả mức giá", "All prices")),
+        new(0, 100_000, HienThi.Chon("Dưới 100.000đ", "Under 100.000đ")),
+        new(100_000, 350_000, HienThi.Chon("100.000đ - 350.000đ", "100.000đ - 350.000đ")),
+        new(350_000, 1_000_000, HienThi.Chon("350.000đ - 1.000.000đ", "350.000đ - 1.000.000đ")),
+        new(1_000_000, 5_000_000, HienThi.Chon("1.000.000đ - 5.000.000đ", "1.000.000đ - 5.000.000đ")),
+        new(5_000_000, null, HienThi.Chon("Trên 5.000.000đ", "Over 5.000.000đ"))
     ];
 
-    /// <summary>Áp phân khúc giá đã chọn vào MinPrice/MaxPrice (giữ nguyên nếu tự nhập).</summary>
+    /// <summary>Áp phân khúc giá đã chọn vào MinPrice/MaxPrice; bỏ nếu người mua tự kéo slider (B-04).</summary>
     public void GiaiPhanGia()
     {
         if (PriceRange is null or 0) return;
         if (PriceRange.Value < 0 || PriceRange.Value >= KhoPhanGia.Length) return;
+        if (MinPrice != null || MaxPrice != null) return;
         MinPrice = KhoPhanGia[PriceRange.Value].Min;
         MaxPrice = KhoPhanGia[PriceRange.Value].Max;
     }
@@ -44,11 +50,11 @@ public class ProductSearchVm
     public string? TenPhanGia =>
         PriceRange > 0 && PriceRange < KhoPhanGia.Length ? KhoPhanGia[PriceRange.Value].Label : null;
 
-    public static readonly (string Key, string Label)[] KhoSapXep =
+    public static (string Key, string Label)[] KhoSapXep =>
     [
-        ("newest", "Mới nhất"),
-        ("price_asc", "Giá thấp đến cao"),
-        ("price_desc", "Giá cao xuống thấp")
+        ("newest", HienThi.Chon("Mới nhất", "Newest first")),
+        ("price_asc", HienThi.Chon("Giá thấp đến cao", "Price: low to high")),
+        ("price_desc", HienThi.Chon("Giá cao xuống thấp", "Price: high to low"))
     ];
 }
 
@@ -68,4 +74,8 @@ public sealed class ProductSearchResultVm
 
     /// <summary>Tên tỉnh/xã đang lọc, hiển thị trên chip bộ lọc; null khi chưa có hoặc chưa chọn.</summary>
     public string? KhuVucDaChon { get; init; }
+
+    /// <summary>Hai đầu của thanh trượt giá (B-04) lấy từ giá thật thấp/cao nhất đang bán; null khi chưa có tin.</summary>
+    public decimal? BienGiaMin { get; init; }
+    public decimal? BienGiaMax { get; init; }
 }

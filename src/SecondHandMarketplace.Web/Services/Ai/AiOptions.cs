@@ -15,7 +15,7 @@ public sealed class AiOptions
     public const string DefaultEndpoint = "https://generativelanguage.googleapis.com/v1beta/models";
 
     public static readonly IReadOnlyList<string> DefaultAllowedModels =
-        new[] { "gemini-3.1-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash" };
+        new[] { "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash" };
 
     /// <summary>System Prompt mặc định khi database chưa có cấu hình; giữ đồng bộ với database/20_cauhinh_ai.sql.</summary>
     public const string DefaultSystemPromptText =
@@ -30,8 +30,14 @@ public sealed class AiOptions
         "Khi giới thiệu sản phẩm, nêu đúng giá VND và kèm liên kết dạng [Tên sản phẩm](/Products/Details/{id}). " +
         "Chỉ trao đổi các nội dung liên quan đến mua bán trên Re:market.";
 
-    /// <summary>Khóa API của nhà cung cấp AI. Rỗng nghĩa là chưa cấu hình.</summary>
+    /// <summary>Khóa API chính của Chatbox AI (và dùng cho kiểm duyệt nếu không đặt ModerationApiKey). Rỗng nghĩa là chưa cấu hình.</summary>
     public string ApiKey { get; init; } = string.Empty;
+
+    /// <summary>Khóa API riêng cho AI kiểm duyệt sản phẩm (C-01), tách quota khỏi Chatbox AI.</summary>
+    public string ModerationApiKey { get; init; } = string.Empty;
+
+    /// <summary>Khóa API dự phòng chung (auto-failover khi key chính gặp 429 hoặc lỗi xác thực).</summary>
+    public string FallbackApiKey { get; init; } = string.Empty;
 
     public string Endpoint { get; init; } = DefaultEndpoint;
 
@@ -53,6 +59,57 @@ public sealed class AiOptions
     /// <summary>Số vòng gọi công cụ tối đa trong một lượt chat (chống vòng lặp vô hạn).</summary>
     public int MaxToolRounds { get; init; } = 3;
 
+    // --- Cấu hình riêng cho AI kiểm duyệt sản phẩm (C-01, độc lập với cờ bật/tắt Chatbox) ---
+
+    /// <summary>Bật/tắt Tầng 2 LLM cho kiểm duyệt sản phẩm. Độc lập với CauHinhAI.DangBat của Chatbox.</summary>
+    public bool ModerationEnabled { get; init; } = true;
+
+    /// <summary>Model mặc định dùng cho Tầng 2 kiểm duyệt sản phẩm.</summary>
+    public string ModerationModel { get; init; } = DefaultAllowedModels[0];
+
+    /// <summary>Thời gian chờ tối đa (giây) cho một lượt gọi AI kiểm duyệt trước khi fallback về keyword-v1.</summary>
+    public int ModerationTimeoutSeconds { get; init; } = 15;
+
+    /// <summary>Số ảnh đại diện tối đa gửi kèm LLM mỗi lượt kiểm duyệt (0 = chỉ Text).</summary>
+    public int ModerationMaxImages { get; init; } = 2;
+
+    /// <summary>
+    /// Danh sách key theo thứ tự ưu tiên cho Chatbox AI / Gợi ý giá (C-03):
+    /// Ưu tiên ApiKey, sau đó auto-failover sang FallbackApiKey (tái sử dụng từ C-01).
+    /// </summary>
+    public IReadOnlyList<string> GetChatApiKeys()
+    {
+        var keys = new List<string>(2);
+        if (!string.IsNullOrWhiteSpace(ApiKey))
+            keys.Add(ApiKey.Trim());
+        if (!string.IsNullOrWhiteSpace(FallbackApiKey))
+        {
+            var fallback = FallbackApiKey.Trim();
+            if (!keys.Any(k => string.Equals(k, fallback, StringComparison.Ordinal)))
+                keys.Add(fallback);
+        }
+        return keys;
+    }
+
+    /// <summary>
+    /// Danh sách key theo thứ tự ưu tiên cho AI kiểm duyệt sản phẩm:
+    /// Ưu tiên ModerationApiKey (nếu có, nếu trống thì dùng ApiKey), sau đó auto-failover sang FallbackApiKey.
+    /// </summary>
+    public IReadOnlyList<string> GetModerationApiKeys()
+    {
+        var keys = new List<string>(2);
+        var primary = !string.IsNullOrWhiteSpace(ModerationApiKey) ? ModerationApiKey : ApiKey;
+        if (!string.IsNullOrWhiteSpace(primary))
+            keys.Add(primary.Trim());
+        if (!string.IsNullOrWhiteSpace(FallbackApiKey))
+        {
+            var fallback = FallbackApiKey.Trim();
+            if (!keys.Any(k => string.Equals(k, fallback, StringComparison.Ordinal)))
+                keys.Add(fallback);
+        }
+        return keys;
+    }
+
     public static AiOptions FromConfiguration(IConfiguration configuration)
     {
         var section = configuration.GetSection(SectionName);
@@ -69,6 +126,10 @@ public sealed class AiOptions
         if (string.IsNullOrEmpty(defaultModel) || !allowed.Contains(defaultModel))
             defaultModel = allowed[0];
 
+        var moderationModel = section["ModerationModel"]?.Trim();
+        if (string.IsNullOrEmpty(moderationModel))
+            moderationModel = defaultModel;
+
         var endpoint = section["Endpoint"]?.Trim();
         if (string.IsNullOrEmpty(endpoint) || !Uri.TryCreate(endpoint, UriKind.Absolute, out _))
             endpoint = DefaultEndpoint;
@@ -76,6 +137,8 @@ public sealed class AiOptions
         return new AiOptions
         {
             ApiKey = section["ApiKey"]?.Trim() ?? string.Empty,
+            ModerationApiKey = section["ModerationApiKey"]?.Trim() ?? string.Empty,
+            FallbackApiKey = section["FallbackApiKey"]?.Trim() ?? string.Empty,
             Endpoint = endpoint,
 
             DefaultModel = defaultModel,
@@ -84,7 +147,11 @@ public sealed class AiOptions
             DefaultSystemPrompt = string.IsNullOrWhiteSpace(section["DefaultSystemPrompt"]) ? DefaultSystemPromptText : section["DefaultSystemPrompt"]!.Trim(),
             MaxTokens = ReadInt(section["MaxTokens"], 1024, 128, 4096),
             TimeoutSeconds = ReadInt(section["TimeoutSeconds"], 50, 5, 120),
-            MaxToolRounds = ReadInt(section["MaxToolRounds"], 3, 1, 6)
+            MaxToolRounds = ReadInt(section["MaxToolRounds"], 3, 1, 6),
+            ModerationEnabled = !bool.TryParse(section["ModerationEnabled"], out var modEnabled) || modEnabled,
+            ModerationModel = moderationModel,
+            ModerationTimeoutSeconds = ReadInt(section["ModerationTimeoutSeconds"], 15, 3, 60),
+            ModerationMaxImages = ReadInt(section["ModerationMaxImages"], 2, 0, 4)
         };
     }
 

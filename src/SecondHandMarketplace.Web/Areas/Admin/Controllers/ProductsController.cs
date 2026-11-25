@@ -25,17 +25,37 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
     public async Task<IActionResult> Approve(int id, CancellationToken cancellationToken)
     {
         if (id <= 0) return NotFound();
-        if (!TryGetAdminId(out var adminId)) return Forbid();
+        if (User.LayNguoiDungId() is not int adminId) return Forbid();
 
         var result = await reviews.ApproveAsync(adminId, id, cancellationToken);
         return Report(result, id, "Đã duyệt sản phẩm.", ProductReviewTabs.Pending);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveGreenLane(int[] productIds, CancellationToken cancellationToken)
+    {
+        if (User.LayNguoiDungId() is not int adminId) return Forbid();
+
+        var result = await reviews.ApproveGreenLaneAsync(adminId, productIds ?? Array.Empty<int>(), cancellationToken);
+        if (!result.Success)
+        {
+            TempData["Loi"] = result.Error ?? "Không duyệt nhanh được các sản phẩm Làn Xanh.";
+        }
+        else
+        {
+            var msg = $"Đã duyệt nhanh {result.ApprovedCount} sản phẩm Làn Xanh.";
+            if (result.SkippedCount > 0)
+                msg += $" Bỏ qua {result.SkippedCount} sản phẩm không còn đủ điều kiện Làn Xanh.";
+            TempData["ThanhCong"] = msg;
+        }
+        return RedirectToAction(nameof(Index), new { tab = ProductReviewTabs.Pending });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(int id, ReviewReasonVm input, CancellationToken cancellationToken)
     {
         if (id <= 0) return NotFound();
-        if (!TryGetAdminId(out var adminId)) return Forbid();
+        if (User.LayNguoiDungId() is not int adminId) return Forbid();
         if (!ModelState.IsValid) return InvalidInput(id);
 
         var result = await reviews.RejectAsync(adminId, id, input.Reason, cancellationToken);
@@ -43,10 +63,33 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Reanalyze(int id, CancellationToken cancellationToken)
+    {
+        if (id <= 0) return NotFound();
+        if (User.LayNguoiDungId() is not int adminId) return Forbid();
+
+        var result = await reviews.ReanalyzeAsync(adminId, id, cancellationToken);
+        if (!result.Success)
+        {
+            TempData["Loi"] = result.Error ?? "Không thể phân tích lại sản phẩm.";
+        }
+        else if (!string.IsNullOrWhiteSpace(result.Warning))
+        {
+            TempData["CanhBao"] = result.Warning;
+        }
+        else
+        {
+            TempData["ThanhCong"] = result.Message ?? "Đã phân tích lại sản phẩm.";
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Remove(int id, ReviewReasonVm input, CancellationToken cancellationToken)
     {
         if (id <= 0) return NotFound();
-        if (!TryGetAdminId(out var adminId)) return Forbid();
+        if (User.LayNguoiDungId() is not int adminId) return Forbid();
         if (!ModelState.IsValid) return InvalidInput(id);
 
         var result = await reviews.RemoveProductAsync(adminId, id, input.Reason, cancellationToken);
@@ -74,6 +117,4 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
         TempData["ThanhCong"] = message;
         return RedirectToAction(nameof(Index), new { tab });
     }
-
-    private bool TryGetAdminId(out int adminId) => int.TryParse(User.GetUserId(), out adminId) && adminId > 0;
 }

@@ -21,7 +21,7 @@ public sealed class ForbiddenKeywordsController(IForbiddenKeywordService keyword
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(string phrase, string? group, string level, string? note, CancellationToken cancellationToken)
     {
-        var result = await keywords.AddAsync(phrase, group, level, note, ActorId(), cancellationToken);
+        var result = await keywords.AddAsync(phrase, group, level, note, User.LayNguoiDungId(), cancellationToken);
         if (result.Success) TempData["ThanhCong"] = "Đã thêm từ khóa cấm.";
         else TempData["Loi"] = result.Error;
         return RedirectToAction(nameof(Index));
@@ -30,7 +30,7 @@ public sealed class ForbiddenKeywordsController(IForbiddenKeywordService keyword
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Update(int id, string? group, string level, string? note, CancellationToken cancellationToken)
     {
-        var result = await keywords.UpdateAsync(id, group, level, note, ActorId(), cancellationToken);
+        var result = await keywords.UpdateAsync(id, group, level, note, User.LayNguoiDungId(), cancellationToken);
         if (result.Success) TempData["ThanhCong"] = "Đã cập nhật từ khóa.";
         else TempData["Loi"] = result.Error;
         return RedirectToAction(nameof(Index));
@@ -39,11 +39,9 @@ public sealed class ForbiddenKeywordsController(IForbiddenKeywordService keyword
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Toggle(int id, bool active, CancellationToken cancellationToken)
     {
-        var result = await keywords.SetActiveAsync(id, active, ActorId(), cancellationToken);
+        var result = await keywords.SetActiveAsync(id, active, User.LayNguoiDungId(), cancellationToken);
         if (result.Success) TempData["ThanhCong"] = active ? "Đã bật từ khóa." : "Đã tắt từ khóa.";
         else TempData["Loi"] = result.Error;
         return RedirectToAction(nameof(Index));
     }
-
-    private int? ActorId() => int.TryParse(User.GetUserId(), out var id) ? id : null;
 }

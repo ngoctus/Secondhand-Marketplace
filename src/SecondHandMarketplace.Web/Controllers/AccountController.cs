@@ -7,10 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.DataProtection;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Account;
+using SecondHandMarketplace.Web.Services.Accounts;
 using SecondHandMarketplace.Web.Services.Auth;
 
 namespace SecondHandMarketplace.Web.Controllers;
@@ -21,10 +24,44 @@ public sealed class AccountController(
     IRegistrationOtpService registrationOtpService,
     AppDbContext db,
     IConfiguration configuration,
-    IWebHostEnvironment environment) : Controller
+    IWebHostEnvironment environment,
+    IAccountAppealUserService accountAppealUserService,
+    IDataProtectionProvider dataProtectionProvider) : Controller
 {
+    private readonly IDataProtector _appealProtector = dataProtectionProvider.CreateProtector("AccountLockedAppeal");
+
+    private string TaoTokenMoKhoa(int userId)
+    {
+        var payload = $"{userId}:{DateTime.UtcNow.Ticks}";
+        return _appealProtector.Protect(payload);
+    }
+
+    private bool GiaiMaTokenMoKhoa(string? token, out int userId)
+    {
+        userId = 0;
+        if (string.IsNullOrWhiteSpace(token)) return false;
+        try
+        {
+            var raw = _appealProtector.Unprotect(token);
+            var parts = raw.Split(':');
+            if (parts.Length != 2) return false;
+            if (!int.TryParse(parts[0], out userId)) return false;
+            if (!long.TryParse(parts[1], out var ticks)) return false;
+
+            var issuedAt = new DateTime(ticks, DateTimeKind.Utc);
+            if (DateTime.UtcNow - issuedAt > TimeSpan.FromMinutes(10))
+            {
+                return false;
+            }
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
     private bool IsMockOAuthEnabled() =>
-        environment.IsDevelopment() && configuration.GetValue("MockOAuth:Enabled", false);
+        environment.IsDevelopment() && configuration.GetValue("MockOAuth:Enabled", true);
 
     [AllowAnonymous]
     [HttpGet]
@@ -253,12 +290,12 @@ public sealed class AccountController(
             return Challenge(properties, scheme);
         }
 
-        if (!IsMockOAuthEnabled())
+        // Khi chưa cấu hình khóa API thực tế, mở màn hình chọn tài khoản trên máy người dùng (Google/Facebook Account Chooser)
+        if (!IsMockOAuthEnabled() && !environment.IsDevelopment())
         {
             TempData["Loi"] = $"Đăng nhập bằng {prov} chưa được cấu hình.";
             return RedirectToAction(nameof(Login), new { returnUrl });
         }
-
         return RedirectToAction(nameof(ExternalLoginSelectAccount), new { provider = prov, returnUrl });
     }
 
@@ -286,16 +323,20 @@ public sealed class AccountController(
         if (user is not null && user.TrangThai != "ACTIVE")
         {
             await HttpContext.SignOutAsync("ExternalCookie");
+            if (string.Equals(user.TrangThai, "LOCKED", StringComparison.OrdinalIgnoreCase))
+            {
+                var token = TaoTokenMoKhoa(user.MaNguoiDung);
+                return RedirectToAction(nameof(Locked), new { token });
+            }
             TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
             return RedirectToAction(nameof(Login));
         }
 
         // Nếu đăng nhập mạng xã hội lần đầu hoặc tài khoản chưa có số điện thoại hợp lệ -> chuyển sang Hoàn tất hồ sơ
-        if (user is null || string.IsNullOrWhiteSpace(user.SoDienThoai))
+        if (user is null || string.IsNullOrWhiteSpace(user.SoDienThoai) || user.SoDienThoai == "0988888888")
         {
             return RedirectToAction(nameof(CompleteProfile), new { returnUrl });
         }
-
         await HttpContext.SignOutAsync("ExternalCookie");
         await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, true, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
         TempData["ThanhCong"] = "Đăng nhập thành công!";
@@ -408,6 +449,11 @@ public sealed class AccountController(
             if (user.TrangThai != "ACTIVE")
             {
                 await HttpContext.SignOutAsync("ExternalCookie");
+                if (string.Equals(user.TrangThai, "LOCKED", StringComparison.OrdinalIgnoreCase))
+                {
+                    var token = TaoTokenMoKhoa(user.MaNguoiDung);
+                    return RedirectToAction(nameof(Locked), new { token });
+                }
                 TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
                 return RedirectToAction(nameof(Login));
             }
@@ -445,7 +491,7 @@ public sealed class AccountController(
     [AllowAnonymous]
     public async Task<IActionResult> ExternalLoginSelectAccount(string provider = "Google", string? returnUrl = null)
     {
-        if (!IsMockOAuthEnabled()) return NotFound();
+        if (!IsMockOAuthEnabled() && !environment.IsDevelopment()) return NotFound();
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
 
         var prov = (provider ?? "Google").Trim();
@@ -476,38 +522,54 @@ public sealed class AccountController(
     public async Task<IActionResult> ExternalLoginSelectAccountSubmit(
         string provider,
         string email,
+        string? fullName,
         string? returnUrl,
         CancellationToken cancellationToken = default)
     {
-        if (!IsMockOAuthEnabled()) return NotFound();
+        if (!IsMockOAuthEnabled() && !environment.IsDevelopment()) return NotFound();
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
 
         var prov = (provider ?? "Google").Trim();
-        var normalizedEmail = (email ?? string.Empty).Trim().ToLowerInvariant();
+        var isGoogle = prov.Equals("Google", StringComparison.OrdinalIgnoreCase);
 
-        var allowedAccounts = await db.NguoiDungs
-            .Where(u => u.TrangThai == "ACTIVE" && u.VaiTro == "USER")
-            .OrderBy(u => u.MaNguoiDung)
-            .Take(4)
-            .ToListAsync(cancellationToken);
-
-        var user = allowedAccounts.FirstOrDefault(u => u.Email.Equals(normalizedEmail, StringComparison.OrdinalIgnoreCase));
-        if (user is null)
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
         {
-            TempData["Loi"] = "Chỉ cho phép đăng nhập thử nghiệm bằng 1 trong 4 tài khoản test có sẵn.";
+            TempData["Loi"] = "Vui lòng nhập địa chỉ email hợp lệ để tiếp tục.";
             return RedirectToAction(nameof(ExternalLoginSelectAccount), new { provider = prov, returnUrl });
         }
 
-        if (string.IsNullOrWhiteSpace(user.SoDienThoai))
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var name = string.IsNullOrWhiteSpace(fullName)
+            ? normalizedEmail.Split('@')[0]
+            : fullName.Trim();
+
+        var avatar = isGoogle
+            ? "https://lh3.googleusercontent.com/a/default-user=s96-c"
+            : "https://graph.facebook.com/v12.0/me/picture?type=large";
+
+        var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
+        if (user is not null && user.TrangThai != "ACTIVE")
+        {
+            if (string.Equals(user.TrangThai, "LOCKED", StringComparison.OrdinalIgnoreCase))
+            {
+                var token = TaoTokenMoKhoa(user.MaNguoiDung);
+                return RedirectToAction(nameof(Locked), new { token });
+            }
+            TempData["Loi"] = "Tài khoản của bạn đã bị khóa hoặc không hoạt động.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        if (user is null || string.IsNullOrWhiteSpace(user.SoDienThoai) || user.SoDienThoai == "0988888888")
         {
             var extClaims = new List<Claim>
             {
-                new(ClaimTypes.Email, user.Email),
-                new(ClaimTypes.Name, user.HoTen)
+                new(ClaimTypes.Email, normalizedEmail),
+                new(ClaimTypes.Name, user?.HoTen ?? name)
             };
-            if (!string.IsNullOrWhiteSpace(user.AnhDaiDien))
+            var pic = user?.AnhDaiDien ?? avatar;
+            if (!string.IsNullOrWhiteSpace(pic))
             {
-                extClaims.Add(new("picture", user.AnhDaiDien));
+                extClaims.Add(new("picture", pic));
             }
             var extIdentity = new ClaimsIdentity(extClaims, "ExternalCookie");
             await HttpContext.SignInAsync("ExternalCookie", new ClaimsPrincipal(extIdentity));
@@ -531,22 +593,138 @@ public sealed class AccountController(
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
         if (!ModelState.IsValid) return View(model);
-        var user = await authService.AuthenticateAsync(model.Email, model.Password, cancellationToken);
-        if (user is null)
+
+        var result = await authService.AuthenticateWithStatusAsync(model.Email, model.Password, cancellationToken);
+        switch (result.Status)
         {
-            ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không chính xác, hoặc tài khoản đã bị khóa.");
-            return View(model);
+            case AuthResultStatus.Success:
+                var user = result.User!;
+                await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, model.RememberMe, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
+                if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl)) return LocalRedirect(model.ReturnUrl);
+                return RedirectToAction("Index", "Home");
+
+            case AuthResultStatus.AccountLocked:
+                var lockedToken = TaoTokenMoKhoa(result.User!.MaNguoiDung);
+                return RedirectToAction(nameof(Locked), new { token = lockedToken });
+
+            case AuthResultStatus.TempLockout:
+                ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Bạn đã nhập sai mật khẩu quá nhiều lần. Vui lòng thử lại sau ít phút.");
+                return View(model);
+
+            case AuthResultStatus.InvalidCredentials:
+            default:
+                ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không chính xác.");
+                return View(model);
         }
-        await SignInUserAsync(user.MaNguoiDung, user.Email, user.HoTen, user.VaiTro, model.RememberMe, user.AnhDaiDien, DangNhapHelper.LaySecurityStamp(user.MatKhauBam));
-        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl)) return LocalRedirect(model.ReturnUrl);
-        return RedirectToAction("Index", "Home");
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> Locked(string? token, CancellationToken cancellationToken)
+    {
+        // 1. Kiểm tra nếu có token hợp lệ
+        if (GiaiMaTokenMoKhoa(token, out var userId))
+        {
+            var overview = await accountAppealUserService.GetLockedAccountOverviewAsync(userId, cancellationToken);
+            if (overview == null || !overview.DangBiKhoa)
+            {
+                TempData["ThongBao"] = "Tài khoản của bạn hiện đang hoạt động bình thường.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            return View(new LockedAccountVm
+            {
+                Token = token,
+                RequiresTokenVerification = false,
+                Overview = overview,
+                LoaiYeuCau = overview.ChoPhepKhieuNaiKhoaNham ? AccountAppealRules.TypeAppeal : AccountAppealRules.TypeUnlockRequest
+            });
+        }
+
+        // 2. Không có token hoặc token không hợp lệ / hết hạn
+        return View(new LockedAccountVm
+        {
+            Token = null,
+            RequiresTokenVerification = true,
+            Overview = null
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting("appeal")]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    public async Task<IActionResult> SubmitAppeal(SubmitAppealFormVm form, CancellationToken cancellationToken)
+    {
+        if (!GiaiMaTokenMoKhoa(form.Token, out var userId))
+        {
+            TempData["Loi"] = "Phiên làm việc khiếu nại đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại để tiếp tục.";
+            return RedirectToAction(nameof(Locked));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var overview = await accountAppealUserService.GetLockedAccountOverviewAsync(userId, cancellationToken);
+            return View(nameof(Locked), new LockedAccountVm
+            {
+                Token = form.Token,
+                RequiresTokenVerification = false,
+                Overview = overview,
+                LoaiYeuCau = form.LoaiYeuCau,
+                NoiDung = form.NoiDung
+            });
+        }
+
+        string? bangChungAnh = null;
+        string? savedFullPath = null;
+
+        if (form.FileDinhKem != null && form.FileDinhKem.Length > 0)
+        {
+            var (hopLe, loi, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(form.FileDinhKem, cancellationToken: cancellationToken);
+            if (!hopLe)
+            {
+                TempData["Loi"] = loi;
+                return RedirectToAction(nameof(Locked), new { token = form.Token });
+            }
+
+            var webRoot = environment?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var (relPath, fullPath) = await UploadAnhAnToan.LuuAnhAsync(form.FileDinhKem, webRoot, "appeals", ext!, cancellationToken);
+            bangChungAnh = relPath;
+            savedFullPath = fullPath;
+        }
+
+        try
+        {
+            var result = await accountAppealUserService.SubmitAppealAsync(
+                userId,
+                form.LoaiYeuCau,
+                form.NoiDung,
+                bangChungAnh,
+                cancellationToken);
+
+            if (!result.Success)
+            {
+                UploadAnhAnToan.XoaAnh(savedFullPath);
+                TempData["Loi"] = result.Error ?? "Không thể gửi yêu cầu khiếu nại.";
+                return RedirectToAction(nameof(Locked), new { token = form.Token });
+            }
+
+            TempData["ThanhCong"] = "Đã gửi yêu cầu thành công! Quản trị viên sẽ xem xét và phản hồi trong thời gian sớm nhất.";
+            return RedirectToAction(nameof(Locked), new { token = form.Token });
+        }
+        catch
+        {
+            UploadAnhAnToan.XoaAnh(savedFullPath);
+            throw;
+        }
     }
 
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Profile(CancellationToken cancellationToken)
     {
-        if (!int.TryParse(User.GetUserId(), out var userId)) return Challenge();
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
         var user = await authService.GetUserAsync(userId, cancellationToken);
         if (user is null) return NotFound();
         return View(new ProfileVm { HoTen = user.HoTen, Email = user.Email, SoDienThoai = user.SoDienThoai ?? string.Empty, DiaChiMacDinh = user.DiaChiMacDinh, AnhDaiDien = user.AnhDaiDien });
@@ -557,7 +735,7 @@ public sealed class AccountController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Profile(ProfileVm model, CancellationToken cancellationToken)
     {
-        if (!int.TryParse(User.GetUserId(), out var userId)) return Challenge();
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
         if (!ModelState.IsValid) return View(model);
         var result = await authService.UpdateProfileAsync(userId, model.HoTen, model.SoDienThoai, model.DiaChiMacDinh, model.AnhDaiDien, cancellationToken);
         if (!result.Success)
@@ -585,7 +763,7 @@ public sealed class AccountController(
     public async Task<IActionResult> ChangePassword(ChangePasswordVm model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return View(model);
-        if (!int.TryParse(User.GetUserId(), out var userId)) return Challenge();
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
         var result = await authService.ChangePasswordAsync(userId, model.CurrentPassword, model.NewPassword, cancellationToken);
         if (!result.Success)
         {
@@ -605,23 +783,9 @@ public sealed class AccountController(
         return RedirectToAction("Index", "Home");
     }
 
-    private async Task SignInUserAsync(int id, string email, string fullName, string role, bool persistent, string? avatar = null, string? securityStamp = null)
-    {
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, id.ToString()), new(ClaimTypes.Name, fullName),
-            new(ClaimTypes.Email, email), new(ClaimTypes.Role, role)
-        };
-        if (!string.IsNullOrWhiteSpace(avatar))
-        {
-            claims.Add(new("avatar", avatar));
-        }
-        if (!string.IsNullOrWhiteSpace(securityStamp))
-        {
-            claims.Add(new("sec_stamp", securityStamp));
-        }
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity),
+    private Task SignInUserAsync(int id, string email, string fullName, string role, bool persistent, string? avatar = null, string? securityStamp = null) =>
+        HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            DangNhapHelper.TaoPrincipal(id, email, fullName, role, avatar, securityStamp),
             new AuthenticationProperties { IsPersistent = persistent, ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7) });
-    }
 }

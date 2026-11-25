@@ -9,12 +9,12 @@ using SecondHandMarketplace.Web.Services.Ai;
 namespace SecondHandMarketplace.Web.Controllers.Api;
 
 /// <summary>
-/// API cho chatbox AI:
-///   POST /api/ai/chat    { "message": "..." }  ->  { success, message, data: { reply } }
-///   GET  /api/ai/status                         ->  { success, message, data: { enabled } }
-/// Xác thực: JWT hoặc Cookie (xem AiChatAuthorizeAttribute; Cookie cần thêm Antiforgery token). Người chưa đăng nhập bị 401.
-/// Chat bị giới hạn theo tài khoản (AiRequestThrottle): vượt giới hạn thì chờ tối đa vài chục giây, nếu phải chờ lâu hơn trả 429 + Retry-After.
-/// Mọi phản hồi dùng định dạng KetQua { success, message, data } và không chứa khóa API hay chi tiết lỗi nội bộ.
+/// API cho Chatbox AI &amp; AI tham khảo giá (C-03):
+///   POST /api/ai/chat           { "message": "...", "language": "vi|en" }  ->  { success, message, data: { reply } }
+///   POST /api/ai/suggest-price  { "name": "...", "categoryId": ... }       ->  { success, message, data: { minPriceVnd, maxPriceVnd, medianPriceVnd, recommendedPriceVnd, ... } }
+///   GET  /api/ai/status                                                    ->  { success, message, data: { enabled } }
+/// Xác thực: JWT hoặc Cookie (xem AiChatAuthorizeAttribute; Cookie cần thêm Antiforgery token).
+/// Giới hạn theo tài khoản (AiRequestThrottle); mọi thông báo lỗi tự động khớp ngôn ngữ VI | EN.
 /// </summary>
 [ApiController]
 [Route("api/ai")]
@@ -37,46 +37,93 @@ public class AiChatController : ControllerBase
     public async Task<IActionResult> Chat([FromBody] AiChatRequest? request, CancellationToken cancellationToken)
     {
         Response.Headers.CacheControl = "no-store";
+        var lang = AiLanguage.Normalize(request?.Language);
 
         if (request is null || string.IsNullOrWhiteSpace(request.Message))
-            return BadRequest(KetQua.ThatBai("Vui lòng nhập nội dung tin nhắn."));
+            return BadRequest(KetQua.ThatBai(AiLanguage.Choose(lang,
+                "Vui lòng nhập nội dung tin nhắn.",
+                "Please enter a message.")));
 
-        // Role và User ID lấy từ claim đã được xác thực (cookie đã mã hóa / JWT đã ký), không bao giờ từ nội dung request.
-        var role = User.IsInRole(AppRoles.Admin) ? AppRoles.Admin
-                 : User.IsInRole(AppRoles.User) ? AppRoles.User
-                 : string.Empty;
-        var userId = User.GetUserId();
+        var (userId, role) = ReadIdentity();
         if (role.Length == 0 || string.IsNullOrWhiteSpace(userId))
-            return StatusCode(StatusCodes.Status403Forbidden, KetQua.ThatBai("Bạn không có quyền sử dụng trợ lý AI."));
+            return StatusCode(StatusCodes.Status403Forbidden, KetQua.ThatBai(AiLanguage.Choose(lang,
+                "Bạn không có quyền sử dụng trợ lý AI.",
+                "You do not have permission to use the AI assistant.")));
 
         try
         {
             var gate = await _throttle.AcquireAsync(userId, role, cancellationToken);
-            if (!gate.Acquired) return TooManyRequests(gate);
+            if (!gate.Acquired) return TooManyRequests(gate, lang);
 
-            // using: slot đồng thời được trả lại khi xong, khi có exception và cả khi bị hủy.
             using var lease = gate.Lease;
-            var result = await _ai.AskAsync(userId, role, request.Message, cancellationToken);
-            return ToActionResult(result);
+            var result = await _ai.AskAsync(userId, role, request.Message, lang, cancellationToken);
+            return ToActionResult(result, lang);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // Client đã ngắt kết nối: không còn ai nhận phản hồi.
             return StatusCode(StatusCodes.Status499ClientClosedRequest);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Lỗi không mong đợi khi xử lý /api/ai/chat.");
             return StatusCode(StatusCodes.Status500InternalServerError,
-                KetQua.ThatBai("Đã xảy ra lỗi. Vui lòng thử lại sau."));
+                KetQua.ThatBai(GenericError(lang)));
         }
     }
 
-    /// <summary>Widget gọi để biết có nên hiển thị Chatbox hay không (Admin có thể tắt).</summary>
+    [HttpPost("suggest-price")]
+    [RequestSizeLimit(16 * 1024)]
+    public async Task<IActionResult> SuggestPrice([FromBody] AiPriceSuggestRequest? request, CancellationToken cancellationToken)
+    {
+        Response.Headers.CacheControl = "no-store";
+        var lang = AiLanguage.Normalize(request?.Language);
+
+        if (request is null || string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(KetQua.ThatBai(AiLanguage.Choose(lang,
+                "Vui lòng nhập tên sản phẩm trước khi nhờ AI tham khảo giá.",
+                "Please enter a product name before requesting a price suggestion.")));
+
+        var (userId, role) = ReadIdentity();
+        if (role.Length == 0 || string.IsNullOrWhiteSpace(userId))
+            return StatusCode(StatusCodes.Status403Forbidden, KetQua.ThatBai(AiLanguage.Choose(lang,
+                "Bạn không có quyền sử dụng trợ lý AI.",
+                "You do not have permission to use the AI assistant.")));
+
+        try
+        {
+            var gate = await _throttle.AcquireAsync(userId, role, cancellationToken);
+            if (!gate.Acquired) return TooManyRequests(gate, lang);
+
+            using var lease = gate.Lease;
+            var input = new AiPriceSuggestInput(
+                request.Name,
+                request.CategoryId,
+                request.ConditionId,
+                request.CategoryName,
+                request.ConditionName,
+                request.Description,
+                lang);
+            var result = await _ai.SuggestPriceAsync(userId, role, input, cancellationToken);
+            return ToPriceActionResult(result, lang);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return StatusCode(StatusCodes.Status499ClientClosedRequest);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi không mong đợi khi xử lý /api/ai/suggest-price.");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                KetQua.ThatBai(GenericError(lang)));
+        }
+    }
+
+    /// <summary>Widget gọi để biết có nên hiển thị Chatbox/các nút trợ lý AI hay không (Admin có thể tắt).</summary>
     [HttpGet("status")]
     public async Task<IActionResult> Status(CancellationToken cancellationToken)
     {
         Response.Headers.CacheControl = "no-store";
+        var lang = AiLanguage.Normalize(null);
         try
         {
             var enabled = await _ai.IsEnabledAsync(cancellationToken);
@@ -90,34 +137,73 @@ public class AiChatController : ControllerBase
         {
             _logger.LogError(ex, "Lỗi không mong đợi khi xử lý /api/ai/status.");
             return StatusCode(StatusCodes.Status500InternalServerError,
-                KetQua.ThatBai("Đã xảy ra lỗi. Vui lòng thử lại sau."));
+                KetQua.ThatBai(GenericError(lang)));
         }
     }
 
-    private IActionResult TooManyRequests(AiThrottleAcquireResult gate)
+    private (string UserId, string Role) ReadIdentity()
+    {
+        var role = User.IsInRole(AppRoles.Admin) ? AppRoles.Admin
+                 : User.IsInRole(AppRoles.User) ? AppRoles.User
+                 : string.Empty;
+        var userId = User.LayNguoiDungId()?.ToString() ?? string.Empty;
+        return (userId, role);
+    }
+
+    private IActionResult TooManyRequests(AiThrottleAcquireResult gate, string lang)
     {
         var seconds = (int)Math.Ceiling(gate.RetryAfter.TotalSeconds);
         Response.Headers.RetryAfter = seconds.ToString(CultureInfo.InvariantCulture);
 
         var message = gate.Rejection == AiThrottleRejection.Busy
-            ? "Bạn đang có quá nhiều yêu cầu đang xử lý. Vui lòng đợi vài giây rồi thử lại."
-            : $"Bạn đã gửi quá nhiều tin nhắn. Vui lòng thử lại sau {FormatWait(seconds)}.";
+            ? AiLanguage.Choose(lang,
+                "Bạn đang có quá nhiều yêu cầu đang xử lý. Vui lòng đợi vài giây rồi thử lại.",
+                "You have too many requests in progress. Please wait a few seconds and try again.")
+            : AiLanguage.Choose(lang,
+                $"Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau {FormatWait(seconds, lang)}.",
+                $"You have sent too many requests. Please try again in {FormatWait(seconds, lang)}.");
 
         return StatusCode(StatusCodes.Status429TooManyRequests, new KetQua(false, message, new { retryAfterSeconds = seconds }));
     }
 
-    private static string FormatWait(int seconds) =>
-        seconds < 60 ? $"{seconds} giây" : $"{(int)Math.Ceiling(seconds / 60.0)} phút";
-
-    private IActionResult ToActionResult(AiChatResult result)
+    private static string FormatWait(int seconds, string lang)
     {
-        var message = result.Error ?? "Đã xảy ra lỗi. Vui lòng thử lại sau.";
+        if (seconds < 60)
+            return AiLanguage.Choose(lang, $"{seconds} giây", $"{seconds} seconds");
+        var mins = (int)Math.Ceiling(seconds / 60.0);
+        return AiLanguage.Choose(lang, $"{mins} phút", mins == 1 ? "1 minute" : $"{mins} minutes");
+    }
+
+    private static string GenericError(string lang) => AiLanguage.Choose(lang,
+        "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+        "Something went wrong. Please try again later.");
+
+    private IActionResult ToActionResult(AiChatResult result, string lang)
+    {
+        var message = result.Error ?? GenericError(lang);
         return result.Status switch
         {
             AiChatStatus.Success => Ok(KetQua.ThanhCong("OK", new { reply = result.Reply })),
             AiChatStatus.InvalidInput => BadRequest(KetQua.ThatBai(message)),
             AiChatStatus.Forbidden => StatusCode(StatusCodes.Status403Forbidden, KetQua.ThatBai(message)),
-            // Chatbox bị Admin tắt: báo rõ để widget khóa ô nhập.
+            AiChatStatus.Disabled => StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new KetQua(false, message, new { disabled = true })),
+            AiChatStatus.NotConfigured => StatusCode(StatusCodes.Status503ServiceUnavailable, KetQua.ThatBai(message)),
+            AiChatStatus.Timeout => StatusCode(StatusCodes.Status504GatewayTimeout, KetQua.ThatBai(message)),
+            AiChatStatus.ProviderError or AiChatStatus.InvalidResponse =>
+                StatusCode(StatusCodes.Status502BadGateway, KetQua.ThatBai(message)),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, KetQua.ThatBai(message))
+        };
+    }
+
+    private IActionResult ToPriceActionResult(AiPriceSuggestionResult result, string lang)
+    {
+        var message = result.Error ?? GenericError(lang);
+        return result.Status switch
+        {
+            AiChatStatus.Success => Ok(KetQua.ThanhCong("OK", result.Data)),
+            AiChatStatus.InvalidInput => BadRequest(KetQua.ThatBai(message)),
+            AiChatStatus.Forbidden => StatusCode(StatusCodes.Status403Forbidden, KetQua.ThatBai(message)),
             AiChatStatus.Disabled => StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new KetQua(false, message, new { disabled = true })),
             AiChatStatus.NotConfigured => StatusCode(StatusCodes.Status503ServiceUnavailable, KetQua.ThatBai(message)),

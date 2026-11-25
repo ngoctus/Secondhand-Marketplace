@@ -48,7 +48,7 @@ public sealed class CategoriesController(ICategoryService categories, IAuditLogS
     }
 
     private Task LogAsync(string action, string objectType, int id) =>
-        auditLog.LogAsync(int.TryParse(User.GetUserId(), out var userId) ? userId : null, action, objectType, id);
+        auditLog.LogAsync(User.LayNguoiDungId(), action, objectType, id);
 }
 
 public sealed class CategoryManagementVm

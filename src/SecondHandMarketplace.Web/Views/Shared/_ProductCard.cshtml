@@ -1,6 +1,8 @@
 @model ProductCardVm
 @{
-    var conditionText = Model.ConditionName ?? "Tốt";
+    // Tên tình trạng lấy từ DB (tiếng Việt) nên phải qua HienThi.TenTinhTrang mới đổi sang EN;
+    // tin thiếu tình trạng dùng nhãn mặc định "Tốt" theo luật hiển thị của B1.
+    var conditionText = HienThi.TenTinhTrang(string.IsNullOrWhiteSpace(Model.ConditionName) ? "GOOD" : Model.ConditionName);
 }
 
 <article class="rm-product-card" data-product-id="@Model.Id">
@@ -13,7 +15,7 @@
             else
             {
                 <div class="wireframe-placeholder">
-                    <span>Ảnh sản phẩm 4:5</span>
+                    <span>@L["Card_ImagePlaceholder"]</span>
                 </div>
             }
         </a>
@@ -28,7 +30,8 @@
         }
 
         <!-- Nút yêu thích ở góc trên phải -->
-        <button type="button" class="rm-card-favorite-btn" data-product-id="@Model.Id" aria-label="Thêm vào yêu thích" aria-pressed="false">
+        <button type="button" class="rm-card-favorite-btn" data-product-id="@Model.Id" aria-label="@L["Card_FavoriteAria"]"
+                data-label-them="@L["Card_FavoriteAria"]" data-label-bo="@L["Card_UnfavoriteAria"]" aria-pressed="false">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
@@ -60,7 +63,7 @@
             {
                 <span class="seller-circle" aria-hidden="true"></span>
             }
-            <span>@(string.IsNullOrWhiteSpace(Model.ShopName) ? "Cửa hàng" : Model.ShopName)</span>
+            <span>@(string.IsNullOrWhiteSpace(Model.ShopName) ? L["Card_SellerFallback"] : Model.ShopName)</span>
             <span class="rm-card-rating @(Model.CoDanhGia ? "" : "is-empty")">
                 @if (Model.CoDanhGia)
                 {

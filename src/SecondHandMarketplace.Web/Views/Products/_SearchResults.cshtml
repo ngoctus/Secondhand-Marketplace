@@ -1,0 +1,106 @@
+@model ProductSearchResultVm
+@{
+    var f = Model.Filter;
+    var ketQua = Model.Result;
+    var keyword = f.Keyword?.Trim() ?? "";
+    var tieuDe = string.IsNullOrWhiteSpace(keyword) ? L["Search_AllProductsTitle"] : L["Search_ResultsFor", keyword];
+
+    string LocUrl(string key, string? value)
+    {
+        var pairs = Context.Request.Query
+            .Where(k => !k.Key.Equals(key, StringComparison.OrdinalIgnoreCase))
+            .SelectMany(k => k.Value, (k, v) => new KeyValuePair<string, string?>(k.Key, v))
+            .ToList();
+        if (!string.IsNullOrEmpty(value)) pairs.Add(new KeyValuePair<string, string?>(key, value));
+        return Context.Request.Path + QueryString.Create(pairs);
+    }
+
+    var chips = new List<string>();
+    if (f.CategoryId is int maDanhMuc)
+        chips.Add(HienThi.TenDanhMuc(Model.DanhSachDanhMuc.FirstOrDefault(c => c.MaDanhMuc == maDanhMuc)?.Ten ?? (string)L["Search_CategoryTitle"]));
+    if (!string.IsNullOrWhiteSpace(f.TenPhanGia)) chips.Add(f.TenPhanGia);
+    else if (f.MinPrice is not null || f.MaxPrice is not null)
+        chips.Add((f.MinPrice, f.MaxPrice) switch
+        {
+            (not null, not null) => L["Search_PriceChip", HienThi.Tien(f.MinPrice.Value), HienThi.Tien(f.MaxPrice.Value)],
+            (not null, _) => L["Search_PriceFrom", HienThi.Tien(f.MinPrice.Value)],
+            (_, not null) => L["Search_PriceTo", HienThi.Tien(f.MaxPrice.Value)],
+            _ => (string)L["Search_PriceTitle"]
+        });
+    if (f.ConditionId is int maTinhTrang)
+        chips.Add(HienThi.TenTinhTrang(Model.DanhSachTinhTrang.FirstOrDefault(t => t.MaTinhTrang == maTinhTrang)?.Ten ?? (string)L["Search_ConditionTitle"]));
+    if (!string.IsNullOrWhiteSpace(Model.KhuVucDaChon)) chips.Add(Model.KhuVucDaChon);
+}
+
+<div class="search-results-header">
+    <div>
+        <h2>@tieuDe</h2>
+        <span class="count-label">@L["Search_ProductCount", ketQua.TotalItems]</span>
+    </div>
+    @* Form GET thật để không có JS vẫn đổi được cách sắp xếp; JS bắt sự kiện change và nạp lại bằng fetch.
+       Các tham số hiện hành gửi kèm hidden để đổi sắp xếp không rơi bộ lọc đang chọn.
+       Sort đổi thì về trang 1, nên page bị loại khỏi danh sách hidden. *@
+    <form class="sort-select-box" method="get" action="@Url.Action("Index")">
+        @foreach (var k in Context.Request.Query.Where(k => !k.Key.Equals("sort", StringComparison.OrdinalIgnoreCase) && !k.Key.Equals("page", StringComparison.OrdinalIgnoreCase)))
+        {
+            @foreach (var v in k.Value)
+            {
+                <input type="hidden" name="@k.Key" value="@v" />
+            }
+        }
+        <label for="sortOrder">@L["Search_SortLabel"]</label>
+        <select id="sortOrder" name="sort">
+            @foreach (var (key, label) in ProductSearchVm.KhoSapXep)
+            {
+                <option value="@key" data-url="@LocUrl("sort", key)" selected="@((f.Sort ?? "newest") == key)">@label</option>
+            }
+        </select>
+        <noscript><button type="submit" class="btn-rm-outline btn-sm">@L["Search_SortSubmit"]</button></noscript>
+    </form>
+</div>
+
+@if (chips.Count > 0)
+{
+    <div class="rm-active-filters">
+        @foreach (var chip in chips)
+        {
+            <span class="rm-filter-chip">@chip</span>
+        }
+        <a asp-action="Index" asp-route-Keyword="@keyword" class="rm-filter-clear">@L["Search_ClearFilters"]</a>
+    </div>
+}
+
+@if (ketQua.Items.Count == 0)
+{
+    <div class="rm-empty-state">
+        <h3>@L["Search_EmptyTitle"]</h3>
+        <p>@L["Search_EmptyDesc"]</p>
+        <ol>
+            <li>@L["Search_EmptyTip1"]</li>
+            <li>@L["Search_EmptyTip2"]</li>
+            <li>@L["Search_EmptyTip3"]</li>
+            <li>@L["Search_EmptyTip4"]</li>
+        </ol>
+        <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap">
+            <a asp-action="Index" asp-route-Keyword="@keyword" class="btn-rm-outline">@L["Search_ClearPriceCond"]</a>
+            <a asp-action="Index" class="btn-rm-primary">@L["Search_ViewAllProducts"]</a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Lưới 3 cột chuẩn Ảnh 4 -->
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4" data-rm-stagger>
+        @foreach (var p in ketQua.Items)
+        {
+            <div class="col">
+                <partial name="_ProductCard" model="p" />
+            </div>
+        }
+    </div>
+
+    @if (ketQua.TotalPages > 1)
+    {
+        <partial name="_Pager" model="new PagerVm(ketQua.Page, ketQua.TotalPages)" />
+    }
+}

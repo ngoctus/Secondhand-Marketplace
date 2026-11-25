@@ -2,12 +2,27 @@
  * JavaScript dùng chung cho Re:Market
  * Quản lý dropdowns, mobile menu, fallback ảnh, thông báo toast
  */
+
+// B-05: JS sinh chuỗi hiển thị nên không đi qua Razor localizer. _Layout đổ từ điển ngôn ngữ hiện tại vào
+// #rm-i18n; thiếu khối đó (ví dụ _LayoutAdmin) thì rmT rơi về fallback tiếng Việt để script không hỏng.
+const RM_TEXT = (() => {
+    try { return JSON.parse(document.getElementById('rm-i18n')?.textContent || '{}'); } catch { return {}; }
+})();
+window.rmT = (key, fallback, ...args) => {
+    let s = RM_TEXT[key] ?? fallback ?? key;
+    args.forEach((arg, i) => { s = s.split('{' + i + '}').join(String(arg)); });
+    return s;
+};
+
 (() => {
     // Helper đóng toàn bộ dropdown đang mở
     const closeAllDropdowns = () => {
         document.querySelectorAll('.rm-dropdown-menu, .account-panel, #mobileDrawer').forEach(el => {
             el.hidden = true;
         });
+        // Đóng notify dropdown riêng (không có class rm-dropdown-menu)
+        const notifyDrop = document.getElementById('notifyDropdownMenu');
+        if (notifyDrop) notifyDrop.hidden = true;
         document.querySelectorAll('[aria-expanded="true"]').forEach(btn => {
             btn.setAttribute('aria-expanded', 'false');
         });
@@ -35,6 +50,7 @@
     setupDropdown('adminMenuBtn', 'adminDropdownMenu');
     setupDropdown('userMenuBtn', 'userDropdownMenu');
     setupDropdown('accountButton', 'accountPanel');
+    setupDropdown('notifyBellBtn', 'notifyDropdownMenu');
 
     // Toggle menu mobile
     const mobileBtn = document.getElementById('mobileMenuBtn');
@@ -56,6 +72,8 @@
         if (!e.target.closest('.rm-dropdown') &&
             !e.target.closest('.rm-user-menu') &&
             !e.target.closest('.account-menu') &&
+            !e.target.closest('.rm-notify-wrapper') &&
+            !e.target.closest('.rm-notify-slot') &&
             !e.target.closest('.rm-mobile-drawer') &&
             !e.target.closest('.rm-mobile-toggle')) {
             closeAllDropdowns();
@@ -78,8 +96,8 @@
 
         const fallback = document.createElement('div');
         fallback.className = 'product-art-fallback';
-        fallback.setAttribute('aria-label', 'Chưa có ảnh sản phẩm');
-        fallback.innerHTML = '<span class="fallback-icon">♻</span><span class="fallback-text">Ảnh sản phẩm 4:5</span>';
+        fallback.setAttribute('aria-label', window.rmT('Js_ImageMissing', 'Chưa có ảnh sản phẩm'));
+        fallback.innerHTML = `<span class="fallback-icon">♻</span><span class="fallback-text">${window.rmT('Card_ImagePlaceholder', 'Ảnh sản phẩm 4:5')}</span>`;
         img.replaceWith(fallback);
     };
 
@@ -146,7 +164,7 @@
             <div class="rm-toast-body">
                 <span class="rm-toast-msg">${escapeHtml(message)}</span>
             </div>
-            <button type="button" class="rm-toast-close" aria-label="Đóng">&times;</button>
+            <button type="button" class="rm-toast-close" aria-label="${window.rmT('Layout_Close', 'Đóng')}">&times;</button>
         `;
 
         const dismiss = () => {
@@ -165,57 +183,14 @@
     };
 
     /**
-     * Hiển thị Modal Dialog trung tâm cho các lỗi nghiêm trọng
-     */
-    window.showErrorModal = (title, message) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'rm-modal-overlay';
-        overlay.setAttribute('role', 'dialog');
-        overlay.setAttribute('aria-modal', 'true');
-        overlay.innerHTML = `
-            <div class="rm-modal-card">
-                <div class="rm-modal-header">
-                    <div class="rm-modal-icon-badge danger" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                    </div>
-                    <h5 class="rm-modal-title">${escapeHtml(title || 'Cảnh báo nghiêm trọng')}</h5>
-                </div>
-                <div class="rm-modal-body">
-                    <p class="mb-0">${escapeHtml(message)}</p>
-                </div>
-                <div class="rm-modal-footer">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4 py-1 btn-modal-close" style="font-size:13.5px;">Đã hiểu</button>
-                </div>
-            </div>
-        `;
-
-        const close = () => {
-            overlay.remove();
-            document.body.classList.remove('rm-modal-open');
-        };
-
-        overlay.querySelector('.btn-modal-close').addEventListener('click', close);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) close();
-        });
-
-        document.body.appendChild(overlay);
-        document.body.classList.add('rm-modal-open');
-    };
-
-    /**
      * Hiển thị Modal Dialog xác nhận xóa / hủy thay thế confirm() mặc định của trình duyệt
      * @returns {Promise<boolean>}
      */
     window.rmConfirm = (message, options = {}) => {
         return new Promise((resolve) => {
-            const title = options.title || 'Xác nhận thao tác';
-            const confirmText = options.confirmText || 'Xác nhận';
-            const cancelText = options.cancelText || 'Hủy bỏ';
+            const title = options.title || window.rmT('Js_ConfirmTitle', 'Xác nhận thao tác');
+            const confirmText = options.confirmText || window.rmT('Js_ConfirmBtn', 'Xác nhận');
+            const cancelText = options.cancelText || window.rmT('Js_CancelBtn', 'Hủy bỏ');
             const isDanger = options.danger !== false;
 
             const overlay = document.createElement('div');
@@ -261,29 +236,6 @@
         });
     };
 
-    // Tự động gán sự kiện tắt và timeout cho các Toast được render sẵn từ Razor Server-side (_ThongBao.cshtml)
-    window.addEventListener('DOMContentLoaded', () => {
-        const toasts = document.querySelectorAll('.rm-toasts .rm-toast');
-        toasts.forEach(toast => {
-            const dismiss = () => {
-                if (toast.dataset.dismissing) return;
-                toast.dataset.dismissing = 'true';
-                toast.classList.add('rm-toast-hiding');
-                setTimeout(() => toast.remove(), 250);
-            };
-
-            const closeBtn = toast.querySelector('.rm-toast-close');
-            if (closeBtn) closeBtn.addEventListener('click', dismiss);
-
-            // Toast thành công / cảnh báo tự ẩn sau 4 giây
-            if (toast.classList.contains('rm-toast-success') || toast.classList.contains('rm-toast-warning')) {
-                setTimeout(dismiss, 4000);
-            } else if (toast.classList.contains('rm-toast-error')) {
-                setTimeout(dismiss, 6000);
-            }
-        });
-    });
-
     // Bắt sự kiện submit form có attribute data-confirm
     document.addEventListener('submit', async (e) => {
         const form = e.target;
@@ -292,70 +244,14 @@
 
         e.preventDefault();
         const ok = await window.rmConfirm(msg, {
-            title: form.getAttribute('data-confirm-title') || 'Xác nhận thao tác',
-            confirmText: form.getAttribute('data-confirm-btn') || 'Xác nhận',
+            title: form.getAttribute('data-confirm-title') || window.rmT('Js_ConfirmTitle', 'Xác nhận thao tác'),
+            confirmText: form.getAttribute('data-confirm-btn') || window.rmT('Js_ConfirmBtn', 'Xác nhận'),
             danger: form.getAttribute('data-confirm-danger') !== 'false'
         });
 
         if (ok) {
             form.removeAttribute('data-confirm');
             form.submit();
-        }
-    });
-
-    // Thêm vào giỏ hàng qua AJAX: mượt mà, không giật trang, hiển thị Toast ngay lập tức
-    document.addEventListener('submit', async (e) => {
-        const form = e.target;
-        if (!form.matches || !form.matches('form[action*="/User/Cart/Them"], form[action*="/Cart/Them"]')) return;
-
-        const btn = form.querySelector('button[type="submit"]');
-        if (!btn) return;
-
-        e.preventDefault();
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang thêm...';
-
-        try {
-            const formData = new FormData(form);
-            const res = await fetch(form.action, {
-                method: 'POST',
-                body: new URLSearchParams(formData),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            if (res.redirected) {
-                window.location.href = res.url;
-                return;
-            }
-
-            const data = await res.json();
-            if (data.success) {
-                window.showToast(data.message || 'Đã thêm vào giỏ hàng!', 'success');
-                // Cập nhật số lượng giỏ hàng trên thanh điều hướng (header desktop + mobile)
-                const badges = document.querySelectorAll('.rm-cart-badge, #rmCartBadge, .rm-cart-badge-mobile');
-                badges.forEach(cartBadge => {
-                    let newCount = (typeof data.cartCount === 'number' && data.cartCount > 0)
-                        ? data.cartCount
-                        : (parseInt(cartBadge.textContent, 10) || 0) + 1;
-                    cartBadge.textContent = newCount > 99 ? '99+' : newCount;
-                    cartBadge.style.display = cartBadge.classList.contains('rm-cart-badge-mobile') ? 'inline-block' : 'inline-flex';
-                    cartBadge.hidden = false;
-                    cartBadge.style.animation = 'none';
-                    cartBadge.offsetHeight; /* trigger reflow */
-                    cartBadge.style.animation = 'rmBadgePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                });
-            } else {
-                window.showToast(data.message || 'Không thể thêm vào giỏ hàng.', 'error');
-            }
-        } catch {
-            // Nếu có sự cố fetch thì submit bình thường theo luồng mặc định
-            form.submit();
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
         }
     });
 })();
@@ -369,7 +265,7 @@
     const danhDau = (productId, isFavorite) => {
         document.querySelectorAll(`.rm-card-favorite-btn[data-product-id="${productId}"]`).forEach(btn => {
             btn.classList.toggle('is-favorite', isFavorite);
-            btn.setAttribute('aria-label', isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích');
+            btn.setAttribute('aria-label', isFavorite ? window.rmT('Card_UnfavoriteAria', 'Bỏ yêu thích') : window.rmT('Card_FavoriteAria', 'Thêm vào yêu thích'));
             btn.setAttribute('aria-pressed', String(isFavorite));
         });
     };
@@ -377,7 +273,7 @@
     const thongBao = (message, type = 'info', title = null) => {
         if (window.showNotifyBox) {
             window.showNotifyBox({
-                title: title || (type === 'success' ? 'Đã lưu yêu thích' : type === 'error' ? 'Lỗi' : 'Thông báo'),
+                title: title || (type === 'success' ? window.rmT('Js_FavSavedTitle', 'Đã lưu yêu thích') : type === 'error' ? window.rmT('Js_Error', 'Lỗi') : window.rmT('Js_Notice', 'Thông báo')),
                 message: message,
                 type: type
             });
@@ -410,19 +306,19 @@
                 return;
             }
             if (!res.ok) {
-            if (!res.ok) {
-                thongBao('Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.', 'warning');
+                thongBao(window.rmT('Js_FavListNotUpdated', 'Chưa cập nhật được danh sách yêu thích. Vui lòng thử lại.'), 'warning', window.rmT('Js_Note', 'Cần lưu ý'));
                 return;
             }
             const data = await res.json();
             if (!data.success) {
-                thongBao(data.message || 'Không thể lưu sản phẩm yêu thích này.', 'error');
+                thongBao(data.message || window.rmT('Js_FavSaveFailed', 'Không thể lưu sản phẩm yêu thích này.'), 'error', window.rmT('Js_FavFailedTitle', 'Không thành công'));
                 return;
             }
             danhDau(productId, data.isFavorite);
             thongBao(
-                data.isFavorite ? 'Đã thêm vào danh sách yêu thích' : 'Đã xóa khỏi danh sách yêu thích',
-                'success'
+                data.isFavorite ? window.rmT('Js_FavAddedMsg', 'Sản phẩm đã được thêm vào danh sách yêu thích của bạn!') : window.rmT('Js_FavRemovedMsg', 'Đã bỏ sản phẩm khỏi danh sách yêu thích.'),
+                data.isFavorite ? 'success' : 'info',
+                data.isFavorite ? window.rmT('Nav_Favorites', 'Yêu thích') : window.rmT('Js_FavRemovedTitle', 'Đã bỏ yêu thích')
             );
             if (!data.isFavorite && window.location.pathname.toLowerCase().startsWith('/user/favorites')) {
                 const item = btn.closest('.col') ?? btn.closest('.rm-product-card');
@@ -430,32 +326,48 @@
                 if (!document.querySelector('.rm-product-card')) window.location.reload();
             }
         } catch {
-            thongBao('Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.', 'error');
+            thongBao(window.rmT('Js_NetworkInterrupt', 'Mạng đang gián đoạn. Sản phẩm chưa được cập nhật.'), 'error', window.rmT('Js_ConnectionError', 'Lỗi kết nối'));
         } finally {
             btn.disabled = false;
         }
     });
 
-    if (csrf) {
-        window.addEventListener('load', async () => {
-            if (!document.querySelector('.rm-card-favorite-btn')) return;
-            try {
-                const res = await fetch(idsUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                const ids = await res.json();
-                ids.forEach(id => danhDau(id, true));
-            } catch { /* chưa đăng nhập hoặc lỗi mạng: bỏ qua */ }
-        });
-    }
+    const napTrangThaiYeuThich = async () => {
+        if (!csrf || !document.querySelector('.rm-card-favorite-btn')) return;
+        try {
+            const res = await fetch(idsUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const ids = await res.json();
+            ids.forEach(id => danhDau(id, true));
+        } catch { /* chưa đăng nhập hoặc lỗi mạng: bỏ qua */ }
+    };
+
+    window.addEventListener('load', napTrangThaiYeuThich);
+    // B-04: lưới kết quả thay bằng AJAX không phát sự kiện load, nên bo-loc-nhanh.js phát sự kiện này.
+    document.addEventListener('rm:ket-qua-da-thay', napTrangThaiYeuThich);
 })();
 
 
 // =========================================================================
-// Lightbox Modal phóng to ảnh không tràn viền & Chuyển ảnh Thumbnail
+// Lightbox Modal phóng to ảnh (B-05) + Gallery dải thumbnail cuộn ngang
 // =========================================================================
 (() => {
     let modal = null;
     let imgEl = null;
     let capEl = null;
+    let demEl = null;
+    let danhSach = [];
+    let viTri = 0;
+    let chuThich = '';
+    let nguonMo = null;
+
+    const hienAnh = () => {
+        if (!danhSach.length) return;
+        viTri = (viTri + danhSach.length) % danhSach.length;
+        imgEl.src = danhSach[viTri];
+        capEl.textContent = chuThich;
+        demEl.textContent = danhSach.length > 1 ? `${viTri + 1} / ${danhSach.length}` : '';
+        modal.classList.toggle('rm-lightbox-mot-anh', danhSach.length < 2);
+    };
 
     const createModal = () => {
         if (modal) return;
@@ -463,12 +375,18 @@
         modal.id = 'rmImageLightbox';
         modal.className = 'rm-lightbox-overlay';
         modal.hidden = true;
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', window.rmT('Js_LightboxAria', 'Ảnh phóng to'));
         modal.innerHTML = `
             <div class="rm-lightbox-container">
-                <button type="button" class="rm-lightbox-close" aria-label="Đóng">&times;</button>
+                <button type="button" class="rm-lightbox-close" aria-label="${window.rmT('Layout_Close', 'Đóng')}">&times;</button>
+                <button type="button" class="rm-lightbox-nav rm-lightbox-prev" aria-label="${window.rmT('Detail_PrevImage', 'Ảnh trước')}">&#8249;</button>
+                <button type="button" class="rm-lightbox-nav rm-lightbox-next" aria-label="${window.rmT('Detail_NextImage', 'Ảnh tiếp theo')}">&#8250;</button>
                 <div class="rm-lightbox-body">
-                    <img class="rm-lightbox-img" src="" alt="Ảnh phóng to" />
+                    <img class="rm-lightbox-img" src="" alt="${window.rmT('Js_LightboxAria', 'Ảnh phóng to')}" />
                     <div class="rm-lightbox-caption"></div>
+                    <div class="rm-lightbox-counter" aria-live="polite"></div>
                 </div>
             </div>
         `;
@@ -476,61 +394,122 @@
 
         imgEl = modal.querySelector('.rm-lightbox-img');
         capEl = modal.querySelector('.rm-lightbox-caption');
-        const closeBtn = modal.querySelector('.rm-lightbox-close');
+        demEl = modal.querySelector('.rm-lightbox-counter');
 
         const closeLightbox = () => {
             modal.hidden = true;
-            if (imgEl) imgEl.src = '';
+            imgEl.src = '';
             document.body.classList.remove('rm-modal-open');
+            nguonMo?.focus();
+            nguonMo = null;
+        };
+        const chuyen = (bac) => {
+            viTri += bac;
+            hienAnh();
         };
 
-        closeBtn.addEventListener('click', closeLightbox);
+        modal.querySelector('.rm-lightbox-close').addEventListener('click', closeLightbox);
+        modal.querySelector('.rm-lightbox-prev').addEventListener('click', () => chuyen(-1));
+        modal.querySelector('.rm-lightbox-next').addEventListener('click', () => chuyen(1));
         modal.addEventListener('click', (e) => {
-            if (!e.target.closest('.rm-lightbox-img')) {
+            if (!e.target.closest('.rm-lightbox-img') && !e.target.closest('.rm-lightbox-nav')) {
                 closeLightbox();
             }
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal && !modal.hidden) {
-                closeLightbox();
-            }
+            if (!modal || modal.hidden) return;
+            if (e.key === 'Escape') closeLightbox();
+            else if (e.key === 'ArrowLeft') chuyen(-1);
+            else if (e.key === 'ArrowRight') chuyen(1);
         });
     };
 
-    const openLightbox = (src, caption) => {
-        if (!src) return;
+    const moLightbox = (anh, index, caption, nguon) => {
+        if (!anh.length) return;
         createModal();
-        imgEl.src = src;
-        capEl.textContent = caption || '';
+        danhSach = anh;
+        viTri = index;
+        chuThich = caption || '';
+        nguonMo = nguon || null;
+        hienAnh();
         modal.hidden = false;
         document.body.classList.add('rm-modal-open');
+        modal.querySelector('.rm-lightbox-close').focus();
     };
 
-    // Bắt sự kiện click vào ảnh phóng to
+    window.rmPhongToAnh = moLightbox;
+
+    // Trang đấu giá và mọi ảnh đánh dấu data-zoomable ngoài gallery: phóng to đơn lẻ.
     document.addEventListener('click', (e) => {
-        const zoomImg = e.target.closest('.detail-main-img img, .auction-main-img, img[data-zoomable]');
-        if (zoomImg) {
+        const zoomImg = e.target.closest('.auction-main-img, img[data-zoomable]');
+        if (!zoomImg || zoomImg.closest('[data-anh-bo-suu]')) return;
+        e.preventDefault();
+        const caption = zoomImg.alt || zoomImg.title || document.querySelector('.detail-title, .bid-title')?.textContent?.trim() || '';
+        moLightbox([zoomImg.src], 0, caption, zoomImg);
+    });
+
+    // Click thumbnail ngoài gallery (trang đấu giá) vẫn đổi ảnh chính như trước.
+    document.addEventListener('click', (e) => {
+        const thumb = e.target.closest('.auction-thumbs img');
+        if (!thumb) return;
+        const mainImg = document.querySelector('#mainImage, .auction-main-img');
+        if (mainImg) mainImg.src = thumb.src;
+    });
+})();
+
+// =========================================================================
+// Gallery trang chi tiết sản phẩm (B-05): thumbnail cuộn ngang, mũi tên đổi
+// ảnh chính và đồng vị "3 / 12". Bấm ảnh chính hoặc ảnh đang xem sẽ mở lightbox.
+// =========================================================================
+(() => {
+    const gallery = document.querySelector('[data-anh-bo-suu]');
+    if (!gallery) return;
+
+    const mainImg = gallery.querySelector('.detail-main-img img');
+    if (!mainImg) return;
+
+    const thumbs = Array.from(gallery.querySelectorAll('.thumbnail-item'));
+    const danhSach = thumbs.map(t => t.querySelector('img')?.src).filter(Boolean);
+    const dem = gallery.querySelector('[data-anh-dem]');
+    const kiemChuyenDong = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    let viTri = 0;
+
+    // Không đủ ảnh để điều hướng thì chỉ còn đường dẫn mở lightbox.
+    if (danhSach.length < 2) {
+        mainImg.addEventListener('click', () => {
+            window.rmPhongToAnh([mainImg.src], 0, mainImg.alt, mainImg);
+        });
+        return;
+    }
+
+    const chuyenAnh = (index, giuThumbTrongMat) => {
+        viTri = (index + danhSach.length) % danhSach.length;
+        mainImg.src = danhSach[viTri];
+        thumbs.forEach((t, i) => {
+            t.classList.toggle('active', i === viTri);
+            if (i === viTri) t.setAttribute('aria-current', 'true');
+            else t.removeAttribute('aria-current');
+        });
+        if (dem) dem.textContent = `${viTri + 1} / ${danhSach.length}`;
+        if (giuThumbTrongMat) thumbs[viTri].scrollIntoView?.({ behavior: kiemChuyenDong ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' });
+    };
+
+    gallery.addEventListener('click', (e) => {
+        const bac = e.target.closest('[data-anh-bac]');
+        if (bac) {
             e.preventDefault();
-            const caption = zoomImg.alt || zoomImg.title || document.querySelector('.detail-title, .bid-title')?.textContent?.trim() || '';
-            openLightbox(zoomImg.src, caption);
+            chuyenAnh(viTri + Number(bac.dataset.anhBac), true);
+            return;
+        }
+        const thumb = e.target.closest('.thumbnail-item');
+        if (thumb && thumb.dataset.anhIndex !== undefined) {
+            chuyenAnh(Number(thumb.dataset.anhIndex), false);
         }
     });
 
-    // Bắt sự kiện click vào thumbnail để đổi ảnh chính
-    document.addEventListener('click', (e) => {
-        const thumb = e.target.closest('.detail-thumbnails .thumbnail-item, .auction-thumbs img');
-        if (!thumb) return;
-
-        const thumbImg = thumb.tagName === 'IMG' ? thumb : thumb.querySelector('img');
-        if (!thumbImg) return;
-
-        const mainImg = document.querySelector('#mainProductImg, .detail-main-img img, #mainImage, .auction-main-img');
-        if (mainImg) {
-            mainImg.src = thumbImg.src;
-            document.querySelectorAll('.detail-thumbnails .thumbnail-item, .auction-thumbs img').forEach(t => t.classList.remove('active'));
-            thumb.classList.add('active');
-        }
+    mainImg.addEventListener('click', () => {
+        window.rmPhongToAnh(danhSach, viTri, mainImg.alt, mainImg);
     });
 })();
 
@@ -549,16 +528,16 @@
 
     const capNhat = () => {
         const dai = o.value.trim().length;
-        if (so) so.textContent = `${dai}/${toiDa} ký tự`;
+        if (so) so.textContent = window.rmT('Js_CharCount', `${dai}/${toiDa} ký tự`, dai, toiDa);
         if (!trangThai) return;
         if (dai === 0) {
-            trangThai.textContent = 'Chưa có mô tả';
+            trangThai.textContent = window.rmT('Js_NoDescriptionYet', 'Chưa có mô tả');
             trangThai.className = 'text-muted';
         } else if (dai < toiThieu) {
-            trangThai.textContent = `Còn thiếu ${toiThieu - dai} ký tự để gửi duyệt`;
+            trangThai.textContent = window.rmT('Js_DescriptionShortBy', `Còn thiếu ${toiThieu - dai} ký tự để gửi duyệt`, toiThieu - dai);
             trangThai.className = 'text-danger';
         } else {
-            trangThai.textContent = 'Đủ độ dài để gửi duyệt';
+            trangThai.textContent = window.rmT('Js_DescriptionLongEnough', 'Đủ độ dài để gửi duyệt');
             trangThai.className = 'text-success';
         }
     };
@@ -576,10 +555,10 @@
     if (!panel || !btn) return;
 
     const soLoc = Number(btn.dataset.soBoLoc || 0);
-    const tenLoc = soLoc > 0 ? `bộ lọc (${soLoc})` : 'bộ lọc';
+    const tenLoc = soLoc > 0 ? window.rmT('Js_FiltersCount', `bộ lọc (${soLoc})`, soLoc) : window.rmT('Js_Filters', 'bộ lọc');
     const capNhat = () => {
         const mo = panel.classList.contains('show');
-        btn.textContent = `${mo ? 'Ẩn' : 'Hiện'} ${tenLoc}`;
+        btn.textContent = `${mo ? window.rmT('Common_Hide', 'Ẩn') : window.rmT('Common_Show', 'Hiện')} ${tenLoc}`;
         btn.setAttribute('aria-expanded', String(mo));
     };
 
@@ -658,28 +637,34 @@
         }
     });
 
-    const updateCartCount = async () => {
-        const cartBadge = document.getElementById('rmCartBadge');
+    const updateCartCount = async (exactCount) => {
+        const applyCount = (c) => {
+            document.querySelectorAll('.rm-cart-badge, #rmCartBadge, .rm-cart-badge-mobile').forEach(badge => {
+                if (c > 0) {
+                    badge.textContent = c > 99 ? '99+' : String(c);
+                    badge.style.display = badge.classList.contains('rm-cart-badge-mobile') ? 'inline-block' : 'inline-flex';
+                    badge.hidden = false;
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        };
+
+        if (typeof exactCount === 'number') {
+            applyCount(exactCount);
+            return;
+        }
+
         try {
             const res = await fetch('/User/Cart/DemSoLuong');
             if (res.ok) {
                 const data = await res.json();
-                if (cartBadge) {
-                    if (data.count > 0) {
-                        cartBadge.textContent = data.count > 99 ? '99+' : data.count;
-                        cartBadge.style.display = 'inline-block';
-                    } else {
-                        cartBadge.style.display = 'none';
-                    }
+                if (typeof data.count === 'number') {
+                    applyCount(data.count);
                 }
             }
         } catch { }
     };
-
-    // Tự động load số lượng giỏ hàng khi có đăng nhập
-    if (document.querySelector('meta[name="rm-csrf"]')) {
-        updateCartCount();
-    }
 
     // Bắt sự kiện submit form Thêm vào giỏ
     document.addEventListener('submit', async (e) => {
@@ -716,7 +701,7 @@
             const data = await res.json();
 
             if (data.success) {
-                const prodName = form.dataset.productName || document.querySelector('.detail-title, .product-title')?.textContent?.trim() || 'Sản phẩm';
+                const prodName = form.dataset.productName || document.querySelector('.detail-title, .product-title')?.textContent?.trim() || window.rmT('Js_Product', 'Sản phẩm');
                 const prodPrice = form.dataset.productPrice || document.querySelector('.main-price, .detail-pricing-row .main-price')?.textContent?.trim() || '';
                 const prodImg = form.dataset.productImage || document.querySelector('.detail-main-img img, .rm-card-image')?.src || '';
 
@@ -742,28 +727,28 @@
                     autoCloseTimer = setTimeout(closeModal, 6000);
                 } else {
                     window.showNotifyBox({
-                        title: 'Đã thêm vào giỏ hàng!',
-                        message: `Đã thêm "${prodName}" vào giỏ hàng thành công.`,
+                        title: window.rmT('Layout_CartAdded', 'Đã thêm vào giỏ hàng!'),
+                        message: window.rmT('Js_CartAddedMsg', `Đã thêm "${prodName}" vào giỏ hàng thành công.`, prodName),
                         type: 'success',
-                        buttonText: 'Đồng ý'
+                        buttonText: window.rmT('Js_Ok', 'Đồng ý')
                     });
                 }
 
-                updateCartCount();
+                updateCartCount(typeof data.cartCount === 'number' ? data.cartCount : undefined);
             } else {
                 window.showNotifyBox({
-                    title: 'Thông báo giỏ hàng',
-                    message: data.message || 'Không thể thêm sản phẩm vào giỏ hàng.',
+                    title: window.rmT('Js_CartNotice', 'Thông báo giỏ hàng'),
+                    message: data.message || window.rmT('Js_CartAddFailed', 'Không thể thêm sản phẩm vào giỏ hàng.'),
                     type: 'warning',
-                    buttonText: 'Đã hiểu'
+                    buttonText: window.rmT('Js_GotIt', 'Đã hiểu')
                 });
             }
         } catch {
             window.showNotifyBox({
-                title: 'Lỗi kết nối',
-                message: 'Không thể kết nối máy chủ. Vui lòng thử lại sau.',
+                title: window.rmT('Js_ConnectionError', 'Lỗi kết nối'),
+                message: window.rmT('Js_CannotConnect', 'Không thể kết nối máy chủ. Vui lòng thử lại sau.'),
                 type: 'error',
-                buttonText: 'Đóng'
+                buttonText: window.rmT('Layout_Close', 'Đóng')
             });
         } finally {
             if (submitBtn) {
@@ -808,7 +793,7 @@
             modal.setAttribute('aria-modal', 'true');
             modal.innerHTML = `
                 <div class="rm-notify-box rm-notify-box-success">
-                    <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="Đóng">&times;</button>
+                    <button type="button" class="rm-notify-close-x" id="rmNotifyCloseX" aria-label="${window.rmT('Layout_Close', 'Đóng')}">&times;</button>
                     <div class="rm-notify-icon-wrap">
                         <div class="rm-notify-icon rm-notify-icon-success" id="rmNotifyIcon">
                             <i class="bi bi-check-circle-fill"></i>
@@ -828,9 +813,9 @@
         }
 
         const type = opts.type || 'success';
-        const title = opts.title || (type === 'success' ? 'Thành công!' : type === 'error' ? 'Đã xảy ra lỗi' : type === 'warning' ? 'Cần lưu ý' : 'Thông báo');
+        const title = opts.title || (type === 'success' ? window.rmT('Js_Success', 'Thành công!') : type === 'error' ? window.rmT('Js_ErrorOccurred', 'Đã xảy ra lỗi') : type === 'warning' ? window.rmT('Js_Note', 'Cần lưu ý') : window.rmT('Js_Notice', 'Thông báo'));
         const message = opts.message || '';
-        const btnText = opts.buttonText || 'Đồng ý';
+        const btnText = opts.buttonText || window.rmT('Js_Ok', 'Đồng ý');
 
         const boxEl = modal.querySelector('.rm-notify-box');
         if (boxEl) {
@@ -912,5 +897,56 @@
     window.alertBox = (message, type = 'success', title = null) => {
         window.showNotifyBox({ message, type, title });
     };
+})();
+
+// =========================================================================
+// B-01 (vòng 2): form banner Admin — xem trước ảnh vừa chọn và chặn sớm file
+// sai định dạng/dung lượng theo đúng luật của UploadAnhAnToan phía server.
+// =========================================================================
+(() => {
+    const forms = document.querySelectorAll('[data-banner-form]');
+    if (!forms.length) return;
+
+    const dinhDangChoPhep = ['image/jpeg', 'image/png', 'image/webp'];
+    const dungLuongToiDa = 5 * 1024 * 1024;
+
+    forms.forEach((form) => {
+        const input = form.querySelector('[data-banner-file]');
+        const khoiXemTruoc = form.querySelector('[data-banner-preview]');
+        if (!input || !khoiXemTruoc) return;
+
+        let duongDanTam = '';
+        const hienKhung = (noiDung) => {
+            if (duongDanTam) URL.revokeObjectURL(duongDanTam);
+            duongDanTam = '';
+            khoiXemTruoc.textContent = noiDung;
+            khoiXemTruoc.hidden = !noiDung;
+        };
+
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file) return hienKhung('');
+
+            const loi = !dinhDangChoPhep.includes(file.type)
+                ? window.rmT('Js_BannerOnlyFormats', 'Chỉ nhận ảnh JPG, PNG hoặc WEBP.')
+                : file.size > dungLuongToiDa
+                    ? window.rmT('Js_BannerTooLarge', 'Ảnh banner tối đa 5MB.')
+                    : null;
+            if (loi) {
+                input.value = '';
+                return hienKhung(loi);
+            }
+
+            duongDanTam = URL.createObjectURL(file);
+            khoiXemTruoc.hidden = false;
+            khoiXemTruoc.textContent = '';
+            const img = document.createElement('img');
+            img.alt = window.rmT('Js_BannerPreview', 'Xem trước banner');
+            img.className = 'mt-2 rounded border';
+            img.style.cssText = 'max-height:90px;max-width:100%;object-fit:cover;';
+            img.src = duongDanTam;
+            khoiXemTruoc.appendChild(img);
+        });
+    });
 })();
 

@@ -7,6 +7,7 @@ using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Cart;
 using SecondHandMarketplace.Web.Models.ViewModels.Orders;
 using SecondHandMarketplace.Web.Services.Carts;
+using SecondHandMarketplace.Web.Services.Notifications;
 
 namespace SecondHandMarketplace.Web.Services.Orders;
 
@@ -14,11 +15,13 @@ public class OrderService : IOrderService
 {
     private readonly AppDbContext _db;
     private readonly ICartService _cartService;
+    private readonly INotificationService? _notifications;
 
-    public OrderService(AppDbContext db, ICartService cartService)
+    public OrderService(AppDbContext db, ICartService cartService, INotificationService? notifications = null)
     {
         _db = db;
         _cartService = cartService;
+        _notifications = notifications;
     }
 
     public async Task<CheckoutViewModel> ChuanBiCheckoutTuGioAsync(int maNguoiDung)
@@ -788,12 +791,47 @@ public class OrderService : IOrderService
     public async Task<(bool ThanhCong, string? ThongBao)> XacNhanThanhToanChuyenKhoanAsync(int maNguoiDung, int maDonHang)
     {
         var don = await _db.DonHangs.FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.MaNguoiDung == maNguoiDung);
+
         if (don == null) return (false, "Đơn hàng không tồn tại.");
         if (don.TrangThai == "CANCELLED") return (false, "Không thể xác nhận thanh toán cho đơn hàng đã hủy.");
         if (don.PhuongThucThanhToan != "BANK_TRANSFER") return (false, "Chỉ có thể xác nhận thanh toán chuyển khoản cho đơn hàng chọn phương thức BANK_TRANSFER.");
-        return don.TrangThaiThanhToan == "PAID"
-            ? (true, "Shop đã xác nhận đơn hàng này đã thanh toán.")
-            : (false, "Chỉ người bán mới được xác nhận đã nhận tiền sau khi tự kiểm tra tài khoản ngân hàng.");
+        if (don.TrangThaiThanhToan == "PAID") return (true, "Shop đã xác nhận đơn hàng này đã thanh toán.");
+        if (don.TrangThaiThanhToan == "REFUNDED") return (false, "Đơn hàng đã được hoàn tiền, chỉ người bán mới được xác nhận.");
+
+        // Ghi lại lịch sử xác nhận đã chuyển khoản
+        _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+        {
+            MaDonHang = don.MaDonHang,
+            TrangThaiCu = don.TrangThai,
+            TrangThaiMoi = don.TrangThai,
+            LoaiNguoiThucHien = "BUYER",
+            NguoiThucHienId = maNguoiDung,
+            LyDo = "Người mua đã bấm xác nhận chuyển khoản ngân hàng qua VietQR.",
+            ThoiGian = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync();
+
+        // Gửi thông báo đến chủ shop
+        if (_notifications != null)
+        {
+            var shop = await _db.CuaHangs.FirstOrDefaultAsync(c => c.MaCuaHang == don.MaCuaHang);
+            if (shop != null)
+            {
+                try
+                {
+                    await _notifications.CreateAsync(
+                        shop.MaNguoiDung,
+                        NotificationTypes.Order,
+                        "Người mua đã xác nhận chuyển khoản",
+                        $"Người mua đơn hàng #{don.MaDon} ({don.TongTien:N0}₫) đã bấm xác nhận chuyển khoản. Vui lòng kiểm tra tài khoản ngân hàng và xác nhận nhận tiền.",
+                        don.MaDonHang
+                    );
+                }
+                catch { /* Best effort */ }
+            }
+        }
+
+        return (true, "Đã gửi thông báo xác nhận chuyển khoản đến người bán. Shop sẽ kiểm tra tài khoản ngân hàng và xác nhận đơn hàng.");
     }
 
     public async Task<(bool ThanhCong, string? ThongBao)> XacNhanThanhToanTatCaChuyenKhoanAsync(int maNguoiDung, IEnumerable<int> maDonHangs)
@@ -801,10 +839,61 @@ public class OrderService : IOrderService
         var idList = maDonHangs.Distinct().ToList();
         if (idList.Count == 0) return (false, "Không có đơn hàng nào.");
 
-        var ownedOrderExists = await _db.DonHangs.AnyAsync(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung);
-        return ownedOrderExists
-            ? (false, "Chỉ người bán mới được xác nhận đã nhận tiền sau khi tự kiểm tra tài khoản ngân hàng.")
-            : (false, "Không tìm thấy đơn hàng thuộc tài khoản của bạn.");
+        // Kiểm tra tất cả đơn hàng phải thuộc tài khoản maNguoiDung (chống IDOR)
+        var ownedOrders = await _db.DonHangs
+            .Where(d => idList.Contains(d.MaDonHang) && d.MaNguoiDung == maNguoiDung)
+            .ToListAsync();
+
+        if (ownedOrders.Count != idList.Count)
+        {
+            return (false, "Một số đơn hàng không thuộc tài khoản của bạn hoặc không tồn tại.");
+        }
+
+        int countNotified = 0;
+        foreach (var don in ownedOrders)
+        {
+            if (don.TrangThai != "CANCELLED" && don.PhuongThucThanhToan == "BANK_TRANSFER" && don.TrangThaiThanhToan != "PAID" && don.TrangThaiThanhToan != "REFUNDED")
+            {
+                _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+                {
+                    MaDonHang = don.MaDonHang,
+                    TrangThaiCu = don.TrangThai,
+                    TrangThaiMoi = don.TrangThai,
+                    LoaiNguoiThucHien = "BUYER",
+                    NguoiThucHienId = maNguoiDung,
+                    LyDo = "Người mua đã bấm xác nhận chuyển khoản ngân hàng qua VietQR.",
+                    ThoiGian = DateTime.UtcNow
+                });
+
+                if (_notifications != null)
+                {
+                    var shop = await _db.CuaHangs.FirstOrDefaultAsync(c => c.MaCuaHang == don.MaCuaHang);
+                    if (shop != null)
+                    {
+                        try
+                        {
+                            await _notifications.CreateAsync(
+                                shop.MaNguoiDung,
+                                NotificationTypes.Order,
+                                "Người mua đã xác nhận chuyển khoản",
+                                $"Người mua đơn hàng #{don.MaDon} ({don.TongTien:N0}₫) đã bấm xác nhận chuyển khoản. Vui lòng kiểm tra tài khoản ngân hàng và xác nhận nhận tiền.",
+                                don.MaDonHang
+                            );
+                        }
+                        catch { /* Best effort */ }
+                    }
+                }
+                countNotified++;
+            }
+        }
+
+        if (countNotified > 0)
+        {
+            await _db.SaveChangesAsync();
+            return (true, $"Đã gửi thông báo xác nhận chuyển khoản cho {countNotified} đơn hàng đến các người bán.");
+        }
+
+        return (false, "Không có đơn hàng chuyển khoản nào cần thông báo.");
     }
 
     public async Task<(bool ThanhCong, string? ThongBao)> XacNhanDaNhanTienShopAsync(int chuShopId, int maDonHang)

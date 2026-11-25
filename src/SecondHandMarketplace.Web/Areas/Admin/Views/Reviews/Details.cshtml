@@ -1,9 +1,12 @@
+@using System.Text.Json
 @model SecondHandMarketplace.Web.Models.ViewModels.Reviews.ChiTietShopRaSoatVm
 @{
-    ViewData["Title"] = "Chi tiết rà soát shop";
+    ViewData["Title"] = L["AdminRev_DetailTitle"].Value;
     var shop = Model.Shop;
     var danhGias = Model.DanhGias;
     var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var hideConfirmJs = JsonSerializer.Serialize(L["AdminRev_HideReviewConfirm"].Value);
+    var avgStr = shop.DiemTrungBinh.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
 }
 
 <div class="container-fluid my-4 px-md-4" style="max-width: 1250px;">
@@ -13,31 +16,31 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb small mb-1">
                     <li class="breadcrumb-item">
-                        <a asp-action="Index" class="text-decoration-none">Rà soát shop</a>
+                        <a asp-action="Index" class="text-decoration-none">@L["AdminRev_BreadcrumbRoot"]</a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">@shop.TenShop</li>
                 </ol>
             </nav>
-            <h2 class="h3 fw-bold text-dark mb-0">
-                <i class="bi bi-shop text-danger"></i> @shop.TenShop
+            <h2 class="h4 fw-bold text-dark mb-0 d-flex flex-wrap align-items-center gap-2">
+                <span><i class="bi bi-shop text-danger me-1"></i>@shop.TenShop</span>
                 @if (shop.TrangThaiShop == "LOCKED")
                 {
-                    <span class="badge bg-danger align-middle">Đã khóa</span>
+                    <span class="badge bg-danger align-middle">@HienThi.TrangThaiTaiKhoan("LOCKED")</span>
                 }
                 else
                 {
-                    <span class="badge bg-success align-middle">Hoạt động</span>
+                    <span class="badge bg-success align-middle">@HienThi.TrangThaiTaiKhoan("ACTIVE")</span>
                 }
             </h2>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
             <a class="btn btn-outline-secondary btn-sm rounded-pill px-3"
                asp-area="Admin" asp-controller="Orders" asp-action="Index" asp-route-shopId="@shop.MaCuaHang">
-                <i class="bi bi-receipt"></i> Lịch sử đơn
+                <i class="bi bi-receipt me-1"></i>@L["AdminRev_BtnOrderHistory"]
             </a>
             <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3"
                     data-bs-toggle="modal" data-bs-target="#modalCanhBao">
-                <i class="bi bi-megaphone"></i> Gửi cảnh cáo
+                <i class="bi bi-megaphone me-1"></i>@L["AdminRev_BtnSendWarn"]
             </button>
             @if (shop.TrangThaiShop == "LOCKED")
             {
@@ -46,7 +49,7 @@
                     <input type="hidden" name="maCuaHang" value="@shop.MaCuaHang" />
                     <input type="hidden" name="returnUrl" value="@returnUrl" />
                     <button class="btn btn-success btn-sm rounded-pill px-3">
-                        <i class="bi bi-unlock"></i> Mở khóa shop
+                        <i class="bi bi-unlock me-1"></i>@L["AdminRev_BtnUnlockShop"]
                     </button>
                 </form>
             }
@@ -54,24 +57,19 @@
             {
                 <button type="button" class="btn btn-danger btn-sm rounded-pill px-3"
                         data-bs-toggle="modal" data-bs-target="#modalKhoaShop">
-                    <i class="bi bi-lock"></i> Khóa shop
+                    <i class="bi bi-lock me-1"></i>@L["AdminRev_BtnLockShop"]
                 </button>
             }
         </div>
     </div>
 
-    <partial name="_ThongBao" />
-
     @if (shop.LaShopCanRaSoat)
     {
-        <div class="alert alert-danger border-0 rounded-4 d-flex align-items-start gap-3 shadow-sm">
+        <div class="alert alert-danger border-0 rounded-4 d-flex align-items-start gap-3 shadow-sm mb-4">
             <i class="bi bi-exclamation-triangle-fill fs-4"></i>
             <div>
-                <strong>Cảnh báo chất lượng:</strong>
-                shop đang có điểm trung bình
-                <strong>@shop.DiemTrungBinh.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) sao</strong>
-                từ @shop.SoDanhGia đánh giá hiển thị — dưới ngưỡng 3.0 sao.
-                Hãy rà soát nội dung đánh giá, gửi cảnh cáo hoặc khóa shop nếu cần thiết.
+                <strong>@L["AdminRev_QualityAlertTitle"]</strong>
+                @L["AdminRev_QualityAlertBody", avgStr, shop.SoDanhGia]
             </div>
         </div>
     }
@@ -80,28 +78,28 @@
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
                 <div class="card-body">
-                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-person-vcard"></i> Thông tin shop & chủ shop</h6>
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-person-vcard me-1"></i>@L["AdminRev_ShopOwnerInfo"]</h6>
                     <div class="row g-3 small">
                         <div class="col-sm-6">
-                            <div class="text-muted">Chủ shop</div>
+                            <div class="text-muted">@L["Admin_Sellers_ColOwner"]</div>
                             <div class="fw-semibold text-dark">@shop.TenChuShop</div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="text-muted">Email</div>
+                            <div class="text-muted">@L["Account_Email"]</div>
                             <div class="fw-semibold text-dark">@shop.EmailChuShop</div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="text-muted">Điện thoại</div>
+                            <div class="text-muted">@L["Account_Phone"]</div>
                             <div class="fw-semibold text-dark">@(string.IsNullOrWhiteSpace(shop.SoDienThoai) ? "—" : shop.SoDienThoai)</div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="text-muted">Khu vực</div>
+                            <div class="text-muted">@L["Admin_Sellers_ColArea"]</div>
                             <div class="fw-semibold text-dark">@shop.KhuVuc</div>
                         </div>
                         @if (shop.TrangThaiShop == "LOCKED" && !string.IsNullOrWhiteSpace(shop.LyDoKhoa))
                         {
                             <div class="col-12">
-                                <div class="text-muted">Lý do khóa</div>
+                                <div class="text-muted">@L["AdminRev_LockReasonLabel"]</div>
                                 <div class="text-danger fw-semibold">@shop.LyDoKhoa</div>
                             </div>
                         }
@@ -114,28 +112,28 @@
                 <div class="col-6">
                     <div class="card border-0 shadow-sm rounded-4 bg-white h-100 text-center">
                         <div class="card-body">
-                            <div class="text-muted small">Điểm trung bình</div>
+                            <div class="text-muted small">@L["AdminRev_AvgScore"]</div>
                             <div class="fs-3 fw-bold @(shop.DiemTrungBinh < 3.0m ? "text-danger" : "text-success")">
-                                @shop.DiemTrungBinh.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+                                @avgStr
                                 <i class="bi bi-star-fill fs-5"></i>
                             </div>
-                            <div class="text-muted small">@shop.SoDanhGia đánh giá hiển thị</div>
+                            <div class="text-muted small">@L["AdminRev_VisibleReviewsCount", shop.SoDanhGia]</div>
                         </div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="card border-0 shadow-sm rounded-4 bg-white h-100 text-center">
                         <div class="card-body">
-                            <div class="text-muted small">Đơn hoàn tất</div>
+                            <div class="text-muted small">@L["AdminRev_CompletedOrdersCard"]</div>
                             <div class="fs-3 fw-bold text-dark">@shop.SoDonThanhCong</div>
-                            <div class="text-muted small">đơn COMPLETED</div>
+                            <div class="text-muted small">@L["AdminRev_CompletedOrdersUnit"]</div>
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-4 bg-white">
                         <div class="card-body py-2 text-center">
-                            <span class="text-muted small">Báo cáo vi phạm (shop & sản phẩm):</span>
+                            <span class="text-muted small">@L["AdminRev_ReportsSummary"]</span>
                             @if (shop.SoBaoCao > 0)
                             {
                                 <span class="badge bg-danger rounded-pill px-3 ms-1">@shop.SoBaoCao</span>
@@ -152,27 +150,27 @@
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden mb-4">
-        <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-chat-square-text"></i> Đánh giá của khách hàng</h5>
-            <span class="text-muted small">@danhGias.TotalItems đánh giá (gồm cả đánh giá đã ẩn)</span>
+        <div class="card-header bg-white border-0 pt-3 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-chat-square-text me-1"></i>@L["AdminRev_CustomerReviewsHeading"]</h5>
+            <span class="text-muted small">@L["AdminRev_TotalInclHidden", danhGias.TotalItems]</span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light small text-muted">
                     <tr>
-                        <th class="ps-3" style="min-width: 170px;">Người mua</th>
-                        <th style="width: 120px;">Số sao</th>
-                        <th style="width: 140px;">Ngày tạo</th>
-                        <th style="min-width: 300px;">Nội dung nhận xét</th>
-                        <th style="width: 110px;">Trạng thái</th>
-                        <th class="text-end pe-3" style="width: 190px;">Thao tác</th>
+                        <th class="ps-3" style="min-width: 170px;">@L["AdminRev_ColBuyer"]</th>
+                        <th style="width: 120px;">@L["AdminRev_ColStars"]</th>
+                        <th style="width: 140px;">@L["Common_CreatedAt"]</th>
+                        <th style="min-width: 300px;">@L["AdminRev_ColComment"]</th>
+                        <th style="width: 110px;">@L["Common_Status"]</th>
+                        <th class="text-end pe-3" style="width: 190px;">@L["Common_Actions"]</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (danhGias.Items.Count == 0)
                     {
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">Shop chưa có đánh giá nào.</td>
+                            <td colspan="6" class="text-center py-5 text-muted">@L["AdminRev_NoReviews"]</td>
                         </tr>
                     }
                     @foreach (var dg in danhGias.Items)
@@ -194,7 +192,7 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="text-warning" title="@dg.SoSao / 5 sao">
+                                <span class="text-warning" title="@L["MyRev_StarsOutOf", dg.SoSao]">
                                     @for (var i = 1; i <= 5; i++)
                                     {
                                         <i class="bi @(i <= dg.SoSao ? "bi-star-fill" : "bi-star") @(i <= dg.SoSao ? "" : "text-secondary-subtle")"></i>
@@ -206,7 +204,7 @@
                             <td>
                                 @if (string.IsNullOrWhiteSpace(dg.NoiDung))
                                 {
-                                    <span class="text-muted fst-italic">Không có nhận xét.</span>
+                                    <span class="text-muted fst-italic">@L["MyRev_NoComment"]</span>
                                 }
                                 else
                                 {
@@ -216,11 +214,11 @@
                             <td>
                                 @if (dg.TrangThai == "VISIBLE")
                                 {
-                                    <span class="badge bg-success rounded-pill">VISIBLE</span>
+                                    <span class="badge bg-success rounded-pill">@L["MyRev_StatusVisible"]</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary rounded-pill">HIDDEN</span>
+                                    <span class="badge bg-secondary rounded-pill">@L["Common_Hide"]</span>
                                 }
                             </td>
                             <td class="text-end pe-3">
@@ -233,16 +231,16 @@
                                     @if (dg.TrangThai == "VISIBLE")
                                     {
                                         <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                                title="Ẩn đánh giá này; điểm shop sẽ tính lại ngay"
-                                                onclick="return confirm('Ẩn đánh giá này? Điểm trung bình của shop sẽ được tính lại từ các đánh giá VISIBLE còn lại.');">
-                                            <i class="bi bi-eye-slash"></i> Ẩn đánh giá vi phạm
+                                                title="@L["AdminRev_HideReviewTip"]"
+                                                onclick="return confirm(@hideConfirmJs);">
+                                            <i class="bi bi-eye-slash me-1"></i>@L["AdminRev_BtnHideReview"]
                                         </button>
                                     }
                                     else
                                     {
                                         <button class="btn btn-sm btn-outline-success rounded-pill px-3"
-                                                title="Hiển thị lại đánh giá này">
-                                            <i class="bi bi-eye"></i> Hiện đánh giá
+                                                title="@L["AdminRev_ShowReviewTip"]">
+                                            <i class="bi bi-eye me-1"></i>@L["AdminRev_BtnShowReview"]
                                         </button>
                                     }
                                 </form>
@@ -256,17 +254,17 @@
         @if (danhGias.TotalPages > 1)
         {
             <div class="d-flex justify-content-between align-items-center p-3 border-top">
-                <span class="text-muted small">Trang @danhGias.Page / @danhGias.TotalPages</span>
-                <nav aria-label="Phân trang đánh giá">
+                <span class="text-muted small">@L["Common_Page"] @danhGias.Page / @danhGias.TotalPages</span>
+                <nav aria-label="@L["MyRev_PaginationAria"]">
                     <ul class="pagination pagination-sm mb-0">
                         <li class="page-item @(danhGias.Page <= 1 ? "disabled" : "")">
                             <a class="page-link" asp-action="Details" asp-route-id="@shop.MaCuaHang"
-                               asp-route-page="@(danhGias.Page - 1)">&laquo; Trước</a>
+                               asp-route-page="@(danhGias.Page - 1)">&laquo; @L["Btn_Prev"]</a>
                         </li>
                         <li class="page-item disabled"><span class="page-link">@danhGias.Page</span></li>
                         <li class="page-item @(danhGias.Page >= danhGias.TotalPages ? "disabled" : "")">
                             <a class="page-link" asp-action="Details" asp-route-id="@shop.MaCuaHang"
-                               asp-route-page="@(danhGias.Page + 1)">Sau &raquo;</a>
+                               asp-route-page="@(danhGias.Page + 1)">@L["Btn_Next"] &raquo;</a>
                         </li>
                     </ul>
                 </nav>
@@ -275,25 +273,25 @@
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
-        <div class="card-header bg-white border-0 pt-3 pb-0">
-            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history"></i> 5 đơn hàng gần nhất</h5>
+        <div class="card-header bg-white border-0 pt-3 pb-2">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-1"></i>@L["AdminRev_RecentOrdersHeading"]</h5>
         </div>
         <div class="table-responsive">
-            <table class="table align-middle mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light small text-muted">
                     <tr>
-                        <th class="ps-3">Mã đơn</th>
-                        <th>Người nhận</th>
-                        <th>Tổng tiền</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày đặt</th>
+                        <th class="ps-3">@L["AdminRev_ColOrderCode"]</th>
+                        <th>@L["AdminRev_ColRecipient"]</th>
+                        <th>@L["AdminRev_ColTotal"]</th>
+                        <th>@L["Common_Status"]</th>
+                        <th>@L["AdminRev_ColOrderDate"]</th>
                         <th class="text-end pe-3"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.DonHangsGanDay.Count == 0)
                     {
-                        <tr><td colspan="6" class="text-center py-4 text-muted">Shop chưa có đơn hàng nào.</td></tr>
+                        <tr><td colspan="6" class="text-center py-4 text-muted">@L["AdminRev_NoOrders"]</td></tr>
                     }
                     @foreach (var don in Model.DonHangsGanDay)
                     {
@@ -306,7 +304,7 @@
                             <td class="text-end pe-3">
                                 <a class="btn btn-sm btn-outline-secondary rounded-pill"
                                    asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@don.MaDonHang">
-                                    Chi tiết
+                                    @L["Admin_Details"]
                                 </a>
                             </td>
                         </tr>
@@ -326,20 +324,20 @@
             <input type="hidden" name="returnUrl" value="@returnUrl" />
             <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold text-danger" id="modalKhoaShopLabel">
-                    <i class="bi bi-lock"></i> Khóa cửa hàng @shop.TenShop
+                    <i class="bi bi-lock me-1"></i>@L["AdminRev_ModalLockTitle"] — @shop.TenShop
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Btn_Close"]"></button>
             </div>
             <div class="modal-body">
-                <label class="form-label fw-semibold small">Lý do khóa <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold small">@L["AdminRev_ModalLockReasonLabel"] <span class="text-danger">*</span></label>
                 <textarea name="reason" class="form-control" rows="3" maxlength="500" required
-                          placeholder="Ví dụ: Nhiều đánh giá phản ánh hàng không đúng mô tả, shop không phản hồi..."></textarea>
-                <div class="form-text">Tối đa 500 ký tự. Lý do được lưu vào nhật ký hệ thống.</div>
+                          placeholder="@L["AdminRev_ModalLockPlaceholder"]"></textarea>
+                <div class="form-text">@L["AdminRev_ModalLockHint"]</div>
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">@L["Btn_Cancel"]</button>
                 <button type="submit" class="btn btn-danger rounded-pill px-3">
-                    <i class="bi bi-lock"></i> Xác nhận khóa
+                    <i class="bi bi-lock me-1"></i>@L["AdminRev_ModalLockConfirm"]
                 </button>
             </div>
         </form>
@@ -355,21 +353,21 @@
             <input type="hidden" name="returnUrl" value="@returnUrl" />
             <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold text-warning" id="modalCanhBaoLabel">
-                    <i class="bi bi-megaphone"></i> Gửi cảnh cáo chất lượng dịch vụ
+                    <i class="bi bi-megaphone me-1"></i>@L["AdminRev_ModalWarnTitle"]
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Btn_Close"]"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-2">Gửi thông báo hệ thống tới chủ shop <strong>@shop.TenChuShop</strong>.</p>
-                <label class="form-label fw-semibold small">Nội dung cảnh cáo <span class="text-danger">*</span></label>
+                <p class="mb-2">@L["AdminRev_ModalWarnIntro"] <strong>@shop.TenChuShop</strong>.</p>
+                <label class="form-label fw-semibold small">@L["AdminRev_ModalWarnLabel"] <span class="text-danger">*</span></label>
                 <textarea name="reason" class="form-control" rows="4" maxlength="1000" required
-                          placeholder="Ví dụ: Shop có 5 đánh giá 1-2 sao phản ánh hàng không đúng mô tả. Đề nghị cải thiện chất lượng và phản hồi khách hàng."></textarea>
-                <div class="form-text">Tối đa 1 000 ký tự. Chủ shop sẽ nhận được thông báo ngay.</div>
+                          placeholder="@L["AdminRev_ModalWarnPlaceholder"]"></textarea>
+                <div class="form-text">@L["AdminRev_ModalWarnHint"]</div>
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">@L["Btn_Cancel"]</button>
                 <button type="submit" class="btn btn-warning rounded-pill px-3">
-                    <i class="bi bi-send"></i> Gửi cảnh cáo
+                    <i class="bi bi-send me-1"></i>@L["AdminRev_BtnSendWarn"]
                 </button>
             </div>
         </form>

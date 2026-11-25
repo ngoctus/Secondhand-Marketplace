@@ -154,6 +154,53 @@ public class AiToolExecutorTests
         Assert.Contains(instructions.EnumerateArray(), i => i.GetString()!.Contains("Không thêm"));
     }
 
+    [Fact]
+    public async Task DraftDescription_EnglishLanguage_ReturnsEnglishInstructions()
+    {
+        var executor = NewExecutor(new FakeAiProductService());
+
+        using var args = JsonDocument.Parse("""
+            {
+              "name": "Wooden Desk",
+              "category": "Furniture",
+              "condition": "Good",
+              "price": 850000
+            }
+            """);
+
+        var result = await executor.ExecuteAsync(
+            AppRoles.User, AiToolExecutor.DraftProductDescription, args.RootElement, "en", CancellationToken.None);
+
+        Assert.False(result.IsError);
+        using var json = JsonDocument.Parse(result.Json);
+        Assert.Equal("en", json.RootElement.GetProperty("language").GetString());
+        var instructions = json.RootElement.GetProperty("instructions");
+        Assert.Contains(instructions.EnumerateArray(), i => i.GetString()!.Contains("in English"));
+    }
+
+    [Fact]
+    public async Task SearchProducts_EnglishCategoryAndCondition_MapsToVietnameseDbIds()
+    {
+        var products = new FakeAiProductService();
+        var executor = NewExecutor(products);
+
+        using var args = JsonDocument.Parse("""
+            {
+              "keyword": "desk",
+              "category": "Furniture",
+              "condition": "Like New"
+            }
+            """);
+
+        var result = await executor.ExecuteAsync(
+            AppRoles.User, AiToolExecutor.SearchProducts, args.RootElement, "en", CancellationToken.None);
+
+        Assert.False(result.IsError);
+        Assert.NotNull(products.LastFilter);
+        Assert.Equal(2, products.LastFilter!.CategoryId);   // Furniture -> Nội thất (id 2)
+        Assert.Equal(1, products.LastFilter.ConditionId);   // Like New -> LIKE_NEW (id 1)
+    }
+
     // ------------------------------------------------------------------ Fake services
 
     private sealed class FakeAiProductService : IProductService
@@ -201,8 +248,11 @@ public class AiToolExecutorTests
         public Task<(bool Success, string? Error)> DatAnhChinhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
-        public Task<(bool Success, string? Error)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default) =>
+        public Task<(bool Success, string? Error, int? MaAnhChinhMoi)> XoaAnhAsync(int maNguoiDung, int maSanPham, int maAnh, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+
+        public Task<(decimal Min, decimal Max)> LayBienGiaAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult((0m, 0m));
     }
 
     private sealed class FakeAiCategoryService : ICategoryService

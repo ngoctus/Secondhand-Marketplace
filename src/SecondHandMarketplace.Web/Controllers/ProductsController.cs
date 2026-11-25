@@ -24,6 +24,19 @@ public class ProductsController : Controller
 
     public async Task<IActionResult> Index([FromQuery] ProductSearchVm filter, CancellationToken cancellationToken)
     {
+        var ketQua = await TaoTimKiemAsync(filter, cancellationToken);
+
+        // B-04: JS gọi lại đúng action này kèm X-Requested-With và chỉ nhận khối kết quả, nhờ đó
+        // người mua giữ được thanh trượt/bộ lọc đang chọn thay vì reload cả trang. Request thường
+        // (tắt JS, link chia sẻ) vẫn nhận trang đầy đủ.
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_SearchResults", ketQua);
+
+        return View(ketQua);
+    }
+
+    private async Task<ProductSearchResultVm> TaoTimKiemAsync(ProductSearchVm filter, CancellationToken cancellationToken)
+    {
         var ketQua = await _products.SearchAsync(filter);
 
         var danhSachTinh = await _khuVuc.GetTinhThanhAsync(cancellationToken);
@@ -33,13 +46,16 @@ public class ProductsController : Controller
 
         var tenTinh = danhSachTinh.FirstOrDefault(t => t.Ma == filter.MaTinhThanh)?.Ten;
         var tenXa = danhSachXa.FirstOrDefault(x => x.Ma == filter.MaPhuongXa)?.Ten;
+        var (giaMin, giaMax) = await _products.LayBienGiaAsync(cancellationToken);
 
-        return View(new ProductSearchResultVm
+        return new ProductSearchResultVm
         {
             Filter = filter,
             Result = ketQua,
             DanhSachDanhMuc = await _categories.GetCategoriesAsync(cancellationToken),
             DanhSachTinhTrang = await _categories.GetConditionsAsync(cancellationToken),
+            BienGiaMin = giaMax > 0 ? giaMin : null,
+            BienGiaMax = giaMax > 0 ? giaMax : null,
             KhuVuc = new ChonKhuVucVm
             {
                 MaTinh = filter.MaTinhThanh,
@@ -55,7 +71,7 @@ public class ProductsController : Controller
                 (_, not null) => tenTinh,
                 _ => null
             }
-        });
+        };
     }
 
     public async Task<IActionResult> Details(int id)

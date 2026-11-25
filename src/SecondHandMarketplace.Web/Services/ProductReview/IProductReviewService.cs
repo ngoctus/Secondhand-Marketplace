@@ -20,14 +20,17 @@ public sealed record ProductListItem(
     int MaSanPham, int? MaLuotKiemDuyet, string Ten, decimal? Gia, string? TenDanhMuc, string? AnhDaiDien,
     string TrangThai, int MaCuaHang, string TenShop, int MaNguoiBan, string TenNguoiBan, string EmailNguoiBan,
     DateTime Moc,                       // chờ duyệt: thời điểm gửi; đang bán: ngày cập nhật
-    string? AnalysisStatus, string? Level);
+    string? AnalysisStatus, string? Level,
+    string? RiskLevel = null, string? Recommendation = null, string? ModelVersion = null, bool IsGreenLane = false);
 
 public sealed record ProductListPage(string Tab, IReadOnlyList<ProductListItem> Items, int Page, int TotalItems, int TotalPages);
 
 public sealed record ReviewTurnRow(
     int MaLuotKiemDuyet, DateTime ThoiGianGui, string? QuyetDinh, string? LyDo, int? MaQuanTriVien, string? TenQuanTriVien,
     DateTime? ThoiGianQuyetDinh, bool QuyetDinhTuDong, string AnalysisStatus, string? Level, string? GiaiThich,
-    string? LoiXuLy, bool ViolationRecorded, IReadOnlyList<KeywordMatch> Matches);
+    string? LoiXuLy, bool ViolationRecorded, IReadOnlyList<KeywordMatch> Matches,
+    string? RiskLevel = null, string? Recommendation = null, string? ModelVersion = null,
+    IReadOnlyList<AiModerationSignal>? AiSignals = null);
 
 public sealed record StatusHistoryRow(
     string? TrangThaiCu, string TrangThaiMoi, string LoaiNguoiThucHien, string? TenNguoiThucHien, string? LyDo, DateTime ThoiGian);
@@ -63,6 +66,7 @@ public sealed class ProductReviewDetail
     public bool CanApprove => IsPending && Review!.CanApprove;
     /// <summary>Từ chối thường luôn được phép khi đang chờ duyệt, trừ HIGH (đã do hệ thống xử lý).</summary>
     public bool CanReject => IsPending && Review!.Level != ModerationPolicy.LevelHigh;
+    public bool CanReanalyze => IsPending && Review!.CanReanalyze;
     public string? ApproveBlockedReason => IsPending && !Review!.CanApprove ? Review.ApproveBlockedReason : null;
     public bool CanRemove => TrangThai == "ACTIVE";
 }
@@ -74,12 +78,34 @@ public sealed record ProductDecisionResult(
         new(false, error, alreadyDecided, null, null, null);
 }
 
+public sealed record BulkApproveResult(bool Success, string? Error, int ApprovedCount, int SkippedCount)
+{
+    public static BulkApproveResult Fail(string error) => new(false, error, 0, 0);
+}
+
+public sealed record ProductReanalyzeResult(
+    bool Success,
+    string? Error,
+    bool AlreadyDecided,
+    bool AutoRejected,
+    bool IsFallback,
+    string? Message,
+    string? Warning,
+    ModerationReview? Review)
+{
+    public static ProductReanalyzeResult Fail(string error, bool alreadyDecided = false, ModerationReview? review = null) =>
+        new(false, error, alreadyDecided, false, false, null, null, review);
+}
+
 public sealed record ViolationRow(
     int MaViPham, int MaNguoiBan, string TenNguoiBan, string EmailNguoiBan, string TrangThaiNguoiBan, string VaiTroNguoiBan,
     int TongViPham, int MaSanPham, string TenSanPham, int MaLuotKiemDuyet, string MucDo, string NguonGhiNhan,
-    DateTime ThoiGian, int? MaQuanTriVien, string? TenQuanTriVien, IReadOnlyList<KeywordMatch> Matches);
+    DateTime ThoiGian, int? MaQuanTriVien, string? TenQuanTriVien, IReadOnlyList<KeywordMatch> Matches,
+    int ViPhamHieuLuc = 0, bool LaViPhamHieuLuc = true, DateTime? MocTinhViPham = null);
 
-public sealed record ViolationPage(int? SellerId, string? SellerName, IReadOnlyList<ViolationRow> Items, int Page, int TotalItems, int TotalPages, int Threshold);
+public sealed record ViolationPage(
+    int? SellerId, string? SellerName, IReadOnlyList<ViolationRow> Items, int Page, int TotalItems, int TotalPages, int Threshold,
+    int? SellerEffectiveViolations = null, int? SellerTotalViolations = null, DateTime? SellerViolationResetAt = null);
 
 /// <summary>
 /// C1: kiểm duyệt sản phẩm và quản lý vi phạm (Admin). Chỉ gọi stored procedure có sẵn (sp_DuyetSanPham, sp_TuChoiSanPham,
@@ -96,6 +122,13 @@ public interface IProductReviewService
     /// <summary>Duyệt: PENDING_REVIEW -> ACTIVE, không vi phạm. Chặn khi QUEUED/FAILED/chưa quét từ khóa/HIGH.</summary>
     Task<ProductDecisionResult> ApproveAsync(int adminId, int maSanPham, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Duyệt nhanh hàng loạt chỉ cho các sản phẩm đạt chuẩn Làn Xanh
+    /// (DONE + MucDoTuKhoa=NONE + AI thật hybrid:* trả MucRuiRo=LOW &amp; DeXuat=APPROVE).
+    /// Server tự xác minh lại từng sản phẩm, bỏ qua an toàn các sản phẩm Làn Vàng / Fallback / đã xử lý.
+    /// </summary>
+    Task<BulkApproveResult> ApproveGreenLaneAsync(int adminId, IReadOnlyCollection<int> productIds, CancellationToken cancellationToken = default);
+
     /// <summary>Từ chối: PENDING_REVIEW -> REJECTED, bắt buộc lý do (10-500 ký tự). Vi phạm LOW (nếu có) do trigger SQL ghi cùng quyết định.</summary>
     Task<ProductDecisionResult> RejectAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default);
 
@@ -104,6 +137,12 @@ public interface IProductReviewService
     /// D5 (xử lý báo cáo) gọi hàm này với adminId của Admin đang xử lý. Có nhật ký + thông báo người bán.
     /// </summary>
     Task<ProductDecisionResult> RemoveProductAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Phân tích lại (Tầng 1 từ khóa + Tầng 2 AI Hybrid) cho lượt kiểm duyệt đang mở của sản phẩm
+    /// (QUEUED / FAILED / chưa quét / Fallback keyword-v1-fallback / hoặc quét lại sau khi sửa từ khóa).
+    /// </summary>
+    Task<ProductReanalyzeResult> ReanalyzeAsync(int adminId, int maSanPham, CancellationToken cancellationToken = default);
 
     /// <summary>Lịch sử vi phạm (mới nhất trước); sellerId = null: tất cả người bán.</summary>
     Task<ViolationPage> GetViolationsAsync(int? sellerId, int page, CancellationToken cancellationToken = default);

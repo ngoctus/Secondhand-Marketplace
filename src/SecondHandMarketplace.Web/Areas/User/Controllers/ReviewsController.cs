@@ -67,4 +67,59 @@ public class ReviewsController(IReviewService reviewService) : UserBaseControlle
 
         return RedirectToAction("ChiTiet", "Orders", new { area = "User", id = model.MaDonHang });
     }
+
+    /// <summary>
+    /// Danh sách đánh giá khách hàng gửi cho shop của tôi (Kênh Người Bán - C4).
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> Shop(int page = 1, CancellationToken cancellationToken = default)
+    {
+        var userId = User.LayNguoiDungId()!.Value;
+        var vm = await reviewService.LayDanhGiaCuaShopAsync(userId, page, 10, cancellationToken);
+        return View(vm);
+    }
+
+    /// <summary>
+    /// Chủ shop gửi phản hồi giải trình (Reply) cho một đánh giá của khách (C4).
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PhanHoi(PhanHoiDanhGiaVm model, string? returnUrl = null, CancellationToken cancellationToken = default)
+    {
+        var userId = User.LayNguoiDungId()!.Value;
+
+        if (!ModelState.IsValid)
+        {
+            var error = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault() ?? "Dữ liệu phản hồi không hợp lệ.";
+            this.ThongBaoLoi(error);
+
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction(nameof(Shop));
+        }
+
+        var (success, errorMessage) = await reviewService.PhanHoiDanhGiaAsync(
+            model.MaDanhGia,
+            userId,
+            model.PhanHoi,
+            cancellationToken);
+
+        if (success)
+        {
+            this.ThongBaoThanhCong("Đã gửi phản hồi giải trình thành công!");
+        }
+        else
+        {
+            this.ThongBaoLoi(errorMessage ?? "Không thể gửi phản hồi.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return Redirect(returnUrl);
+
+        return RedirectToAction(nameof(Shop));
+    }
 }

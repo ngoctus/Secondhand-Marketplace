@@ -1,7 +1,7 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Areas.ChonKhuVucVm
 @{
-    var tatCaTinh = Model.ChoPhepTatCa ? "Tất cả tỉnh/thành" : "-- Chọn tỉnh/thành --";
-    var tatCaXa = Model.ChoPhepTatCa ? "Tất cả phường/xã" : "-- Chọn phường/xã --";
+    var tatCaTinh = Model.ChoPhepTatCa ? (string)L["KhuVuc_AllProvinces"] : (string)L["KhuVuc_PickProvince"];
+    var tatCaXa = Model.ChoPhepTatCa ? (string)L["KhuVuc_AllWards"] : (string)L["KhuVuc_PickWard"];
     var idTinh = "kv-" + Model.TenFieldTinh;
     var idXa = "kv-" + Model.TenFieldXa;
 }

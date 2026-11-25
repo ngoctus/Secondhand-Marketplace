@@ -142,7 +142,7 @@ public class DisputeService : IDisputeService
         return (true, "Đã gửi yêu cầu khiếu nại tranh chấp thành công. Người bán và Ban quản trị sẽ tiến hành xử lý.");
     }
 
-    public async Task<(bool ThanhCong, string? ThongBao)> NguoiBanPhanHoiAsync(int maChuShop, int maTranhChap, string phanHoi)
+    public async Task<(bool ThanhCong, string? ThongBao)> NguoiBanPhanHoiAsync(int maChuShop, int maTranhChap, string phanHoi, string? anhPhanHoi = null)
     {
         if (string.IsNullOrWhiteSpace(phanHoi))
         {
@@ -152,6 +152,18 @@ public class DisputeService : IDisputeService
         if (phanHoiTrim.Length > 1000)
         {
             return (false, "Nội dung phản hồi không được vượt quá 1000 ký tự.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(anhPhanHoi))
+        {
+            if (anhPhanHoi.Trim().Length > 500)
+            {
+                return (false, "Đường dẫn ảnh bằng chứng phản hồi không được vượt quá 500 ký tự.");
+            }
+            if (!UrlAnToan.HopLe(anhPhanHoi))
+            {
+                return (false, "Đường dẫn ảnh bằng chứng không hợp lệ.");
+            }
         }
 
         var tc = await _db.TranhChaps
@@ -173,6 +185,10 @@ public class DisputeService : IDisputeService
         }
 
         tc.PhanHoiNguoiBan = phanHoiTrim;
+        if (!string.IsNullOrWhiteSpace(anhPhanHoi))
+        {
+            tc.AnhPhanHoi = anhPhanHoi.Trim();
+        }
         tc.NgayCapNhat = DateTime.UtcNow;
         tc.TrangThai = "PROCESSING";
 
@@ -223,6 +239,7 @@ public class DisputeService : IDisputeService
             LyDo = tc.LyDo,
             BangChungAnh = tc.BangChungAnh,
             PhanHoiNguoiBan = tc.PhanHoiNguoiBan,
+            AnhPhanHoi = tc.AnhPhanHoi,
             NgayPhanHoi = tc.PhanHoiNguoiBan != null ? tc.NgayCapNhat : null,
             TrangThai = tc.TrangThai,
             PhanQuyet = tc.PhanQuyet,
@@ -263,6 +280,7 @@ public class DisputeService : IDisputeService
             LyDo = tc.LyDo,
             BangChungAnh = tc.BangChungAnh,
             PhanHoiNguoiBan = tc.PhanHoiNguoiBan,
+            AnhPhanHoi = tc.AnhPhanHoi,
             NgayPhanHoi = tc.PhanHoiNguoiBan != null ? tc.NgayCapNhat : null,
             TrangThai = tc.TrangThai,
             PhanQuyet = tc.PhanQuyet,
@@ -316,6 +334,7 @@ public class DisputeService : IDisputeService
             LyDo = tc.LyDo,
             BangChungAnh = tc.BangChungAnh,
             PhanHoiNguoiBan = tc.PhanHoiNguoiBan,
+            AnhPhanHoi = tc.AnhPhanHoi,
             NgayPhanHoi = tc.PhanHoiNguoiBan != null ? tc.NgayCapNhat : null,
             TrangThai = tc.TrangThai,
             PhanQuyet = tc.PhanQuyet,

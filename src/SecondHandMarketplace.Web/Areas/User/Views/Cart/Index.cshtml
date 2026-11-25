@@ -1,6 +1,6 @@
-﻿@model SecondHandMarketplace.Web.Models.ViewModels.Cart.CartIndexViewModel
+@model SecondHandMarketplace.Web.Models.ViewModels.Cart.CartIndexViewModel
 @{
-    ViewData["Title"] = "Giỏ hàng của bạn";
+    ViewData["Title"] = L["Cart_Title"];
 }
 
 <div class="container my-4" style="max-width: 1100px;">
@@ -8,11 +8,11 @@
     <!-- Tiêu đề trang -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
-            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-cart3 text-success"></i> Giỏ hàng của bạn</h2>
-            <p class="text-muted small mb-0">Các món đồ cũ độc nhất bạn đã chọn mua từ các cửa hàng.</p>
+            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-cart3 text-success"></i> @L["Cart_Title"]</h2>
+            <p class="text-muted small mb-0">@L["Cart_Subtitle"]</p>
         </div>
-        <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-            &larr; Tiếp tục mua sắm
+        <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-rm-secondary btn-sm rounded-pill px-3">
+            &larr; @L["Cart_Continue"]
         </a>
     </div>
 
@@ -20,14 +20,13 @@
 
     @if (!Model.DanhSachNhomShop.Any())
     {
-        <div class="card text-center p-5 border-0 rounded-4 shadow-sm bg-white my-4">
+        <div class="card text-center p-5 border-0 rounded-4 shadow-sm bg-white my-4 rm-empty-state">
             <div class="card-body">
                 <div class="display-3 text-muted mb-3">&#128722;</div>
-                <h4 class="fw-bold text-dark mb-2">Giỏ hàng của bạn đang trống</h4>
-                <p class="text-secondary small mb-4">Hãy dạo quanh sàn Re:Market để tìm những món đồ cũ chất lượng và độc đáo nhé!</p>
-                <a asp-area="" asp-controller="Products" asp-action="Index" class="btn btn-success px-4 py-2 rounded-pill fw-semibold"
-                   style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
-                    Khám phá đồ cũ ngay
+                <h4 class="fw-bold text-dark mb-2">@L["Cart_EmptyTitle"]</h4>
+                <p class="text-secondary small mb-4">@L["Cart_EmptyDesc"]</p>
+                <a asp-area="" asp-controller="Products" asp-action="Index" class="btn btn-rm-primary px-4 py-2 rounded-pill fw-semibold">
+                    @L["Cart_FindProducts"]
                 </a>
             </div>
         </div>
@@ -38,7 +37,7 @@
         {
             <form asp-area="User" asp-controller="Cart" asp-action="XoaMonKhongKhaDung" method="post" class="mb-3">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Dọn các món đã bán hoặc không còn khả dụng</button>
+                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">@L["Cart_CleanUnavailable"]</button>
             </form>
         }
         <div class="row g-4">
@@ -57,7 +56,7 @@
                                     <i class="bi bi-shop me-1 text-success"></i> @shop.TenShop
                                 </label>
                             </div>
-                            <span class="badge bg-white text-muted border rounded-pill px-2 py-1 small">@shop.Items.Count sản phẩm</span>
+                            <span class="badge bg-white text-muted border rounded-pill px-2 py-1 small">@string.Format(L["Cart_ShopProductsCount"].Value, shop.Items.Count)</span>
                         </div>
 
                         <!-- Shop Items Table -->
@@ -67,10 +66,10 @@
                                     <thead class="table-light small text-muted">
                                         <tr>
                                             <th style="width: 45px;" class="ps-4"></th>
-                                            <th>Sản phẩm</th>
-                                            <th style="width: 140px;">Đơn giá</th>
-                                            <th style="width: 100px;" class="text-center">Số lượng</th>
-                                            <th style="width: 70px;" class="text-end pe-4">Xóa</th>
+                                            <th>@L["Cart_ColProduct"]</th>
+                                            <th style="width: 140px;">@L["Cart_ColPrice"]</th>
+                                            <th style="width: 100px;" class="text-center">@L["Cart_ColQuantity"]</th>
+                                            <th style="width: 70px;" class="text-end pe-4">@L["Cart_ColRemove"]</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -105,11 +104,11 @@
                                                             </div>
                                                             @if (!item.CoTheMua)
                                                             {
-                                                                <span class="badge bg-danger-subtle text-danger small mt-1">Không khả dụng (đã bán hoặc đã gỡ)</span>
+                                                                <span class="badge bg-danger-subtle text-danger small mt-1">@L["Cart_Unavailable"]</span>
                                                             }
                                                             else
                                                             {
-                                                                <span class="badge bg-success-subtle text-success small mt-1">Sẵn sàng đặt mua</span>
+                                                                <span class="badge bg-success-subtle text-success small mt-1">@L["Cart_ReadyToOrder"]</span>
                                                             }
                                                         </div>
                                                     </div>
@@ -119,14 +118,14 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <span class="badge bg-light text-dark border px-2 py-1">1</span>
-                                                    <div class="text-muted small" style="font-size: 10px;">Duy nhất</div>
+                                                    <div class="text-muted small" style="font-size: 10px;">@L["Cart_UniqueItem"]</div>
                                                 </td>
                                                 <td class="text-end pe-4">
                                                     <form asp-area="User" asp-controller="Cart" asp-action="Xoa" method="post" class="d-inline"
-                                                          onsubmit="return confirm('Bạn có chắc muốn xóa món đồ này khỏi giỏ hàng?');">
+                                                          onsubmit="return confirm('@L["Cart_ConfirmRemove"].Value');">
                                                         @Html.AntiForgeryToken()
                                                         <input type="hidden" name="maGioHang" value="@item.MaGioHang" />
-                                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle p-1" style="width: 28px; height: 28px; line-height: 1;" title="Xóa món">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle p-1" style="width: 28px; height: 28px; line-height: 1;" title="@L["Cart_ColRemove"]">
                                                             &times;
                                                         </button>
                                                     </form>
@@ -144,31 +143,30 @@
             <!-- Tóm tắt đơn hàng & Checkout -->
             <div class="col-lg-4">
                 <div class="card border-0 shadow-sm rounded-4 bg-white rm-sticky-summary p-4">
-                    <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom">Tóm tắt giỏ hàng</h5>
+                    <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom">@L["Cart_SummaryTitle"]</h5>
 
                     <div class="d-flex justify-content-between mb-2 small">
-                        <span class="text-muted">Món đồ đã chọn:</span>
-                        <strong class="text-dark" id="lbl-tong-mon">@Model.TongSoMonChon sản phẩm</strong>
+                        <span class="text-muted">@L["Cart_SelectedItems"]</span>
+                        <strong class="text-dark" id="lbl-tong-mon">@Model.TongSoMonChon @L["Cart_ItemCountSuffix"]</strong>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-baseline mb-3">
-                        <span class="text-muted">Tổng tạm tính:</span>
+                        <span class="text-muted">@L["Cart_Subtotal"]</span>
                         <span class="h4 fw-bold text-success mb-0" id="lbl-tong-tien">@Model.TongTienTamTinh.ToString("N0") ₫</span>
                     </div>
 
                     <div class="p-3 bg-light rounded-3 border small mb-4">
                         <i class="bi bi-info-circle text-success me-1"></i>
-                        <strong>Lưu ý:</strong> Đồ cũ mỗi món chỉ có 1 cái duy nhất. Nếu nhiều người cùng thêm vào giỏ, ai đặt hàng trước sẽ sở hữu món đồ.
+                        <strong>@L["Cart_NoteTitle"]</strong> @L["Cart_NoteContent"]
                     </div>
 
                     <div class="d-grid gap-2">
                         <a asp-area="User" asp-controller="Orders" asp-action="Checkout" id="btn-checkout"
-                           class="btn btn-success py-2 fw-semibold rounded-pill @(Model.TongSoMonChon == 0 ? "disabled" : "")"
-                           style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
-                            Tiến hành Đặt hàng &rarr;
+                           class="btn btn-rm-primary py-2 fw-semibold rounded-pill @(Model.TongSoMonChon == 0 ? "disabled" : "")">
+                            @L["Cart_ProceedCheckout"] &rarr;
                         </a>
-                        <a asp-area="" asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary py-2 rounded-pill small">
-                            Tìm thêm món đồ khác
+                        <a asp-area="" asp-controller="Products" asp-action="Index" class="btn btn-rm-outline py-2 rounded-pill small">
+                            @L["Cart_FindMore"]
                         </a>
                     </div>
                 </div>
@@ -180,6 +178,7 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const itemSuffix = '@Html.Raw(L["Cart_ItemCountSuffix"].Value)';
             // Checkbox từng sản phẩm
             const afToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
             document.querySelectorAll('.item-checkbox').forEach(function (chk) {
@@ -192,11 +191,7 @@
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': afToken },
                         body: 'maGioHang=' + encodeURIComponent(id) + '&daChon=' + encodeURIComponent(daChon) + '&__RequestVerificationToken=' + encodeURIComponent(afToken)
                     }).then(res => res.json()).then(data => {
-                        if (data && data.success) {
-                            capNhatGiaoDien();
-                        } else {
-                            capNhatGiaoDien();
-                        }
+                        capNhatGiaoDien();
                     }).catch(() => {
                         capNhatGiaoDien();
                     });
@@ -218,11 +213,7 @@
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': afToken },
                         body: 'maCuaHang=' + encodeURIComponent(shopId) + '&daChon=' + encodeURIComponent(daChon) + '&__RequestVerificationToken=' + encodeURIComponent(afToken)
                     }).then(res => res.json()).then(data => {
-                        if (data && data.success) {
-                            capNhatGiaoDien();
-                        } else {
-                            capNhatGiaoDien();
-                        }
+                        capNhatGiaoDien();
                     }).catch(() => {
                         capNhatGiaoDien();
                     });
@@ -238,7 +229,13 @@
                     tongTien += parseFloat(chk.getAttribute('data-price') || 0);
                 });
 
-                document.getElementById('lbl-tong-mon').innerText = tongMon + ' sản phẩm';
+                document.querySelectorAll('.shop-select-all').forEach(function (chkShop) {
+                    const shopId = chkShop.getAttribute('data-shop-id');
+                    const items = document.querySelectorAll('.item-checkbox[data-shop-id="' + shopId + '"]');
+                    chkShop.checked = items.length > 0 && Array.from(items).every(function (c) { return c.checked; });
+                });
+
+                document.getElementById('lbl-tong-mon').innerText = tongMon + ' ' + itemSuffix;
                 document.getElementById('lbl-tong-tien').innerText = new Intl.NumberFormat('vi-VN').format(tongTien) + ' ₫';
 
                 const btnCheckout = document.getElementById('btn-checkout');

@@ -29,7 +29,7 @@ Các migration bổ sung trước đây đã được hợp nhất vào schema c
 | `10_moderation_admin_procedures.sql` | Procedure kiểm duyệt và quản trị |
 | `11_extensions.sql` | Procedure đánh giá và đấu giá |
 | `12_seed_core.sql` | Seed hệ thống, chạy cả DEV/TEST và DEPLOY |
-| `13_seed_demo.sql` | Seed tài khoản/sản phẩm/địa chỉ shop/đơn hàng/tranh chấp/báo cáo/đánh giá demo, chỉ DEV/TEST |
+| `13_seed_demo.sql` | Seed tài khoản/sản phẩm/địa chỉ shop/đơn hàng/tranh chấp/báo cáo/đánh giá demo, gồm cả đợt 2 (`sp131`–`sp160`, 40 đơn, đánh giá, yêu thích, thông báo); chỉ DEV/TEST |
 
 Các đối tượng được phân tách theo loại để dễ tra cứu. Dependencies được giữ theo thứ tự: schema → constraints/indexes → functions → views → triggers → procedures → seed.
 
@@ -91,7 +91,7 @@ run-db.bat
 ## 5. Seed
 
 - `12_seed_core.sql`: danh mục, tình trạng sản phẩm, từ khóa mặc định, dữ liệu địa giới hành chính, banner mặc định và cấu hình AI.
-- `13_seed_demo.sql`: hợp nhất theo đúng thứ tự seed gốc → địa chỉ shop → đơn hàng → đánh giá. Chỉ được gọi khi `DB_MODE=dev` hoặc `test`.
+- `13_seed_demo.sql`: hợp nhất theo đúng thứ tự seed gốc → địa chỉ shop → đơn hàng → đánh giá, sau đó là seed bổ sung đợt 2 (30 sản phẩm `sp131`–`sp160`, 40 đơn, 15 đánh giá, yêu thích, thông báo). Phần bổ sung có guard idempotent nên chạy lại không nhân đôi dữ liệu. Chỉ được gọi khi `DB_MODE=dev` hoặc `test`.
 - `templates/seed_admin_deploy.template.sql`: mẫu seed Admin riêng cho triển khai; không tự chạy trong bootstrap.
 
 Dữ liệu địa giới hành chính được sinh từ `data/provinces_v2_depth2.json`. Chạy `tools/gen_dia_chi_insert.ps1` để cập nhật phần giữa hai marker `BEGIN GENERATED DATA` và `END GENERATED DATA` trong `12_seed_core.sql`.

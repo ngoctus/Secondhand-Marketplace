@@ -1,4 +1,4 @@
-﻿SET ANSI_NULLS ON;
+SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 SET ARITHABORT ON;
 GO
@@ -9,6 +9,8 @@ GO
 -- Toàn bộ 30 bảng đã ở trạng thái schema cuối cùng; không còn ALTER TABLE ADD COLUMN ở các file module.
 
 DROP TABLE IF EXISTS dbo.PasswordResetOtp;
+DROP TABLE IF EXISTS dbo.KhieuNaiTaiKhoan;
+DROP TABLE IF EXISTS dbo.CauHinhKhieuNaiTaiKhoan;
 DROP TABLE IF EXISTS dbo.TinNhan;
 DROP TABLE IF EXISTS dbo.HoiThoai;
 DROP TABLE IF EXISTS dbo.LuotDatGia;
@@ -51,6 +53,8 @@ CREATE TABLE NguoiDung (
     TrangThai       varchar(10)    NOT NULL CONSTRAINT DF_NguoiDung_TrangThai DEFAULT ('ACTIVE'),
     LyDoKhoa        nvarchar(500)  NULL,
     ThoiGianKhoa    datetime2(3)   NULL,
+    MocTinhViPham   datetime2(3)   NULL,
+    SoLanBiKhoa     int            NOT NULL CONSTRAINT DF_NguoiDung_SoLanBiKhoa DEFAULT (0),
     AnhDaiDien      varchar(500)   NULL,
     DiaChiMacDinh   nvarchar(500)  NULL,
     NgayTao         datetime2(3)   NOT NULL CONSTRAINT DF_NguoiDung_NgayTao     DEFAULT (SYSUTCDATETIME()),
@@ -323,6 +327,8 @@ BEGIN
         MaCuaHang     int            NOT NULL,
         SoSao         tinyint        NOT NULL,
         NoiDung       nvarchar(1000) NULL,
+        PhanHoiShop   nvarchar(1000) NULL,
+        NgayPhanHoi   datetime2(3)   NULL,
         TrangThai     varchar(10)    NOT NULL CONSTRAINT DF_DanhGia_TrangThai DEFAULT ('VISIBLE'),
         NgayTao       datetime2(3)   NOT NULL CONSTRAINT DF_DanhGia_NgayTao   DEFAULT (SYSUTCDATETIME())
     );
@@ -339,6 +345,7 @@ BEGIN
         LyDo              nvarchar(500)  NOT NULL,
         BangChungAnh      nvarchar(500)  NULL,
         PhanHoiNguoiBan   nvarchar(1000) NULL,
+        AnhPhanHoi        nvarchar(500)  NULL,
         TrangThai         varchar(20)    NOT NULL CONSTRAINT DF_TranhChap_TrangThai DEFAULT ('OPEN'),
         PhanQuyet         nvarchar(500)  NULL,
         GhiChuAdmin       nvarchar(1000) NULL,
@@ -506,9 +513,48 @@ BEGIN
 END;
 GO
 
+IF OBJECT_ID(N'dbo.KhieuNaiTaiKhoan', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.KhieuNaiTaiKhoan (
+        MaKhieuNai          int            IDENTITY(1,1) NOT NULL,
+        MaNguoiDung         int            NOT NULL,
+        LoaiYeuCau          varchar(20)    NOT NULL,
+        LanKhoaThu          int            NOT NULL,
+        LyDoKhoaLucGui      nvarchar(500)  NOT NULL,
+        NoiDung             nvarchar(2000) NOT NULL,
+        BangChungAnh        varchar(500)   NULL,
+        YeuCauPhi           bit            NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_YeuCauPhi DEFAULT (0),
+        SoTienPhi           decimal(18,2)  NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_SoTienPhi DEFAULT (0),
+        MaGiaoDichThamChieu varchar(40)    NULL,
+        TrangThai           varchar(20)    NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_TrangThai DEFAULT ('PENDING'),
+        GhiChuAdmin         nvarchar(1000) NULL,
+        NguoiXuLyId         int            NULL,
+        NgayTao             datetime2(3)   NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_NgayTao   DEFAULT (SYSUTCDATETIME()),
+        NgayXuLy            datetime2(3)   NULL
+    );
+END;
+GO
+
+IF OBJECT_ID(N'dbo.CauHinhKhieuNaiTaiKhoan', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.CauHinhKhieuNaiTaiKhoan (
+        Id                int           NOT NULL,
+        SoLanGuiMoiChuKy  int           NOT NULL CONSTRAINT DF_CauHinhKhieuNai_SoLanGui    DEFAULT (2),
+        CooldownPhut      int           NOT NULL CONSTRAINT DF_CauHinhKhieuNai_Cooldown    DEFAULT (4320),
+        PhiMoKhoaLan2     decimal(18,2) NOT NULL CONSTRAINT DF_CauHinhKhieuNai_Phi         DEFAULT (200000),
+        TenNganHang       nvarchar(100) NOT NULL,
+        MaNganHang        varchar(20)   NOT NULL,
+        SoTaiKhoan        varchar(30)   NOT NULL,
+        ChuTaiKhoan       nvarchar(100) NOT NULL,
+        NgayCapNhat       datetime2(3)  NOT NULL CONSTRAINT DF_CauHinhKhieuNai_NgayCapNhat DEFAULT (SYSUTCDATETIME()),
+        NguoiCapNhatId    int           NULL
+    );
+END;
+GO
+
 DROP SEQUENCE IF EXISTS dbo.sq_MaDonHang;
 CREATE SEQUENCE dbo.sq_MaDonHang AS int START WITH 1 INCREMENT BY 1 CACHE 50;
 GO
 
-PRINT N'Đã tạo xong 31 bảng và sequence sq_MaDonHang.';
+PRINT N'Đã tạo xong 33 bảng và sequence sq_MaDonHang.';
 GO

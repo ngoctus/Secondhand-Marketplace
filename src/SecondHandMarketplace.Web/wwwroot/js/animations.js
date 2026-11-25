@@ -68,14 +68,14 @@
         }, { once: true });
     }
 
-    khiSanSang(function () {
-        var theHienDan = document.querySelectorAll('[data-rm-reveal]');
+    function quet(root) {
+        var theHienDan = root.querySelectorAll('[data-rm-reveal]');
         theHienDan.forEach(function (el) {
             var c = el.getAttribute('data-rm-reveal');
             el.setAttribute('data-rm-reveal', c === '' ? 'up' : c);
         });
 
-        document.querySelectorAll('[data-rm-stagger]').forEach(function (grid) {
+        root.querySelectorAll('[data-rm-stagger]').forEach(function (grid) {
             Array.prototype.slice.call(grid.children).forEach(function (child, i) {
                 if (child.nodeType !== 1) return;
                 if (!child.hasAttribute('data-rm-reveal')) child.setAttribute('data-rm-reveal', 'up');
@@ -83,10 +83,15 @@
             });
         });
 
-        var tatCa = document.querySelectorAll('[data-rm-reveal]');
-        quanSat(tatCa, function (el) { el.classList.add('rm-reveal-in'); });
-        quanSat(document.querySelectorAll('[data-rm-count]'), demTangDan,
+        quanSat(root.querySelectorAll('[data-rm-reveal]'), function (el) { el.classList.add('rm-reveal-in'); });
+        quanSat(root.querySelectorAll('[data-rm-count]'), demTangDan,
             { rootMargin: '0px', threshold: 0.4 });
-        document.querySelectorAll('[data-rm-media]').forEach(skeletonAnh);
-    });
+        root.querySelectorAll('[data-rm-media]').forEach(skeletonAnh);
+    }
+
+    // Khối nội dung nạp bằng fetch (lọc nhanh B-04) không đi qua DOMContentLoaded lần nữa,
+    // nên trang gọi hàm này sau khi thay HTML để thẻ mới cũng được reveal như thẻ cũ.
+    window.rmHienThien = function (root) { quet(root || document); };
+
+    khiSanSang(function () { window.rmHienThien(document); });
 })();

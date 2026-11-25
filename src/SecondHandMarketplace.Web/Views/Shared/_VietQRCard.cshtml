@@ -124,6 +124,9 @@
                     <button type="submit" class="btn btn-success w-100 rounded-pill fw-semibold py-2 shadow-sm">
                         <i class="bi bi-check-circle-fill me-1"></i> Tôi đã chuyển khoản xong
                     </button>
+                    <div class="text-center text-muted small mt-2" style="font-size: 11.5px;">
+                        <i class="bi bi-bell me-1"></i>Hệ thống sẽ gửi thông báo đến chủ shop để đối soát giao dịch và chuẩn bị hàng.
+                    </div>
                 </form>
             }
 
@@ -162,12 +165,6 @@
 </div>
 
 <script>
-function copyVietQr(elementId, btn) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    const text = el.innerText.trim();
-    copyTextToClipboard(text, btn);
-}
 function copyVietQrRaw(text, btn) {
     copyTextToClipboard(text, btn);
 }
@@ -176,7 +173,14 @@ function copyTextToClipboard(text, btn) {
         const orig = btn.innerHTML;
         btn.innerHTML = '<i class="bi bi-check2"></i> Đã chép!';
         btn.classList.add('btn-success');
-        if (typeof window.showToast === 'function') {
+        if (window.showNotifyBox) {
+            window.showNotifyBox({
+                title: 'Đã sao chép!',
+                message: 'Đã sao chép nội dung: "' + text + '" vào bộ nhớ tạm.',
+                type: 'success',
+                autoCloseMs: 2500
+            });
+        } else if (typeof window.showToast === 'function') {
             window.showToast('Đã sao chép: ' + text, 'info', 2500);
         }
         setTimeout(() => {
@@ -184,13 +188,17 @@ function copyTextToClipboard(text, btn) {
             btn.classList.remove('btn-success');
         }, 1800);
     }).catch(err => {
-        if (typeof window.showToast === 'function') {
+        if (window.showNotifyBox) {
+            window.showNotifyBox({
+                title: 'Không thể tự sao chép',
+                message: 'Vui lòng chọn và sao chép thủ công: ' + text,
+                type: 'warning'
+            });
+        } else if (typeof window.showToast === 'function') {
             window.showToast('Không thể sao chép tự động: ' + text, 'warning', 3500);
         } else {
-            prompt('Sao chép nội dung bên dưới:', text);
+            prompt('Vui lòng sao chép thủ công:', text);
         }
-    });
-}
     });
 }
 </script>

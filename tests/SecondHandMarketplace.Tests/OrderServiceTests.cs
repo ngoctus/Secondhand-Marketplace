@@ -588,6 +588,48 @@ public class OrderServiceTests
     }
 
     [Fact]
+    public async Task XacNhanThanhToanChuyenKhoanAsync_NguoiMuaXacNhan_GuiThongBaoChoShopVaLuuLichSu()
+    {
+        using var db = GetInMemoryDbContext("OrderTest_BuyerNotifySellerPayment");
+        var fakeCart = new FakeCartService();
+        var fakeNotify = new FakeNotificationService();
+        var service = new OrderService(db, fakeCart, fakeNotify);
+
+        var shop = new CuaHang { MaCuaHang = 10, MaNguoiDung = 88, TenShop = "Shop 88", TrangThai = "ACTIVE" };
+        var don = new DonHang
+        {
+            MaDonHang = 501,
+            MaNguoiDung = 5,
+            MaCuaHang = 10,
+            MaDon = "DH501",
+            PhuongThucThanhToan = "BANK_TRANSFER",
+            TrangThai = "CONFIRMED",
+            TrangThaiThanhToan = "PENDING",
+            TongTien = 250000,
+            CuaHang = shop
+        };
+        db.CuaHangs.Add(shop);
+        db.DonHangs.Add(don);
+        await db.SaveChangesAsync();
+
+        var (ok, msg) = await service.XacNhanThanhToanChuyenKhoanAsync(5, 501);
+        Assert.True(ok);
+        Assert.Contains("người bán", msg);
+
+        // Trạng thái thanh toán vẫn là PENDING vì cần shop tự kiểm tra
+        var donDb = await db.DonHangs.FindAsync(501);
+        Assert.Equal("PENDING", donDb!.TrangThaiThanhToan);
+
+        // Có thông báo gửi đến chủ shop (UserId = 88)
+        Assert.Contains(fakeNotify.Notifications, n => n.UserId == 88 && n.Content.Contains("DH501"));
+
+        // Có ghi lại lịch sử trạng thái
+        var history = await db.LichSuTrangThaiDonHangs.FirstOrDefaultAsync(h => h.MaDonHang == 501);
+        Assert.NotNull(history);
+        Assert.Contains("chuyển khoản", history.LyDo);
+    }
+
+    [Fact]
     public async Task XacNhanDaNhanTienShopAsync_DonPendingHoacDaHuy_KhongChoXacNhan()
     {
         using var db = GetInMemoryDbContext("OrderTest_ShopPaymentPendingCheck");

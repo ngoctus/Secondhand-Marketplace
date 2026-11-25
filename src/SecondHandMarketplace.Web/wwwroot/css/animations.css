@@ -206,3 +206,13 @@ html.rm-motion .section-label::after {
         filter: none;
     }
 }
+
+/* B-02: tab danh mục trang chủ mờ lên nhẹ khi chuyển tab */
+html.rm-motion .rm-cat-contents .pane-cat.show.active {
+    animation: rmTabIn 0.32s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+@keyframes rmTabIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}

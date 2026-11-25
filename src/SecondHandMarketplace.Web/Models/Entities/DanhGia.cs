@@ -13,6 +13,10 @@ public class DanhGia
     public int MaCuaHang { get; set; }
     public byte SoSao { get; set; }
     public string? NoiDung { get; set; }
+    /// <summary>Phản hồi giải trình từ chủ shop (tối đa 1 000 ký tự).</summary>
+    public string? PhanHoiShop { get; set; }
+    /// <summary>Thời điểm chủ shop gửi phản hồi.</summary>
+    public DateTime? NgayPhanHoi { get; set; }
     public string TrangThai { get; set; } = "VISIBLE";
     public DateTime NgayTao { get; set; } = DateTime.UtcNow;
 

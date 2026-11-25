@@ -1,20 +1,20 @@
 ﻿@model ProductFormVm
 @{
-    ViewData["Title"] = "Sửa sản phẩm";
+    ViewData["Title"] = L["Form_EditTitle"];
 }
 
 <div class="rm-main-content" style="padding-top:8px; max-width:860px; margin:0 auto;">
     <div class="card shadow-sm border-0 rounded-3 p-4">
-        <h2 style="font-family:'Playfair Display',serif; font-size:22px;" class="mb-3">Sửa sản phẩm</h2>
+        <h2 style="font-family:'Playfair Display',serif; font-size:22px;" class="mb-3">@L["Form_EditTitle"]</h2>
 
         <form asp-area="User" asp-controller="Products" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
             <partial name="_ProductForm" model="Model" />
         </form>
 
         <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-            <a asp-action="Index" class="text-decoration-none">← Quay lại danh sách</a>
-            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này?');">
-                <button type="submit" class="btn btn-outline-danger btn-sm">Xóa sản phẩm này</button>
+            <a asp-action="Index" class="text-decoration-none">← @L["Form_BackToList"]</a>
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('@L["Form_ConfirmDeleteThis"]');">
+                <button type="submit" class="btn btn-outline-danger btn-sm">@L["Form_DeleteThis"]</button>
             </form>
         </div>
     </div>
@@ -22,7 +22,10 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/anh-dang-tin.js" asp-append-version="true" defer></script>
     <script src="~/js/ai-mo-ta.js" asp-append-version="true" defer
             data-ai-mota-chat-url="@Url.Content("~/api/ai/chat")"
-            data-ai-mota-status-url="@Url.Content("~/api/ai/status")"></script>
+            data-ai-gia-url="@Url.Content("~/api/ai/suggest-price")"
+            data-ai-mota-status-url="@Url.Content("~/api/ai/status")"
+            data-lang="@(HienThi.LaTiengAnh ? "en" : "vi")"></script>
 }
