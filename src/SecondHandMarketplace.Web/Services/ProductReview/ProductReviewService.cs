@@ -318,7 +318,7 @@ public class ProductReviewService(
                 Review: after);
         }
 
-        var lane = ReviewDisplay.DescribeLane(after.AnalysisStatus, after.Level, after.RiskLevel, after.Recommendation, after.ModelVersion);
+        var lane = ReviewDisplay.DescribeLane(after.AnalysisStatus, after.Level, after.RiskLevel, after.Recommendation, after.ModelVersion, forceVietnamese: true);
         return new ProductReanalyzeResult(
             true, null, AlreadyDecided: false, AutoRejected: false, IsFallback: false,
             Message: $"Đã phân tích lại thành công — Kết quả: {lane.Text}.",

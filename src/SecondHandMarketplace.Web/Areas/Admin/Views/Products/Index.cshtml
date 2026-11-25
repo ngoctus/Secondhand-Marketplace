@@ -1,87 +1,145 @@
+@using System.Text.Json
 @using SecondHandMarketplace.Web.Services.ProductReview
 @model SecondHandMarketplace.Web.Services.ProductReview.ProductListPage
 @{
-    ViewData["Title"] = "Kiểm duyệt sản phẩm";
+    ViewData["Title"] = L["AdminMod_Title"].Value;
     var pending = Model.Tab == ProductReviewTabs.Pending;
     var greenLaneIds = pending
         ? Model.Items.Where(x => x.IsGreenLane).Select(x => x.MaSanPham).ToList()
         : new List<int>();
+    var greenConfirmJs = JsonSerializer.Serialize(L["AdminMod_GreenLaneConfirm", greenLaneIds.Count].Value);
 }
 <div class="container-fluid py-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-        <h2 class="mb-0">Kiểm duyệt sản phẩm</h2>
-        @if (pending && greenLaneIds.Count > 0)
-        {
-            <form asp-action="ApproveGreenLane" method="post" onsubmit="return confirm('Duyệt nhanh @greenLaneIds.Count sản phẩm Làn Xanh (đã qua AI kiểm duyệt an toàn)?');">
-                @foreach (var gid in greenLaneIds)
-                {
-                    <input type="hidden" name="productIds" value="@gid" />
-                }
-                <button type="submit" class="btn btn-success btn-sm">Duyệt nhanh Làn Xanh (@greenLaneIds.Count)</button>
-            </form>
-        }
-    </div>
-    <ul class="nav nav-tabs mb-3">
-        <li class="nav-item"><a class="nav-link @(pending ? "active" : "")" asp-action="Index" asp-route-tab="@ProductReviewTabs.Pending">Chờ duyệt</a></li>
-        <li class="nav-item"><a class="nav-link @(pending ? "" : "active")" asp-action="Index" asp-route-tab="@ProductReviewTabs.Active">Đang bán (gỡ vi phạm)</a></li>
-    </ul>
-
-    <div class="table-responsive">
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th style="width:72px"></th><th>Sản phẩm</th><th>Người bán / Shop</th><th>Giá</th>
-                    <th>@(pending ? "Gửi lúc" : "Cập nhật")</th>
-                    @if (pending) { <th>Phân làn &amp; Phân tích AI</th> }
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var item in Model.Items)
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="h4 fw-bold mb-1">@L["AdminMod_Title"]</h2>
+            <p class="text-muted small mb-0">@L["AdminMod_Subtitle"]</p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 rounded-pill">
+                @L["AdminMod_TotalProducts", Model.TotalItems]
+            </span>
+            @if (pending && greenLaneIds.Count > 0)
             {
-                var lane = ReviewDisplay.DescribeLane(item.AnalysisStatus, item.Level, item.RiskLevel, item.Recommendation, item.ModelVersion);
-                var rec = ReviewDisplay.DescribeRecommendation(item.Recommendation);
-                <tr>
-                    <td>
-                        @if (!string.IsNullOrWhiteSpace(item.AnhDaiDien))
-                        {
-                            <img src="@item.AnhDaiDien" alt="@item.Ten" style="width:64px;height:64px;object-fit:cover" class="rounded" loading="lazy" data-fallback />
-                        }
-                    </td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@item.MaSanPham"><strong>@item.Ten</strong></a>
-                        <div class="small text-muted">@item.TenDanhMuc</div>
-                    </td>
-                    <td>@item.TenNguoiBan<div class="small text-muted">@item.EmailNguoiBan · @item.TenShop</div></td>
-                    <td>@(item.Gia?.ToString("N0"))</td>
-                    <td>@HienThi.NgayGio(item.Moc)</td>
-                    @if (pending)
+                <form asp-action="ApproveGreenLane" method="post" class="m-0" onsubmit="return confirm(@greenConfirmJs);">
+                    @foreach (var gid in greenLaneIds)
                     {
-                        <td>
-                            <div><span class="badge @lane.BadgeClass">@lane.Text</span></div>
-                            @if (!string.IsNullOrWhiteSpace(item.Recommendation))
+                        <input type="hidden" name="productIds" value="@gid" />
+                    }
+                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold">
+                        <i class="bi bi-check2-all me-1"></i>@L["AdminMod_GreenLaneBtn", greenLaneIds.Count]
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div class="card-header bg-white border-bottom px-3 pt-3 pb-0">
+            <ul class="nav nav-tabs border-0">
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold @(pending ? "active" : "text-muted")" asp-action="Index" asp-route-tab="@ProductReviewTabs.Pending">
+                        <i class="bi bi-hourglass-split me-1"></i>@L["AdminMod_TabPending"]
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold @(pending ? "text-muted" : "active")" asp-action="Index" asp-route-tab="@ProductReviewTabs.Active">
+                        <i class="bi bi-shield-x me-1"></i>@L["AdminMod_TabActive"]
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th class="ps-3" style="width:76px"></th>
+                        <th>@L["AdminMod_ColProduct"]</th>
+                        <th>@L["AdminMod_ColSeller"]</th>
+                        <th>@L["AdminMod_ColPrice"]</th>
+                        <th>@(pending ? L["AdminMod_ColSubmitted"].Value : L["AdminMod_ColUpdated"].Value)</th>
+                        @if (pending)
+                        {
+                            <th>@L["AdminMod_ColAiAnalysis"]</th>
+                        }
+                        <th class="text-end pe-3">@L["Common_Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    var lane = ReviewDisplay.DescribeLane(item.AnalysisStatus, item.Level, item.RiskLevel, item.Recommendation, item.ModelVersion);
+                    var rec = ReviewDisplay.DescribeRecommendation(item.Recommendation);
+                    <tr>
+                        <td class="ps-3">
+                            @if (!string.IsNullOrWhiteSpace(item.AnhDaiDien))
                             {
-                                <div class="small text-muted mt-1">@rec.Text</div>
+                                <img src="@item.AnhDaiDien" alt="@item.Ten" style="width:56px;height:56px;object-fit:cover" class="rounded-3 border" loading="lazy" data-fallback />
+                            }
+                            else
+                            {
+                                <div class="rounded-3 border bg-light d-flex align-items-center justify-content-center text-muted" style="width:56px;height:56px;">
+                                    <i class="bi bi-image"></i>
+                                </div>
                             }
                         </td>
-                    }
-                    <td><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@item.MaSanPham">@(pending ? "Xem & xử lý" : "Xem / gỡ")</a></td>
-                </tr>
-            }
-            @if (Model.Items.Count == 0)
-            {
-                <tr><td colspan="@(pending ? 7 : 6)" class="text-center text-muted">@(pending ? "Không có sản phẩm nào đang chờ duyệt." : "Không có sản phẩm đang bán.")</td></tr>
-            }
-            </tbody>
-        </table>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.MaSanPham" class="fw-semibold text-dark text-decoration-none">@item.Ten</a>
+                            @if (!string.IsNullOrWhiteSpace(item.TenDanhMuc))
+                            {
+                                <div class="small text-muted">@HienThi.TenDanhMuc(item.TenDanhMuc)</div>
+                            }
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark">@item.TenNguoiBan</div>
+                            <div class="small text-muted">@item.EmailNguoiBan · @item.TenShop</div>
+                        </td>
+                        <td class="fw-semibold text-nowrap">@(item.Gia.HasValue ? HienThi.Tien(item.Gia.Value) : "—")</td>
+                        <td class="small text-muted text-nowrap">@HienThi.NgayGio(item.Moc)</td>
+                        @if (pending)
+                        {
+                            <td>
+                                <div><span class="badge @lane.BadgeClass rounded-pill px-2 py-1">@lane.Text</span></div>
+                                @if (!string.IsNullOrWhiteSpace(item.Recommendation))
+                                {
+                                    <div class="small text-muted mt-1">@rec.Text</div>
+                                }
+                            </td>
+                        }
+                        <td class="text-end pe-3">
+                            <a class="btn btn-sm btn-outline-primary rounded-pill px-3 text-nowrap" asp-action="Details" asp-route-id="@item.MaSanPham">
+                                @(pending ? L["AdminMod_BtnReview"].Value : L["AdminMod_BtnViewRemove"].Value)
+                            </a>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@(pending ? 7 : 6)" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            @(pending ? L["AdminMod_EmptyPending"].Value : L["AdminMod_EmptyActive"].Value)
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="d-flex justify-content-between">
-        <span>Tổng @Model.TotalItems sản phẩm</span>
-        <div class="d-flex gap-2">
-            @if (Model.Page > 1) { <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-tab="@Model.Tab" asp-route-page="@(Model.Page - 1)">Trước</a> }
-            <span class="align-self-center">Trang @Model.Page / @Math.Max(1, Model.TotalPages)</span>
-            @if (Model.Page < Model.TotalPages) { <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-tab="@Model.Tab" asp-route-page="@(Model.Page + 1)">Sau</a> }
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <span class="small text-muted">@L["AdminMod_TotalProducts", Model.TotalItems]</span>
+        <div class="d-flex gap-2 align-items-center">
+            @if (Model.Page > 1)
+            {
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-tab="@Model.Tab" asp-route-page="@(Model.Page - 1)">@L["Btn_Prev"]</a>
+            }
+            <span class="small">@L["Common_Page"] @Model.Page / @Math.Max(1, Model.TotalPages)</span>
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-tab="@Model.Tab" asp-route-page="@(Model.Page + 1)">@L["Btn_Next"]</a>
+            }
         </div>
     </div>
 </div>

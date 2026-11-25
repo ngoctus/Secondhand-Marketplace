@@ -1,66 +1,97 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Notifications.NotificationListVm
 @{
-    ViewData["Title"] = "Thông báo";
-    static string TenLoai(string loai) => loai switch
+    ViewData["Title"] = L["Notify_Title"].Value;
+    Func<string, string> tenLoai = loai => loai switch
     {
-        "ORDER" => "Đơn hàng",
-        "PRODUCT" => "Sản phẩm",
-        _ => "Hệ thống"
+        "ORDER" => L["Notify_TypeOrder"].Value,
+        "PRODUCT" => L["Notify_TypeProduct"].Value,
+        _ => L["Notify_TypeSystem"].Value
     };
 }
-<div class="container py-4 rm-thong-bao">
-    <div class="d-flex justify-content-between align-items-center mb-3 tb-head">
-        <h2 class="mb-0">Thông báo</h2>
-        <span class="text-muted">Chưa đọc: <strong>@Model.UnreadCount</strong></span>
+<div class="container py-4 rm-thong-bao" style="max-width: 900px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2 tb-head">
+        <div>
+            <h2 class="h3 fw-bold mb-1 font-serif">
+                <i class="bi bi-bell me-1" style="color: var(--color-primary);"></i> @L["Notify_Title"]
+            </h2>
+            <span class="text-muted small">@L["UserNotify_UnreadLabel"] <strong class="text-dark">@Model.UnreadCount</strong></span>
+        </div>
+        @if (Model.UnreadCount > 0)
+        {
+            <form asp-action="MarkAllRead" method="post" class="m-0">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-rm-outline rounded-pill py-1 px-3 small">
+                    <i class="bi bi-check2-all me-1"></i> @L["Notify_MarkAll"]
+                </button>
+            </form>
+        }
     </div>
 
     @if (Model.Items.Count == 0)
     {
-        <div class="empty panel">Bạn chưa có thông báo nào.</div>
+        <div class="card border-0 shadow-sm rounded-4 bg-white text-center p-5">
+            <div class="text-muted fs-2 mb-2"><i class="bi bi-bell-slash"></i></div>
+            <div class="text-muted">@L["Notify_Empty"]</div>
+        </div>
     }
     else
     {
-        <div class="list-group mb-3">
-            @foreach (var item in Model.Items)
-            {
-                <div class="list-group-item d-flex justify-content-between align-items-start gap-3 @(item.DaDoc ? null : "is-unread")">
-                    <div>
-                        <div class="tb-title">
-                            @if (item.MaThamChieu.HasValue)
-                            {
-                                <a asp-action="ChiTiet" asp-route-id="@item.MaThongBao" class="text-decoration-none text-dark fw-bold">@item.TieuDe</a>
-                            }
-                            else
-                            {
-                                @item.TieuDe
-                            }
-                            @if (!item.DaDoc) { <span class="tb-badge">MỚI</span> }
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-3">
+            <div class="list-group list-group-flush">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="list-group-item p-3 d-flex justify-content-between align-items-start gap-3 @(item.DaDoc ? null : "is-unread")"
+                         style="@(item.DaDoc ? "" : "background-color: var(--color-primary-subtle);")">
+                        <div class="min-w-0 flex-grow-1">
+                            <div class="tb-title d-flex align-items-center gap-2 flex-wrap mb-1">
+                                @if (item.MaThamChieu.HasValue)
+                                {
+                                    <a asp-action="ChiTiet" asp-route-id="@item.MaThongBao" class="text-decoration-none text-dark fw-bold">@item.TieuDe</a>
+                                }
+                                else
+                                {
+                                    <strong class="text-dark">@item.TieuDe</strong>
+                                }
+                                @if (!item.DaDoc)
+                                {
+                                    <span class="badge rounded-pill" style="background-color: var(--color-primary); font-size: 10px;">@L["Notify_New"]</span>
+                                }
+                            </div>
+                            <div class="tb-body text-secondary small mb-1">@item.NoiDung</div>
+                            <div class="tb-meta text-muted" style="font-size: 12px;">
+                                <span class="fw-semibold">@tenLoai(item.Loai)</span> · @HienThi.NgayGio(item.NgayTao)
+                            </div>
                         </div>
-                        <div class="tb-body">@item.NoiDung</div>
-                        <div class="tb-meta">@TenLoai(item.Loai) · @HienThi.NgayGio(item.NgayTao)</div>
+                        @if (!item.DaDoc)
+                        {
+                            <form asp-action="MarkRead" method="post" class="flex-shrink-0">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.MaThongBao" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <button type="submit" class="btn-rm-outline rounded-pill py-1 px-3" style="font-size: 12px;">@L["UserNotify_MarkRead"]</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-muted border rounded-pill px-2 py-1 flex-shrink-0">@L["UserNotify_Read"]</span>
+                        }
                     </div>
-                    @if (!item.DaDoc)
-                    {
-                        <form asp-action="MarkRead" method="post" class="flex-shrink-0">
-                            <input type="hidden" name="id" value="@item.MaThongBao" />
-                            <input type="hidden" name="page" value="@Model.Page" />
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Đánh dấu đã đọc</button>
-                        </form>
-                    }
-                    else
-                    {
-                        <span class="tb-read flex-shrink-0">Đã đọc</span>
-                    }
-                </div>
-            }
+                }
+            </div>
         </div>
 
-        <div class="d-flex justify-content-between">
-            <span>Tổng @Model.TotalItems thông báo</span>
-            <div class="d-flex gap-2">
-                @if (Model.Page > 1) { <a class="btn btn-sm btn-outline-secondary" asp-route-page="@(Model.Page - 1)">Trước</a> }
-                <span class="align-self-center">Trang @Model.Page / @Math.Max(1, Model.TotalPages)</span>
-                @if (Model.Page < Model.TotalPages) { <a class="btn btn-sm btn-outline-secondary" asp-route-page="@(Model.Page + 1)">Sau</a> }
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+            <span class="small text-muted">@L["UserNotify_Total", Model.TotalItems]</span>
+            <div class="d-flex gap-2 align-items-center">
+                @if (Model.Page > 1)
+                {
+                    <a class="btn-rm-outline py-1 px-3 small" asp-route-page="@(Model.Page - 1)">@L["Btn_Prev"]</a>
+                }
+                <span class="small text-muted">@L["Common_Page"] @Model.Page / @Math.Max(1, Model.TotalPages)</span>
+                @if (Model.Page < Model.TotalPages)
+                {
+                    <a class="btn-rm-outline py-1 px-3 small" asp-route-page="@(Model.Page + 1)">@L["Btn_Next"]</a>
+                }
             </div>
         </div>
     }

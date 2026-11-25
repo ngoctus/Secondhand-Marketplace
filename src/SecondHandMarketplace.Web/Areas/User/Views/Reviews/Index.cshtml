@@ -1,30 +1,25 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Reviews.DanhSachDanhGiaCuaToiVm
 @{
-    ViewData["Title"] = "Đánh giá của tôi";
+    ViewData["Title"] = L["MyRev_Title"].Value;
 }
 
 <div class="container my-4" style="max-width: 950px;">
-    <!-- Tiêu đề & Breadcrumb -->
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom flex-wrap gap-2">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
         <div>
-            <h2 class="h3 fw-bold text-dark mb-1">
-                <i class="bi bi-star-half text-warning"></i> Đánh giá của tôi
+            <h2 class="h3 fw-bold text-dark mb-1 font-serif">
+                <i class="bi bi-star-half text-warning me-1"></i> @L["MyRev_Title"]
             </h2>
-            <div class="text-muted small">
-                Danh sách nhận xét bạn đã gửi cho các cửa hàng sau khi hoàn tất mua sắm.
-            </div>
+            <div class="text-muted small">@L["MyRev_Subtitle"]</div>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-area="User" asp-controller="Reviews" asp-action="Shop" class="btn btn-outline-success btn-sm rounded-pill px-3">
-                <i class="bi bi-shop me-1"></i> Đánh giá shop nhận được
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-area="User" asp-controller="Reviews" asp-action="Shop" class="btn-rm-outline rounded-pill py-1 px-3 small">
+                <i class="bi bi-shop me-1"></i> @L["MyRev_BtnShopReviews"]
             </a>
-            <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="bi bi-receipt me-1"></i> Xem đơn mua của tôi
+            <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn-rm-outline rounded-pill py-1 px-3 small">
+                <i class="bi bi-receipt me-1"></i> @L["MyRev_BtnMyOrders"]
             </a>
         </div>
     </div>
-
-    <partial name="_ThongBao" />
 
     @if (Model.Items.Count == 0)
     {
@@ -33,14 +28,13 @@
                 <div class="display-3 text-warning mb-3">
                     <i class="bi bi-chat-square-quote"></i>
                 </div>
-                <h4 class="fw-bold text-dark mb-2">Bạn chưa viết đánh giá nào</h4>
+                <h4 class="fw-bold text-dark mb-2">@L["MyRev_EmptyTitle"]</h4>
                 <p class="text-secondary small mb-4" style="max-width: 480px; margin: 0 auto;">
-                    Mỗi đánh giá của bạn là nguồn thông tin quý giá giúp cộng đồng Re:Market mua bán an toàn và minh bạch hơn. Hãy đánh giá sau khi nhận hàng thành công nhé!
+                    @L["MyRev_EmptyDesc"]
                 </p>
                 <a asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="COMPLETED"
-                   class="btn btn-success px-4 py-2 rounded-pill fw-semibold"
-                   style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
-                    Xem các đơn hàng đã hoàn tất
+                   class="btn-rm-primary rounded-pill px-4 py-2">
+                    @L["MyRev_BtnCompletedOrders"]
                 </a>
             </div>
         </div>
@@ -51,43 +45,41 @@
             @foreach (var item in Model.Items)
             {
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white p-4">
-                    <!-- Header của đánh giá -->
                     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 pb-3 border-bottom">
                         <div>
                             <div class="d-flex align-items-center gap-2 flex-wrap">
                                 <a asp-area="" asp-controller="Shops" asp-action="Details" asp-route-id="@item.MaCuaHang"
-                                   class="fw-bold text-success text-decoration-none fs-6">
+                                   class="fw-bold text-decoration-none fs-6" style="color: var(--color-primary);">
                                     <i class="bi bi-shop me-1"></i>@item.TenShop
                                 </a>
                                 <span class="text-muted">•</span>
                                 <a asp-area="User" asp-controller="Orders" asp-action="ChiTiet" asp-route-id="@item.MaDonHang"
                                    class="text-secondary text-decoration-none small">
-                                    Đơn hàng: <span class="font-monospace text-dark fw-semibold">#@item.MaDon</span>
+                                    @L["MyRev_OrderLabel"] <span class="font-monospace text-dark fw-semibold">#@item.MaDon</span>
                                 </a>
                             </div>
                             <div class="text-muted small mt-1">
-                                <i class="bi bi-clock me-1"></i>Ngày đánh giá: @HienThi.NgayGio(item.NgayTao)
+                                <i class="bi bi-clock me-1"></i>@L["MyRev_ReviewedAt"] @HienThi.NgayGio(item.NgayTao)
                             </div>
                         </div>
 
                         <div>
                             @if (item.TrangThai == "VISIBLE")
                             {
-                                <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3 py-1 small">
-                                    <i class="bi bi-check-circle me-1"></i>Đang hiển thị
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small">
+                                    <i class="bi bi-check-circle me-1"></i>@L["MyRev_StatusVisible"]
                                 </span>
                             }
                             else
                             {
-                                <span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 py-1 small"
-                                      title="Đánh giá này đã bị ẩn bởi quản trị viên do vi phạm quy định">
-                                    <i class="bi bi-eye-slash me-1"></i>Bị ẩn bởi Admin
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 small"
+                                      title="@L["MyRev_StatusHiddenTip"]">
+                                    <i class="bi bi-eye-slash me-1"></i>@L["MyRev_StatusHidden"]
                                 </span>
                             }
                         </div>
                     </div>
 
-                    <!-- Điểm sao & Nội dung nhận xét -->
                     <div class="py-3">
                         <div class="d-flex align-items-center gap-1 mb-2">
                             @for (byte s = 1; s <= 5; s++)
@@ -101,17 +93,17 @@
                                     <i class="bi bi-star text-secondary fs-5 opacity-50"></i>
                                 }
                             }
-                            <span class="ms-2 fw-bold text-dark">@item.SoSao / 5 sao</span>
+                            <span class="ms-2 fw-bold text-dark">@L["MyRev_StarsOutOf", item.SoSao]</span>
                         </div>
 
                         @if (!string.IsNullOrWhiteSpace(item.NoiDung))
                         {
-                            <p class="text-dark mb-0 bg-light p-3 rounded-3 border" style="white-space: pre-line;">@item.NoiDung</p>
+                            <p class="text-dark mb-0 p-3 rounded-3 border" style="white-space: pre-line; background-color: var(--color-surface); border-color: var(--color-border-subtle) !important;">@item.NoiDung</p>
                         }
                         else
                         {
-                            <p class="text-muted fst-italic mb-0 bg-light p-2 rounded-2 small">
-                                <i class="bi bi-info-circle me-1"></i>Không có nhận xét kèm theo.
+                            <p class="text-muted fst-italic mb-0 p-2 rounded-2 small" style="background-color: var(--color-surface);">
+                                <i class="bi bi-info-circle me-1"></i>@L["MyRev_NoComment"]
                             </p>
                         }
 
@@ -120,7 +112,7 @@
                             <div class="mt-3 p-3 rounded-3 bg-success-subtle border border-success-subtle border-start border-start-4 border-start-success">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <strong class="text-success small">
-                                        <i class="bi bi-reply-fill me-1"></i>Phản hồi từ người bán:
+                                        <i class="bi bi-reply-fill me-1"></i>@L["ShopRev_SellerReply"]:
                                     </strong>
                                     @if (item.NgayPhanHoi.HasValue)
                                     {
@@ -132,22 +124,21 @@
                         }
                     </div>
 
-                    <!-- Danh sách sản phẩm trong đơn -->
                     @if (item.TenSanPhams.Count > 0)
                     {
-                        <div class="pt-2 border-top d-flex align-items-center gap-3">
+                        <div class="pt-2 border-top d-flex align-items-center gap-3 flex-wrap">
                             @if (!string.IsNullOrWhiteSpace(item.AnhSanPhamDaiDien))
                             {
-                                <img src="@item.AnhSanPhamDaiDien" alt="Sản phẩm"
+                                <img src="@item.AnhSanPhamDaiDien" alt="@L["Layout_ProductImage"]"
                                      class="rounded-2 border" style="width: 44px; height: 44px; object-fit: cover;" />
                             }
                             <div class="small text-muted flex-grow-1">
-                                <span class="fw-semibold text-dark">Sản phẩm:</span>
+                                <span class="fw-semibold text-dark">@L["MyRev_ProductsLabel"]</span>
                                 @string.Join(", ", item.TenSanPhams)
                             </div>
                             <a asp-area="User" asp-controller="Orders" asp-action="ChiTiet" asp-route-id="@item.MaDonHang"
-                               class="btn btn-outline-success btn-sm rounded-pill px-3">
-                                Xem đơn &rarr;
+                               class="btn-rm-outline rounded-pill py-1 px-3 small">
+                                @L["MyRev_ViewOrder"] &rarr;
                             </a>
                         </div>
                     }
@@ -155,16 +146,15 @@
             }
         </div>
 
-        <!-- Phân trang -->
         @if (Model.TotalPages > 1)
         {
-            <nav aria-label="Phân trang đánh giá" class="d-flex justify-content-center">
+            <nav aria-label="@L["MyRev_PaginationAria"]" class="d-flex justify-content-center">
                 <ul class="pagination pagination-sm">
                     @if (Model.Page > 1)
                     {
                         <li class="page-item">
-                            <a class="page-link rounded-pill px-3 me-1 text-success border-0 bg-light"
-                               asp-action="Index" asp-route-page="@(Model.Page - 1)">‹ Trước</a>
+                            <a class="page-link rounded-pill px-3 me-1 border bg-white text-dark"
+                               asp-action="Index" asp-route-page="@(Model.Page - 1)">&lsaquo; @L["Btn_Prev"]</a>
                         </li>
                     }
 
@@ -173,13 +163,13 @@
                         if (p == Model.Page)
                         {
                             <li class="page-item active">
-                                <span class="page-link rounded-pill px-3 me-1 bg-success border-success text-white">@p</span>
+                                <span class="page-link rounded-pill px-3 me-1 border-0 text-white" style="background-color: var(--color-primary);">@p</span>
                             </li>
                         }
                         else
                         {
                             <li class="page-item">
-                                <a class="page-link rounded-pill px-3 me-1 text-dark border-0 bg-light"
+                                <a class="page-link rounded-pill px-3 me-1 text-dark border bg-white"
                                    asp-action="Index" asp-route-page="@p">@p</a>
                             </li>
                         }
@@ -188,8 +178,8 @@
                     @if (Model.Page < Model.TotalPages)
                     {
                         <li class="page-item">
-                            <a class="page-link rounded-pill px-3 ms-1 text-success border-0 bg-light"
-                               asp-action="Index" asp-route-page="@(Model.Page + 1)">Sau ›</a>
+                            <a class="page-link rounded-pill px-3 ms-1 border bg-white text-dark"
+                               asp-action="Index" asp-route-page="@(Model.Page + 1)">@L["Btn_Next"] &rsaquo;</a>
                         </li>
                     }
                 </ul>

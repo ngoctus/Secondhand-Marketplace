@@ -612,4 +612,253 @@
   <data name="Banner_OptHide" xml:space="preserve"><value>Hide</value></data>
   <data name="Banner_SaveChanges" xml:space="preserve"><value>Save changes</value></data>
   <data name="Banner_ConfirmDelete" xml:space="preserve"><value>Are you sure you want to delete this banner?</value></data>
+  <!-- C-04: Chat, Notifications, Reviews & Admin Moderation / AI -->
+  <data name="ShopRev_Title" xml:space="preserve"><value>Buyer Reviews</value></data>
+  <data name="ShopRev_Subtitle" xml:space="preserve"><value>Only buyers with completed orders can submit a review.</value></data>
+  <data name="ShopRev_TotalReviews" xml:space="preserve"><value>{0} reviews</value></data>
+  <data name="ShopRev_Empty" xml:space="preserve"><value>This shop has no buyer reviews yet.</value></data>
+  <data name="ShopRev_StarCount" xml:space="preserve"><value>({0} stars)</value></data>
+  <data name="ShopRev_VerifiedBuyer" xml:space="preserve"><value>Verified Purchase</value></data>
+  <data name="ShopRev_NoComment" xml:space="preserve"><value>The buyer did not leave a written comment.</value></data>
+  <data name="ShopRev_SellerReply" xml:space="preserve"><value>Seller's Response</value></data>
+  <data name="ShopRev_PaginationAria" xml:space="preserve"><value>Shop reviews pagination</value></data>
+  <data name="MyRev_Title" xml:space="preserve"><value>My Reviews</value></data>
+  <data name="MyRev_Subtitle" xml:space="preserve"><value>Reviews you have submitted to shops after completing orders.</value></data>
+  <data name="MyRev_BtnShopReviews" xml:space="preserve"><value>Received Shop Reviews</value></data>
+  <data name="MyRev_BtnMyOrders" xml:space="preserve"><value>View My Purchases</value></data>
+  <data name="MyRev_EmptyTitle" xml:space="preserve"><value>You haven't written any reviews yet</value></data>
+  <data name="MyRev_EmptyDesc" xml:space="preserve"><value>Your reviews help the Re:Market community trade safely and transparently. Leave a review after receiving your order!</value></data>
+  <data name="MyRev_BtnCompletedOrders" xml:space="preserve"><value>View Completed Orders</value></data>
+  <data name="MyRev_OrderLabel" xml:space="preserve"><value>Order:</value></data>
+  <data name="MyRev_ReviewedAt" xml:space="preserve"><value>Reviewed on:</value></data>
+  <data name="MyRev_StatusVisible" xml:space="preserve"><value>Visible</value></data>
+  <data name="MyRev_StatusHidden" xml:space="preserve"><value>Hidden by Admin</value></data>
+  <data name="MyRev_StatusHiddenTip" xml:space="preserve"><value>This review was hidden by an administrator for violating guidelines</value></data>
+  <data name="MyRev_StarsOutOf" xml:space="preserve"><value>{0} / 5 stars</value></data>
+  <data name="MyRev_NoComment" xml:space="preserve"><value>No written comment provided.</value></data>
+  <data name="MyRev_ProductsLabel" xml:space="preserve"><value>Products:</value></data>
+  <data name="MyRev_ViewOrder" xml:space="preserve"><value>View Order</value></data>
+  <data name="MyRev_PaginationAria" xml:space="preserve"><value>Reviews pagination</value></data>
+  <data name="ShopRevMgr_Title" xml:space="preserve"><value>My Shop Reviews</value></data>
+  <data name="ShopRevMgr_Subtitle" xml:space="preserve"><value>Manage buyer reviews and send public responses (Seller Center).</value></data>
+  <data name="ShopRevMgr_BtnWritten" xml:space="preserve"><value>Reviews I Wrote</value></data>
+  <data name="ShopRevMgr_BtnSellerOrders" xml:space="preserve"><value>Manage Shop Orders</value></data>
+  <data name="ShopRevMgr_NoShopTitle" xml:space="preserve"><value>You haven't opened a shop yet</value></data>
+  <data name="ShopRevMgr_NoShopDesc" xml:space="preserve"><value>Create your shop profile to start listing items and building buyer trust.</value></data>
+  <data name="ShopRevMgr_BtnCreateShop" xml:space="preserve"><value>Create Shop Profile</value></data>
+  <data name="ShopRevMgr_NoScore" xml:space="preserve"><value>N/A</value></data>
+  <data name="ShopRevMgr_BadgeExcellent" xml:space="preserve"><value>Top Rated Shop</value></data>
+  <data name="ShopRevMgr_BadgePositive" xml:space="preserve"><value>Positive Rating</value></data>
+  <data name="ShopRevMgr_BadgeImprove" xml:space="preserve"><value>Needs Improvement</value></data>
+  <data name="ShopRevMgr_BadgeActive" xml:space="preserve"><value>Active Shop</value></data>
+  <data name="ShopRevMgr_EmptyTitle" xml:space="preserve"><value>No buyer reviews yet</value></data>
+  <data name="ShopRevMgr_EmptyDesc" xml:space="preserve"><value>When buyers complete orders and leave reviews, you can view and respond to them here.</value></data>
+  <data name="ShopRevMgr_StarUnit" xml:space="preserve"><value>{0} stars</value></data>
+  <data name="ShopRevMgr_BuyerCommentLabel" xml:space="preserve"><value>Buyer's comment:</value></data>
+  <data name="ShopRevMgr_NoBuyerComment" xml:space="preserve"><value>The buyer did not leave a detailed comment.</value></data>
+  <data name="ShopRevMgr_YourReplyLabel" xml:space="preserve"><value>Your shop's reply:</value></data>
+  <data name="ShopRevMgr_BtnWriteReply" xml:space="preserve"><value>Write a Reply</value></data>
+  <data name="ShopRevMgr_BtnEditReply" xml:space="preserve"><value>Edit Reply</value></data>
+  <data name="ShopRevMgr_ReplyFieldLabel" xml:space="preserve"><value>Shop reply message:</value></data>
+  <data name="ShopRevMgr_ReplyPlaceholder" xml:space="preserve"><value>Thank the buyer or clarify details about the order...</value></data>
+  <data name="ShopRevMgr_ReplyHint" xml:space="preserve"><value>Up to 1,000 characters. Your reply will be shown publicly under the buyer's review.</value></data>
+  <data name="ShopRevMgr_BtnSendReply" xml:space="preserve"><value>Send Reply</value></data>
+  <data name="UserNotify_UnreadLabel" xml:space="preserve"><value>Unread:</value></data>
+  <data name="UserNotify_MarkRead" xml:space="preserve"><value>Mark as Read</value></data>
+  <data name="UserNotify_Read" xml:space="preserve"><value>Read</value></data>
+  <data name="UserNotify_Total" xml:space="preserve"><value>Total {0} notifications</value></data>
+  <data name="AdminMod_Title" xml:space="preserve"><value>Product Moderation</value></data>
+  <data name="AdminMod_Subtitle" xml:space="preserve"><value>3-lane triage (Red – Yellow – Green) combining Tier 1 keyword scan and Tier 2 contextual AI.</value></data>
+  <data name="AdminMod_GreenLaneBtn" xml:space="preserve"><value>Quick-Approve Green Lane ({0})</value></data>
+  <data name="AdminMod_GreenLaneConfirm" xml:space="preserve"><value>Quick-approve {0} Green Lane listings verified safe by AI?</value></data>
+  <data name="AdminMod_TabPending" xml:space="preserve"><value>Pending Review</value></data>
+  <data name="AdminMod_TabActive" xml:space="preserve"><value>Active (Violation Removal)</value></data>
+  <data name="AdminMod_ColProduct" xml:space="preserve"><value>Product</value></data>
+  <data name="AdminMod_ColSeller" xml:space="preserve"><value>Seller / Shop</value></data>
+  <data name="AdminMod_ColPrice" xml:space="preserve"><value>Price</value></data>
+  <data name="AdminMod_ColSubmitted" xml:space="preserve"><value>Submitted</value></data>
+  <data name="AdminMod_ColUpdated" xml:space="preserve"><value>Updated</value></data>
+  <data name="AdminMod_ColAiAnalysis" xml:space="preserve"><value>Lane &amp; AI Analysis</value></data>
+  <data name="AdminMod_BtnReview" xml:space="preserve"><value>Review</value></data>
+  <data name="AdminMod_BtnViewRemove" xml:space="preserve"><value>View / Remove</value></data>
+  <data name="AdminMod_EmptyPending" xml:space="preserve"><value>No listings pending review.</value></data>
+  <data name="AdminMod_EmptyActive" xml:space="preserve"><value>No active listings found.</value></data>
+  <data name="AdminMod_TotalProducts" xml:space="preserve"><value>Total {0} products</value></data>
+  <data name="AdminMod_DetailTitle" xml:space="preserve"><value>Moderation Details</value></data>
+  <data name="AdminMod_NoImages" xml:space="preserve"><value>No product images uploaded.</value></data>
+  <data name="AdminMod_CategoryCondition" xml:space="preserve"><value>Category / Condition</value></data>
+  <data name="AdminMod_Seller" xml:space="preserve"><value>Seller</value></data>
+  <data name="AdminMod_SellerViolations" xml:space="preserve"><value>Seller violations</value></data>
+  <data name="AdminMod_ViewHistory" xml:space="preserve"><value>view history</value></data>
+  <data name="AdminMod_CreatedUpdated" xml:space="preserve"><value>Created / Updated</value></data>
+  <data name="AdminMod_RemoveReason" xml:space="preserve"><value>Removal reason</value></data>
+  <data name="AdminMod_Description" xml:space="preserve"><value>Product Description</value></data>
+  <data name="AdminMod_HybridTitle" xml:space="preserve"><value>Hybrid Moderation Analysis</value></data>
+  <data name="AdminMod_ModelBadge" xml:space="preserve"><value>Model: {0}</value></data>
+  <data name="AdminMod_AttemptsBadge" xml:space="preserve"><value>Scans: {0}</value></data>
+  <data name="AdminMod_ReanalyzeAiBtn" xml:space="preserve"><value>Reanalyze with AI</value></data>
+  <data name="AdminMod_ReanalyzeBtn" xml:space="preserve"><value>Reanalyze</value></data>
+  <data name="AdminMod_Reanalyzing" xml:space="preserve"><value>Analyzing...</value></data>
+  <data name="AdminMod_FallbackAlert" xml:space="preserve"><value>Contextual AI (Tier 2) did not respond during this scan — the system automatically fell back to Tier 1 keyword results. You can click "Reanalyze with AI" to retry Tier 2, or manually review the images/description.</value></data>
+  <data name="AdminMod_AnalysisError" xml:space="preserve"><value>Analysis error: {0}</value></data>
+  <data name="AdminMod_Tier1Heading" xml:space="preserve"><value>Tier 1 — Detected Forbidden Keywords</value></data>
+  <data name="AdminMod_ColKeyword" xml:space="preserve"><value>Keyword</value></data>
+  <data name="AdminMod_ColLevel" xml:space="preserve"><value>Severity</value></data>
+  <data name="AdminMod_ColField" xml:space="preserve"><value>Field</value></data>
+  <data name="AdminMod_ColPosition" xml:space="preserve"><value>Position</value></data>
+  <data name="AdminMod_Tier2Heading" xml:space="preserve"><value>Tier 2 — AI Risk Signals</value></data>
+  <data name="AdminMod_ColRiskGroup" xml:space="preserve"><value>Risk Group</value></data>
+  <data name="AdminMod_ColEvidence" xml:space="preserve"><value>AI Evidence / Note</value></data>
+  <data name="AdminMod_ApproveBtn" xml:space="preserve"><value>Approve Product</value></data>
+  <data name="AdminMod_LowApproveHint" xml:space="preserve"><value>LOW warning: approving will not record a violation.</value></data>
+  <data name="AdminMod_RejectPlaceholder" xml:space="preserve"><value>Rejection reason (10–500 characters, required)</value></data>
+  <data name="AdminMod_LowRejectWarn" xml:space="preserve"><value>Rejecting a product with a LOW warning records 1 violation for the seller ({0} violations trigger an automatic account lock).</value></data>
+  <data name="AdminMod_RejectBtn" xml:space="preserve"><value>Reject Product</value></data>
+  <data name="AdminMod_RemoveHeading" xml:space="preserve"><value>Remove Violating Product</value></data>
+  <data name="AdminMod_RemoveConfirm" xml:space="preserve"><value>Remove this product from the marketplace?</value></data>
+  <data name="AdminMod_RemovePlaceholder" xml:space="preserve"><value>Removal reason (10–500 characters, required)</value></data>
+  <data name="AdminMod_RemoveBtn" xml:space="preserve"><value>Remove Product</value></data>
+  <data name="AdminMod_TurnsHeading" xml:space="preserve"><value>Moderation Turn History</value></data>
+  <data name="AdminMod_ColTurn" xml:space="preserve"><value>Turn</value></data>
+  <data name="AdminMod_ColAnalysis" xml:space="preserve"><value>Analysis</value></data>
+  <data name="AdminMod_ColDecision" xml:space="preserve"><value>Decision</value></data>
+  <data name="AdminMod_ColReviewer" xml:space="preserve"><value>Reviewer</value></data>
+  <data name="AdminMod_ColReason" xml:space="preserve"><value>Reason</value></data>
+  <data name="AdminMod_ColViolation" xml:space="preserve"><value>Violation</value></data>
+  <data name="AdminMod_PendingDecision" xml:space="preserve"><value>Pending</value></data>
+  <data name="AdminMod_SystemAuto" xml:space="preserve"><value>System (auto)</value></data>
+  <data name="AdminMod_ViolationPlusOne" xml:space="preserve"><value>Yes (+1)</value></data>
+  <data name="AdminMod_TurnsEmpty" xml:space="preserve"><value>No moderation turns yet.</value></data>
+  <data name="AdminMod_StatusHistoryHeading" xml:space="preserve"><value>Product Status History</value></data>
+  <data name="AdminMod_ColFrom" xml:space="preserve"><value>From</value></data>
+  <data name="AdminMod_ColTo" xml:space="preserve"><value>To</value></data>
+  <data name="AdminMod_ColActor" xml:space="preserve"><value>Actor</value></data>
+  <data name="AdminMod_StatusHistoryEmpty" xml:space="preserve"><value>No status history yet.</value></data>
+  <data name="AdminMod_KeywordsPrefix" xml:space="preserve"><value>Keywords:</value></data>
+  <data name="AdminKw_Title" xml:space="preserve"><value>Forbidden Keywords</value></data>
+  <data name="AdminKw_DescHigh" xml:space="preserve"><value>HIGH: listings are auto-rejected and 1 violation is recorded for the seller.</value></data>
+  <data name="AdminKw_DescLow" xml:space="preserve"><value>LOW: queued for Admin review on the moderation screen (confirm violation or dismiss).</value></data>
+  <data name="AdminKw_DescNote" xml:space="preserve"><value>Changes apply to subsequent moderation scans only.</value></data>
+  <data name="AdminKw_AddSection" xml:space="preserve"><value>Add New Keyword</value></data>
+  <data name="AdminKw_PhrasePlaceholder" xml:space="preserve"><value>Forbidden word/phrase</value></data>
+  <data name="AdminKw_GroupPlaceholder" xml:space="preserve"><value>Group (e.g. COUNTERFEIT)</value></data>
+  <data name="AdminKw_OptLow" xml:space="preserve"><value>LOW - Admin review</value></data>
+  <data name="AdminKw_OptHigh" xml:space="preserve"><value>HIGH - Auto-reject</value></data>
+  <data name="AdminKw_NotePlaceholder" xml:space="preserve"><value>Note</value></data>
+  <data name="AdminKw_AddBtn" xml:space="preserve"><value>Add Keyword</value></data>
+  <data name="AdminKw_SearchPlaceholder" xml:space="preserve"><value>Search by keyword or group</value></data>
+  <data name="AdminKw_AllLevels" xml:space="preserve"><value>All severities</value></data>
+  <data name="AdminKw_Active" xml:space="preserve"><value>Active</value></data>
+  <data name="AdminKw_Disabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="AdminKw_ColGroup" xml:space="preserve"><value>Group</value></data>
+  <data name="AdminKw_ColNote" xml:space="preserve"><value>Note</value></data>
+  <data name="AdminKw_BtnDisable" xml:space="preserve"><value>Disable</value></data>
+  <data name="AdminKw_BtnEnable" xml:space="preserve"><value>Enable</value></data>
+  <data name="AdminKw_Empty" xml:space="preserve"><value>No forbidden keywords found.</value></data>
+  <data name="AdminVio_Title" xml:space="preserve"><value>Moderation Violation History</value></data>
+  <data name="AdminVio_Desc" xml:space="preserve"><value>Each row is a moderation violation record. The auto-lock counter only counts active violations since the last unlock ({0} active violations trigger an automatic lock). HIGH: recorded automatically on auto-rejection. LOW: recorded when Admin rejects a LOW-warning listing. Unlocking resets the active counter to 0/{0} without deleting history.</value></data>
+  <data name="AdminVio_FilterSeller" xml:space="preserve"><value>Filtering by seller:</value></data>
+  <data name="AdminVio_Effective" xml:space="preserve"><value>Active:</value></data>
+  <data name="AdminVio_TotalHistory" xml:space="preserve"><value>Total history:</value></data>
+  <data name="AdminVio_ResetAt" xml:space="preserve"><value>(Reset at: {0})</value></data>
+  <data name="AdminVio_ViewAll" xml:space="preserve"><value>View all</value></data>
+  <data name="AdminVio_ColAccount" xml:space="preserve"><value>Account</value></data>
+  <data name="AdminVio_ColCount" xml:space="preserve"><value>Active / History</value></data>
+  <data name="AdminVio_ColLevelSource" xml:space="preserve"><value>Severity / Source</value></data>
+  <data name="AdminVio_ColConfirmedBy" xml:space="preserve"><value>Confirmed By</value></data>
+  <data name="AdminVio_BadgeEffective" xml:space="preserve"><value>Active strike</value></data>
+  <data name="AdminVio_BadgeBeforeUnlock" xml:space="preserve"><value>Before unlock</value></data>
+  <data name="AdminVio_UnlockLink" xml:space="preserve"><value>Unlock in User Management</value></data>
+  <data name="AdminVio_EffectiveUnit" xml:space="preserve"><value>active</value></data>
+  <data name="AdminVio_TotalHistoryRow" xml:space="preserve"><value>Total history: {0}</value></data>
+  <data name="AdminVio_TurnLabel" xml:space="preserve"><value>Turn #{0}</value></data>
+  <data name="AdminVio_SourceAutoHigh" xml:space="preserve"><value>Auto (System)</value></data>
+  <data name="AdminVio_SourceAdminReject" xml:space="preserve"><value>Admin Rejected</value></data>
+  <data name="AdminVio_Empty" xml:space="preserve"><value>No violations recorded.</value></data>
+  <data name="AdminVio_TotalCount" xml:space="preserve"><value>Total {0} violations</value></data>
+  <data name="AdminAi_Title" xml:space="preserve"><value>AI Assistant Settings</value></data>
+  <data name="AdminAi_Subtitle" xml:space="preserve"><value>Changes are saved to the database and take effect immediately for subsequent user messages.</value></data>
+  <data name="AdminAi_NotPersistedWarn" xml:space="preserve"><value>The database does not have AI configuration yet (table CauHinhAI). Showing default values; saving requires the table to exist.</value></data>
+  <data name="AdminAi_EnabledLabel" xml:space="preserve"><value>Enable AI Assistant</value></data>
+  <data name="AdminAi_EnabledHint" xml:space="preserve"><value>When disabled, the chat button is hidden and the server rejects all chat requests.</value></data>
+  <data name="AdminAi_ModelLabel" xml:space="preserve"><value>AI Model</value></data>
+  <data name="AdminAi_PromptLabel" xml:space="preserve"><value>System Prompt</value></data>
+  <data name="AdminAi_PromptHint" xml:space="preserve"><value>Up to 4,000 characters. Core safety rules (grounded real data only, no placing orders/listings, no internal leaks) are automatically appended by the server.</value></data>
+  <data name="AdminAi_SaveBtn" xml:space="preserve"><value>Save Settings</value></data>
+  <data name="AdminAi_LastUpdated" xml:space="preserve"><value>Last updated: {0}</value></data>
+  <data name="AdminAi_ApiKeyNote" xml:space="preserve"><value>API keys are managed via server User Secrets / environment variables, not in this form.</value></data>
+  <data name="AdminRev_Title" xml:space="preserve"><value>Low-Rated Shop Review</value></data>
+  <data name="AdminRev_Heading" xml:space="preserve"><value>Review Low-Rated Shops</value></data>
+  <data name="AdminRev_Criteria" xml:space="preserve"><value>Alert criteria: average rating below 3.0 stars with at least 5 reviews. Currently {0} shops require review.</value></data>
+  <data name="AdminRev_TabFlagged" xml:space="preserve"><value>Flagged Shops (&lt; 3 stars)</value></data>
+  <data name="AdminRev_TabAll" xml:space="preserve"><value>All Rated Shops</value></data>
+  <data name="AdminRev_SearchPlaceholder" xml:space="preserve"><value>Search by shop name, owner name, or email...</value></data>
+  <data name="AdminRev_PerPage" xml:space="preserve"><value>{0} / page</value></data>
+  <data name="AdminRev_ClearSearch" xml:space="preserve"><value>Clear</value></data>
+  <data name="AdminRev_ColRating" xml:space="preserve"><value>Rating</value></data>
+  <data name="AdminRev_ColCompletedOrders" xml:space="preserve"><value>Completed Orders</value></data>
+  <data name="AdminRev_ColReports" xml:space="preserve"><value>Reports</value></data>
+  <data name="AdminRev_EmptyFlagged" xml:space="preserve"><value>No shops rated below 3 stars in this group.</value></data>
+  <data name="AdminRev_EmptyAll" xml:space="preserve"><value>No shops match the current filter.</value></data>
+  <data name="AdminRev_ReviewsCount" xml:space="preserve"><value>{0} reviews</value></data>
+  <data name="AdminRev_CompletedOrdersUnit" xml:space="preserve"><value>COMPLETED orders</value></data>
+  <data name="AdminRev_ReportsTip" xml:space="preserve"><value>Reports against this shop and its listings</value></data>
+  <data name="AdminRev_BtnInspect" xml:space="preserve"><value>Inspect</value></data>
+  <data name="AdminRev_BtnOrderHistory" xml:space="preserve"><value>Order History</value></data>
+  <data name="AdminRev_BtnWarn" xml:space="preserve"><value>Warn</value></data>
+  <data name="AdminRev_BtnSendWarn" xml:space="preserve"><value>Send Warning</value></data>
+  <data name="AdminRev_BtnLockShop" xml:space="preserve"><value>Lock Shop</value></data>
+  <data name="AdminRev_BtnUnlockShop" xml:space="preserve"><value>Unlock Shop</value></data>
+  <data name="AdminRev_ShopsCount" xml:space="preserve"><value>{0} shops</value></data>
+  <data name="AdminRev_ModalLockTitle" xml:space="preserve"><value>Lock Shop</value></data>
+  <data name="AdminRev_ModalLockIntro" xml:space="preserve"><value>You are locking shop</value></data>
+  <data name="AdminRev_ModalLockReasonLabel" xml:space="preserve"><value>Lock reason</value></data>
+  <data name="AdminRev_ModalLockPlaceholder" xml:space="preserve"><value>E.g., Multiple reviews report items not as described, unresponsive seller...</value></data>
+  <data name="AdminRev_ModalLockHint" xml:space="preserve"><value>Up to 500 characters. The reason is recorded in the audit log.</value></data>
+  <data name="AdminRev_ModalLockConfirm" xml:space="preserve"><value>Confirm Lock</value></data>
+  <data name="AdminRev_ModalWarnTitle" xml:space="preserve"><value>Send Service Quality Warning</value></data>
+  <data name="AdminRev_ModalWarnIntro" xml:space="preserve"><value>Send a system warning notification to shop owner</value></data>
+  <data name="AdminRev_ModalWarnLabel" xml:space="preserve"><value>Warning message</value></data>
+  <data name="AdminRev_ModalWarnPlaceholder" xml:space="preserve"><value>E.g., Shop received 5 low ratings regarding item accuracy. Please improve quality and buyer communication.</value></data>
+  <data name="AdminRev_ModalWarnHint" xml:space="preserve"><value>Up to 1,000 characters. The shop owner will be notified immediately.</value></data>
+  <data name="AdminRev_DetailTitle" xml:space="preserve"><value>Shop Review Details</value></data>
+  <data name="AdminRev_BreadcrumbRoot" xml:space="preserve"><value>Shop Review</value></data>
+  <data name="AdminRev_QualityAlertTitle" xml:space="preserve"><value>Quality Alert:</value></data>
+  <data name="AdminRev_QualityAlertBody" xml:space="preserve"><value>this shop has an average rating of {0} stars across {1} visible reviews — below the 3.0-star threshold. Review buyer feedback, send a warning, or lock the shop if necessary.</value></data>
+  <data name="AdminRev_ShopOwnerInfo" xml:space="preserve"><value>Shop &amp; Owner Information</value></data>
+  <data name="AdminRev_LockReasonLabel" xml:space="preserve"><value>Lock reason</value></data>
+  <data name="AdminRev_AvgScore" xml:space="preserve"><value>Average Rating</value></data>
+  <data name="AdminRev_VisibleReviewsCount" xml:space="preserve"><value>{0} visible reviews</value></data>
+  <data name="AdminRev_CompletedOrdersCard" xml:space="preserve"><value>Completed Orders</value></data>
+  <data name="AdminRev_ReportsSummary" xml:space="preserve"><value>Violation reports (shop &amp; products):</value></data>
+  <data name="AdminRev_CustomerReviewsHeading" xml:space="preserve"><value>Customer Reviews</value></data>
+  <data name="AdminRev_TotalInclHidden" xml:space="preserve"><value>{0} reviews (including hidden)</value></data>
+  <data name="AdminRev_ColBuyer" xml:space="preserve"><value>Buyer</value></data>
+  <data name="AdminRev_ColStars" xml:space="preserve"><value>Stars</value></data>
+  <data name="AdminRev_ColComment" xml:space="preserve"><value>Comment</value></data>
+  <data name="AdminRev_NoReviews" xml:space="preserve"><value>This shop has no reviews yet.</value></data>
+  <data name="AdminRev_BtnHideReview" xml:space="preserve"><value>Hide Review</value></data>
+  <data name="AdminRev_BtnShowReview" xml:space="preserve"><value>Show Review</value></data>
+  <data name="AdminRev_HideReviewTip" xml:space="preserve"><value>Hide this review; the shop rating will recalculate immediately</value></data>
+  <data name="AdminRev_HideReviewConfirm" xml:space="preserve"><value>Hide this review? The shop's average rating will be recalculated from the remaining visible reviews.</value></data>
+  <data name="AdminRev_ShowReviewTip" xml:space="preserve"><value>Restore visibility for this review</value></data>
+  <data name="AdminRev_RecentOrdersHeading" xml:space="preserve"><value>5 Most Recent Orders</value></data>
+  <data name="AdminRev_ColOrderCode" xml:space="preserve"><value>Order Code</value></data>
+  <data name="AdminRev_ColRecipient" xml:space="preserve"><value>Recipient</value></data>
+  <data name="AdminRev_ColTotal" xml:space="preserve"><value>Total</value></data>
+  <data name="AdminRev_ColOrderDate" xml:space="preserve"><value>Order Date</value></data>
+  <data name="AdminRev_NoOrders" xml:space="preserve"><value>This shop has no orders yet.</value></data>
+  <data name="AdminNotify_Title" xml:space="preserve"><value>Send System Notification</value></data>
+  <data name="AdminNotify_Subtitle" xml:space="preserve"><value>Send a direct notification to a specific user or broadcast to all active accounts.</value></data>
+  <data name="AdminNotify_TargetLabel" xml:space="preserve"><value>Recipients</value></data>
+  <data name="AdminNotify_TargetUser" xml:space="preserve"><value>Single user</value></data>
+  <data name="AdminNotify_TargetAll" xml:space="preserve"><value>System-wide (all active accounts)</value></data>
+  <data name="AdminNotify_RecipientEmail" xml:space="preserve"><value>Recipient Email</value></data>
+  <data name="AdminNotify_RecipientPlaceholder" xml:space="preserve"><value>e.g. chi.buyer@demo.local</value></data>
+  <data name="AdminNotify_SubjectLabel" xml:space="preserve"><value>Subject</value></data>
+  <data name="AdminNotify_SubjectPlaceholder" xml:space="preserve"><value>Enter notification title...</value></data>
+  <data name="AdminNotify_BodyLabel" xml:space="preserve"><value>Message</value></data>
+  <data name="AdminNotify_BodyPlaceholder" xml:space="preserve"><value>Enter detailed notification message...</value></data>
+  <data name="AdminNotify_SendBtn" xml:space="preserve"><value>Send Notification</value></data>
+  <data name="AdminNotify_ConfirmBroadcast" xml:space="preserve"><value>Send this notification to ALL active users?</value></data>
 </root>
