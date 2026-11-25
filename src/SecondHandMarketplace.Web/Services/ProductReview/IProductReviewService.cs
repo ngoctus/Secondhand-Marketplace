@@ -66,6 +66,7 @@ public sealed class ProductReviewDetail
     public bool CanApprove => IsPending && Review!.CanApprove;
     /// <summary>Từ chối thường luôn được phép khi đang chờ duyệt, trừ HIGH (đã do hệ thống xử lý).</summary>
     public bool CanReject => IsPending && Review!.Level != ModerationPolicy.LevelHigh;
+    public bool CanReanalyze => IsPending && Review!.CanReanalyze;
     public string? ApproveBlockedReason => IsPending && !Review!.CanApprove ? Review.ApproveBlockedReason : null;
     public bool CanRemove => TrangThai == "ACTIVE";
 }
@@ -80,6 +81,20 @@ public sealed record ProductDecisionResult(
 public sealed record BulkApproveResult(bool Success, string? Error, int ApprovedCount, int SkippedCount)
 {
     public static BulkApproveResult Fail(string error) => new(false, error, 0, 0);
+}
+
+public sealed record ProductReanalyzeResult(
+    bool Success,
+    string? Error,
+    bool AlreadyDecided,
+    bool AutoRejected,
+    bool IsFallback,
+    string? Message,
+    string? Warning,
+    ModerationReview? Review)
+{
+    public static ProductReanalyzeResult Fail(string error, bool alreadyDecided = false, ModerationReview? review = null) =>
+        new(false, error, alreadyDecided, false, false, null, null, review);
 }
 
 public sealed record ViolationRow(
@@ -122,6 +137,12 @@ public interface IProductReviewService
     /// D5 (xử lý báo cáo) gọi hàm này với adminId của Admin đang xử lý. Có nhật ký + thông báo người bán.
     /// </summary>
     Task<ProductDecisionResult> RemoveProductAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Phân tích lại (Tầng 1 từ khóa + Tầng 2 AI Hybrid) cho lượt kiểm duyệt đang mở của sản phẩm
+    /// (QUEUED / FAILED / chưa quét / Fallback keyword-v1-fallback / hoặc quét lại sau khi sửa từ khóa).
+    /// </summary>
+    Task<ProductReanalyzeResult> ReanalyzeAsync(int adminId, int maSanPham, CancellationToken cancellationToken = default);
 
     /// <summary>Lịch sử vi phạm (mới nhất trước); sellerId = null: tất cả người bán.</summary>
     Task<ViolationPage> GetViolationsAsync(int? sellerId, int page, CancellationToken cancellationToken = default);

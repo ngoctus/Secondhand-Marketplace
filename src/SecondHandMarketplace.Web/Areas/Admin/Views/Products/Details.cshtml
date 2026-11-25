@@ -42,19 +42,34 @@
 
     @if (review is not null)
     {
+        var needsReanalyze = review.IsFallback
+            || review.AnalysisStatus != SecondHandMarketplace.Web.Services.Moderation.ModerationPolicy.AnalysisDone
+            || review.Level is null;
         <hr />
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-            <h4 class="mb-0">Phân tích kiểm duyệt Hybrid</h4>
-            <span class="badge @lane.BadgeClass">@lane.Text</span>
-            @if (badge.Text != lane.Text) { <span class="badge @badge.BadgeClass">@badge.Text</span> }
-            @if (!string.IsNullOrWhiteSpace(review.RiskLevel)) { <span class="badge @risk.BadgeClass">@risk.Text</span> }
-            @if (!string.IsNullOrWhiteSpace(review.Recommendation)) { <span class="badge @rec.BadgeClass">@rec.Text</span> }
-            @if (!string.IsNullOrWhiteSpace(review.ModelVersion)) { <span class="badge bg-light text-dark border">Mô hình: @review.ModelVersion</span> }
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <h4 class="mb-0">Phân tích kiểm duyệt Hybrid</h4>
+                <span class="badge @lane.BadgeClass">@lane.Text</span>
+                @if (badge.Text != lane.Text) { <span class="badge @badge.BadgeClass">@badge.Text</span> }
+                @if (!string.IsNullOrWhiteSpace(review.RiskLevel)) { <span class="badge @risk.BadgeClass">@risk.Text</span> }
+                @if (!string.IsNullOrWhiteSpace(review.Recommendation)) { <span class="badge @rec.BadgeClass">@rec.Text</span> }
+                @if (!string.IsNullOrWhiteSpace(review.ModelVersion)) { <span class="badge bg-light text-dark border">Mô hình: @review.ModelVersion</span> }
+                @if (review.Attempts > 0) { <span class="badge bg-light text-muted border">Lần quét: @review.Attempts</span> }
+            </div>
+            @if (Model.CanReanalyze)
+            {
+                <form asp-action="Reanalyze" asp-route-id="@Model.MaSanPham" method="post"
+                      onsubmit="var b=this.querySelector('button[type=submit]');if(b){b.disabled=true;b.textContent='Đang phân tích...';}">
+                    <button type="submit" class="btn btn-sm @(needsReanalyze ? "btn-warning" : "btn-outline-secondary")">
+                        @(review.IsFallback ? "Phân tích lại với AI" : "Phân tích lại")
+                    </button>
+                </form>
+            }
         </div>
         @if (review.IsFallback)
         {
             <div class="alert alert-warning py-2">
-                AI ngữ cảnh (Tầng 2) tạm không phản hồi trong lượt phân tích này — hệ thống đã tự động fallback về kết quả quét từ khóa Tầng 1. Quản trị viên vẫn có thể xem kỹ ảnh/mô tả và duyệt thủ công.
+                AI ngữ cảnh (Tầng 2) tạm không phản hồi trong lượt phân tích này — hệ thống đã tự động fallback về kết quả quét từ khóa Tầng 1. Quản trị viên có thể bấm <strong>"Phân tích lại với AI"</strong> để quét lại Tầng 2 hoặc tự xem kỹ ảnh/mô tả và duyệt thủ công.
             </div>
         }
         @if (!string.IsNullOrWhiteSpace(review.Explanation)) { <p>@review.Explanation</p> }

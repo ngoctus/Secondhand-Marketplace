@@ -247,7 +247,83 @@ public class ProductReviewService(
         if (approved == 0)
             return new BulkApproveResult(false, "Không có sản phẩm nào đủ điều kiện Làn Xanh để duyệt nhanh.", 0, skipped);
 
+        // Đảm bảo xóa cache trang chủ (home:catalog) sau khi duyệt nhanh Làn Xanh thành công.
+        HomeCacheHelper.XoaCacheTrangChu(cache);
         return new BulkApproveResult(true, null, approved, skipped);
+    }
+
+    public async Task<ProductReanalyzeResult> ReanalyzeAsync(int adminId, int maSanPham, CancellationToken cancellationToken = default)
+    {
+        var denied = await RequireAdminAsync(adminId, cancellationToken);
+        if (denied is not null)
+            return ProductReanalyzeResult.Fail(denied.Error ?? "Chỉ quản trị viên đang hoạt động mới được thực hiện thao tác này.");
+
+        var before = await moderation.GetReviewAsync(maSanPham, cancellationToken);
+        if (before is null || !before.CanReanalyze)
+            return ProductReanalyzeResult.Fail("Sản phẩm không còn ở trạng thái chờ duyệt (có thể đã được xử lý).", alreadyDecided: true);
+
+        var productStillPending = await db.SanPhams.AsNoTracking()
+            .AnyAsync(p => p.MaSanPham == maSanPham && !p.DaXoa && p.TrangThai == ModerationPolicy.ProductPending, cancellationToken);
+        if (!productStillPending)
+            return ProductReanalyzeResult.Fail("Sản phẩm không còn ở trạng thái chờ duyệt (có thể đã được xử lý).", alreadyDecided: true);
+
+        try
+        {
+            await moderation.PhanTichSanPhamAsync(maSanPham, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Phân tích lại kiểm duyệt lỗi cho sản phẩm {ProductId}.", maSanPham);
+            return ProductReanalyzeResult.Fail("Không thể chạy phân tích lại lúc này. Vui lòng thử lại sau.");
+        }
+
+        var after = await moderation.GetReviewByTurnAsync(before.MaLuotKiemDuyet, cancellationToken);
+        if (after is null)
+            return ProductReanalyzeResult.Fail("Không đọc lại được kết quả phân tích sau khi quét.");
+
+        var auditDetail = $"Lượt #{before.MaLuotKiemDuyet}: {before.AnalysisStatus}/{before.ModelVersion ?? "-"} -> {after.AnalysisStatus}/{after.ModelVersion ?? "-"} ({after.Level ?? "-"}, {after.RiskLevel ?? "-"}, {after.Recommendation ?? "-"})";
+        await TryAuditAsync(adminId, "REANALYZE_PRODUCT", maSanPham, auditDetail, cancellationToken);
+
+        // Phát hiện từ khóa cấm mức HIGH mới -> hệ thống đã tự đóng lượt, từ chối sản phẩm và ghi nhận vi phạm.
+        if (!after.TurnIsOpen && after.Level == ModerationPolicy.LevelHigh)
+        {
+            return new ProductReanalyzeResult(
+                true, null, AlreadyDecided: false, AutoRejected: true, IsFallback: false,
+                Message: null,
+                Warning: "Đã phân tích lại: phát hiện từ khóa cấm mức HIGH nên hệ thống đã tự động từ chối sản phẩm và ghi nhận vi phạm.",
+                Review: after);
+        }
+
+        if (!after.TurnIsOpen)
+            return ProductReanalyzeResult.Fail("Lượt kiểm duyệt đã được xử lý trước khi hoàn tất phân tích lại.", alreadyDecided: true, review: after);
+
+        if (after.AnalysisStatus == ModerationPolicy.AnalysisFailed)
+        {
+            var err = string.IsNullOrWhiteSpace(after.ErrorMessage)
+                ? "Phân tích lại thất bại. Vui lòng kiểm tra cấu hình và thử lại."
+                : $"Phân tích lại thất bại: {after.ErrorMessage}";
+            return ProductReanalyzeResult.Fail(err, alreadyDecided: false, review: after);
+        }
+
+        if (after.IsFallback)
+        {
+            return new ProductReanalyzeResult(
+                true, null, AlreadyDecided: false, AutoRejected: false, IsFallback: true,
+                Message: null,
+                Warning: "Đã quét lại từ khóa Tầng 1 nhưng AI ngữ cảnh (Tầng 2) vẫn tạm không phản hồi (Fallback). Bạn có thể thử lại sau hoặc tự kiểm tra để duyệt thủ công.",
+                Review: after);
+        }
+
+        var lane = ReviewDisplay.DescribeLane(after.AnalysisStatus, after.Level, after.RiskLevel, after.Recommendation, after.ModelVersion);
+        return new ProductReanalyzeResult(
+            true, null, AlreadyDecided: false, AutoRejected: false, IsFallback: false,
+            Message: $"Đã phân tích lại thành công — Kết quả: {lane.Text}.",
+            Warning: null,
+            Review: after);
     }
 
     public async Task<ProductDecisionResult> RejectAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default)
