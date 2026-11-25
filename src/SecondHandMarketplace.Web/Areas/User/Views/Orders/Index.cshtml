@@ -1,6 +1,6 @@
 @model List<SecondHandMarketplace.Web.Models.ViewModels.Orders.DonHangItemViewModel>
 @{
-    ViewData["Title"] = "Đơn mua của tôi";
+    ViewData["Title"] = L["Order_MyOrdersTitle"];
     var currentFilter = ViewBag.TrangThaiHienTai as string;
 }
 
@@ -8,11 +8,11 @@
     <!-- Tiêu đề trang -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
-            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-box-seam text-success"></i> Đơn mua của tôi</h2>
-            <p class="text-muted small mb-0">Theo dõi hành trình và trạng thái các đơn hàng bạn đã đặt mua.</p>
+            <h2 class="h3 fw-bold text-dark mb-1"><i class="bi bi-box-seam text-success"></i> @L["Order_MyOrdersTitle"]</h2>
+            <p class="text-muted small mb-0">@L["Order_MyOrdersSubtitle"]</p>
         </div>
-        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-            <i class="bi bi-cart3 me-1"></i> Xem giỏ hàng
+        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="btn btn-rm-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-cart3 me-1"></i> @L["Order_ViewCart"]
         </a>
     </div>
 
@@ -21,47 +21,39 @@
     <!-- Thanh bộ lọc trạng thái đơn hàng -->
     <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-2">
         <div class="d-flex flex-nowrap overflow-auto gap-2 py-1 px-2">
-            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(string.IsNullOrEmpty(currentFilter) ? "btn-success" : "btn-light text-secondary")" 
-               style="@(string.IsNullOrEmpty(currentFilter) ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index">Tất cả đơn</a>
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(string.IsNullOrEmpty(currentFilter) ? "btn-rm-primary" : "btn-light text-secondary")" 
+               asp-area="User" asp-controller="Orders" asp-action="Index">@L["Order_FilterAll"]</a>
 
-            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "PENDING" ? "btn-success" : "btn-light text-secondary")" 
-               style="@(currentFilter == "PENDING" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="PENDING">Chờ xác nhận</a>
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "PENDING" ? "btn-rm-primary" : "btn-light text-secondary")" 
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="PENDING">@L["Order_FilterPending"]</a>
 
-            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "CONFIRMED" ? "btn-success" : "btn-light text-secondary")" 
-               style="@(currentFilter == "CONFIRMED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="CONFIRMED">Shop đã xác nhận</a>
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "CONFIRMED" ? "btn-rm-primary" : "btn-light text-secondary")" 
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="CONFIRMED">@L["Order_FilterConfirmed"]</a>
 
-            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "SHIPPING" ? "btn-success" : "btn-light text-secondary")" 
-               style="@(currentFilter == "SHIPPING" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="SHIPPING">Đang giao / Hẹn gặp</a>
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "SHIPPING" ? "btn-rm-primary" : "btn-light text-secondary")" 
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="SHIPPING">@L["Order_FilterShipping"]</a>
 
-            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "DELIVERED" ? "btn-success" : "btn-light text-secondary")" 
-               style="@(currentFilter == "DELIVERED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="DELIVERED">Đã giao / Nhận hàng</a>
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "DELIVERED" ? "btn-rm-primary" : "btn-light text-secondary")" 
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="DELIVERED">@L["Order_FilterDelivered"]</a>
 
-            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "COMPLETED" ? "btn-success" : "btn-light text-secondary")" 
-               style="@(currentFilter == "COMPLETED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="COMPLETED">Hoàn tất</a>
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "COMPLETED" ? "btn-rm-primary" : "btn-light text-secondary")" 
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="COMPLETED">@L["Order_FilterCompleted"]</a>
 
-            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "CANCELLED" ? "btn-success" : "btn-light text-secondary")" 
-               style="@(currentFilter == "CANCELLED" ? "background-color: var(--green, #285b43); border-color: var(--green, #285b43);" : "")"
-               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="CANCELLED">Đã hủy</a>
+            <a class="btn btn-sm rounded-pill px-3 text-nowrap fw-semibold @(currentFilter == "CANCELLED" ? "btn-rm-primary" : "btn-light text-secondary")" 
+               asp-area="User" asp-controller="Orders" asp-action="Index" asp-route-trangThai="CANCELLED">@L["Order_FilterCancelled"]</a>
         </div>
     </div>
 
     <!-- Danh sách các đơn hàng -->
     @if (!Model.Any())
     {
-        <div class="card text-center p-5 border-0 rounded-4 shadow-sm bg-white my-4">
+        <div class="card text-center p-5 border-0 rounded-4 shadow-sm bg-white my-4 rm-empty-state">
             <div class="card-body">
                 <div class="display-3 text-muted mb-3">&#128230;</div>
-                <h4 class="fw-bold text-dark mb-2">Chưa có đơn hàng nào ở mục này</h4>
-                <p class="text-secondary small mb-4">Bạn chưa có đơn mua nào tương ứng với bộ lọc đã chọn.</p>
-                <a asp-area="" asp-controller="Products" asp-action="Index" class="btn btn-success px-4 py-2 rounded-pill fw-semibold"
-                   style="background-color: var(--green, #285b43); border-color: var(--green, #285b43);">
-                    Khám phá đồ cũ ngay
+                <h4 class="fw-bold text-dark mb-2">@L["Order_EmptyTitle"]</h4>
+                <p class="text-secondary small mb-4">@L["Order_EmptyDesc"]</p>
+                <a asp-area="" asp-controller="Products" asp-action="Index" class="btn btn-rm-primary px-4 py-2 rounded-pill fw-semibold">
+                    @L["Cart_FindProducts"]
                 </a>
             </div>
         </div>
@@ -76,7 +68,7 @@
                     <div>
                         <span class="fw-bold text-dark"><i class="bi bi-shop text-success me-1"></i> @don.TenShop</span>
                         <span class="text-muted mx-2">|</span>
-                        <span class="font-monospace text-secondary small">Mã đơn: #@don.MaDon</span>
+                        <span class="font-monospace text-secondary small">@string.Format(L["Order_OrderCode"].Value, don.MaDon)</span>
                     </div>
                     <div>
                         <span class="badge @(don.TrangThai switch {
@@ -102,7 +94,7 @@
                                  class="rounded-3 border" style="width: 60px; height: 60px; object-fit: cover;" alt="@sp.TenSanPham" />
                             <div class="flex-grow-1 min-w-0">
                                 <div class="fw-semibold text-truncate text-dark">@sp.TenSanPham</div>
-                                <div class="text-muted small" style="font-size: 11px;">Số lượng: 1 (đồ cũ độc nhất)</div>
+                                <div class="text-muted small" style="font-size: 11px;">@L["Order_UniqueQuantity"]</div>
                             </div>
                             <div class="fw-bold text-success text-nowrap">@sp.Gia.ToString("N0") ₫</div>
                         </div>
@@ -111,20 +103,20 @@
                     <!-- Footer của thẻ đơn hàng -->
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3">
                         <div class="text-muted small">
-                            Ngày đặt: @HienThi.NgayGio(don.NgayTao)
+                            @L["Order_OrderDate"] @HienThi.NgayGio(don.NgayTao)
                             @if (!string.IsNullOrEmpty(don.LyDoHuy))
                             {
-                                <div class="text-danger small mt-1">Lý do hủy: @don.LyDoHuy</div>
+                                <div class="text-danger small mt-1">@L["Order_CancelReason"] @don.LyDoHuy</div>
                             }
                         </div>
                         <div class="d-flex align-items-center gap-3">
                             <div>
-                                <span class="text-muted small">Tổng tiền:</span>
+                                <span class="text-muted small">@L["Order_Total"]</span>
                                 <span class="h5 fw-bold text-success ms-1 mb-0">@don.TongTien.ToString("N0") ₫</span>
                             </div>
                             <a asp-area="User" asp-controller="Orders" asp-action="ChiTiet" asp-route-id="@don.MaDonHang" 
-                               class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold">
-                                Xem chi tiết &rarr;
+                               class="btn btn-rm-outline btn-sm rounded-pill px-3 fw-semibold">
+                                @L["Order_ViewDetails"] &rarr;
                             </a>
                         </div>
                     </div>

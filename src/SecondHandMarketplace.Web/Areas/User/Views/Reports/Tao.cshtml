@@ -1,6 +1,6 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Reports.TaoBaoCaoViewModel
 @{
-    ViewData["Title"] = "Gửi báo cáo vi phạm";
+    ViewData["Title"] = L["Report_SubmitTitle"];
 }
 
 <div class="container my-5" style="max-width: 600px;">
@@ -11,8 +11,8 @@
                 <i class="bi bi-flag-fill"></i>
             </span>
             <div>
-                <h4 class="fw-bold text-dark mb-0">Gửi báo cáo vi phạm</h4>
-                <p class="text-muted small mb-0">Giúp cộng đồng Re:Market an toàn và minh bạch hơn.</p>
+                <h4 class="fw-bold text-dark mb-0">@L["Report_SubmitTitle"]</h4>
+                <p class="text-muted small mb-0">@L["Report_SubmitSubtitle"]</p>
             </div>
         </div>
 
@@ -26,7 +26,7 @@
 
             <!-- Thông tin đối tượng bị báo cáo -->
             <div class="p-3 bg-light rounded-3 border mb-3">
-                <span class="text-muted small d-block">Đối tượng bị báo cáo:</span>
+                <span class="text-muted small d-block">@L["Report_TargetLabel"]</span>
                 <div class="d-flex align-items-center gap-2 mt-1">
                     <span class="badge bg-secondary rounded-pill small">@Model.LoaiDoiTuong</span>
                     <strong class="text-dark">@(string.IsNullOrEmpty(Model.TenDoiTuong) ? $"#{Model.MaDoiTuong}" : Model.TenDoiTuong)</strong>
@@ -35,34 +35,34 @@
 
             <!-- Lý do -->
             <div class="mb-3">
-                <label asp-for="LyDo" class="form-label fw-semibold small text-dark">Lý do vi phạm <span class="text-danger">*</span></label>
+                <label asp-for="LyDo" class="form-label fw-semibold small text-dark">@L["Report_ReasonLabel"] <span class="text-danger">*</span></label>
                 <select asp-for="LyDo" class="form-select rounded-3">
-                    <option value="">-- Vui lòng chọn lý do --</option>
-                    <option value="Hàng giả / Hàng nhái">Hàng giả / Hàng nhái</option>
-                    <option value="Hàng cấm buôn bán">Hàng cấm buôn bán</option>
-                    <option value="Lừa đảo / Gian lận thông tin">Lừa đảo / Gian lận thông tin</option>
-                    <option value="Hình ảnh phản cảm / Vi phạm thuần phong mỹ tục">Hình ảnh phản cảm / Vi phạm thuần phong mỹ tục</option>
-                    <option value="Người bán không trung thực về tình trạng">Người bán không trung thực về tình trạng</option>
-                    <option value="Spam / Đăng tin lặp lại">Spam / Đăng tin lặp lại</option>
-                    <option value="Khác">Lý do khác</option>
+                    <option value="">@L["Report_ReasonSelectDefault"]</option>
+                    <option value="Hàng giả / Hàng nhái">@L["Report_ReasonFake"]</option>
+                    <option value="Hàng cấm buôn bán">@L["Report_ReasonProhibited"]</option>
+                    <option value="Lừa đảo / Gian lận thông tin">@L["Report_ReasonFraud"]</option>
+                    <option value="Hình ảnh phản cảm / Vi phạm thuần phong mỹ tục">@L["Report_ReasonInappropriate"]</option>
+                    <option value="Người bán không trung thực về tình trạng">@L["Report_ReasonDishonest"]</option>
+                    <option value="Spam / Đăng tin lặp lại">@L["Report_ReasonSpam"]</option>
+                    <option value="Khác">@L["Report_ReasonOther"]</option>
                 </select>
                 <span asp-validation-for="LyDo" class="text-danger small"></span>
             </div>
 
             <!-- Mô tả -->
             <div class="mb-4">
-                <label asp-for="MoTa" class="form-label fw-semibold small text-dark">Mô tả cụ thể (tùy chọn)</label>
-                <textarea asp-for="MoTa" rows="4" class="form-control rounded-3" placeholder="Cung cấp thêm chi tiết giúp Ban quản trị xác minh và xử lý nhanh chóng..."></textarea>
+                <label asp-for="MoTa" class="form-label fw-semibold small text-dark">@L["Report_DescLabel"]</label>
+                <textarea asp-for="MoTa" rows="4" class="form-control rounded-3" placeholder="@L["Report_DescPlaceholder"].Value"></textarea>
                 <span asp-validation-for="MoTa" class="text-danger small"></span>
             </div>
 
             <!-- Nút gửi -->
             <div class="d-flex justify-content-between align-items-center">
-                <a href="@(string.IsNullOrEmpty(ViewBag.ReturnUrl) || !Url.IsLocalUrl(ViewBag.ReturnUrl) ? "/" : ViewBag.ReturnUrl)" class="btn btn-outline-secondary rounded-pill px-3 btn-sm">
-                    &larr; Hủy bỏ
+                <a href="@(string.IsNullOrEmpty(ViewBag.ReturnUrl) || !Url.IsLocalUrl(ViewBag.ReturnUrl) ? "/" : ViewBag.ReturnUrl)" class="btn btn-rm-secondary rounded-pill px-3 btn-sm">
+                    &larr; @L["Report_CancelBtn"]
                 </a>
                 <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold btn-sm">
-                    <i class="bi bi-send me-1"></i> Gửi báo cáo
+                    <i class="bi bi-send me-1"></i> @L["Report_SubmitBtn"]
                 </button>
             </div>
         </form>

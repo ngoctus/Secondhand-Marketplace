@@ -613,4 +613,236 @@
   <data name="Banner_OptHide" xml:space="preserve"><value>Ẩn</value></data>
   <data name="Banner_SaveChanges" xml:space="preserve"><value>Lưu thay đổi</value></data>
   <data name="Banner_ConfirmDelete" xml:space="preserve"><value>Bạn có chắc muốn xóa banner này?</value></data>
+  <data name="Cart_Title" xml:space="preserve"><value>Giỏ hàng của bạn</value></data>
+  <data name="Cart_Subtitle" xml:space="preserve"><value>Các món đồ cũ độc nhất bạn đã chọn mua từ các cửa hàng.</value></data>
+  <data name="Cart_Continue" xml:space="preserve"><value>Tiếp tục mua sắm</value></data>
+  <data name="Cart_EmptyTitle" xml:space="preserve"><value>Giỏ hàng của bạn đang trống</value></data>
+  <data name="Cart_EmptyDesc" xml:space="preserve"><value>Hãy dạo quanh sàn Re:Market để tìm những món đồ cũ chất lượng và độc đáo nhé!</value></data>
+  <data name="Cart_FindProducts" xml:space="preserve"><value>Khám phá đồ cũ ngay</value></data>
+  <data name="Cart_CleanUnavailable" xml:space="preserve"><value>Dọn các món đã bán hoặc không còn khả dụng</value></data>
+  <data name="Cart_ShopProductsCount" xml:space="preserve"><value>{0} sản phẩm</value></data>
+  <data name="Cart_ColProduct" xml:space="preserve"><value>Sản phẩm</value></data>
+  <data name="Cart_ColPrice" xml:space="preserve"><value>Đơn giá</value></data>
+  <data name="Cart_ColQuantity" xml:space="preserve"><value>Số lượng</value></data>
+  <data name="Cart_ColRemove" xml:space="preserve"><value>Xóa</value></data>
+  <data name="Cart_Unavailable" xml:space="preserve"><value>Không khả dụng (đã bán hoặc đã gỡ)</value></data>
+  <data name="Cart_ReadyToOrder" xml:space="preserve"><value>Sẵn sàng đặt mua</value></data>
+  <data name="Cart_UniqueItem" xml:space="preserve"><value>Duy nhất</value></data>
+  <data name="Cart_ConfirmRemove" xml:space="preserve"><value>Bạn có chắc muốn xóa món đồ này khỏi giỏ hàng?</value></data>
+  <data name="Cart_SummaryTitle" xml:space="preserve"><value>Tóm tắt giỏ hàng</value></data>
+  <data name="Cart_SelectedItems" xml:space="preserve"><value>Món đồ đã chọn:</value></data>
+  <data name="Cart_ItemCountSuffix" xml:space="preserve"><value>sản phẩm</value></data>
+  <data name="Cart_Subtotal" xml:space="preserve"><value>Tổng tạm tính:</value></data>
+  <data name="Cart_NoteTitle" xml:space="preserve"><value>Lưu ý:</value></data>
+  <data name="Cart_NoteContent" xml:space="preserve"><value>Đồ cũ mỗi món chỉ có 1 cái duy nhất. Nếu nhiều người cùng thêm vào giỏ, ai đặt hàng trước sẽ sở hữu món đồ.</value></data>
+  <data name="Cart_ProceedCheckout" xml:space="preserve"><value>Tiến hành Đặt hàng</value></data>
+  <data name="Cart_FindMore" xml:space="preserve"><value>Tìm thêm món đồ khác</value></data>
+  <data name="Order_MyOrdersTitle" xml:space="preserve"><value>Đơn mua của tôi</value></data>
+  <data name="Order_MyOrdersSubtitle" xml:space="preserve"><value>Theo dõi hành trình và trạng thái các đơn hàng bạn đã đặt mua.</value></data>
+  <data name="Order_ViewCart" xml:space="preserve"><value>Xem giỏ hàng</value></data>
+  <data name="Order_FilterAll" xml:space="preserve"><value>Tất cả đơn</value></data>
+  <data name="Order_FilterPending" xml:space="preserve"><value>Chờ xác nhận</value></data>
+  <data name="Order_FilterConfirmed" xml:space="preserve"><value>Shop đã xác nhận</value></data>
+  <data name="Order_FilterShipping" xml:space="preserve"><value>Đang giao / Hẹn gặp</value></data>
+  <data name="Order_FilterDelivered" xml:space="preserve"><value>Đã giao / Nhận hàng</value></data>
+  <data name="Order_FilterCompleted" xml:space="preserve"><value>Hoàn tất</value></data>
+  <data name="Order_FilterCancelled" xml:space="preserve"><value>Đã hủy</value></data>
+  <data name="Order_EmptyTitle" xml:space="preserve"><value>Chưa có đơn hàng nào ở mục này</value></data>
+  <data name="Order_EmptyDesc" xml:space="preserve"><value>Bạn chưa có đơn mua nào tương ứng với bộ lọc đã chọn.</value></data>
+  <data name="Order_OrderCode" xml:space="preserve"><value>Mã đơn: #{0}</value></data>
+  <data name="Order_UniqueQuantity" xml:space="preserve"><value>Số lượng: 1 (đồ cũ độc nhất)</value></data>
+  <data name="Order_OrderDate" xml:space="preserve"><value>Ngày đặt:</value></data>
+  <data name="Order_CancelReason" xml:space="preserve"><value>Lý do hủy:</value></data>
+  <data name="Order_Total" xml:space="preserve"><value>Tổng tiền:</value></data>
+  <data name="Order_ViewDetails" xml:space="preserve"><value>Xem chi tiết</value></data>
+  <data name="Checkout_Title" xml:space="preserve"><value>Xác nhận &amp; Đặt hàng</value></data>
+  <data name="Checkout_Subtitle" xml:space="preserve"><value>Kiểm tra thông tin giao nhận và chọn phương thức thanh toán thuận tiện nhất.</value></data>
+  <data name="Checkout_BackToCart" xml:space="preserve"><value>Quay lại giỏ hàng</value></data>
+  <data name="Checkout_Step1" xml:space="preserve"><value>Hình thức nhận &amp; Thông tin người nhận</value></data>
+  <data name="Checkout_Fulfillment" xml:space="preserve"><value>Hình thức giao dịch</value></data>
+  <data name="Checkout_Delivery" xml:space="preserve"><value>Giao hàng tận nơi</value></data>
+  <data name="Checkout_DeliveryDesc" xml:space="preserve"><value>Người bán gửi hàng tận nhà cho bạn.</value></data>
+  <data name="Checkout_Meetup" xml:space="preserve"><value>Gặp mặt trực tiếp</value></data>
+  <data name="Checkout_MeetupDesc" xml:space="preserve"><value>Hẹn gặp kiểm tra đồ trực tiếp, 0đ ship.</value></data>
+  <data name="Checkout_FullName" xml:space="preserve"><value>Họ và tên người nhận</value></data>
+  <data name="Checkout_FullNamePlaceholder" xml:space="preserve"><value>Ví dụ: Nguyễn Văn An</value></data>
+  <data name="Checkout_Phone" xml:space="preserve"><value>Số điện thoại liên hệ</value></data>
+  <data name="Checkout_PhonePlaceholder" xml:space="preserve"><value>Ví dụ: 0912345678</value></data>
+  <data name="Checkout_AddressDetail" xml:space="preserve"><value>Địa chỉ chi tiết (Số nhà, tên ngõ/đường - Không bắt buộc)</value></data>
+  <data name="Checkout_MeetupLocationDetail" xml:space="preserve"><value>Địa điểm hẹn gặp chi tiết (Không bắt buộc)</value></data>
+  <data name="Checkout_AddressPlaceholder" xml:space="preserve"><value>Ví dụ: Số 123 ngõ 45 đường Giải Phóng (tùy chọn)</value></data>
+  <data name="Checkout_MeetupPlaceholder" xml:space="preserve"><value>Ví dụ: Quán cafe X, cổng trường UTC2...</value></data>
+  <data name="Checkout_AddressHint" xml:space="preserve"><value>Bạn có thể để trống nếu chỉ cần giao nhận tại địa bàn Phường/Xã đã chọn.</value></data>
+  <data name="Checkout_DeliveryWindow" xml:space="preserve"><value>Khung giờ hoặc lưu ý khi nhận hàng</value></data>
+  <data name="Checkout_DeliveryWindowPlaceholder" xml:space="preserve"><value>Ví dụ: sau 18:00, né giờ hành chính, hoặc linh động</value></data>
+  <data name="Checkout_Step2" xml:space="preserve"><value>Chọn phương thức thanh toán</value></data>
+  <data name="Checkout_COD" xml:space="preserve"><value>Thanh toán khi nhận hàng (COD)</value></data>
+  <data name="Checkout_Popular" xml:space="preserve"><value>Phổ biến</value></data>
+  <data name="Checkout_CODDesc" xml:space="preserve"><value>Kiểm tra kiện hàng trước khi thanh toán tiền mặt cho shipper.</value></data>
+  <data name="Checkout_VietQR" xml:space="preserve"><value>Chuyển khoản ngân hàng (VietQR)</value></data>
+  <data name="Checkout_PerShop" xml:space="preserve"><value>Theo từng cửa hàng</value></data>
+  <data name="Checkout_VietQRDesc" xml:space="preserve"><value>Mỗi cửa hàng có mã QR và nội dung chuyển khoản riêng. Chi tiết hiện sau khi đặt đơn.</value></data>
+  <data name="Checkout_VietQRUnavailable" xml:space="preserve"><value>Chưa khả dụng: ít nhất một cửa hàng chưa cấu hình đủ thông tin nhận tiền. Bạn có thể chọn COD.</value></data>
+  <data name="Checkout_Online" xml:space="preserve"><value>Ví điện tử / Thẻ thanh toán</value></data>
+  <data name="Checkout_ComingSoon" xml:space="preserve"><value>Sắp hỗ trợ</value></data>
+  <data name="Checkout_OnlineDesc" xml:space="preserve"><value>Thanh toán online chưa được tích hợp; phương thức này hiện chưa thể chọn.</value></data>
+  <data name="Checkout_VietQRNotice" xml:space="preserve"><value>Sau khi đặt hàng: Re:Market tạo đơn riêng cho từng cửa hàng và hiển thị QR theo thông tin shop đã đăng ký. Hãy đối chiếu chủ tài khoản, số tiền và mã đơn. Shop xác nhận thủ công sau khi kiểm tra tiền vào; hệ thống chưa kết nối ngân hàng.</value></data>
+  <data name="Checkout_ItemsSummary" xml:space="preserve"><value>Món đồ đặt mua</value></data>
+  <data name="Checkout_UniqueBadge" xml:space="preserve"><value>Mỗi món là duy nhất</value></data>
+  <data name="Checkout_ItemTotal" xml:space="preserve"><value>Tiền hàng:</value></data>
+  <data name="Checkout_ShippingFee" xml:space="preserve"><value>Phí vận chuyển:</value></data>
+  <data name="Checkout_FreeShipping" xml:space="preserve"><value>Miễn phí</value></data>
+  <data name="Checkout_TotalPayment" xml:space="preserve"><value>Tổng thanh toán:</value></data>
+  <data name="Checkout_ConfirmBtn" xml:space="preserve"><value>Xác nhận đặt hàng</value></data>
+  <data name="Checkout_TrustNotice" xml:space="preserve"><value>Kiểm tra thông tin đơn và trao đổi với shop ngay trên Re:Market.</value></data>
+  <data name="OrderConfirm_Title" xml:space="preserve"><value>Đặt hàng thành công!</value></data>
+  <data name="OrderConfirm_Subtitle" xml:space="preserve"><value>Cảm ơn bạn đã lựa chọn mua sắm cùng Re:Market.</value></data>
+  <data name="OrderConfirm_BankNote" xml:space="preserve"><value>Đơn hàng đã được ghi nhận; shop sẽ xác nhận thanh toán trước khi chuẩn bị gửi hàng.</value></data>
+  <data name="OrderConfirm_CodNote" xml:space="preserve"><value>Đơn hàng đã được ghi nhận và shop sẽ chuẩn bị bước tiếp theo.</value></data>
+  <data name="OrderConfirm_CodeLabel" xml:space="preserve"><value>Mã đơn hàng:</value></data>
+  <data name="OrderConfirm_VietQRTitle" xml:space="preserve"><value>Thanh toán chuyển khoản VietQR</value></data>
+  <data name="OrderConfirm_VietQRDesc" xml:space="preserve"><value>Mỗi đơn được thanh toán riêng cho cửa hàng tương ứng. Shop cập nhật trạng thái sau khi kiểm tra giao dịch.</value></data>
+  <data name="OrderConfirm_BankPaid" xml:space="preserve"><value>Đã xác nhận thanh toán chuyển khoản thành công!</value></data>
+  <data name="OrderConfirm_BankPaidDesc" xml:space="preserve"><value>Shop đã xác nhận thanh toán. Bạn có thể theo dõi tiến độ trong chi tiết đơn hàng.</value></data>
+  <data name="OrderConfirm_CodTitle" xml:space="preserve"><value>Thanh toán khi nhận hàng (COD)</value></data>
+  <data name="OrderConfirm_CodDesc" xml:space="preserve"><value>Đơn hàng của bạn sẽ được giao tới địa chỉ đã đăng ký. Bạn hãy chuẩn bị tiền mặt để thanh toán cho shipper sau khi nhận và kiểm tra gói hàng.</value></data>
+  <data name="OrderConfirm_PackageList" xml:space="preserve"><value>Danh sách kiện hàng đã tạo</value></data>
+  <data name="OrderConfirm_PackageCount" xml:space="preserve"><value>{0} kiện</value></data>
+  <data name="OrderConfirm_PackageDetail" xml:space="preserve"><value>Chi tiết đơn này</value></data>
+  <data name="OrderConfirm_ManageOrders" xml:space="preserve"><value>Quản lý đơn mua</value></data>
+  <data name="OrderConfirm_Continue" xml:space="preserve"><value>Tiếp tục khám phá</value></data>
+  <data name="OrderDetail_Title" xml:space="preserve"><value>Chi tiết đơn hàng #{0}</value></data>
+  <data name="OrderDetail_Shop" xml:space="preserve"><value>Cửa hàng:</value></data>
+  <data name="OrderDetail_ReportShop" xml:space="preserve"><value>Báo cáo shop</value></data>
+  <data name="OrderDetail_BackToList" xml:space="preserve"><value>Về danh sách đơn</value></data>
+  <data name="OrderDetail_DeliveryWindow" xml:space="preserve"><value>Khung giờ nhận:</value></data>
+  <data name="OrderDetail_Status" xml:space="preserve"><value>Trạng thái đơn:</value></data>
+  <data name="OrderDetail_CancelBtn" xml:space="preserve"><value>Hủy đơn hàng</value></data>
+  <data name="OrderDetail_ConfirmReceivedBtn" xml:space="preserve"><value>Đã nhận được hàng</value></data>
+  <data name="OrderDetail_ConfirmReceivedPrompt" xml:space="preserve"><value>Bạn xác nhận đã nhận được hàng đúng như mô tả và hài lòng với sản phẩm?</value></data>
+  <data name="OrderDetail_ViewDispute" xml:space="preserve"><value>Xem tiến độ khiếu nại</value></data>
+  <data name="OrderDetail_OpenDispute" xml:space="preserve"><value>Khiếu nại / Tranh chấp</value></data>
+  <data name="OrderDetail_ReviewShop" xml:space="preserve"><value>Đánh giá người bán</value></data>
+  <data name="OrderDetail_Reviewed" xml:space="preserve"><value>Đã đánh giá ({0} ★)</value></data>
+  <data name="OrderDetail_CancelBoxTitle" xml:space="preserve"><value>Xác nhận hủy đơn hàng</value></data>
+  <data name="OrderDetail_CancelBoxDesc" xml:space="preserve"><value>Bạn có chắc chắn muốn hủy đơn hàng này không? Sản phẩm sẽ được đưa lại lên sàn để người khác có thể mua.</value></data>
+  <data name="OrderDetail_CancelReasonLabel" xml:space="preserve"><value>Lý do hủy đơn</value></data>
+  <data name="OrderDetail_CancelReasonPlaceholder" xml:space="preserve"><value>Nhập lý do bạn muốn hủy đơn...</value></data>
+  <data name="OrderDetail_ConfirmCancelBtn" xml:space="preserve"><value>Xác nhận hủy ngay</value></data>
+  <data name="OrderDetail_Close" xml:space="preserve"><value>Đóng</value></data>
+  <data name="OrderDetail_YourReview" xml:space="preserve"><value>Đánh giá của bạn dành cho shop {0}</value></data>
+  <data name="OrderDetail_ReviewVisible" xml:space="preserve"><value>Đang hiển thị</value></data>
+  <data name="OrderDetail_ReviewHidden" xml:space="preserve"><value>Đã bị ẩn</value></data>
+  <data name="OrderDetail_NoReviewComment" xml:space="preserve"><value>Không có nhận xét kèm theo.</value></data>
+  <data name="OrderDetail_DeliveryInfo" xml:space="preserve"><value>Thông tin giao hàng</value></data>
+  <data name="OrderDetail_MeetupInfo" xml:space="preserve"><value>Thông tin điểm hẹn trực tiếp</value></data>
+  <data name="OrderDetail_FulfillmentMethod" xml:space="preserve"><value>Hình thức nhận:</value></data>
+  <data name="OrderDetail_Recipient" xml:space="preserve"><value>Người nhận:</value></data>
+  <data name="OrderDetail_MeetupPerson" xml:space="preserve"><value>Người hẹn:</value></data>
+  <data name="OrderDetail_Phone" xml:space="preserve"><value>Số điện thoại:</value></data>
+  <data name="OrderDetail_Address" xml:space="preserve"><value>Địa chỉ nhận:</value></data>
+  <data name="OrderDetail_MeetupLocation" xml:space="preserve"><value>Địa điểm hẹn:</value></data>
+  <data name="OrderDetail_Payment" xml:space="preserve"><value>Thanh toán</value></data>
+  <data name="OrderDetail_PaymentMethod" xml:space="preserve"><value>Phương thức:</value></data>
+  <data name="OrderDetail_PaymentStatus" xml:space="preserve"><value>Trạng thái thanh toán:</value></data>
+  <data name="OrderDetail_ViewQrBtn" xml:space="preserve"><value>Xem mã VietQR chuyển khoản</value></data>
+  <data name="OrderDetail_ItemsInOrder" xml:space="preserve"><value>Sản phẩm trong đơn</value></data>
+  <data name="OrderDetail_ItemsCount" xml:space="preserve"><value>{0} sản phẩm</value></data>
+  <data name="OrderDetail_Timeline" xml:space="preserve"><value>Lịch sử trạng thái đơn hàng</value></data>
+  <data name="OrderDetail_TimelineDesc" xml:space="preserve"><value>Chi tiết các mốc xử lý đơn hàng từ lúc đặt mua đến khi hoàn tất.</value></data>
+  <data name="SellerOrder_Title" xml:space="preserve"><value>Đơn bán hàng</value></data>
+  <data name="SellerOrder_Subtitle" xml:space="preserve"><value>Đơn của khách gửi tới cửa hàng của bạn.</value></data>
+  <data name="SellerOrder_ViewReviews" xml:space="preserve"><value>Xem đánh giá cửa hàng</value></data>
+  <data name="SellerOrder_SearchPlaceholder" xml:space="preserve"><value>Tìm theo mã đơn hoặc tên người mua</value></data>
+  <data name="SellerOrder_SearchBtn" xml:space="preserve"><value>Tìm</value></data>
+  <data name="SellerOrder_Empty" xml:space="preserve"><value>Chưa có đơn hàng nào.</value></data>
+  <data name="SellerOrder_ColOrder" xml:space="preserve"><value>ĐƠN HÀNG</value></data>
+  <data name="SellerOrder_ColBuyer" xml:space="preserve"><value>NGƯỜI MUA</value></data>
+  <data name="SellerOrder_ColTotal" xml:space="preserve"><value>TỔNG TIỀN</value></data>
+  <data name="SellerOrder_ColPayment" xml:space="preserve"><value>THANH TOÁN</value></data>
+  <data name="SellerOrder_ColStatus" xml:space="preserve"><value>TRẠNG THÁI</value></data>
+  <data name="SellerOrder_ColDate" xml:space="preserve"><value>NGÀY ĐẶT</value></data>
+  <data name="SellerOrder_ColAction" xml:space="preserve"><value>Hành động</value></data>
+  <data name="SellerOrder_ProcessBtn" xml:space="preserve"><value>Xử lý</value></data>
+  <data name="SellerOrder_DisputeAlert" xml:space="preserve"><value>Đơn hàng đang có khiếu nại từ người mua</value></data>
+  <data name="SellerOrder_DisputeReason" xml:space="preserve"><value>Lý do:</value></data>
+  <data name="SellerOrder_DisputeAwaitingResponse" xml:space="preserve"><value>Chờ bạn phản hồi</value></data>
+  <data name="SellerOrder_DisputeProcessing" xml:space="preserve"><value>Đang xử lý</value></data>
+  <data name="SellerOrder_DisputeRespondBtn" xml:space="preserve"><value>Xem &amp; Phản hồi</value></data>
+  <data name="SellerOrder_ActionPanelTitle" xml:space="preserve"><value>Xử lý đơn</value></data>
+  <data name="SellerOrder_ConfirmPaymentTitle" xml:space="preserve"><value>Chưa xác nhận tiền</value></data>
+  <data name="SellerOrder_ConfirmPaymentDesc" xml:space="preserve"><value>Kiểm tra tài khoản ngân hàng hoặc khi nhận tiền mặt xong, người bán bấm nút xác nhận bên dưới:</value></data>
+  <data name="SellerOrder_ConfirmPaymentBtn" xml:space="preserve"><value>Đã nhận tiền thành công</value></data>
+  <data name="SellerOrder_ConfirmPaymentPrompt" xml:space="preserve"><value>Bạn xác nhận đã nhận đủ tiền {0} từ người mua?</value></data>
+  <data name="SellerOrder_CancelPrompt" xml:space="preserve"><value>Hủy đơn hàng này?</value></data>
+  <data name="SellerOrder_CancelReasonLabel" xml:space="preserve"><value>Lý do hủy đơn (bắt buộc)</value></data>
+  <data name="SellerOrder_CancelReasonPlaceholder" xml:space="preserve"><value>Ví dụ: Sản phẩm không còn như mô tả...</value></data>
+  <data name="SellerOrder_CancelBtn" xml:space="preserve"><value>Hủy đơn</value></data>
+  <data name="Dispute_Title" xml:space="preserve"><value>Khiếu nại &amp; Tranh chấp</value></data>
+  <data name="Dispute_Subtitle" xml:space="preserve"><value>Theo dõi tiến trình giải quyết khiếu nại các đơn hàng của bạn.</value></data>
+  <data name="Dispute_ViewOrders" xml:space="preserve"><value>Xem danh sách đơn mua</value></data>
+  <data name="Dispute_EmptyTitle" xml:space="preserve"><value>Chưa có khiếu nại nào</value></data>
+  <data name="Dispute_EmptyDesc" xml:space="preserve"><value>Bạn hiện không có bất kỳ tranh chấp hay khiếu nại đơn hàng nào đang chờ xử lý.</value></data>
+  <data name="Dispute_ColOrder" xml:space="preserve"><value>Mã đơn hàng</value></data>
+  <data name="Dispute_ColRole" xml:space="preserve"><value>Vai trò</value></data>
+  <data name="Dispute_ColPartner" xml:space="preserve"><value>Đối tác giao dịch</value></data>
+  <data name="Dispute_ColReason" xml:space="preserve"><value>Lý do khiếu nại</value></data>
+  <data name="Dispute_ColDate" xml:space="preserve"><value>Ngày mở</value></data>
+  <data name="Dispute_ColStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="Dispute_ColAction" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="Dispute_RoleBuyer" xml:space="preserve"><value>Người mua</value></data>
+  <data name="Dispute_RoleSeller" xml:space="preserve"><value>Người bán (Shop)</value></data>
+  <data name="Dispute_DetailsBtn" xml:space="preserve"><value>Chi tiết</value></data>
+  <data name="Report_Title" xml:space="preserve"><value>Lịch sử báo cáo của tôi</value></data>
+  <data name="Report_Subtitle" xml:space="preserve"><value>Theo dõi tiến độ xử lý các báo cáo vi phạm bạn đã gửi.</value></data>
+  <data name="Report_Home" xml:space="preserve"><value>Về trang chủ</value></data>
+  <data name="Report_EmptyTitle" xml:space="preserve"><value>Bạn chưa gửi báo cáo vi phạm nào</value></data>
+  <data name="Report_EmptyDesc" xml:space="preserve"><value>Khi phát hiện sản phẩm hoặc cửa hàng có dấu hiệu vi phạm, hãy bấm nút 'Báo cáo vi phạm' tại trang chi tiết để gửi phản ánh.</value></data>
+  <data name="Report_ColId" xml:space="preserve"><value>Mã</value></data>
+  <data name="Report_ColTarget" xml:space="preserve"><value>Đối tượng</value></data>
+  <data name="Report_ColReason" xml:space="preserve"><value>Lý do</value></data>
+  <data name="Report_ColDate" xml:space="preserve"><value>Thời gian gửi</value></data>
+  <data name="Report_ColStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="Report_ColAdminReply" xml:space="preserve"><value>Phản hồi của Admin</value></data>
+  <data name="Report_Pending" xml:space="preserve"><value>Chờ xử lý</value></data>
+  <data name="Report_Resolved" xml:space="preserve"><value>Đã xử lý</value></data>
+  <data name="Report_Dismissed" xml:space="preserve"><value>Bỏ qua</value></data>
+  <data name="Locked_Title" xml:space="preserve"><value>Khiếu nại &amp; Mở khóa tài khoản</value></data>
+  <data name="Locked_VerifyTitle" xml:space="preserve"><value>Xác minh tài khoản bị khóa</value></data>
+  <data name="Locked_VerifyDesc" xml:space="preserve"><value>Để xem lý do khóa, lịch sử vi phạm và gửi đơn khiếu nại hoặc cam kết mở khóa, vui lòng đăng nhập bằng tài khoản bị khóa của bạn tại trang Đăng nhập để hệ thống xác thực an toàn.</value></data>
+  <data name="Locked_GoToLogin" xml:space="preserve"><value>Đến trang Đăng nhập</value></data>
+  <data name="Locked_BannerLocked" xml:space="preserve"><value>TÀI KHOẢN ĐANG BỊ KHÓA</value></data>
+  <data name="Locked_LockCount1" xml:space="preserve"><value>Lần khóa: 1 / 3</value></data>
+  <data name="Locked_LockCount2" xml:space="preserve"><value>Lần khóa: 2 / 3 (Tái phạm)</value></data>
+  <data name="Locked_LockCount3" xml:space="preserve"><value>Lần khóa: {0} (Mức cao nhất)</value></data>
+  <data name="Locked_LockTime" xml:space="preserve"><value>Thời điểm khóa:</value></data>
+  <data name="Locked_LockReason" xml:space="preserve"><value>Lý do khóa tài khoản:</value></data>
+  <data name="Locked_StrikesCardTitle" xml:space="preserve"><value>Gậy vi phạm hiệu lực</value></data>
+  <data name="Locked_StrikesCount" xml:space="preserve"><value>{0} / {1} gậy</value></data>
+  <data name="Locked_NoStrikes" xml:space="preserve"><value>Không có vi phạm mới ghi nhận sau lần mở khóa gần nhất.</value></data>
+  <data name="Locked_PolicyCardTitle" xml:space="preserve"><value>Quy định xử lý mở khóa</value></data>
+  <data name="Locked_PolicyTier1" xml:space="preserve"><value>Khóa lần 1: Mở khóa miễn phí qua giải trình hoặc cam kết.</value></data>
+  <data name="Locked_PolicyTier2" xml:space="preserve"><value>Khóa lần 2: Khiếu nại khóa nhầm miễn phí; Cam kết mở khóa yêu cầu ký quỹ 200.000đ qua VietQR và gửi kèm ảnh biên lai.</value></data>
+  <data name="Locked_PolicyTier3" xml:space="preserve"><value>Khóa lần 3+: Đóng cam kết mở khóa; chỉ tiếp nhận Khiếu nại nếu bị hệ thống quét nhầm.</value></data>
+  <data name="Locked_PendingAlert" xml:space="preserve"><value>Đang chờ duyệt: Bạn đang có một đơn khiếu nại / yêu cầu mở khóa đang chờ Ban quản trị xử lý (Gửi lúc {0}). Vui lòng kiên nhẫn chờ phản hồi.</value></data>
+  <data name="Locked_CooldownAlert" xml:space="preserve"><value>Tạm khóa lượt gửi: Bạn đã gửi đủ {0} lượt trong chu kỳ hiện tại. Bạn có thể gửi lại sau:</value></data>
+  <data name="Locked_AttemptsRemaining" xml:space="preserve"><value>Lượt gửi còn lại trong chu kỳ: {0} / {1} lượt.</value></data>
+  <data name="Locked_FormCardTitle" xml:space="preserve"><value>Gửi yêu cầu xem xét mở khóa</value></data>
+  <data name="Locked_ReqTypeLabel" xml:space="preserve"><value>Loại yêu cầu</value></data>
+  <data name="Locked_TypeAppealTitle" xml:space="preserve"><value>Khiếu nại khóa nhầm / Bị oan (Miễn phí)</value></data>
+  <data name="Locked_TypeAppealDesc" xml:space="preserve"><value>Dành cho trường hợp hệ thống hoặc người khác báo cáo nhầm. Nếu được duyệt, hệ thống sẽ xóa tiền án đợt khóa này.</value></data>
+  <data name="Locked_TypeUnlockTitle" xml:space="preserve"><value>Cam kết không tái phạm &amp; Xin mở khóa</value></data>
+  <data name="Locked_TypeUnlockDesc" xml:space="preserve"><value>Dành cho trường hợp bạn nhận lỗi và cam kết tuân thủ chính sách sàn.</value></data>
+  <data name="Locked_DepositRequiredBadge" xml:space="preserve"><value>Yêu cầu phí ký quỹ 200.000đ</value></data>
+  <data name="Locked_FreeBadge" xml:space="preserve"><value>Miễn phí</value></data>
+  <data name="Locked_PledgeClosedTitle" xml:space="preserve"><value>Cam kết mở khóa (Đã đóng)</value></data>
+  <data name="Locked_PledgeClosedDesc" xml:space="preserve"><value>Tài khoản bị khóa từ lần thứ 3 trở lên không áp dụng hình thức cam kết mở khóa.</value></data>
+  <data name="Locked_VietQrTitle" xml:space="preserve"><value>Thanh toán phí ký quỹ cam kết (200.000đ)</value></data>
+  <data name="Locked_VietQrDesc" xml:space="preserve"><value>Vui lòng quét mã VietQR bên dưới hoặc chuyển khoản chính xác nội dung để hệ thống đối soát. Sau khi hoàn tất, vui lòng tải ảnh chụp màn hình chuyển khoản thành công vào ô đính kèm bên dưới.</value></data>
+  <data name="Locked_ContentLabel" xml:space="preserve"><value>Nội dung giải trình / Cam kết</value></data>
+  <data name="Locked_ContentPlaceholder" xml:space="preserve"><value>Nhập chi tiết lý do giải trình hoặc nội dung cam kết (tối thiểu 20 ký tự)...</value></data>
+  <data name="Locked_ContentHint" xml:space="preserve"><value>Tối thiểu 20 ký tự, tối đa 2000 ký tự.</value></data>
+  <data name="Locked_EvidenceLabel" xml:space="preserve"><value>Ảnh minh chứng (Tùy chọn)</value></data>
+  <data name="Locked_EvidenceHint" xml:space="preserve"><value>Hỗ trợ định dạng JPG, PNG, WEBP. Tối đa 5MB.</value></data>
+  <data name="Locked_SubmitBtn" xml:space="preserve"><value>Gửi yêu cầu xem xét mở khóa</value></data>
 </root>

@@ -612,4 +612,236 @@
   <data name="Banner_OptHide" xml:space="preserve"><value>Hide</value></data>
   <data name="Banner_SaveChanges" xml:space="preserve"><value>Save changes</value></data>
   <data name="Banner_ConfirmDelete" xml:space="preserve"><value>Are you sure you want to delete this banner?</value></data>
+  <data name="Cart_Title" xml:space="preserve"><value>Your Shopping Cart</value></data>
+  <data name="Cart_Subtitle" xml:space="preserve"><value>Unique pre-owned items selected from shops.</value></data>
+  <data name="Cart_Continue" xml:space="preserve"><value>Continue Shopping</value></data>
+  <data name="Cart_EmptyTitle" xml:space="preserve"><value>Your shopping cart is empty</value></data>
+  <data name="Cart_EmptyDesc" xml:space="preserve"><value>Explore Re:Market to discover unique and quality pre-owned treasures!</value></data>
+  <data name="Cart_FindProducts" xml:space="preserve"><value>Explore Items Now</value></data>
+  <data name="Cart_CleanUnavailable" xml:space="preserve"><value>Remove unavailable items</value></data>
+  <data name="Cart_ShopProductsCount" xml:space="preserve"><value>{0} items</value></data>
+  <data name="Cart_ColProduct" xml:space="preserve"><value>Product</value></data>
+  <data name="Cart_ColPrice" xml:space="preserve"><value>Unit Price</value></data>
+  <data name="Cart_ColQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="Cart_ColRemove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Cart_Unavailable" xml:space="preserve"><value>Unavailable (sold or unlisted)</value></data>
+  <data name="Cart_ReadyToOrder" xml:space="preserve"><value>Ready to order</value></data>
+  <data name="Cart_UniqueItem" xml:space="preserve"><value>Unique item</value></data>
+  <data name="Cart_ConfirmRemove" xml:space="preserve"><value>Are you sure you want to remove this item from your cart?</value></data>
+  <data name="Cart_SummaryTitle" xml:space="preserve"><value>Cart Summary</value></data>
+  <data name="Cart_SelectedItems" xml:space="preserve"><value>Selected items:</value></data>
+  <data name="Cart_ItemCountSuffix" xml:space="preserve"><value>items</value></data>
+  <data name="Cart_Subtotal" xml:space="preserve"><value>Subtotal:</value></data>
+  <data name="Cart_NoteTitle" xml:space="preserve"><value>Note:</value></data>
+  <data name="Cart_NoteContent" xml:space="preserve"><value>Each pre-owned item is unique. The first buyer to complete checkout claims the item.</value></data>
+  <data name="Cart_ProceedCheckout" xml:space="preserve"><value>Proceed to Checkout</value></data>
+  <data name="Cart_FindMore" xml:space="preserve"><value>Find More Items</value></data>
+  <data name="Order_MyOrdersTitle" xml:space="preserve"><value>My Orders</value></data>
+  <data name="Order_MyOrdersSubtitle" xml:space="preserve"><value>Track the progress and status of your placed orders.</value></data>
+  <data name="Order_ViewCart" xml:space="preserve"><value>View Cart</value></data>
+  <data name="Order_FilterAll" xml:space="preserve"><value>All Orders</value></data>
+  <data name="Order_FilterPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="Order_FilterConfirmed" xml:space="preserve"><value>Confirmed</value></data>
+  <data name="Order_FilterShipping" xml:space="preserve"><value>Shipping / Meetup</value></data>
+  <data name="Order_FilterDelivered" xml:space="preserve"><value>Delivered / Handed Over</value></data>
+  <data name="Order_FilterCompleted" xml:space="preserve"><value>Completed</value></data>
+  <data name="Order_FilterCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="Order_EmptyTitle" xml:space="preserve"><value>No orders found in this section</value></data>
+  <data name="Order_EmptyDesc" xml:space="preserve"><value>You have no orders matching the selected filter.</value></data>
+  <data name="Order_OrderCode" xml:space="preserve"><value>Order ID: #{0}</value></data>
+  <data name="Order_UniqueQuantity" xml:space="preserve"><value>Quantity: 1 (unique item)</value></data>
+  <data name="Order_OrderDate" xml:space="preserve"><value>Ordered on:</value></data>
+  <data name="Order_CancelReason" xml:space="preserve"><value>Cancellation reason:</value></data>
+  <data name="Order_Total" xml:space="preserve"><value>Total:</value></data>
+  <data name="Order_ViewDetails" xml:space="preserve"><value>View Details</value></data>
+  <data name="Checkout_Title" xml:space="preserve"><value>Confirm &amp; Place Order</value></data>
+  <data name="Checkout_Subtitle" xml:space="preserve"><value>Review delivery details and choose your preferred payment method.</value></data>
+  <data name="Checkout_BackToCart" xml:space="preserve"><value>Back to Cart</value></data>
+  <data name="Checkout_Step1" xml:space="preserve"><value>Fulfillment &amp; Receiver Details</value></data>
+  <data name="Checkout_Fulfillment" xml:space="preserve"><value>Fulfillment Method</value></data>
+  <data name="Checkout_Delivery" xml:space="preserve"><value>Home Delivery</value></data>
+  <data name="Checkout_DeliveryDesc" xml:space="preserve"><value>Seller ships the package to your doorstep.</value></data>
+  <data name="Checkout_Meetup" xml:space="preserve"><value>In-Person Meetup</value></data>
+  <data name="Checkout_MeetupDesc" xml:space="preserve"><value>Meet directly to inspect items with zero shipping fee.</value></data>
+  <data name="Checkout_FullName" xml:space="preserve"><value>Receiver Full Name</value></data>
+  <data name="Checkout_FullNamePlaceholder" xml:space="preserve"><value>e.g. Nguyen Van An</value></data>
+  <data name="Checkout_Phone" xml:space="preserve"><value>Contact Phone Number</value></data>
+  <data name="Checkout_PhonePlaceholder" xml:space="preserve"><value>e.g. 0912345678</value></data>
+  <data name="Checkout_AddressDetail" xml:space="preserve"><value>Detailed Address (Street/House number - Optional)</value></data>
+  <data name="Checkout_MeetupLocationDetail" xml:space="preserve"><value>Detailed Meetup Location (Optional)</value></data>
+  <data name="Checkout_AddressPlaceholder" xml:space="preserve"><value>e.g. No. 123, 45 Giai Phong street (optional)</value></data>
+  <data name="Checkout_MeetupPlaceholder" xml:space="preserve"><value>e.g. Coffee shop X, university gate...</value></data>
+  <data name="Checkout_AddressHint" xml:space="preserve"><value>You can leave this blank if meeting within the selected ward.</value></data>
+  <data name="Checkout_DeliveryWindow" xml:space="preserve"><value>Preferred delivery window / notes</value></data>
+  <data name="Checkout_DeliveryWindowPlaceholder" xml:space="preserve"><value>e.g. after 6 PM, outside office hours, or flexible</value></data>
+  <data name="Checkout_Step2" xml:space="preserve"><value>Select Payment Method</value></data>
+  <data name="Checkout_COD" xml:space="preserve"><value>Cash on Delivery (COD)</value></data>
+  <data name="Checkout_Popular" xml:space="preserve"><value>Popular</value></data>
+  <data name="Checkout_CODDesc" xml:space="preserve"><value>Inspect your package before paying cash to the courier.</value></data>
+  <data name="Checkout_VietQR" xml:space="preserve"><value>Bank Transfer (VietQR)</value></data>
+  <data name="Checkout_PerShop" xml:space="preserve"><value>Per Shop</value></data>
+  <data name="Checkout_VietQRDesc" xml:space="preserve"><value>Each shop has its own QR code and transfer note. Details shown after placing order.</value></data>
+  <data name="Checkout_VietQRUnavailable" xml:space="preserve"><value>Unavailable: at least one shop hasn't configured payment details. You can select COD.</value></data>
+  <data name="Checkout_Online" xml:space="preserve"><value>E-wallet / Credit Card</value></data>
+  <data name="Checkout_ComingSoon" xml:space="preserve"><value>Coming Soon</value></data>
+  <data name="Checkout_OnlineDesc" xml:space="preserve"><value>Online payment is not yet integrated; currently unavailable.</value></data>
+  <data name="Checkout_VietQRNotice" xml:space="preserve"><value>After ordering: Re:Market creates separate orders per shop with their registered QR code. Verify the account name, amount, and order code. The shop manually confirms payment.</value></data>
+  <data name="Checkout_ItemsSummary" xml:space="preserve"><value>Order Items</value></data>
+  <data name="Checkout_UniqueBadge" xml:space="preserve"><value>One-of-a-kind items</value></data>
+  <data name="Checkout_ItemTotal" xml:space="preserve"><value>Subtotal:</value></data>
+  <data name="Checkout_ShippingFee" xml:space="preserve"><value>Shipping Fee:</value></data>
+  <data name="Checkout_FreeShipping" xml:space="preserve"><value>Free</value></data>
+  <data name="Checkout_TotalPayment" xml:space="preserve"><value>Total Payment:</value></data>
+  <data name="Checkout_ConfirmBtn" xml:space="preserve"><value>Confirm &amp; Place Order</value></data>
+  <data name="Checkout_TrustNotice" xml:space="preserve"><value>Review order information and communicate directly with the shop on Re:Market.</value></data>
+  <data name="OrderConfirm_Title" xml:space="preserve"><value>Order Placed Successfully!</value></data>
+  <data name="OrderConfirm_Subtitle" xml:space="preserve"><value>Thank you for shopping with Re:Market.</value></data>
+  <data name="OrderConfirm_BankNote" xml:space="preserve"><value>Order recorded; shop will verify payment before dispatching.</value></data>
+  <data name="OrderConfirm_CodNote" xml:space="preserve"><value>Order recorded; shop will prepare the next steps.</value></data>
+  <data name="OrderConfirm_CodeLabel" xml:space="preserve"><value>Order ID:</value></data>
+  <data name="OrderConfirm_VietQRTitle" xml:space="preserve"><value>VietQR Bank Transfer</value></data>
+  <data name="OrderConfirm_VietQRDesc" xml:space="preserve"><value>Each order is paid directly to its corresponding shop. The shop updates the status after verifying.</value></data>
+  <data name="OrderConfirm_BankPaid" xml:space="preserve"><value>Bank transfer payment confirmed!</value></data>
+  <data name="OrderConfirm_BankPaidDesc" xml:space="preserve"><value>Shop confirmed your payment. You can track progress in order details.</value></data>
+  <data name="OrderConfirm_CodTitle" xml:space="preserve"><value>Cash on Delivery (COD)</value></data>
+  <data name="OrderConfirm_CodDesc" xml:space="preserve"><value>Your order will be delivered to the specified address. Please have cash ready upon receiving and inspecting.</value></data>
+  <data name="OrderConfirm_PackageList" xml:space="preserve"><value>Created Packages</value></data>
+  <data name="OrderConfirm_PackageCount" xml:space="preserve"><value>{0} packages</value></data>
+  <data name="OrderConfirm_PackageDetail" xml:space="preserve"><value>View Order Details</value></data>
+  <data name="OrderConfirm_ManageOrders" xml:space="preserve"><value>Manage Orders</value></data>
+  <data name="OrderConfirm_Continue" xml:space="preserve"><value>Continue Shopping</value></data>
+  <data name="OrderDetail_Title" xml:space="preserve"><value>Order Details #{0}</value></data>
+  <data name="OrderDetail_Shop" xml:space="preserve"><value>Shop:</value></data>
+  <data name="OrderDetail_ReportShop" xml:space="preserve"><value>Report shop</value></data>
+  <data name="OrderDetail_BackToList" xml:space="preserve"><value>Back to Orders</value></data>
+  <data name="OrderDetail_DeliveryWindow" xml:space="preserve"><value>Delivery Window:</value></data>
+  <data name="OrderDetail_Status" xml:space="preserve"><value>Order Status:</value></data>
+  <data name="OrderDetail_CancelBtn" xml:space="preserve"><value>Cancel Order</value></data>
+  <data name="OrderDetail_ConfirmReceivedBtn" xml:space="preserve"><value>Confirm Received</value></data>
+  <data name="OrderDetail_ConfirmReceivedPrompt" xml:space="preserve"><value>Do you confirm you have received the item as described and are satisfied?</value></data>
+  <data name="OrderDetail_ViewDispute" xml:space="preserve"><value>View Dispute Progress</value></data>
+  <data name="OrderDetail_OpenDispute" xml:space="preserve"><value>File a Dispute</value></data>
+  <data name="OrderDetail_ReviewShop" xml:space="preserve"><value>Review Seller</value></data>
+  <data name="OrderDetail_Reviewed" xml:space="preserve"><value>Reviewed ({0} ★)</value></data>
+  <data name="OrderDetail_CancelBoxTitle" xml:space="preserve"><value>Confirm Order Cancellation</value></data>
+  <data name="OrderDetail_CancelBoxDesc" xml:space="preserve"><value>Are you sure you want to cancel this order? The item will be made available for other buyers.</value></data>
+  <data name="OrderDetail_CancelReasonLabel" xml:space="preserve"><value>Cancellation Reason</value></data>
+  <data name="OrderDetail_CancelReasonPlaceholder" xml:space="preserve"><value>Enter your reason for cancellation...</value></data>
+  <data name="OrderDetail_ConfirmCancelBtn" xml:space="preserve"><value>Confirm Cancel</value></data>
+  <data name="OrderDetail_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="OrderDetail_YourReview" xml:space="preserve"><value>Your review for shop {0}</value></data>
+  <data name="OrderDetail_ReviewVisible" xml:space="preserve"><value>Visible</value></data>
+  <data name="OrderDetail_ReviewHidden" xml:space="preserve"><value>Hidden</value></data>
+  <data name="OrderDetail_NoReviewComment" xml:space="preserve"><value>No comment provided.</value></data>
+  <data name="OrderDetail_DeliveryInfo" xml:space="preserve"><value>Delivery Information</value></data>
+  <data name="OrderDetail_MeetupInfo" xml:space="preserve"><value>In-Person Meetup Information</value></data>
+  <data name="OrderDetail_FulfillmentMethod" xml:space="preserve"><value>Fulfillment:</value></data>
+  <data name="OrderDetail_Recipient" xml:space="preserve"><value>Recipient:</value></data>
+  <data name="OrderDetail_MeetupPerson" xml:space="preserve"><value>Meetup Contact:</value></data>
+  <data name="OrderDetail_Phone" xml:space="preserve"><value>Phone:</value></data>
+  <data name="OrderDetail_Address" xml:space="preserve"><value>Delivery Address:</value></data>
+  <data name="OrderDetail_MeetupLocation" xml:space="preserve"><value>Meetup Location:</value></data>
+  <data name="OrderDetail_Payment" xml:space="preserve"><value>Payment</value></data>
+  <data name="OrderDetail_PaymentMethod" xml:space="preserve"><value>Method:</value></data>
+  <data name="OrderDetail_PaymentStatus" xml:space="preserve"><value>Payment Status:</value></data>
+  <data name="OrderDetail_ViewQrBtn" xml:space="preserve"><value>View VietQR Code</value></data>
+  <data name="OrderDetail_ItemsInOrder" xml:space="preserve"><value>Items in Order</value></data>
+  <data name="OrderDetail_ItemsCount" xml:space="preserve"><value>{0} items</value></data>
+  <data name="OrderDetail_Timeline" xml:space="preserve"><value>Order Status Timeline</value></data>
+  <data name="OrderDetail_TimelineDesc" xml:space="preserve"><value>Detailed milestones from order placement to completion.</value></data>
+  <data name="SellerOrder_Title" xml:space="preserve"><value>Seller Orders</value></data>
+  <data name="SellerOrder_Subtitle" xml:space="preserve"><value>Customer orders placed with your shop.</value></data>
+  <data name="SellerOrder_ViewReviews" xml:space="preserve"><value>View Shop Reviews</value></data>
+  <data name="SellerOrder_SearchPlaceholder" xml:space="preserve"><value>Search by order ID or buyer name</value></data>
+  <data name="SellerOrder_SearchBtn" xml:space="preserve"><value>Search</value></data>
+  <data name="SellerOrder_Empty" xml:space="preserve"><value>No orders yet.</value></data>
+  <data name="SellerOrder_ColOrder" xml:space="preserve"><value>ORDER</value></data>
+  <data name="SellerOrder_ColBuyer" xml:space="preserve"><value>BUYER</value></data>
+  <data name="SellerOrder_ColTotal" xml:space="preserve"><value>TOTAL</value></data>
+  <data name="SellerOrder_ColPayment" xml:space="preserve"><value>PAYMENT</value></data>
+  <data name="SellerOrder_ColStatus" xml:space="preserve"><value>STATUS</value></data>
+  <data name="SellerOrder_ColDate" xml:space="preserve"><value>ORDER DATE</value></data>
+  <data name="SellerOrder_ColAction" xml:space="preserve"><value>Actions</value></data>
+  <data name="SellerOrder_ProcessBtn" xml:space="preserve"><value>Process</value></data>
+  <data name="SellerOrder_DisputeAlert" xml:space="preserve"><value>Order has an active dispute from the buyer</value></data>
+  <data name="SellerOrder_DisputeReason" xml:space="preserve"><value>Reason:</value></data>
+  <data name="SellerOrder_DisputeAwaitingResponse" xml:space="preserve"><value>Awaiting your response</value></data>
+  <data name="SellerOrder_DisputeProcessing" xml:space="preserve"><value>Under review</value></data>
+  <data name="SellerOrder_DisputeRespondBtn" xml:space="preserve"><value>View &amp; Respond</value></data>
+  <data name="SellerOrder_ActionPanelTitle" xml:space="preserve"><value>Order Actions</value></data>
+  <data name="SellerOrder_ConfirmPaymentTitle" xml:space="preserve"><value>Unconfirmed Payment</value></data>
+  <data name="SellerOrder_ConfirmPaymentDesc" xml:space="preserve"><value>After checking your bank account or receiving cash, confirm payment below:</value></data>
+  <data name="SellerOrder_ConfirmPaymentBtn" xml:space="preserve"><value>Confirm Payment Received</value></data>
+  <data name="SellerOrder_ConfirmPaymentPrompt" xml:space="preserve"><value>Confirm that you received full payment of {0} from the buyer?</value></data>
+  <data name="SellerOrder_CancelPrompt" xml:space="preserve"><value>Cancel this order?</value></data>
+  <data name="SellerOrder_CancelReasonLabel" xml:space="preserve"><value>Cancellation reason (required)</value></data>
+  <data name="SellerOrder_CancelReasonPlaceholder" xml:space="preserve"><value>e.g. Item no longer as described...</value></data>
+  <data name="SellerOrder_CancelBtn" xml:space="preserve"><value>Cancel Order</value></data>
+  <data name="Dispute_Title" xml:space="preserve"><value>Disputes &amp; Complaints</value></data>
+  <data name="Dispute_Subtitle" xml:space="preserve"><value>Track resolution progress for your order disputes.</value></data>
+  <data name="Dispute_ViewOrders" xml:space="preserve"><value>View My Orders</value></data>
+  <data name="Dispute_EmptyTitle" xml:space="preserve"><value>No disputes yet</value></data>
+  <data name="Dispute_EmptyDesc" xml:space="preserve"><value>You have no pending complaints or order disputes.</value></data>
+  <data name="Dispute_ColOrder" xml:space="preserve"><value>Order Code</value></data>
+  <data name="Dispute_ColRole" xml:space="preserve"><value>Role</value></data>
+  <data name="Dispute_ColPartner" xml:space="preserve"><value>Counterparty</value></data>
+  <data name="Dispute_ColReason" xml:space="preserve"><value>Complaint Reason</value></data>
+  <data name="Dispute_ColDate" xml:space="preserve"><value>Opened Date</value></data>
+  <data name="Dispute_ColStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="Dispute_ColAction" xml:space="preserve"><value>Action</value></data>
+  <data name="Dispute_RoleBuyer" xml:space="preserve"><value>Buyer</value></data>
+  <data name="Dispute_RoleSeller" xml:space="preserve"><value>Seller (Shop)</value></data>
+  <data name="Dispute_DetailsBtn" xml:space="preserve"><value>Details</value></data>
+  <data name="Report_Title" xml:space="preserve"><value>My Report History</value></data>
+  <data name="Report_Subtitle" xml:space="preserve"><value>Track progress on violation reports you have submitted.</value></data>
+  <data name="Report_Home" xml:space="preserve"><value>Back to Home</value></data>
+  <data name="Report_EmptyTitle" xml:space="preserve"><value>You haven't submitted any reports</value></data>
+  <data name="Report_EmptyDesc" xml:space="preserve"><value>When spotting violations on products or shops, click 'Report' on their page to submit.</value></data>
+  <data name="Report_ColId" xml:space="preserve"><value>ID</value></data>
+  <data name="Report_ColTarget" xml:space="preserve"><value>Target</value></data>
+  <data name="Report_ColReason" xml:space="preserve"><value>Reason</value></data>
+  <data name="Report_ColDate" xml:space="preserve"><value>Submitted At</value></data>
+  <data name="Report_ColStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="Report_ColAdminReply" xml:space="preserve"><value>Admin Response</value></data>
+  <data name="Report_Pending" xml:space="preserve"><value>Pending</value></data>
+  <data name="Report_Resolved" xml:space="preserve"><value>Resolved</value></data>
+  <data name="Report_Dismissed" xml:space="preserve"><value>Dismissed</value></data>
+  <data name="Locked_Title" xml:space="preserve"><value>Appeal &amp; Account Unlock</value></data>
+  <data name="Locked_VerifyTitle" xml:space="preserve"><value>Verify Locked Account</value></data>
+  <data name="Locked_VerifyDesc" xml:space="preserve"><value>To view lockout reasons, violation history, and submit an appeal or pledge, please log in with your locked account on the Login page.</value></data>
+  <data name="Locked_GoToLogin" xml:space="preserve"><value>Go to Login Page</value></data>
+  <data name="Locked_BannerLocked" xml:space="preserve"><value>ACCOUNT IS CURRENTLY LOCKED</value></data>
+  <data name="Locked_LockCount1" xml:space="preserve"><value>Lock: 1 / 3</value></data>
+  <data name="Locked_LockCount2" xml:space="preserve"><value>Lock: 2 / 3 (Repeat Offense)</value></data>
+  <data name="Locked_LockCount3" xml:space="preserve"><value>Lock: {0} (Highest Tier)</value></data>
+  <data name="Locked_LockTime" xml:space="preserve"><value>Locked at:</value></data>
+  <data name="Locked_LockReason" xml:space="preserve"><value>Reason for lockout:</value></data>
+  <data name="Locked_StrikesCardTitle" xml:space="preserve"><value>Active Violation Strikes</value></data>
+  <data name="Locked_StrikesCount" xml:space="preserve"><value>{0} / {1} strikes</value></data>
+  <data name="Locked_NoStrikes" xml:space="preserve"><value>No new violations recorded since last unlock.</value></data>
+  <data name="Locked_PolicyCardTitle" xml:space="preserve"><value>Account Unlock Policy</value></data>
+  <data name="Locked_PolicyTier1" xml:space="preserve"><value>1st Lockout: Free unlock via explanation or pledge.</value></data>
+  <data name="Locked_PolicyTier2" xml:space="preserve"><value>2nd Lockout: Free appeal if mislocked; Pledge requires a 200,000 VND deposit via VietQR with receipt upload.</value></data>
+  <data name="Locked_PolicyTier3" xml:space="preserve"><value>3rd+ Lockout: Pledge closed; only mislock appeals are considered.</value></data>
+  <data name="Locked_PendingAlert" xml:space="preserve"><value>Under review: You have a pending unlock request submitted at {0}. Please wait patiently.</value></data>
+  <data name="Locked_CooldownAlert" xml:space="preserve"><value>Submission cooldown: You have used {0} attempts in this cycle. You can submit again in:</value></data>
+  <data name="Locked_AttemptsRemaining" xml:space="preserve"><value>Remaining attempts in cycle: {0} / {1} attempts.</value></data>
+  <data name="Locked_FormCardTitle" xml:space="preserve"><value>Submit Account Unlock Request</value></data>
+  <data name="Locked_ReqTypeLabel" xml:space="preserve"><value>Request Type</value></data>
+  <data name="Locked_TypeAppealTitle" xml:space="preserve"><value>Mistaken Lockout Appeal (Free)</value></data>
+  <data name="Locked_TypeAppealDesc" xml:space="preserve"><value>For cases where the system or reports were mistaken. Approval will wipe this offense.</value></data>
+  <data name="Locked_TypeUnlockTitle" xml:space="preserve"><value>Pledge &amp; Unlock Request</value></data>
+  <data name="Locked_TypeUnlockDesc" xml:space="preserve"><value>For cases where you acknowledge the fault and pledge compliance.</value></data>
+  <data name="Locked_DepositRequiredBadge" xml:space="preserve"><value>200,000 VND Deposit Required</value></data>
+  <data name="Locked_FreeBadge" xml:space="preserve"><value>Free</value></data>
+  <data name="Locked_PledgeClosedTitle" xml:space="preserve"><value>Pledge (Closed)</value></data>
+  <data name="Locked_PledgeClosedDesc" xml:space="preserve"><value>Accounts locked 3+ times are not eligible for pledge unlocks.</value></data>
+  <data name="Locked_VietQrTitle" xml:space="preserve"><value>Pay Commitment Deposit (200,000 VND)</value></data>
+  <data name="Locked_VietQrDesc" xml:space="preserve"><value>Please scan the VietQR code below or transfer with the exact note. Then upload proof screenshot below.</value></data>
+  <data name="Locked_ContentLabel" xml:space="preserve"><value>Explanation / Pledge Content</value></data>
+  <data name="Locked_ContentPlaceholder" xml:space="preserve"><value>Enter detailed explanation or commitment (at least 20 characters)...</value></data>
+  <data name="Locked_ContentHint" xml:space="preserve"><value>Min 20 chars, max 2000 chars.</value></data>
+  <data name="Locked_EvidenceLabel" xml:space="preserve"><value>Evidence Photo (Optional)</value></data>
+  <data name="Locked_EvidenceHint" xml:space="preserve"><value>Supports JPG, PNG, WEBP. Max 5MB.</value></data>
+  <data name="Locked_SubmitBtn" xml:space="preserve"><value>Submit Unlock Request</value></data>
 </root>

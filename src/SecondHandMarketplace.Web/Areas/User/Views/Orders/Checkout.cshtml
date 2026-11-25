@@ -1,6 +1,6 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Orders.CheckoutViewModel
 @{
-    ViewData["Title"] = "Xác nhận & Đặt hàng";
+    ViewData["Title"] = L["Checkout_Title"];
 }
 
 <div class="container my-4" style="max-width: 1080px;">
@@ -8,12 +8,12 @@
     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
         <div>
             <h2 class="h3 fw-bold text-dark mb-1" style="font-family: 'Playfair Display', serif;">
-                <i class="bi bi-shield-check text-success me-2"></i>Xác nhận & Đặt hàng
+                <i class="bi bi-shield-check text-success me-2"></i>@L["Checkout_Title"]
             </h2>
-            <p class="text-muted small mb-0">Kiểm tra thông tin giao nhận và chọn phương thức thanh toán thuận tiện nhất.</p>
+            <p class="text-muted small mb-0">@L["Checkout_Subtitle"]</p>
         </div>
-        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 text-decoration-none">
-            <i class="bi bi-arrow-left me-1"></i> Quay lại giỏ hàng
+        <a asp-area="User" asp-controller="Cart" asp-action="Index" class="btn btn-rm-secondary btn-sm rounded-pill px-3 py-2 text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i> @L["Checkout_BackToCart"]
         </a>
     </div>
 
@@ -32,20 +32,20 @@
                 <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4">
                     <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
                         <span class="badge bg-success rounded-circle px-2 py-1" style="font-size: 13px;">1</span>
-                        <span>Hình thức nhận & Thông tin người nhận</span>
+                        <span>@L["Checkout_Step1"]</span>
                     </h5>
 
                     <!-- Chọn hình thức nhận hàng (Task D3) -->
                     <label class="form-label fw-semibold small text-dark mb-2">
-                        Hình thức giao dịch <span class="text-danger">*</span>
+                        @L["Checkout_Fulfillment"] <span class="text-danger">*</span>
                     </label>
                     <div class="row g-2 mb-3">
                         <div class="col-sm-6">
                             <label class="delivery-option-card border rounded-3 p-3 d-flex align-items-start gap-2 h-100 cursor-pointer @(Model.HinhThucNhan == "GIAO_HANG" ? "delivery-active" : "")" for="htn_giao">
                                 <input class="form-check-input mt-1" type="radio" asp-for="HinhThucNhan" id="htn_giao" value="GIAO_HANG" />
                                 <div>
-                                    <div class="fw-bold text-dark small"><i class="bi bi-truck text-primary me-1"></i> Giao hàng tận nơi</div>
-                                    <div class="text-muted" style="font-size: 11px;">Người bán gửi hàng tận nhà cho bạn.</div>
+                                    <div class="fw-bold text-dark small"><i class="bi bi-truck text-primary me-1"></i> @L["Checkout_Delivery"]</div>
+                                    <div class="text-muted" style="font-size: 11px;">@L["Checkout_DeliveryDesc"]</div>
                                 </div>
                             </label>
                         </div>
@@ -53,8 +53,8 @@
                             <label class="delivery-option-card border rounded-3 p-3 d-flex align-items-start gap-2 h-100 cursor-pointer @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "delivery-active" : "")" for="htn_gap">
                                 <input class="form-check-input mt-1" type="radio" asp-for="HinhThucNhan" id="htn_gap" value="GAP_TRUC_TIEP" />
                                 <div>
-                                    <div class="fw-bold text-dark small"><i class="bi bi-people-fill text-success me-1"></i> Gặp mặt trực tiếp</div>
-                                    <div class="text-muted" style="font-size: 11px;">Hẹn gặp kiểm tra đồ trực tiếp, 0đ ship.</div>
+                                    <div class="fw-bold text-dark small"><i class="bi bi-people-fill text-success me-1"></i> @L["Checkout_Meetup"]</div>
+                                    <div class="text-muted" style="font-size: 11px;">@L["Checkout_MeetupDesc"]</div>
                                 </div>
                             </label>
                         </div>
@@ -62,7 +62,7 @@
 
                     <div class="mb-3">
                         <label asp-for="TenNguoiNhan" class="form-label fw-semibold small text-dark">
-                            Họ và tên người nhận <span class="text-danger">*</span>
+                            @L["Checkout_ReceiverName"] <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-person"></i></span>
@@ -73,7 +73,7 @@
 
                     <div class="mb-3">
                         <label asp-for="SoDienThoaiNhan" class="form-label fw-semibold small text-dark">
-                            Số điện thoại liên hệ <span class="text-danger">*</span>
+                            @L["Checkout_ReceiverPhone"] <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-telephone"></i></span>
@@ -93,22 +93,22 @@
                     <!-- Địa chỉ chi tiết (Không bắt buộc) -->
                     <div class="mb-3">
                         <label asp-for="DiaChiChiTiet" id="lblDiaChiChiTiet" class="form-label fw-semibold small text-dark">
-                            @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Địa điểm hẹn gặp chi tiết (Không bắt buộc)" : "Địa chỉ chi tiết (Số nhà, tên ngõ/đường - Không bắt buộc)")
+                            @(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? L["Checkout_MeetupLocation"].Value : L["Checkout_DeliveryAddress"].Value)
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-geo-alt"></i></span>
                             <input asp-for="DiaChiChiTiet" id="txtDiaChiChiTiet" class="form-control rounded-end-3 border-start-0" 
-                                   placeholder="@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "Ví dụ: Quán cafe X, cổng trường UTC2..." : "Ví dụ: Số 123 ngõ 45 đường Giải Phóng (tùy chọn)")" maxlength="300" />
+                                   placeholder="@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? L["Checkout_MeetupPlaceholder"].Value : L["Checkout_AddressPlaceholder"].Value)" maxlength="300" />
                         </div>
                         <span asp-validation-for="DiaChiChiTiet" class="text-danger small mt-1 d-block"></span>
-                        <div class="form-text text-muted" style="font-size: 11px;">Bạn có thể để trống nếu chỉ cần giao nhận tại địa bàn Phường/Xã đã chọn.</div>
+                        <div class="form-text text-muted" style="font-size: 11px;">@L["Checkout_AddressHint"]</div>
                     </div>
 
                     <input type="hidden" asp-for="DiaChiNhan" id="hiddenDiaChiNhan" />
 
                     <div class="mb-2">
-                        <label asp-for="KhungGioNhan" class="form-label fw-semibold small text-dark">Khung giờ hoặc lưu ý khi nhận hàng</label>
-                        <input asp-for="KhungGioNhan" class="form-control rounded-3" maxlength="200" placeholder="Ví dụ: sau 18:00, né giờ hành chính, hoặc linh động" />
+                        <label asp-for="KhungGioNhan" class="form-label fw-semibold small text-dark">@L["Checkout_DeliveryTimeNote"]</label>
+                        <input asp-for="KhungGioNhan" class="form-control rounded-3" maxlength="200" placeholder="@L["Checkout_DeliveryTimePlaceholder"].Value" />
                         <span asp-validation-for="KhungGioNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                 <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-4">
                     <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
                         <span class="badge bg-success rounded-circle px-2 py-1" style="font-size: 13px;">2</span>
-                        <span>Chọn phương thức thanh toán</span>
+                        <span>@L["Checkout_Step2"]</span>
                     </h5>
 
                     <div class="d-flex flex-column gap-3 mb-3" id="paymentOptions">
@@ -126,10 +126,10 @@
                             <input class="form-check-input mt-1" type="radio" asp-for="PhuongThucThanhToan" id="pt_cod" value="COD" />
                             <div class="flex-grow-1">
                                 <div class="fw-bold text-dark d-flex align-items-center justify-content-between">
-                                    <span><i class="bi bi-cash-stack text-success me-2 fs-5"></i>Thanh toán khi nhận hàng (COD)</span>
-                                    <span class="badge bg-light text-secondary border small">Phổ biến</span>
+                                    <span><i class="bi bi-cash-stack text-success me-2 fs-5"></i>@L["Checkout_CodTitle"]</span>
+                                    <span class="badge bg-light text-secondary border small">@L["Checkout_CodPopular"]</span>
                                 </div>
-                                <div class="text-secondary small mt-1">Kiểm tra kiện hàng trước khi thanh toán tiền mặt cho shipper.</div>
+                                <div class="text-secondary small mt-1">@L["Checkout_CodDesc"]</div>
                             </div>
                         </label>
 
@@ -140,10 +140,10 @@
                                 <input class="form-check-input mt-1" type="radio" asp-for="PhuongThucThanhToan" id="pt_bank" value="BANK_TRANSFER" />
                                 <div class="flex-grow-1">
                                     <div class="fw-bold text-dark d-flex align-items-center justify-content-between">
-                                        <span><i class="bi bi-qr-code-scan text-primary me-2 fs-5"></i>Chuyển khoản ngân hàng (VietQR)</span>
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">Theo từng cửa hàng</span>
+                                        <span><i class="bi bi-qr-code-scan text-primary me-2 fs-5"></i>@L["Checkout_VietQrTitle"]</span>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">@L["Checkout_VietQrShopBadge"]</span>
                                     </div>
-                                    <div class="text-secondary small mt-1">Mỗi cửa hàng có mã QR và nội dung chuyển khoản riêng. Chi tiết hiện sau khi đặt đơn.</div>
+                                    <div class="text-secondary small mt-1">@L["Checkout_VietQrDesc"]</div>
                                 </div>
                             </label>
                         }
@@ -152,8 +152,8 @@
                             <label class="payment-card border rounded-3 p-3 d-flex align-items-start gap-3 opacity-50" for="pt_bank_unavailable">
                                 <input class="form-check-input mt-1" type="radio" id="pt_bank_unavailable" disabled />
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold text-dark">Chuyển khoản ngân hàng (VietQR)</div>
-                                    <div class="text-secondary small mt-1">Chưa khả dụng: ít nhất một cửa hàng chưa cấu hình đủ thông tin nhận tiền. Bạn có thể chọn COD.</div>
+                                    <div class="fw-bold text-dark">@L["Checkout_VietQrTitle"]</div>
+                                    <div class="text-secondary small mt-1">@L["Checkout_VietQrUnavailable"]</div>
                                 </div>
                             </label>
                         }
@@ -163,10 +163,10 @@
                             <input class="form-check-input mt-1" type="radio" id="pt_online" value="ONLINE" disabled />
                             <div class="flex-grow-1">
                                 <div class="fw-bold text-dark d-flex align-items-center justify-content-between">
-                                    <span><i class="bi bi-credit-card text-warning me-2 fs-5"></i>Ví điện tử / Thẻ thanh toán</span>
-                                    <span class="badge bg-light text-secondary border small">Sắp hỗ trợ</span>
+                                    <span><i class="bi bi-credit-card text-warning me-2 fs-5"></i>@L["Checkout_OnlineTitle"]</span>
+                                    <span class="badge bg-light text-secondary border small">@L["Checkout_OnlineComingSoon"]</span>
                                 </div>
-                                <div class="text-secondary small mt-1">Thanh toán online chưa được tích hợp; phương thức này hiện chưa thể chọn.</div>
+                                <div class="text-secondary small mt-1">@L["Checkout_OnlineDesc"]</div>
                             </div>
                         </label>
                     </div>
@@ -174,7 +174,7 @@
                     <!-- Hướng dẫn thay cho QR giả: thông tin nhận tiền chỉ xuất hiện sau khi xác định từng đơn/shop. -->
                     <div id="vietqrBox" style="display: @(Model.PhuongThucThanhToan == "BANK_TRANSFER" ? "block" : "none");">
                         <div class="alert alert-info border rounded-3 mb-0 small">
-                            <strong>Sau khi đặt hàng:</strong> Re:Market tạo đơn riêng cho từng cửa hàng và hiển thị QR theo thông tin shop đã đăng ký. Hãy đối chiếu chủ tài khoản, số tiền và mã đơn. Shop xác nhận thủ công sau khi kiểm tra tiền vào; hệ thống chưa kết nối ngân hàng.
+                            <strong>@L["Cart_NoteTitle"]</strong> @L["Checkout_VietQrNotice"]
                         </div>
                     </div>
                 </div>
@@ -184,8 +184,8 @@
             <div class="col-lg-5">
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-4 rm-sticky-summary">
                     <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between">
-                        <span>Món đồ đặt mua</span>
-                        <span class="badge bg-light text-muted border fw-normal" style="font-size: 11px;">Mỗi món là duy nhất</span>
+                        <span>@L["Checkout_OrderItems"]</span>
+                        <span class="badge bg-light text-muted border fw-normal" style="font-size: 11px;">@L["Checkout_UniqueItem"]</span>
                     </h5>
 
                     <!-- Danh sách sản phẩm -->
@@ -204,7 +204,7 @@
                                     <div class="text-muted small" style="font-size: 11px;">
                                         <i class="bi bi-shop me-1 text-success"></i>Shop: @Model.SanPhamMuaNgay.TenShop
                                     </div>
-                                    <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">SL: 1 độc bản</div>
+                                    <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">@L["Checkout_SingleUniqueItem"]</div>
                                 </div>
                                 <div class="fw-bold text-success text-nowrap small">
                                     @Model.SanPhamMuaNgay.Gia.ToString("N0") ₫
@@ -230,7 +230,7 @@
                                                 <div class="fw-semibold text-truncate small text-dark" title="@it.TenSanPham">
                                                     @it.TenSanPham
                                                 </div>
-                                                <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">SL: 1 độc bản</div>
+                                                <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">@L["Checkout_SingleUniqueItem"]</div>
                                             </div>
                                             <div class="fw-bold text-success text-nowrap small">
                                                 @it.Gia.ToString("N0") ₫
@@ -245,17 +245,17 @@
                     <!-- Bảng tính tiền -->
                     <div class="border-top pt-3 mb-4">
                         <div class="d-flex justify-content-between mb-2 small">
-                            <span class="text-muted">Tiền hàng:</span>
+                            <span class="text-muted">@L["Checkout_GoodsAmount"]</span>
                             <span class="fw-semibold text-dark">@Model.TienHang.ToString("N0") ₫</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2 small">
-                            <span class="text-muted">Phí vận chuyển:</span>
+                            <span class="text-muted">@L["Checkout_ShippingFee"]</span>
                             <span class="fw-semibold text-success" id="phiVanChuyenTxt">
-                                @(Model.PhiVanChuyen == 0 ? "Miễn phí" : Model.PhiVanChuyen.ToString("N0") + " ₫")
+                                @(Model.PhiVanChuyen == 0 ? L["Checkout_FreeShipping"].Value : Model.PhiVanChuyen.ToString("N0") + " ₫")
                             </span>
                         </div>
                         <div class="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                            <span class="fw-bold text-dark fs-6">Tổng thanh toán:</span>
+                            <span class="fw-bold text-dark fs-6">@L["Checkout_TotalPayment"]</span>
                             <span class="h4 fw-bold text-success mb-0" id="tongThanhToanTxt">
                                 @Model.TongThanhToan.ToString("N0") ₫
                             </span>
@@ -263,12 +263,12 @@
                     </div>
 
                     <!-- Nút đặt hàng -->
-                    <button type="submit" class="btn btn-rm-order w-100 py-3 fw-bold rounded-pill text-white shadow-sm" id="btnSubmitOrder">
-                        <i class="bi bi-bag-check-fill me-2 fs-5"></i>Xác nhận đặt hàng
+                    <button type="submit" class="btn btn-rm-primary w-100 py-3 fw-bold rounded-pill text-white shadow-sm" id="btnSubmitOrder">
+                        <i class="bi bi-bag-check-fill me-2 fs-5"></i>@L["Checkout_ConfirmBtn"]
                     </button>
 
                     <div class="text-center text-muted small mt-3" style="font-size: 11.5px;">
-                        <i class="bi bi-info-circle-fill text-success me-1"></i> Kiểm tra thông tin đơn và trao đổi với shop ngay trên Re:Market.
+                        <i class="bi bi-info-circle-fill text-success me-1"></i> @L["Checkout_BottomNotice"]
                     </div>
                 </div>
             </div>
@@ -300,17 +300,6 @@
     border-color: #1f5c3d !important;
     background-color: rgba(31, 92, 61, 0.04) !important;
     box-shadow: 0 2px 8px rgba(31, 92, 61, 0.08);
-}
-.btn-rm-order {
-    background-color: #1f5c3d;
-    border: none;
-    letter-spacing: 0.3px;
-    transition: all 0.2s ease;
-}
-.btn-rm-order:hover {
-    background-color: #16432c;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(31, 92, 61, 0.25) !important;
 }
 .product-summary-list::-webkit-scrollbar {
     width: 5px;
@@ -361,6 +350,13 @@
         const lblDiaChiChiTiet = document.getElementById('lblDiaChiChiTiet');
         const txtDiaChiChiTiet = document.getElementById('txtDiaChiChiTiet');
 
+        const meetupLocationText = '@Html.Raw(L["Checkout_MeetupLocation"].Value)';
+        const deliveryAddressText = '@Html.Raw(L["Checkout_DeliveryAddress"].Value)';
+        const meetupPlaceholderText = '@Html.Raw(L["Checkout_MeetupPlaceholder"].Value)';
+        const addressPlaceholderText = '@Html.Raw(L["Checkout_AddressPlaceholder"].Value)';
+        const freeShippingZeroText = '@Html.Raw(L["Checkout_FreeShippingZero"].Value)';
+        const freeShippingText = '@Html.Raw(L["Checkout_FreeShipping"].Value)';
+
         function updateDeliveryUI() {
             let selectedVal = 'GIAO_HANG';
             deliveryRadios.forEach(radio => {
@@ -380,15 +376,15 @@
             const inputPhiVc = document.getElementById('PhiVanChuyen');
 
             if (selectedVal === 'GAP_TRUC_TIEP') {
-                if (lblDiaChiChiTiet) lblDiaChiChiTiet.textContent = 'Địa điểm hẹn gặp chi tiết (Không bắt buộc)';
-                if (txtDiaChiChiTiet) txtDiaChiChiTiet.placeholder = 'Ví dụ: Quán cafe X, cổng trường UTC2, công viên Y...';
-                if (phiVcTxt) phiVcTxt.textContent = 'Miễn phí (0 ₫)';
+                if (lblDiaChiChiTiet) lblDiaChiChiTiet.textContent = meetupLocationText;
+                if (txtDiaChiChiTiet) txtDiaChiChiTiet.placeholder = meetupPlaceholderText;
+                if (phiVcTxt) phiVcTxt.textContent = freeShippingZeroText;
                 if (totalTxt) totalTxt.textContent = tienHang.toLocaleString('vi-VN') + ' ₫';
                 if (inputPhiVc) inputPhiVc.value = '0';
             } else {
-                if (lblDiaChiChiTiet) lblDiaChiChiTiet.textContent = 'Địa chỉ chi tiết (Số nhà, tên ngõ/đường - Không bắt buộc)';
-                if (txtDiaChiChiTiet) txtDiaChiChiTiet.placeholder = 'Ví dụ: Số 123 ngõ 45 đường Giải Phóng (tùy chọn)';
-                if (phiVcTxt) phiVcTxt.textContent = (originalPhiVc === 0 ? 'Miễn phí' : originalPhiVc.toLocaleString('vi-VN') + ' ₫');
+                if (lblDiaChiChiTiet) lblDiaChiChiTiet.textContent = deliveryAddressText;
+                if (txtDiaChiChiTiet) txtDiaChiChiTiet.placeholder = addressPlaceholderText;
+                if (phiVcTxt) phiVcTxt.textContent = (originalPhiVc === 0 ? freeShippingText : originalPhiVc.toLocaleString('vi-VN') + ' ₫');
                 if (totalTxt) totalTxt.textContent = (tienHang + originalPhiVc).toLocaleString('vi-VN') + ' ₫';
                 if (inputPhiVc) inputPhiVc.value = originalPhiVc;
             }
