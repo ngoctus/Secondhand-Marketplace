@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -31,6 +32,39 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
     [HttpGet]
     public async Task<IActionResult> Chart(string mode = "day", CancellationToken ct = default) =>
         Json(await dashboard.GetAdminChartAsync(mode, ct));
+
+    [HttpGet]
+    public async Task<IActionResult> ExportCsv(CancellationToken ct)
+    {
+        var orders = await db.DonHangs.AsNoTracking()
+            .Where(x => x.TrangThai == "COMPLETED")
+            .OrderBy(x => x.ThoiGianHoanTat ?? x.NgayTao)
+            .Select(x => new
+            {
+                x.MaDon,
+                CompletedAt = x.ThoiGianHoanTat ?? x.NgayTao,
+                Shop = x.CuaHang.TenShop,
+                Buyer = x.NguoiDung.HoTen,
+                x.TongTien
+            })
+            .ToListAsync(ct);
+
+        var rows = new List<IEnumerable<string?>>
+        {
+            new[] { "Mã đơn", "Ngày hoàn tất (UTC)", "Cửa hàng", "Người mua", "Doanh thu (VND)", "Lợi nhuận sàn 5% (VND)" }
+        };
+        rows.AddRange(orders.Select(x => (IEnumerable<string?>)new[]
+        {
+            x.MaDon,
+            x.CompletedAt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+            x.Shop,
+            x.Buyer,
+            CsvExport.Money(x.TongTien),
+            CsvExport.Money(Math.Round(x.TongTien * 0.05m, 0))
+        }));
+
+        return CsvExport.Create($"remarket-admin-revenue-{DateTime.UtcNow:yyyyMMdd}.csv", rows);
+    }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateOrder(int shopId, int buyerId, string productName, decimal amount, string status = "COMPLETED", CancellationToken ct = default)

@@ -1,74 +1,75 @@
 @model AdminDashboardVm
 @{
-    ViewData["Title"] = "Thống kê hệ thống";
+    ViewData["Title"] = L["E_AdminDashTitle"];
     var tt = new[] { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" };
 }
 <div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div>
-        <h2>Thống kê hệ thống</h2>
-        <p class="muted mb-0">Tổng quan hoạt động, doanh thu tháng, lợi nhuận và sản phẩm bán chạy của sàn.</p>
+        <h2>@L["E_AdminDashTitle"]</h2>
+        <p class="muted mb-0">@L["E_AdminDashSubtitle"]</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-sm btn-outline-success" asp-action="ExportCsv" title="@L["E_DashboardExportHint"]"><i class="bi bi-download me-1" aria-hidden="true"></i>@L["E_ExportCsv"]</a>
         <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalThemDoanhThu">
-            <i class="bi bi-plus-circle me-1"></i>Thêm doanh thu / đơn hàng
+            <i class="bi bi-plus-circle me-1"></i>@L["E_AdminAddRevenue"]
         </button>
-        <a class="btn btn-sm btn-outline-primary" asp-controller="Users" asp-action="Index">Người dùng</a>
-        <a class="btn btn-sm btn-outline-primary" asp-controller="Sellers" asp-action="Index">Cửa hàng</a>
-        <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE">Sản phẩm</a>
-        <a class="btn btn-sm btn-outline-primary" asp-controller="Orders" asp-action="Index">Đơn hàng</a>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Users" asp-action="Index">@L["E_AdminUsers"]</a>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Sellers" asp-action="Index">@L["E_AdminShops"]</a>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE">@L["E_AdminProducts"]</a>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Orders" asp-action="Index">@L["E_AdminOrders"]</a>
     </div>
 </div>
 
 <div class="kpi-grid">
     <a class="kpi highlight" asp-controller="Orders" asp-action="Index" asp-route-status="COMPLETED" title="Xem toàn bộ đơn hàng hoàn tất">
-        <span>Doanh thu (đơn hoàn tất)</span>
+        <span>@L["E_DashRevenueCompleted"]</span>
         <b>@HienThi.Tien(Model.DoanhThu)</b>
-        <small>Tổng lợi nhuận: @HienThi.Tien(Model.TongLoiNhuan)</small>
+        <small>@L["E_DashTotalProfit", HienThi.Tien(Model.TongLoiNhuan)]</small>
     </a>
     <a class="kpi highlight" asp-controller="Orders" asp-action="Index" asp-route-status="COMPLETED" title="Doanh thu đơn hoàn tất trong tháng @Model.ThangHienTai">
-        <span>Doanh thu tháng (@Model.ThangHienTai)</span>
+        <span>@L["E_DashMonthlyRevenue", Model.ThangHienTai]</span>
         <b>@HienThi.Tien(Model.DoanhThuThang)</b>
-        <small>@Model.DonHoanTatThang đơn trong tháng</small>
+        <small>@L["E_DashOrdersThisMonth", Model.DonHoanTatThang]</small>
     </a>
     <a class="kpi highlight" href="#bang-ban-chay" title="Lợi nhuận sàn tháng @Model.ThangHienTai (chiết khấu @Model.TyLeLoiNhuan%)">
-        <span>Lợi nhuận tháng (@Model.ThangHienTai)</span>
+        <span>@L["E_DashMonthlyProfit", Model.ThangHienTai]</span>
         <b>@HienThi.Tien(Model.LoiNhuanThang)</b>
-        <small>Phí sàn @Model.TyLeLoiNhuan% doanh thu</small>
+        <small>@L["E_DashPlatformFee", Model.TyLeLoiNhuan]</small>
     </a>
     <a class="kpi highlight" href="#bang-ban-chay" title="@(Model.SanPhamBanChayNhat?.Name ?? "Chưa có sản phẩm bán chạy")">
-        <span>Sản phẩm bán chạy nhất</span>
-        <b class="kpi-text-val">@(Model.SanPhamBanChayNhat?.Name ?? "Chưa có")</b>
-        <small>@(Model.SanPhamBanChayNhat != null ? $"Đã bán {Model.SanPhamBanChayNhat.QuantitySold} · {HienThi.Tien(Model.SanPhamBanChayNhat.Revenue)}" : "Chưa có dữ liệu")</small>
+        <span>@L["E_DashTopProduct"]</span>
+        <b class="kpi-text-val">@(Model.SanPhamBanChayNhat?.Name ?? (string)L["E_DashNoTopProduct"])</b>
+        <small>@(Model.SanPhamBanChayNhat != null ? L["E_DashTopProductSales", Model.SanPhamBanChayNhat.QuantitySold, HienThi.Tien(Model.SanPhamBanChayNhat.Revenue)] : L["E_DashNoData"])</small>
     </a>
     <a class="kpi" asp-controller="Users" asp-action="Index" title="Quản lý người dùng (Thêm / Sửa / Xóa)">
-        <span>Người dùng</span>
+        <span>@L["E_AdminUsers"]</span>
         <b>@Model.TongNguoiDung</b>
-        <small>Thêm / Sửa / Xóa</small>
+        <small>@L["E_DashManageRecords"]</small>
     </a>
     <a class="kpi" asp-controller="Sellers" asp-action="Index" title="Quản lý cửa hàng (Thêm / Sửa / Xóa)">
-        <span>Cửa hàng</span>
+        <span>@L["E_AdminShops"]</span>
         <b>@Model.TongCuaHang</b>
-        <small>Thêm / Sửa / Xóa</small>
+        <small>@L["E_DashManageRecords"]</small>
     </a>
     <a class="kpi" asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE" title="Quản lý sản phẩm (Thêm / Sửa / Xóa)">
-        <span>Sản phẩm</span>
+        <span>@L["E_AdminProducts"]</span>
         <b>@Model.TongSanPham</b>
-        <small>Thêm / Sửa / Xóa</small>
+        <small>@L["E_DashManageRecords"]</small>
     </a>
     <a class="kpi" asp-controller="Orders" asp-action="Index" title="Quản lý tổng đơn hàng (Thêm / Sửa / Xóa)">
-        <span>Tổng đơn hàng</span>
+        <span>@L["E_DashTotalOrders"]</span>
         <b>@Model.TongDonHang</b>
-        <small>@Model.DonHoanTat đã hoàn tất</small>
+        <small>@L["E_DashCompletedCount", Model.DonHoanTat]</small>
     </a>
     <a class="kpi warn" asp-controller="Products" asp-action="Index" asp-route-tab="PENDING_REVIEW" title="Duyệt hoặc từ chối sản phẩm chờ duyệt">
-        <span>Sản phẩm chờ duyệt</span>
+        <span>@L["E_DashPendingProducts"]</span>
         <b>@Model.SanPhamChoDuyet</b>
-        <small>Xem &amp; duyệt ngay</small>
+        <small>@L["E_DashReviewNow"]</small>
     </a>
     <a class="kpi warn" asp-controller="Reports" asp-action="Index" title="Xử lý báo cáo vi phạm">
-        <span>Báo cáo chưa xử lý</span>
+        <span>@L["E_DashPendingReports"]</span>
         <b>@(Model.BaoCaoChuaXuLy?.ToString() ?? "—")</b>
-        <small>Kiểm tra &amp; xử lý</small>
+        <small>@L["E_DashCheckResolve"]</small>
     </a>
 </div>
 
@@ -76,7 +77,7 @@
     <div class="col-lg-8"><partial name="_BieuDo" /></div>
     <div class="col-lg-4">
         <div class="panel">
-            <h3>Đơn theo trạng thái</h3>
+            <h3>@L["E_DashOrdersByStatus"]</h3>
             @foreach (var s in tt)
             {
                 var n = Model.DonTheoTrangThai.GetValueOrDefault(s);
@@ -92,12 +93,12 @@
 
 <div class="panel mt-3" id="bang-ban-chay">
     <div class="panel-head">
-        <h3>Top sản phẩm bán chạy nhất &amp; Lợi nhuận sàn</h3>
-        <a asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE">Quản lý sản phẩm</a>
+        <h3>@L["E_DashTopProductsProfit"]</h3>
+        <a asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE">@L["E_AdminProducts"]</a>
     </div>
     @if (Model.SanPhamBanChay.Count == 0)
     {
-        <div class="empty">Chưa có sản phẩm hoàn tất nào.</div>
+        <div class="empty">@L["E_DashNoCompletedProducts"]</div>
     }
     else
     {
@@ -105,13 +106,13 @@
             <table class="table align-middle">
                 <thead>
                     <tr>
-                        <th>HẠNG</th>
-                        <th>SẢN PHẨM</th>
-                        <th>CỬA HÀNG</th>
-                        <th class="text-center">SỐ LƯỢNG BÁN</th>
-                        <th class="text-end">DOANH THU</th>
-                        <th class="text-end">LỢI NHUẬN SÀN (@Model.TyLeLoiNhuan%)</th>
-                        <th class="text-end">THAO TÁC</th>
+                        <th>@L["E_DashRank"]</th>
+                        <th>@L["E_AdminProducts"]</th>
+                        <th>@L["E_DashShop"]</th>
+                        <th class="text-center">@L["E_DashQuantitySold"]</th>
+                        <th class="text-end">@L["E_DashRevenue"]</th>
+                        <th class="text-end">@L["E_DashPlatformProfit", Model.TyLeLoiNhuan]</th>
+                        <th class="text-end">@L["E_DashAction"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -125,7 +126,7 @@
                             <a asp-controller="Products" asp-action="Details" asp-route-id="@p.ProductId"><strong>@p.Name</strong></a>
                             @if (i == 0)
                             {
-                                <span class="badge bg-warning text-dark ms-1">Bán chạy nhất</span>
+                                <span class="badge bg-warning text-dark ms-1">@L["E_DashBestSeller"]</span>
                             }
                         </td>
                         <td>@p.ShopName</td>
@@ -145,26 +146,26 @@
 
 <div class="panel mt-3">
     <div class="panel-head d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <h3 class="mb-0">Đơn hàng &amp; Doanh thu mới nhất (Thêm / Sửa / Xóa)</h3>
+        <h3 class="mb-0">@L["E_DashLatestOrders"]</h3>
         <div class="d-flex gap-2 align-items-center">
             <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalThemDoanhThu">
-                + Thêm đơn / doanh thu
+                + @L["E_DashAddOrder"]
             </button>
-            <a asp-controller="Orders" asp-action="Index">Xem tất cả</a>
+            <a asp-controller="Orders" asp-action="Index">@L["E_DashViewAll"]</a>
         </div>
     </div>
     <div class="table-responsive">
         <table class="table align-middle">
             <thead>
                 <tr>
-                    <th>MÃ ĐƠN</th>
-                    <th>SẢN PHẨM</th>
-                    <th>NGƯỜI MUA</th>
-                    <th>CỬA HÀNG</th>
-                    <th>DOANH THU</th>
-                    <th>LỢI NHUẬN (@Model.TyLeLoiNhuan%)</th>
-                    <th>TRẠNG THÁI</th>
-                    <th class="text-end">THAO TÁC</th>
+                    <th>@L["E_AuctionSessionCode"]</th>
+                    <th>@L["E_AdminProducts"]</th>
+                    <th>@L["E_DashBuyer"]</th>
+                    <th>@L["E_DashShop"]</th>
+                    <th>@L["E_DashRevenue"]</th>
+                    <th>@L["E_DashProfit", Model.TyLeLoiNhuan]</th>
+                    <th>@L["E_AuctionStatus"]</th>
+                    <th class="text-end">@L["E_DashAction"]</th>
                 </tr>
             </thead>
             <tbody>
@@ -181,15 +182,15 @@
                     <td><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td>
                     <td class="text-end">
                         <div class="d-inline-flex gap-1">
-                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">Chi tiết</a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">@L["E_DashDetails"]</a>
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                     onclick="openEditOrderModal(@o.Id, '@Html.Raw((o.MaDon ?? "").Replace("'", "\\'"))', '@Html.Raw((o.FirstItem ?? "").Replace("'", "\\'"))', @o.Total.ToString(System.Globalization.CultureInfo.InvariantCulture), '@o.Status')">
-                                Sửa
+                                @L["E_DashEdit"]
                             </button>
-                            <form asp-action="DeleteOrder" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa đơn hàng @o.MaDon không?');">
+                            <form asp-action="DeleteOrder" method="post" class="d-inline" onsubmit="return confirm('@L["E_DashCancelOrder", o.MaDon ?? ""].Value');">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@o.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger">@L["E_DashDelete"]</button>
                             </form>
                         </div>
                     </td>
@@ -206,21 +207,21 @@
         <form asp-action="CreateOrder" method="post" class="modal-content">
             @Html.AntiForgeryToken()
             <div class="modal-header">
-                <h5 class="modal-title">Thêm đơn hàng / Ghi nhận doanh thu</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                <h5 class="modal-title">@L["E_DashAddOrderTitle"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["E_DashCancel"]"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label">Tên sản phẩm</label>
-                    <input type="text" name="productName" class="form-control" placeholder="VD: Tai nghe Sony WH-1000XM3" required maxlength="200" />
+                    <label class="form-label" for="newOrderProduct">@L["E_DashProductName"]</label>
+                    <input id="newOrderProduct" type="text" name="productName" class="form-control" placeholder="@L["E_DashProductName"]" required maxlength="200" />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Số tiền / Doanh thu (đ)</label>
-                    <input type="number" name="amount" class="form-control" min="1000" step="1000" value="500000" required />
+                    <label class="form-label" for="newOrderAmount">@L["E_DashAmount"]</label>
+                    <input id="newOrderAmount" type="number" name="amount" class="form-control" min="1000" step="1000" value="500000" required />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Cửa hàng</label>
-                    <select name="shopId" class="form-select">
+                    <label class="form-label" for="newOrderShop">@L["E_AdminShops"]</label>
+                    <select id="newOrderShop" name="shopId" class="form-select">
                         @if (ViewBag.Shops != null)
                         {
                             foreach (var s in ViewBag.Shops)
@@ -231,8 +232,8 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Người mua</label>
-                    <select name="buyerId" class="form-select">
+                    <label class="form-label" for="newOrderBuyer">@L["E_DashBuyerLabel"]</label>
+                    <select id="newOrderBuyer" name="buyerId" class="form-select">
                         @if (ViewBag.Buyers != null)
                         {
                             foreach (var u in ViewBag.Buyers)
@@ -243,19 +244,19 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Trạng thái đơn</label>
-                    <select name="status" class="form-select">
-                        <option value="COMPLETED" selected>Hoàn tất (Tính vào doanh thu &amp; lợi nhuận tháng)</option>
-                        <option value="PENDING">Chờ xác nhận</option>
-                        <option value="CONFIRMED">Đã xác nhận</option>
-                        <option value="SHIPPING">Đang giao</option>
-                        <option value="DELIVERED">Đã giao</option>
+                    <label class="form-label" for="newOrderStatus">@L["E_DashOrderStatus"]</label>
+                    <select id="newOrderStatus" name="status" class="form-select">
+                        <option value="COMPLETED" selected>@HienThi.TrangThaiDon("COMPLETED") · @L["E_DashRevenueCompleted"]</option>
+                        <option value="PENDING">@HienThi.TrangThaiDon("PENDING")</option>
+                        <option value="CONFIRMED">@HienThi.TrangThaiDon("CONFIRMED")</option>
+                        <option value="SHIPPING">@HienThi.TrangThaiDon("SHIPPING")</option>
+                        <option value="DELIVERED">@HienThi.TrangThaiDon("DELIVERED")</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="submit" class="btn btn-success">Lưu</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["E_DashCancel"]</button>
+                <button type="submit" class="btn btn-success">@L["E_DashSave"]</button>
             </div>
         </form>
     </div>
@@ -268,20 +269,20 @@
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" id="editOrderId" />
             <div class="modal-header">
-                <h5 class="modal-title">Sửa đơn hàng / Doanh thu <span id="editOrderCode" class="text-muted"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                <h5 class="modal-title">@L["E_DashEditOrderTitle"] <span id="editOrderCode" class="text-muted"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["E_DashCancel"]"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label">Tên sản phẩm</label>
+                    <label class="form-label" for="editOrderProduct">@L["E_DashProductName"]</label>
                     <input type="text" name="productName" id="editOrderProduct" class="form-control" required maxlength="200" />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Tổng tiền / Doanh thu (đ)</label>
+                    <label class="form-label" for="editOrderAmount">@L["E_DashTotalAmount"]</label>
                     <input type="number" name="amount" id="editOrderAmount" class="form-control" min="1000" step="1000" required />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Trạng thái</label>
+                    <label class="form-label" for="editOrderStatus">@L["E_DashOrderStatus"]</label>
                     <select name="status" id="editOrderStatus" class="form-select">
                         @foreach (var s in tt)
                         {
@@ -291,8 +292,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="submit" class="btn btn-primary">Cập nhật</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["E_DashCancel"]</button>
+                <button type="submit" class="btn btn-primary">@L["E_DashUpdate"]</button>
             </div>
         </form>
     </div>

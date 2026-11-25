@@ -35,18 +35,19 @@ public sealed class PartEReadinessTests
     }
 
     [Fact]
-    public void AuctionLinks_AreAbsentFromNavigationAndAdminDashboard()
+    public void AuctionLinks_AreAvailableFromPublicAndSellerNavigation()
     {
         var root = FindRepositoryRoot();
         var layout = File.ReadAllText(Path.Combine(root, "src", "SecondHandMarketplace.Web", "Views", "Shared", "_Layout.cshtml"));
         var adminLinks = File.ReadAllText(Path.Combine(root, "src", "SecondHandMarketplace.Web", "Views", "Shared", "_AdminLinks.cshtml"));
-        var dashboard = File.ReadAllText(Path.Combine(root, "src", "SecondHandMarketplace.Web", "Areas", "Admin", "Views", "Dashboard", "Index.cshtml"));
+        var productDetails = File.ReadAllText(Path.Combine(root, "src", "SecondHandMarketplace.Web", "Views", "Products", "Details.cshtml"));
 
-        Assert.DoesNotContain("PublicAuctions", layout, StringComparison.Ordinal);
-        Assert.DoesNotContain("asp-controller=\"Auctions\"", layout, StringComparison.Ordinal);
+        Assert.Contains("PublicAuctions", layout, StringComparison.Ordinal);
+        Assert.Contains("asp-controller=\"Auctions\"", layout, StringComparison.Ordinal);
         Assert.Contains("Auctions", adminLinks, StringComparison.Ordinal);
-        Assert.DoesNotContain("Auctions", dashboard, StringComparison.Ordinal);
         Assert.Contains("AiSettings", adminLinks, StringComparison.Ordinal);
+        Assert.Contains("GetOpenAuctionIdForProductAsync", productDetails, StringComparison.Ordinal);
+        Assert.Contains("PublicAuctions", productDetails, StringComparison.Ordinal);
     }
 
     [Fact]

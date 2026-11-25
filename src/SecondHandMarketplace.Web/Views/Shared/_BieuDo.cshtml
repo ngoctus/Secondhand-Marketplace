@@ -1,10 +1,10 @@
 @* Dùng: <partial name="_BieuDo" /> trong view có action Chart. Cần nhúng Chart.js ở @section Scripts của view cha. *@
-<div class="panel">
+<div class="panel" id="dashboardRevenueChart" data-url="@Url.Action("Chart")" data-culture="@(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" ? "en-US" : "vi-VN")">
     <div class="panel-head">
-        <h3>Doanh thu và số đơn</h3>
+        <h3>@L["E_ChartTitle"]</h3>
         <div class="seg">
-            <button type="button" class="on" data-mode="day">30 ngày</button>
-            <button type="button" data-mode="month">12 tháng</button>
+            <button type="button" class="on" data-mode="day" aria-pressed="true">@L["E_ChartDays"]</button>
+            <button type="button" data-mode="month" aria-pressed="false">@L["E_ChartMonths"]</button>
         </div>
     </div>
     <div class="chart-box"><canvas id="revenueChart"></canvas></div>
@@ -13,22 +13,23 @@
 <script>
     window.addEventListener('load', () => {
         if (typeof Chart === 'undefined') return;
+        const root = document.getElementById('dashboardRevenueChart');
         const ctx = document.getElementById('revenueChart');
         const chart = new Chart(ctx, {
             data: { labels: [], datasets: [
-                { type: 'bar', label: 'Doanh thu (đ)', data: [], backgroundColor: '#9fc079', borderRadius: 4, yAxisID: 'y' },
-                { type: 'line', label: 'Số đơn', data: [], borderColor: '#285b43', backgroundColor: '#285b43', tension: .3, yAxisID: 'y1' }
+                { type: 'bar', label: '@L["E_ChartRevenue"]', data: [], backgroundColor: '#9fc079', borderRadius: 4, yAxisID: 'y' },
+                { type: 'line', label: '@L["E_ChartOrders"]', data: [], borderColor: '#285b43', backgroundColor: '#285b43', tension: .3, yAxisID: 'y1' }
             ]},
             options: {
                 responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
                 scales: {
-                    y:  { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('vi-VN') } },
+                    y:  { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString(root.dataset.culture) } },
                     y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { precision: 0 } }
                 }
             }
         });
         async function load(mode) {
-            const res = await fetch('@Url.Action("Chart")?mode=' + mode, { headers: { Accept: 'application/json' } });
+            const res = await fetch(root.dataset.url + '?mode=' + mode, { headers: { Accept: 'application/json' } });
             if (!res.ok) return;
             const d = await res.json();
             chart.data.labels = d.labels;
@@ -36,9 +37,10 @@
             chart.data.datasets[1].data = d.orders;
             chart.update();
         }
-        document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
-            document.querySelectorAll('.seg button').forEach(x => x.classList.remove('on'));
+        root.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+            root.querySelectorAll('.seg button').forEach(x => { x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
             b.classList.add('on');
+            b.setAttribute('aria-pressed', 'true');
             load(b.dataset.mode);
         }));
         load('day');

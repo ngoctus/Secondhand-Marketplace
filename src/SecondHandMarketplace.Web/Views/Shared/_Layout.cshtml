@@ -36,6 +36,7 @@
     var isSellerChannelPage = currentArea.Equals("User", StringComparison.OrdinalIgnoreCase) &&
                               (currentController.Equals("Products", StringComparison.OrdinalIgnoreCase) ||
                                currentController.Equals("SellerOrders", StringComparison.OrdinalIgnoreCase) ||
+                               currentController.Equals("Auctions", StringComparison.OrdinalIgnoreCase) ||
                                currentController.Equals("Shop", StringComparison.OrdinalIgnoreCase) ||
                                currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ||
                                (currentController.Equals("Reviews", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Shop", StringComparison.OrdinalIgnoreCase)));
@@ -135,7 +136,7 @@
 
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Sort="newest" asp-route-Keyword="@(Context.Request.Query["Keyword"])">@L["Nav_Newest"]</a>
                 <a class="rm-nav-link" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" asp-route-Keyword="@(Context.Request.Query["Keyword"])">@L["Nav_BestPrice"]</a>
-                @* B-03 chừa sẵn chỗ này cho link "Đấu giá" (/dau-gia) mà E-02 sẽ mở lại. *@
+                <a class="rm-nav-link" asp-area="" asp-controller="PublicAuctions" asp-action="Index">@L["E_AuctionNav"]</a>
 
                 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
                 {
@@ -215,6 +216,7 @@
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">@L["Nav_MyOrders"]</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">@L["Nav_MyReviews"]</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">@L["Nav_SellerOrders"]</a>
+                            <a class="rm-dropdown-item" asp-area="User" asp-controller="Auctions" asp-action="Index">@L["E_SellerAuctionsNav"]</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">@L["Nav_ShopReviews"]</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">@L["Nav_RevenueStats"]</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">@L["Nav_Favorites"]</a>
@@ -267,6 +269,7 @@
             <div class="rm-dropdown-divider"></div>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-Sort="newest" asp-route-Keyword="@(Context.Request.Query["Keyword"])">@L["Nav_Newest"]</a>
             <a class="rm-dropdown-item" asp-area="" asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" asp-route-Keyword="@(Context.Request.Query["Keyword"])">@L["Nav_BestPrice"]</a>
+            <a class="rm-dropdown-item" asp-area="" asp-controller="PublicAuctions" asp-action="Index">@L["E_AuctionNav"]</a>
 
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN"))
             {
@@ -296,6 +299,7 @@
                         <i class="bi bi-shop me-1"></i> @L["Nav_SellerChannel"]
                     </a>
                     <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">@L["Nav_SellerOrders"]</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Auctions" asp-action="Index">@L["E_SellerAuctionsNav"]</a>
                     <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">@L["Nav_ShopReviews"]</a>
                     <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">@L["Layout_ShopStats"]</a>
                     <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">@L["Nav_MyShop"]</a>
@@ -330,6 +334,10 @@
                    class="btn btn-sm @(currentController.Equals("SellerOrders", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
                     @L["Nav_SellerOrders"]
                 </a>
+                    <a asp-area="User" asp-controller="Auctions" asp-action="Index"
+                       class="btn btn-sm @(currentController.Equals("Auctions", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
+                        @L["E_SellerAuctionsNav"]
+                    </a>
                 <a asp-area="User" asp-controller="Shop" asp-action="Index"
                    class="btn btn-sm @(currentController.Equals("Shop", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
                     @L["Nav_MyShop"]

@@ -757,38 +757,38 @@ DECLARE @Mua2Uid int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoimu
 DECLARE @Mua3Uid int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoimua03@demo.local');
 DECLARE @Mua5Uid int = (SELECT MaNguoiDung FROM NguoiDung WHERE Email = 'nguoimua05@demo.local');
 
-DECLARE @SpDauGia1 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Máy ảnh Canon EOS 700D kèm lens kit');
-DECLARE @SpDauGia2 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Đồng hồ Casio vintage');
+DECLARE @SpDauGia1 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Bàn phím cơ Keychron K2');
+DECLARE @SpDauGia2 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Giày sneaker trắng size 42');
 DECLARE @SpDauGia3 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Bập bênh gỗ trẻ em có tay vịn');
 DECLARE @SpDauGia4 int = (SELECT TOP 1 MaSanPham FROM SanPham WHERE Ten = N'Xe đạp địa hình Giant ATX');
 
--- Phiên 1: RUNNING (Máy ảnh Canon EOS 700D)
+-- Phiên 1: RUNNING (Bàn phím cơ Keychron K2)
 IF @SpDauGia1 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM PhienDauGia WHERE MaSanPham = @SpDauGia1)
 BEGIN
     UPDATE SanPham SET TrangThai = 'RESERVED' WHERE MaSanPham = @SpDauGia1;
     INSERT INTO PhienDauGia (MaSanPham, GiaNiemYet, GiaKhoiDiem, BuocGia, GiaHienTai, SoLuotDat, MaNguoiDanDau, ThoiGianBatDau, ThoiGianKetThuc, TrangThai)
-    VALUES (@SpDauGia1, 5200000, 3000000, 100000, 3400000, 4, @ChiUid, DATEADD(HOUR, -12, @Now), DATEADD(HOUR, 36, @Now), 'RUNNING');
+    VALUES (@SpDauGia1, 1100000, 600000, 50000, 800000, 4, @ChiUid, DATEADD(HOUR, -12, @Now), DATEADD(HOUR, 36, @Now), 'RUNNING');
     DECLARE @Pdg1 int = SCOPE_IDENTITY();
 
     INSERT INTO LuotDatGia (MaPhienDauGia, MaNguoiDung, SoTien, ThoiGian) VALUES
-    (@Pdg1, @DungUid, 3100000, DATEADD(HOUR, -10, @Now)),
-    (@Pdg1, @Mua1Uid, 3200000, DATEADD(HOUR, -8, @Now)),
-    (@Pdg1, @DungUid, 3300000, DATEADD(HOUR, -5, @Now)),
-    (@Pdg1, @ChiUid,  3400000, DATEADD(HOUR, -2, @Now));
+    (@Pdg1, @DungUid, 650000, DATEADD(HOUR, -10, @Now)),
+    (@Pdg1, @Mua1Uid, 700000, DATEADD(HOUR, -8, @Now)),
+    (@Pdg1, @DungUid, 750000, DATEADD(HOUR, -5, @Now)),
+    (@Pdg1, @ChiUid,  800000, DATEADD(HOUR, -2, @Now));
 END;
 
--- Phiên 2: RUNNING (Đồng hồ Casio)
+-- Phiên 2: RUNNING (Giày sneaker trắng size 42)
 IF @SpDauGia2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM PhienDauGia WHERE MaSanPham = @SpDauGia2)
 BEGIN
     UPDATE SanPham SET TrangThai = 'RESERVED' WHERE MaSanPham = @SpDauGia2;
     INSERT INTO PhienDauGia (MaSanPham, GiaNiemYet, GiaKhoiDiem, BuocGia, GiaHienTai, SoLuotDat, MaNguoiDanDau, ThoiGianBatDau, ThoiGianKetThuc, TrangThai)
-    VALUES (@SpDauGia2, 600000, 200000, 50000, 350000, 3, @DungUid, DATEADD(HOUR, -6, @Now), DATEADD(HOUR, 18, @Now), 'RUNNING');
+    VALUES (@SpDauGia2, 450000, 200000, 30000, 290000, 3, @DungUid, DATEADD(HOUR, -6, @Now), DATEADD(HOUR, 18, @Now), 'RUNNING');
     DECLARE @Pdg2 int = SCOPE_IDENTITY();
 
     INSERT INTO LuotDatGia (MaPhienDauGia, MaNguoiDung, SoTien, ThoiGian) VALUES
-    (@Pdg2, @Mua2Uid, 250000, DATEADD(HOUR, -5, @Now)),
-    (@Pdg2, @Mua3Uid, 300000, DATEADD(HOUR, -3, @Now)),
-    (@Pdg2, @DungUid, 350000, DATEADD(HOUR, -1, @Now));
+    (@Pdg2, @Mua2Uid, 230000, DATEADD(HOUR, -5, @Now)),
+    (@Pdg2, @Mua3Uid, 260000, DATEADD(HOUR, -3, @Now)),
+    (@Pdg2, @DungUid, 290000, DATEADD(HOUR, -1, @Now));
 END;
 
 -- Phiên 3: SCHEDULED (Bập bênh gỗ)
@@ -1696,15 +1696,15 @@ INSERT @ThongBaoMau (Email, Loai, TieuDe, NoiDung, MaDon, TenSP, DaDoc, GioTruoc
  ('binh.seller@demo.local', 'ORDER',  N'Bạn có đơn hàng mới',
   N'Đơn DH20261001-000001 đang chờ bạn xác nhận. Khách chọn thanh toán khi nhận hàng (COD).', 'DH20261001-000001', NULL, 0, 8),
  ('chi.buyer@demo.local',  'PRODUCT', N'Phiên đấu giá đang diễn ra',
-  N'Phiên đấu giá "Máy ảnh Canon EOS 700D kèm lens kit" đang nhận đặt giá. Bạn đang là người dẫn đầu với 3.400.000đ.', NULL, N'Máy ảnh Canon EOS 700D kèm lens kit', 0, 2),
+  N'Phiên đấu giá "Bàn phím cơ Keychron K2" đang nhận đặt giá. Bạn đang là người dẫn đầu với 800.000đ.', NULL, N'Bàn phím cơ Keychron K2', 0, 2),
  ('dung.buyer@demo.local', 'PRODUCT', N'Bạn đang dẫn đầu phiên đấu giá',
-  N'Bạn vừa vượt giá thành công cho "Đồng hồ Casio vintage" với 350.000đ. Phiên sẽ kết thúc sau 18 giờ.', NULL, N'Đồng hồ Casio vintage', 0, 1),
+  N'Bạn vừa vượt giá thành công cho "Giày sneaker trắng size 42" với 290.000đ. Phiên sẽ kết thúc sau 18 giờ.', NULL, N'Giày sneaker trắng size 42', 0, 1),
  ('nguoiban01@demo.local', 'PRODUCT', N'Tin đăng đã được duyệt',
   N'Tin "Laptop Dell Latitude 7490 Core i5 RAM 8GB SSD 256GB" đã được kiểm duyệt và hiển thị công khai.', NULL, N'Laptop Dell Latitude 7490 Core i5 RAM 8GB SSD 256GB', 0, 40),
  ('an.seller@demo.local',  'PRODUCT', N'Tin đăng bị gỡ',
   N'Tin "Loa Bluetooth JBL Flip 4" bị gỡ vì mô tả không đúng sự thật về tình trạng sản phẩm. Bạn có thể sửa và gửi duyệt lại.', NULL, N'Loa Bluetooth JBL Flip 4', 1, 120),
  ('binh.seller@demo.local', 'PRODUCT', N'Phiên đấu giá sắp kết thúc',
-  N'Phiên đấu giá "Đồng hồ Casio vintage" sẽ kết thúc trong 18 giờ tới. Hiện có 3 lượt đặt giá.', NULL, N'Đồng hồ Casio vintage', 0, 1),
+  N'Phiên đấu giá "Giày sneaker trắng size 42" sẽ kết thúc trong 18 giờ tới. Hiện có 3 lượt đặt giá.', NULL, N'Giày sneaker trắng size 42', 0, 1),
  ('chi.buyer@demo.local',  'SYSTEM',  N'Chào mừng bạn đến với Re:Market',
   N'Hoàn thiện hồ sơ và xác thực email để tăng độ tin cậy khi mua bán đồ cũ.', NULL, NULL, 1, 168),
  ('nguoimua01@demo.local', 'SYSTEM',  N'Cập nhật chính sách giao dịch',

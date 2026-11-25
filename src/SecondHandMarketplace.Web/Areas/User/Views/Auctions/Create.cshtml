@@ -1,22 +1,23 @@
 @model CreateAuctionVm
-@{ ViewData["Title"] = "Tạo phiên đấu giá"; }
+@{ ViewData["Title"] = L["E_AuctionCreate"]; }
 
-<div class="form-page" style="max-width:720px">
-    <div class="modal-box">
-        <div class="eyebrow">ĐẤU GIÁ</div>
-        <h2>Tạo phiên đấu giá</h2>
+<div class="container py-3">
+    <div class="panel mx-auto" style="max-width:720px">
+        <div class="section-label">@L["E_AuctionCreateEyebrow"]</div>
+        <h1 class="h3">@L["E_AuctionCreate"]</h1>
 
         @if (Model.Products.Count == 0)
         {
-            <div class="note">Bạn chưa có sản phẩm nào đủ điều kiện (sản phẩm phải đang bán và chưa nằm trong phiên khác).</div>
+            <div class="alert alert-info" role="status">@L["E_AuctionNoEligibleProducts"]</div>
+            <a class="btn btn-rm-outline" asp-action="Index">@L["E_AuctionBackToList"]</a>
         }
         else
         {
             <form asp-action="Create" method="post">
                 <div asp-validation-summary="All" class="text-danger"></div>
-                <label>Sản phẩm
+                <label for="productSelect">@L["E_AuctionProduct"]
                     <select asp-for="ProductId" class="form-select" id="productSelect">
-                        <option value="">-- Chọn sản phẩm đang bán --</option>
+                        <option value="">@L["E_AuctionChooseProduct"]</option>
                         @foreach (var p in Model.Products)
                         {
                             <option value="@p.Id" data-price="@((long)p.Price)">@p.Name — @HienThi.Tien(p.Price)</option>
@@ -24,26 +25,22 @@
                     </select>
                 </label>
                 <div class="form-row">
-                    <label>Giá khởi điểm (đ)<input asp-for="StartPrice" type="number" min="1000" step="1000" id="startPrice" /></label>
-                    <label>Bước giá (đ)<input asp-for="Step" type="number" min="1000" step="1000" value="@(Model.Step ?? 10000)" /></label>
+                    <label for="startPrice">@L["E_AuctionStartPriceLabel"]<input asp-for="StartPrice" type="number" min="1000" step="1000" id="startPrice" class="form-control" /></label>
+                    <label asp-for="Step">@L["E_AuctionStepLabel"]<input asp-for="Step" type="number" min="1000" step="1000" value="@(Model.Step ?? 10000)" class="form-control" /></label>
                 </div>
                 <div class="form-row">
-                    <label>Bắt đầu lúc (để trống = ngay bây giờ)
-                        <input asp-for="StartAt" type="datetime-local" value="@HienThi.ChoInputGio(null)" />
+                    <label asp-for="StartAt">@L["E_AuctionStartAtLabel"]
+                        <input asp-for="StartAt" type="datetime-local" value="@HienThi.ChoInputGio(null)" class="form-control" />
                     </label>
-                    <label>Kết thúc lúc
-                        <input asp-for="EndAt" type="datetime-local" value="@(Model.EndAt?.ToString("yyyy-MM-dd'T'HH:mm"))" />
+                    <label asp-for="EndAt">@L["E_AuctionEndAtLabel"]
+                        <input asp-for="EndAt" type="datetime-local" value="@(Model.EndAt?.ToString("yyyy-MM-dd'T'HH:mm"))" class="form-control" />
                     </label>
                 </div>
-                <div class="note">
-                    Giờ theo múi giờ Việt Nam. Phiên kéo dài từ 5 phút đến 30 ngày. Trong lúc đấu giá, sản phẩm được giữ riêng nên
-                    không ai mua trực tiếp được. Bạn chỉ hủy được khi chưa có người đặt giá. Khi kết thúc, hệ thống tự tạo đơn cho
-                    người trả giá cao nhất.
-                </div>
-                <button class="primary full" type="submit">Tạo phiên đấu giá</button>
+                <div class="alert alert-light border mt-3">@L["E_AuctionCreateNote"]</div>
+                <button class="btn btn-rm-primary w-100" type="submit">@L["E_AuctionCreate"]</button>
             </form>
         }
-        <p class="mt-3"><a asp-action="Index">← Quay lại</a></p>
+        <p class="mt-3"><a asp-action="Index">← @L["E_AuctionBackToList"]</a></p>
     </div>
 </div>
 

@@ -5289,3 +5289,58 @@ body.rmc-open {
 .rm-notify-meta-type {
     font-weight: 600;
 }
+
+/* Auction detail refinements use the existing marketplace palette and controls. */
+.auction-page .auction-thumb-button {
+    display: block;
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+}
+
+.auction-page .auction-thumb-button img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.auction-page .auction-thumb-button:focus-visible,
+.auction-page a:focus-visible,
+.auction-page button:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 3px;
+}
+
+.auction-page .rm-page-title,
+.auction-page h1,
+.auction-page h2,
+.auction-page h3 {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 575.98px) {
+    .auction-page .panel {
+        padding: 1rem;
+    }
+
+    .auction-page .status-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: thin;
+    }
+
+    .auction-page .rm-auction-foot {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .auction-page .rm-auction-cta,
+    .auction-page .quick-bids button {
+        min-height: 44px;
+    }
+}

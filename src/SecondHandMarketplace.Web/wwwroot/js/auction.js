@@ -2,20 +2,22 @@
 // Trang chi tiết: <div id="auction" data-id data-status data-status-url data-bid-url data-start data-end data-now data-min data-step>
 // Trang danh sách: các thẻ <span class="js-countdown" data-end="ISO">.
 (() => {
+    const t = (key, fallback, ...args) => window.rmT ? window.rmT(key, fallback, ...args) : fallback;
     const fmtTime = (ms) => {
         if (ms <= 0) return '00:00:00';
         const s = Math.floor(ms / 1000), d = Math.floor(s / 86400);
         const h = String(Math.floor((s % 86400) / 3600)).padStart(2, '0');
         const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
         const sec = String(s % 60).padStart(2, '0');
-        return (d > 0 ? d + ' ngày ' : '') + `${h}:${m}:${sec}`;
+        return (d > 0 ? d + ' ' + t('E_AuctionDays', 'days') + ' ' : '') + `${h}:${m}:${sec}`;
     };
-    const fmtMoney = (n) => Number(n).toLocaleString('vi-VN') + 'đ';
+    const fmtMoney = (n) => Number(n).toLocaleString(document.documentElement.lang === 'en' ? 'en-US' : 'vi-VN') + ' ₫';
 
     // Đếm ngược ở trang danh sách
     document.querySelectorAll('.js-countdown').forEach((el) => {
         const end = new Date(el.dataset.end).getTime();
-        const tick = () => { el.textContent = 'Còn ' + fmtTime(end - Date.now()); };
+        const prefix = el.dataset.prefix || t('E_AuctionTimePrefix', 'Time left: ');
+        const tick = () => { el.textContent = prefix + fmtTime(end - Date.now()); };
         tick();
         setInterval(tick, 1000);
     });
@@ -24,6 +26,14 @@
     if (!root) return;
 
     const $ = (id) => document.getElementById(id);
+    const renderBidStats = (count) => {
+        const stats = $('bid-stats');
+        if (!stats) return;
+        stats.textContent = (root.dataset.bidStats || '{0} bids · Starting price {1} · Bid step {2}')
+            .replace('{0}', count)
+            .replace('{1}', root.dataset.startPrice)
+            .replace('{2}', root.dataset.stepPrice);
+    };
     const st = {
         status: root.dataset.status,
         start: new Date(root.dataset.start).getTime(),
@@ -39,10 +49,10 @@
     function renderCountdown() {
         const box = $('countdown'), label = $('countdown-label');
         if (!box) return;
-        if (!isOpen()) { label.textContent = 'Phiên đã'; box.textContent = st.status === 'CANCELLED' ? 'BỊ HỦY' : 'KẾT THÚC'; return; }
-        if (now() < st.start) { label.textContent = 'Bắt đầu sau'; box.textContent = fmtTime(st.start - now()); return; }
+        if (!isOpen()) { label.textContent = t('E_AuctionEndedStatus', 'Auction ended'); box.textContent = st.status === 'CANCELLED' ? t('E_AuctionCancelledStatus', 'Auction cancelled') : ''; return; }
+        if (now() < st.start) { label.textContent = label.dataset.start || t('E_AuctionStartsIn', 'Starts in'); box.textContent = fmtTime(st.start - now()); return; }
         const left = st.end - now();
-        label.textContent = left > 0 ? 'Kết thúc sau' : 'Đang chốt kết quả...';
+        label.textContent = left > 0 ? (label.dataset.end || t('E_AuctionEndsIn', 'Ends in')) : (label.dataset.finishing || t('E_AuctionFinishing', 'Finalizing results...'));
         box.textContent = fmtTime(left);
         box.classList.toggle('urgent', left > 0 && left < 5 * 60 * 1000);
     }
@@ -77,6 +87,7 @@
             $('current-price').classList.remove('flash'); void $('current-price').offsetWidth; $('current-price').classList.add('flash');
         }
         $('bid-count').textContent = d.bidCount;
+        renderBidStats(d.bidCount);
         if ($('min-bid')) $('min-bid').textContent = d.minNextBidText;
         const badge = $('status-badge');
         badge.textContent = d.statusText;
@@ -112,7 +123,7 @@
         const dot = $('live-dot');
         if (!dot) return;
         dot.dataset.state = state;
-        dot.textContent = state === 'on' ? '● Trực tiếp' : state === 'connecting' ? '● Đang kết nối...' : '● Mất kết nối';
+        dot.textContent = '● ' + (state === 'on' ? (dot.dataset.textOn || t('E_AuctionLiveOnline', 'Live')) : state === 'connecting' ? (dot.dataset.textConnecting || t('E_AuctionLiveConnecting', 'Connecting...')) : (dot.dataset.textOff || t('E_AuctionLiveOffline', 'Connection lost')));
     };
 
     function startHub() {
@@ -163,9 +174,9 @@
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const amount = Number(digits(input.value));
-        if (!amount) return say('Vui lòng nhập số tiền hợp lệ.', false);
-        if (amount < st.min) return say('Giá đặt tối thiểu là ' + fmtMoney(st.min) + '.', false);
-        if (!confirm('Xác nhận đặt giá ' + fmtMoney(amount) + '?')) return;
+        if (!amount) return say(t('E_AuctionAmountInvalid', 'Enter a valid bid amount.'), false);
+        if (amount < st.min) return say(t('E_AuctionMinimumError', 'The minimum bid is {0}.', fmtMoney(st.min)), false);
+        if (!confirm(t('E_AuctionConfirmBid', 'Confirm a bid of {0}?', fmtMoney(amount)))) return;
 
         submit.disabled = true;
         try {
@@ -187,7 +198,7 @@
             say(json.message, res.ok && json.success);
             if (res.ok && json.success) { input.value = ''; apply(json.data); }
         } catch {
-            say('Không kết nối được máy chủ, vui lòng thử lại.', false);
+            say(t('E_AuctionConnectionError', 'Could not connect to the server. Please try again.'), false);
         } finally {
             submit.disabled = false;
         }

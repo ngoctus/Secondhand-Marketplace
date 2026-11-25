@@ -1,36 +1,38 @@
 @model AuctionDetailVm
 @{
-    ViewData["Title"] = Model.ProductName + " - Đấu giá";
+    ViewData["Title"] = Model.ProductName + " - " + L["E_AuctionPageTitle"];
     var isOpen = Model.Status is "RUNNING" or "SCHEDULED" or "ENDING";
     var logged = User.Identity?.IsAuthenticated == true;
 }
 
 <div class="auction-page">
-    <p class="muted mt-4"><a asp-action="Index">← Sàn đấu giá</a></p>
+    <p class="muted mt-4"><a asp-action="Index" class="text-decoration-none">← @L["E_AuctionBack"]</a></p>
     <div class="row g-4">
         <div class="col-lg-7">
             @if (Model.Images.Count == 0)
             {
-                <div class="product-art-fallback">♻</div>
+                <div class="product-art-fallback" role="img" aria-label="@L["E_AuctionImagePlaceholder"]">♻</div>
             }
             else
             {
-                <img id="mainImage" class="auction-main-img" src="@Model.Images[0]" alt="@Model.ProductName" data-fallback data-zoomable style="cursor: zoom-in;" title="Nhấn để phóng to ảnh" />
+                <img id="mainImage" class="auction-main-img" src="@Model.Images[0]" alt="@Model.ProductName" data-fallback data-zoomable style="cursor: zoom-in;" title="@L["E_AuctionImageZoom"]" />
                 @if (Model.Images.Count > 1)
                 {
                     <div class="auction-thumbs">
                         @foreach (var img in Model.Images)
                         {
-                            <img src="@img" alt="" data-fallback onclick="document.getElementById('mainImage').src=this.src" />
+                            <button type="button" class="auction-thumb-button" aria-label="@L["E_AuctionImageZoom"]" onclick="document.getElementById('mainImage').src=this.querySelector('img').src">
+                                <img src="@img" alt="" data-fallback />
+                            </button>
                         }
                     </div>
                 }
             }
             <div class="rm-panel">
-                <h3>Mô tả sản phẩm</h3>
-                <p class="detail-desc">@(Model.Description ?? "Người bán chưa nhập mô tả.")</p>
-                <p class="muted">Danh mục: @(Model.CategoryName ?? "Chưa phân loại") · Tình trạng: @(Model.ConditionName ?? "Chưa rõ") · Cửa hàng: @Model.ShopName</p>
-                <p class="muted">Giá niêm yết ban đầu: @HienThi.Tien(Model.ListPrice)</p>
+                <h3>@L["E_AuctionDescription"]</h3>
+                <p class="detail-desc">@(Model.Description ?? (string)L["E_AuctionNoDescription"])</p>
+                <p class="muted">@L["E_AuctionCategory", Model.CategoryName ?? "—"] · @L["E_AuctionCondition", Model.ConditionName ?? "—"] · @L["E_AuctionShop", Model.ShopName]</p>
+                <p class="muted">@L["E_AuctionListPrice", HienThi.Tien(Model.ListPrice)]</p>
             </div>
         </div>
 
@@ -45,6 +47,9 @@
                  data-now="@HienThi.Iso(Model.ServerNowUtc)"
                  data-min="@((long)Model.MinNextBid)"
                  data-step="@((long)Model.Step)"
+                 data-bid-stats="@L["E_AuctionBidStats"]"
+                 data-start-price="@HienThi.Tien(Model.StartPrice)"
+                 data-step-price="@HienThi.Tien(Model.Step)"
                  data-hub-url="@Url.Content("~/hubs/auction")">
                 <div class="d-flex justify-content-between align-items-center">
                     <h2 class="bid-title">@Model.ProductName</h2>
@@ -53,27 +58,27 @@
                 @if (isOpen)
                 {
                     <div class="live-row">
-                        <span id="live-dot" class="live-dot" data-state="connecting">● Đang kết nối...</span>
-                        <span class="muted">👁 <span id="viewer-count">1</span> đang xem</span>
+                    <span id="live-dot" class="live-dot" data-state="connecting" data-text-on="@L["E_AuctionLiveOnline"]" data-text-connecting="@L["E_AuctionLiveConnecting"]" data-text-off="@L["E_AuctionLiveOffline"]">● @L["E_AuctionLiveConnecting"]</span>
+                    <span class="muted"><i class="bi bi-eye" aria-hidden="true"></i> <span id="viewer-count">1</span> @L["E_AuctionWatchingSuffix"]</span>
                     </div>
                 }
 
-                <div class="bid-price-label">Giá hiện tại</div>
+                <div class="bid-price-label">@L["E_AuctionCurrentPrice"]</div>
                 <div class="bid-price" id="current-price">@HienThi.Tien(Model.CurrentPrice)</div>
-                <div class="muted"><span id="bid-count">@Model.BidCount</span> lượt đặt giá · Giá khởi điểm @HienThi.Tien(Model.StartPrice) · Bước giá @HienThi.Tien(Model.Step)</div>
+                <div class="muted" id="bid-stats"><span id="bid-count" class="visually-hidden">@Model.BidCount</span>@L["E_AuctionBidStats", Model.BidCount, HienThi.Tien(Model.StartPrice), HienThi.Tien(Model.Step)]</div>
 
                 <div class="countdown-box">
-                    <div class="countdown-label" id="countdown-label">@(Model.Status == "SCHEDULED" ? "Bắt đầu sau" : "Kết thúc sau")</div>
+                    <div class="countdown-label" id="countdown-label" data-start="@L["E_AuctionStartsIn"]" data-end="@L["E_AuctionEndsIn"]" data-finishing="@L["E_AuctionFinishing"]">@(Model.Status == "SCHEDULED" ? L["E_AuctionStartsIn"] : L["E_AuctionEndsIn"])</div>
                     <div class="countdown" id="countdown">--:--:--</div>
-                    <div class="muted">Kết thúc lúc @HienThi.NgayGio(Model.EndAt)</div>
+                    <div class="muted">@L["E_AuctionEndsAt", HienThi.NgayGio(Model.EndAt)]</div>
                 </div>
 
-                <div id="leader-badge" class="leader-badge" @(Model.IsLeader && isOpen ? "" : "hidden")>🏆 Bạn đang dẫn đầu phiên này</div>
+                <div id="leader-badge" class="leader-badge" @(Model.IsLeader && isOpen ? "" : "hidden")>🏆 @L["E_AuctionLeader"]</div>
 
                 @if (logged && !Model.IsOwner && User.IsInRole("USER"))
                 {
                     <button type="button" class="btn-rm-outline js-chat-seller mt-2" data-product-id="@Model.ProductId"
-                            data-prefill="@($"Chào shop, mình quan tâm phiên đấu giá \"{Model.ProductName}\" ạ.")">💬 Chat với người bán</button>
+                            data-prefill="@string.Format(L["E_AuctionChatPrefill"].Value, Model.ProductName)">💬 @L["E_AuctionChatSeller"]</button>
                 }
 
                 @if (Model.Status is "ENDED")
@@ -81,57 +86,57 @@
                     <div class="rm-note">
                         @if (Model.WinnerName is not null)
                         {
-                            <text>Phiên đã kết thúc. Người thắng: <b>@Model.WinnerName</b> với giá <b>@HienThi.Tien(Model.WinningPrice ?? 0)</b>.</text>
+                            <text>@L["E_AuctionWinner", Model.WinnerName, HienThi.Tien(Model.WinningPrice ?? 0)]</text>
                         }
-                        else { <text>Phiên đã kết thúc mà không có người đặt giá.</text> }
+                        else { <text>@L["E_AuctionNoWinner"]</text> }
                     </div>
                 }
                 else if (Model.Status == "CANCELLED")
                 {
-                    <div class="rm-note">Phiên đã bị hủy@(Model.CancelBy == "ADMIN" ? " bởi quản trị viên" : "")@(string.IsNullOrEmpty(Model.CancelReason) ? "" : ". Lý do: " + Model.CancelReason).</div>
+                    <div class="rm-note">@L["E_AuctionCancelled", Model.CancelBy == "ADMIN" ? L["E_AuctionCancelledByAdmin"].Value : "", string.IsNullOrEmpty(Model.CancelReason) ? "" : string.Format(L["E_AuctionCancelReason"].Value, Model.CancelReason)]</div>
                 }
                 else if (Model.IsOwner)
                 {
-                    <div class="rm-note">Đây là phiên đấu giá của bạn nên bạn không thể đặt giá.</div>
+                    <div class="rm-note">@L["E_AuctionOwnerCannotBid"]</div>
                 }
                 else if (!logged)
                 {
                     <a class="btn-rm-primary w-100 text-center text-decoration-none d-block" style="padding:10px"
-                       asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Đăng nhập để đặt giá</a>
+                       asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">@L["E_AuctionLoginToBid"]</a>
                 }
                 else
                 {
                     <form id="bid-form" autocomplete="off">
                         @Html.AntiForgeryToken()
-                        <label for="bid-amount">Số tiền đặt (tối thiểu <b id="min-bid">@HienThi.Tien(Model.MinNextBid)</b>)</label>
+                        <label for="bid-amount">@L["E_AuctionAmountLabel"] <span class="small text-muted">(@L["E_AuctionMinimum"] <b id="min-bid">@HienThi.Tien(Model.MinNextBid)</b>)</span></label>
                         <div class="bid-input">
-                            <input id="bid-amount" name="soTien" inputmode="numeric" placeholder="Nhập số tiền..." />
+                            <input id="bid-amount" name="soTien" inputmode="numeric" placeholder="@L["E_AuctionAmountPlaceholder"]" />
                             <span>đ</span>
                         </div>
                         <div class="quick-bids">
-                            <button type="button" data-k="0">Tối thiểu</button>
-                            <button type="button" data-k="1">+1 bước</button>
-                            <button type="button" data-k="3">+3 bước</button>
+                            <button type="button" data-k="0">@L["E_AuctionMinimum"]</button>
+                            <button type="button" data-k="1">@L["E_AuctionPlusStep", 1]</button>
+                            <button type="button" data-k="3">@L["E_AuctionPlusStep", 3]</button>
                         </div>
-                        <button id="bid-submit" class="btn-rm-primary w-100" style="padding:10px" type="submit">Đặt giá ngay</button>
+                        <button id="bid-submit" class="btn-rm-primary w-100" style="padding:10px" type="submit">@L["E_AuctionPlaceBid"]</button>
                         <div id="bid-msg" class="bid-msg" role="status"></div>
                     </form>
-                    <p class="muted mt-2">Đặt giá là cam kết mua. Nếu thắng, đơn hàng được tạo tự động theo địa chỉ mặc định trong hồ sơ của bạn.</p>
+                    <p class="muted mt-2">@L["E_AuctionCommitment"]</p>
                 }
             </div>
 
             <div class="rm-panel">
-                <div class="rm-panel-head"><h3>Lịch sử đặt giá</h3></div>
-                <table class="table">
-                    <thead><tr><th>NGƯỜI ĐẶT</th><th>SỐ TIỀN</th><th>THỜI GIAN</th></tr></thead>
+                <div class="rm-panel-head"><h3>@L["E_AuctionBidHistory"]</h3></div>
+                <div class="table-responsive"><table class="table align-middle">
+                    <thead><tr><th>@L["E_AuctionBidder"]</th><th>@L["E_AuctionAmount"]</th><th>@L["E_AuctionTime"]</th></tr></thead>
                     <tbody id="bid-list">
                         @foreach (var b in Model.Bids)
                         {
                             <tr class="@(b.IsMine ? "mine" : "")"><td>@b.Bidder</td><td><b>@HienThi.Tien(b.Amount)</b></td><td>@HienThi.GioGiay(b.At)</td></tr>
                         }
                     </tbody>
-                </table>
-                <div id="bid-empty" class="empty" @(Model.Bids.Count > 0 ? "hidden" : "")>Chưa có lượt đặt giá nào.</div>
+                </table></div>
+                <div id="bid-empty" class="empty" @(Model.Bids.Count > 0 ? "hidden" : "")>@L["E_AuctionNoBids"]</div>
             </div>
         </div>
     </div>

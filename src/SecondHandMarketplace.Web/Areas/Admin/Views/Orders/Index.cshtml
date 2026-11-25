@@ -1,15 +1,15 @@
 @model AdminOrderListVm
 @{
-    ViewData["Title"] = "Quản lý đơn hàng";
+    ViewData["Title"] = L["E_OrderAdminTitle"];
     var f = Model.Filter;
 }
-<div class="page-head"><div><h2>Quản lý đơn hàng</h2><p class="muted">Toàn bộ đơn hàng trên sàn.</p></div></div>
+<div class="page-head"><div><h2>@L["E_OrderAdminTitle"]</h2><p class="muted">@L["E_OrderAdminSubtitle"]</p></div></div>
 
 <form method="get" class="row g-2 mb-3">
-    <div class="col-md-3"><input name="q" value="@f.Q" class="form-control" placeholder="Mã đơn / tên người mua" /></div>
+    <div class="col-md-3"><input name="q" value="@f.Q" class="form-control" placeholder="@L["E_OrderSearchPlaceholder"]" aria-label="@L["E_OrderSearchPlaceholder"]" /></div>
     <div class="col-md-2">
         <select name="status" class="form-select">
-            <option value="">Mọi trạng thái</option>
+            <option value="">@L["E_OrderAllStatuses"]</option>
             @foreach (var s in new[] { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" })
             {
                 <option value="@s" selected="@(f.Status == s)">@HienThi.TrangThaiDon(s)</option>
@@ -18,18 +18,18 @@
     </div>
     <div class="col-md-3">
         <select name="shopId" class="form-select">
-            <option value="">Mọi cửa hàng</option>
+            <option value="">@L["E_OrderAllShops"]</option>
             @foreach (var s in Model.Shops) { <option value="@s.Id" selected="@(f.ShopId == s.Id)">@s.Name</option> }
         </select>
     </div>
-    <div class="col-md-2"><input type="date" name="from" value="@(f.From?.ToString("yyyy-MM-dd"))" class="form-control" title="Từ ngày" /></div>
-    <div class="col-md-2"><input type="date" name="to" value="@(f.To?.ToString("yyyy-MM-dd"))" class="form-control" title="Đến ngày" /></div>
-    <div class="col-auto"><button class="btn btn-primary">Lọc</button> <a class="btn btn-outline-secondary" asp-action="Index">Xóa lọc</a></div>
+    <div class="col-md-2"><input type="date" name="from" value="@(f.From?.ToString("yyyy-MM-dd"))" class="form-control" title="@L["E_OrderFromDate"]" aria-label="@L["E_OrderFromDate"]" /></div>
+    <div class="col-md-2"><input type="date" name="to" value="@(f.To?.ToString("yyyy-MM-dd"))" class="form-control" title="@L["E_OrderToDate"]" aria-label="@L["E_OrderToDate"]" /></div>
+    <div class="col-auto"><button class="btn btn-primary">@L["E_OrderFilter"]</button> <a class="btn btn-outline-secondary" asp-action="Index">@L["E_OrderClearFilter"]</a></div>
 </form>
 
 <div class="panel table-wrap">
     <table class="table align-middle">
-        <thead><tr><th>MÃ ĐƠN</th><th>NGƯỜI MUA</th><th>CỬA HÀNG</th><th>TỔNG TIỀN</th><th>THANH TOÁN</th><th>TRẠNG THÁI</th><th>NGÀY ĐẶT</th><th></th></tr></thead>
+        <thead><tr><th>@L["E_OrderCode"]</th><th>@L["E_OrderBuyer"]</th><th>@L["E_OrderShop"]</th><th>@L["E_OrderTotal"]</th><th>@L["E_OrderPayment"]</th><th>@L["E_OrderStatus"]</th><th>@L["E_OrderDate"]</th><th></th></tr></thead>
         <tbody>
         @foreach (var o in Model.Result.Items)
         {
@@ -41,12 +41,12 @@
                 <td class="small">@HienThi.TrangThaiThanhToan(o.PaymentStatus)</td>
                 <td><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td>
                 <td class="small">@HienThi.NgayGio(o.CreatedAt)</td>
-                <td><a class="smallbtn text-decoration-none" asp-action="Details" asp-route-id="@o.Id">Chi tiết</a></td>
+                <td><a class="smallbtn text-decoration-none" asp-action="Details" asp-route-id="@o.Id">@L["E_OrderDetails"]</a></td>
             </tr>
         }
-        @if (Model.Result.Items.Count == 0) { <tr><td colspan="8" class="text-center text-muted">Không có đơn hàng nào.</td></tr> }
+        @if (Model.Result.Items.Count == 0) { <tr><td colspan="8" class="text-center text-muted py-4">@L["E_OrderNoOrders"]</td></tr> }
         </tbody>
     </table>
 </div>
-<div class="muted">Tổng @Model.Result.TotalItems đơn</div>
+<div class="muted mt-2">@L["E_OrderTotalCount", Model.Result.TotalItems]</div>
 <partial name="_Pager" model="new PagerVm(Model.Result.Page, Model.Result.TotalPages)" />

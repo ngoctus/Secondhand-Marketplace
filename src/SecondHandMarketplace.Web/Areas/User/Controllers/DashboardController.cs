@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Services.Dashboard;
 
 namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
-public sealed class DashboardController(IDashboardService dashboard) : UserBaseController
+public sealed class DashboardController(IDashboardService dashboard, SecondHandMarketplace.Web.Data.AppDbContext db) : UserBaseController
 {
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken ct)
@@ -26,5 +27,43 @@ public sealed class DashboardController(IDashboardService dashboard) : UserBaseC
         var userId = User.LayNguoiDungId();
         if (userId is null) return Unauthorized();
         return Json(await dashboard.GetSellerChartAsync(userId.Value, mode, ct));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportCsv(CancellationToken ct)
+    {
+        var userId = User.LayNguoiDungId();
+        if (userId is null) return Challenge();
+        var shopId = await db.CuaHangs.AsNoTracking()
+            .Where(x => x.MaNguoiDung == userId.Value)
+            .Select(x => (int?)x.MaCuaHang)
+            .FirstOrDefaultAsync(ct);
+        if (shopId is null) return NotFound();
+
+        var orders = await db.DonHangs.AsNoTracking()
+            .Where(x => x.MaCuaHang == shopId && x.TrangThai == "COMPLETED")
+            .OrderBy(x => x.ThoiGianHoanTat ?? x.NgayTao)
+            .Select(x => new
+            {
+                x.MaDon,
+                CompletedAt = x.ThoiGianHoanTat ?? x.NgayTao,
+                x.TongTien,
+                x.PhuongThucThanhToan
+            })
+            .ToListAsync(ct);
+
+        var rows = new List<IEnumerable<string?>>
+        {
+            new[] { "Mã đơn", "Ngày hoàn tất (UTC)", "Doanh thu (VND)", "Phương thức thanh toán" }
+        };
+        rows.AddRange(orders.Select(x => (IEnumerable<string?>)new[]
+        {
+            x.MaDon,
+            x.CompletedAt.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture),
+            CsvExport.Money(x.TongTien),
+            HienThi.PhuongThucThanhToan(x.PhuongThucThanhToan)
+        }));
+
+        return CsvExport.Create($"remarket-shop-revenue-{DateTime.UtcNow:yyyyMMdd}.csv", rows);
     }
 }

@@ -115,8 +115,8 @@ BEGIN
         IF @ThoiGianBatDau < DATEADD(MINUTE, -2, @Now)
             THROW 52008, N'Thời gian bắt đầu không được nằm trong quá khứ.', 1;
         IF @ThoiGianBatDau < @Now SET @ThoiGianBatDau = @Now;
-        IF @ThoiGianKetThuc < DATEADD(MINUTE, 5, @ThoiGianBatDau)
-            THROW 52009, N'Phiên đấu giá phải kéo dài tối thiểu 5 phút.', 1;
+        IF @ThoiGianKetThuc < DATEADD(MINUTE, 1, @ThoiGianBatDau)
+            THROW 52009, N'Phiên đấu giá phải kéo dài tối thiểu 1 phút.', 1;
         IF @ThoiGianKetThuc > DATEADD(DAY, 30, @ThoiGianBatDau)
             THROW 52010, N'Phiên đấu giá không được kéo dài quá 30 ngày.', 1;
 

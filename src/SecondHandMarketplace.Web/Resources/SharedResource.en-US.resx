@@ -1094,4 +1094,217 @@
   <data name="AdminNotify_BodyPlaceholder" xml:space="preserve"><value>Enter detailed notification message...</value></data>
   <data name="AdminNotify_SendBtn" xml:space="preserve"><value>Send Notification</value></data>
   <data name="AdminNotify_ConfirmBroadcast" xml:space="preserve"><value>Send this notification to ALL active users?</value></data>
+  <data name="E_ExportCsv" xml:space="preserve"><value>Export CSV</value></data>
+  <data name="E_AuctionNav" xml:space="preserve"><value>Auctions</value></data>
+  <data name="E_SellerAuctionsNav" xml:space="preserve"><value>Auction sessions</value></data>
+  <data name="E_ProductAuctionNotice" xml:space="preserve"><value>This product is in an auction. Direct purchase is temporarily unavailable.</value></data>
+  <data name="E_ProductAuctionCta" xml:space="preserve"><value>Place a bid</value></data>
+  <data name="E_AuctionPageTitle" xml:space="preserve"><value>Auctions</value></data>
+  <data name="E_AuctionBreadcrumbHome" xml:space="preserve"><value>Home</value></data>
+  <data name="E_AuctionEyebrow" xml:space="preserve"><value>AUCTIONS</value></data>
+  <data name="E_AuctionHeadline" xml:space="preserve"><value>Find great deals on pre-loved goods</value></data>
+  <data name="E_AuctionSearchPlaceholder" xml:space="preserve"><value>Search auction products...</value></data>
+  <data name="E_AuctionSearch" xml:space="preserve"><value>Search</value></data>
+  <data name="E_AuctionTabRunning" xml:space="preserve"><value>Live</value></data>
+  <data name="E_AuctionTabScheduled" xml:space="preserve"><value>Upcoming</value></data>
+  <data name="E_AuctionTabEnded" xml:space="preserve"><value>Ended</value></data>
+  <data name="E_AuctionEmpty" xml:space="preserve"><value>No auction sessions in this category yet.</value></data>
+  <data name="E_AuctionBrowseProducts" xml:space="preserve"><value>Browse all products</value></data>
+  <data name="E_AuctionImagePlaceholder" xml:space="preserve"><value>Product image</value></data>
+  <data name="E_AuctionBidCount" xml:space="preserve"><value>{0} bids</value></data>
+  <data name="E_AuctionTimeLeft" xml:space="preserve"><value>{0} left</value></data>
+  <data name="E_AuctionStartsAt" xml:space="preserve"><value>Starts {0}</value></data>
+  <data name="E_AuctionEndedAt" xml:space="preserve"><value>Ended {0}</value></data>
+  <data name="E_AuctionViewSession" xml:space="preserve"><value>View auction</value></data>
+  <data name="E_AuctionBack" xml:space="preserve"><value>Back to auctions</value></data>
+  <data name="E_AuctionImageZoom" xml:space="preserve"><value>Click to zoom image</value></data>
+  <data name="E_AuctionDescription" xml:space="preserve"><value>Product description</value></data>
+  <data name="E_AuctionNoDescription" xml:space="preserve"><value>The seller has not added a description.</value></data>
+  <data name="E_AuctionCategory" xml:space="preserve"><value>Category: {0}</value></data>
+  <data name="E_AuctionCondition" xml:space="preserve"><value>Condition: {0}</value></data>
+  <data name="E_AuctionShop" xml:space="preserve"><value>Shop: {0}</value></data>
+  <data name="E_AuctionListPrice" xml:space="preserve"><value>Original list price: {0}</value></data>
+  <data name="E_AuctionLiveConnecting" xml:space="preserve"><value>Connecting...</value></data>
+  <data name="E_AuctionWatching" xml:space="preserve"><value>{0} watching</value></data>
+  <data name="E_AuctionCurrentPrice" xml:space="preserve"><value>Current bid</value></data>
+  <data name="E_AuctionBidStats" xml:space="preserve"><value>{0} bids · Starting price {1} · Bid step {2}</value></data>
+  <data name="E_AuctionStartsIn" xml:space="preserve"><value>Starts in</value></data>
+  <data name="E_AuctionEndsIn" xml:space="preserve"><value>Ends in</value></data>
+  <data name="E_AuctionEndsAt" xml:space="preserve"><value>Ends at {0}</value></data>
+  <data name="E_AuctionLeader" xml:space="preserve"><value>You are currently leading</value></data>
+  <data name="E_AuctionChatSeller" xml:space="preserve"><value>Chat with seller</value></data>
+  <data name="E_AuctionWinner" xml:space="preserve"><value>Auction ended. Winner: {0} at {1}.</value></data>
+  <data name="E_AuctionNoWinner" xml:space="preserve"><value>Auction ended without any bids.</value></data>
+  <data name="E_AuctionCancelled" xml:space="preserve"><value>This auction was cancelled{0}{1}.</value></data>
+  <data name="E_AuctionCancelledByAdmin" xml:space="preserve"><value> by an administrator</value></data>
+  <data name="E_AuctionCancelReason" xml:space="preserve"><value>. Reason: {0}</value></data>
+  <data name="E_AuctionOwnerCannotBid" xml:space="preserve"><value>You cannot bid on your own auction.</value></data>
+  <data name="E_AuctionLoginToBid" xml:space="preserve"><value>Sign in to place a bid</value></data>
+  <data name="E_AuctionAmountPlaceholder" xml:space="preserve"><value>Enter your bid...</value></data>
+  <data name="E_AuctionMinimum" xml:space="preserve"><value>Minimum</value></data>
+  <data name="E_AuctionPlusStep" xml:space="preserve"><value>+{0} step(s)</value></data>
+  <data name="E_AuctionPlaceBid" xml:space="preserve"><value>Place bid</value></data>
+  <data name="E_AuctionCommitment" xml:space="preserve"><value>A bid is a commitment to buy. If you win, an order is created using your default profile address.</value></data>
+  <data name="E_AuctionBidHistory" xml:space="preserve"><value>Bid history</value></data>
+  <data name="E_AuctionBidder" xml:space="preserve"><value>BIDDER</value></data>
+  <data name="E_AuctionAmount" xml:space="preserve"><value>AMOUNT</value></data>
+  <data name="E_AuctionTime" xml:space="preserve"><value>TIME</value></data>
+  <data name="E_AuctionNoBids" xml:space="preserve"><value>No bids have been placed.</value></data>
+  <data name="E_SellerAuctionsTitle" xml:space="preserve"><value>My auctions</value></data>
+  <data name="E_SellerAuctionsSubtitle" xml:space="preserve"><value>Manage auction sessions for products in your shop.</value></data>
+  <data name="E_AuctionCreate" xml:space="preserve"><value>Create auction</value></data>
+  <data name="E_SellerAuctionsEmpty" xml:space="preserve"><value>You don't have any auctions yet. Choose an active listing to get started.</value></data>
+  <data name="E_AuctionStartPrice" xml:space="preserve"><value>STARTING PRICE</value></data>
+  <data name="E_AuctionBidTotal" xml:space="preserve"><value>BIDS</value></data>
+  <data name="E_AuctionPeriod" xml:space="preserve"><value>TIME</value></data>
+  <data name="E_AuctionStatus" xml:space="preserve"><value>STATUS</value></data>
+  <data name="E_AuctionAction" xml:space="preserve"><value>ACTIONS</value></data>
+  <data name="E_AuctionView" xml:space="preserve"><value>View</value></data>
+  <data name="E_AuctionCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="E_AuctionCancelConfirm" xml:space="preserve"><value>Cancel this auction?</value></data>
+  <data name="E_AuctionWinnerShort" xml:space="preserve"><value>Winner: {0}</value></data>
+  <data name="E_AuctionCreateEyebrow" xml:space="preserve"><value>AUCTION</value></data>
+  <data name="E_AuctionProduct" xml:space="preserve"><value>Product</value></data>
+  <data name="E_AuctionChooseProduct" xml:space="preserve"><value>-- Choose an active product --</value></data>
+  <data name="E_AuctionStartPriceLabel" xml:space="preserve"><value>Starting price (VND)</value></data>
+  <data name="E_AuctionStepLabel" xml:space="preserve"><value>Bid increment (VND)</value></data>
+  <data name="E_AuctionStartAtLabel" xml:space="preserve"><value>Starts at (leave blank to start now)</value></data>
+  <data name="E_AuctionEndAtLabel" xml:space="preserve"><value>Ends at</value></data>
+  <data name="E_AuctionCreateNote" xml:space="preserve"><value>Times use Vietnam time. Auctions run from 1 minute to 30 days. The product is reserved during the auction and cannot be bought directly. You can cancel only before the first bid. The highest bidder receives an order when the auction ends.</value></data>
+  <data name="E_AuctionNoEligibleProducts" xml:space="preserve"><value>You have no eligible products. A product must be active and not in another auction.</value></data>
+  <data name="E_AuctionBackToList" xml:space="preserve"><value>Back to list</value></data>
+  <data name="E_AdminAuctionsTitle" xml:space="preserve"><value>Manage auctions</value></data>
+  <data name="E_AdminAuctionsSubtitle" xml:space="preserve"><value>Monitor auction sessions and handle policy violations.</value></data>
+  <data name="E_AuctionSearchAdmin" xml:space="preserve"><value>Session ID, product, or shop</value></data>
+  <data name="E_AuctionAllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="E_AuctionFilter" xml:space="preserve"><value>Filter</value></data>
+  <data name="E_AuctionSessionCode" xml:space="preserve"><value>SESSION</value></data>
+  <data name="E_AuctionShopColumn" xml:space="preserve"><value>SHOP</value></data>
+  <data name="E_AuctionEndColumn" xml:space="preserve"><value>ENDS</value></data>
+  <data name="E_AuctionDetails" xml:space="preserve"><value>Details</value></data>
+  <data name="E_AuctionNoData" xml:space="preserve"><value>No data found.</value></data>
+  <data name="E_AuctionSessionTitle" xml:space="preserve"><value>Auction #{0}</value></data>
+  <data name="E_AuctionSessionsList" xml:space="preserve"><value>Back to sessions</value></data>
+  <data name="E_AuctionShopPrefix" xml:space="preserve"><value>Shop {0}</value></data>
+  <data name="E_AuctionStartTimeLabel" xml:space="preserve"><value>Starts:</value></data>
+  <data name="E_AuctionEndTimeLabel" xml:space="preserve"><value>Ends:</value></data>
+  <data name="E_AuctionWinnerAdmin" xml:space="preserve"><value>Winner: {0} · Price {1}</value></data>
+  <data name="E_AuctionViewOrder" xml:space="preserve"><value>View order</value></data>
+  <data name="E_AuctionCancelledBy" xml:space="preserve"><value>Cancelled by {0}. Reason: {1}</value></data>
+  <data name="E_AuctionCancelViolation" xml:space="preserve"><value>Cancel policy-violating auction</value></data>
+  <data name="E_AuctionCancelAdminConfirm" xml:space="preserve"><value>Cancel this auction? This cannot be undone.</value></data>
+  <data name="E_AuctionCancelReasonPlaceholder" xml:space="preserve"><value>Required reason; the seller and bidders will be notified</value></data>
+  <data name="E_AuctionCancelSubmit" xml:space="preserve"><value>Cancel auction</value></data>
+  <data name="E_DashboardExportHint" xml:space="preserve"><value>Download completed orders as UTF-8 CSV for Excel.</value></data>
+  <data name="E_AuctionTimePrefix" xml:space="preserve"><value>Time left: </value></data>
+  <data name="E_AuctionLiveOnline" xml:space="preserve"><value>Live</value></data>
+  <data name="E_AuctionLiveOffline" xml:space="preserve"><value>Connection lost</value></data>
+  <data name="E_AuctionWatchingSuffix" xml:space="preserve"><value>watching</value></data>
+  <data name="E_AuctionFinishing" xml:space="preserve"><value>Finalizing results...</value></data>
+  <data name="E_AuctionChatPrefill" xml:space="preserve"><value>Hello, I'm interested in the auction for "{0}".</value></data>
+  <data name="E_AuctionAmountLabel" xml:space="preserve"><value>Your bid</value></data>
+  <data name="E_AuctionEndedStatus" xml:space="preserve"><value>Auction ended</value></data>
+  <data name="E_AuctionCancelledStatus" xml:space="preserve"><value>Auction cancelled</value></data>
+  <data name="E_AuctionAmountInvalid" xml:space="preserve"><value>Enter a valid bid amount.</value></data>
+  <data name="E_AuctionMinimumError" xml:space="preserve"><value>The minimum bid is {0}.</value></data>
+  <data name="E_AuctionConfirmBid" xml:space="preserve"><value>Confirm a bid of {0}?</value></data>
+  <data name="E_AuctionConnectionError" xml:space="preserve"><value>Could not connect to the server. Please try again.</value></data>
+  <data name="E_AuctionDays" xml:space="preserve"><value>days</value></data>
+  <data name="E_AdminDashTitle" xml:space="preserve"><value>System dashboard</value></data>
+  <data name="E_AdminDashSubtitle" xml:space="preserve"><value>Marketplace activity, monthly revenue, profit, and top-selling products.</value></data>
+  <data name="E_AdminAddRevenue" xml:space="preserve"><value>Add revenue / order</value></data>
+  <data name="E_AdminUsers" xml:space="preserve"><value>Users</value></data>
+  <data name="E_AdminShops" xml:space="preserve"><value>Shops</value></data>
+  <data name="E_AdminProducts" xml:space="preserve"><value>Products</value></data>
+  <data name="E_AdminOrders" xml:space="preserve"><value>Orders</value></data>
+  <data name="E_DashRevenueCompleted" xml:space="preserve"><value>Revenue (completed orders)</value></data>
+  <data name="E_DashTotalProfit" xml:space="preserve"><value>Total profit: {0}</value></data>
+  <data name="E_DashMonthlyRevenue" xml:space="preserve"><value>Monthly revenue ({0})</value></data>
+  <data name="E_DashOrdersThisMonth" xml:space="preserve"><value>{0} orders this month</value></data>
+  <data name="E_DashMonthlyProfit" xml:space="preserve"><value>Monthly profit ({0})</value></data>
+  <data name="E_DashPlatformFee" xml:space="preserve"><value>{0}% marketplace fee</value></data>
+  <data name="E_DashTopProduct" xml:space="preserve"><value>Top-selling product</value></data>
+  <data name="E_DashNoTopProduct" xml:space="preserve"><value>No top product yet</value></data>
+  <data name="E_DashTopProductSales" xml:space="preserve"><value>{0} sold · {1}</value></data>
+  <data name="E_DashNoData" xml:space="preserve"><value>No data yet</value></data>
+  <data name="E_DashManageRecords" xml:space="preserve"><value>Add / Edit / Delete</value></data>
+  <data name="E_DashTotalOrders" xml:space="preserve"><value>Total orders</value></data>
+  <data name="E_DashCompletedCount" xml:space="preserve"><value>{0} completed</value></data>
+  <data name="E_DashPendingProducts" xml:space="preserve"><value>Products awaiting review</value></data>
+  <data name="E_DashReviewNow" xml:space="preserve"><value>Review now</value></data>
+  <data name="E_DashPendingReports" xml:space="preserve"><value>Unresolved reports</value></data>
+  <data name="E_DashCheckResolve" xml:space="preserve"><value>Review and resolve</value></data>
+  <data name="E_DashOrdersByStatus" xml:space="preserve"><value>Orders by status</value></data>
+  <data name="E_DashTopProductsProfit" xml:space="preserve"><value>Top-selling products and marketplace profit</value></data>
+  <data name="E_DashRank" xml:space="preserve"><value>RANK</value></data>
+  <data name="E_DashShop" xml:space="preserve"><value>SHOP</value></data>
+  <data name="E_DashQuantitySold" xml:space="preserve"><value>QUANTITY SOLD</value></data>
+  <data name="E_DashPlatformProfit" xml:space="preserve"><value>MARKETPLACE PROFIT ({0}%)</value></data>
+  <data name="E_DashAction" xml:space="preserve"><value>ACTION</value></data>
+  <data name="E_DashBestSeller" xml:space="preserve"><value>Best seller</value></data>
+  <data name="E_DashNoCompletedProducts" xml:space="preserve"><value>No completed product sales yet.</value></data>
+  <data name="E_DashLatestOrders" xml:space="preserve"><value>Recent orders and revenue</value></data>
+  <data name="E_DashAddOrder" xml:space="preserve"><value>Add order / revenue</value></data>
+  <data name="E_DashViewAll" xml:space="preserve"><value>View all</value></data>
+  <data name="E_DashBuyer" xml:space="preserve"><value>BUYER</value></data>
+  <data name="E_DashRevenue" xml:space="preserve"><value>REVENUE</value></data>
+  <data name="E_DashProfit" xml:space="preserve"><value>PROFIT ({0}%)</value></data>
+  <data name="E_DashCancelOrder" xml:space="preserve"><value>Are you sure you want to delete order {0}?</value></data>
+  <data name="E_DashEdit" xml:space="preserve"><value>Edit</value></data>
+  <data name="E_DashDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="E_DashDetails" xml:space="preserve"><value>Details</value></data>
+  <data name="E_DashAddOrderTitle" xml:space="preserve"><value>Add order / record revenue</value></data>
+  <data name="E_DashProductName" xml:space="preserve"><value>Product name</value></data>
+  <data name="E_DashAmount" xml:space="preserve"><value>Amount / revenue (VND)</value></data>
+  <data name="E_DashBuyerLabel" xml:space="preserve"><value>Buyer</value></data>
+  <data name="E_DashOrderStatus" xml:space="preserve"><value>Order status</value></data>
+  <data name="E_DashSave" xml:space="preserve"><value>Save</value></data>
+  <data name="E_DashCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="E_DashEditOrderTitle" xml:space="preserve"><value>Edit order / revenue</value></data>
+  <data name="E_DashTotalAmount" xml:space="preserve"><value>Total / revenue (VND)</value></data>
+  <data name="E_DashUpdate" xml:space="preserve"><value>Update</value></data>
+  <data name="E_SellerDashTitle" xml:space="preserve"><value>Shop dashboard</value></data>
+  <data name="E_SellerDashOrdersPending" xml:space="preserve"><value>Orders awaiting confirmation</value></data>
+  <data name="E_SellerDashCompletedOrders" xml:space="preserve"><value>Completed / total orders</value></data>
+  <data name="E_SellerDashProductsActive" xml:space="preserve"><value>Active products</value></data>
+  <data name="E_SellerDashProductsCount" xml:space="preserve"><value>{0} sold · {1} total</value></data>
+  <data name="E_SellerDashAuctionsOpen" xml:space="preserve"><value>Open auctions</value></data>
+  <data name="E_SellerDashTopProducts" xml:space="preserve"><value>Top products (by revenue)</value></data>
+  <data name="E_SellerDashNoOrders" xml:space="preserve"><value>No completed orders yet.</value></data>
+  <data name="E_OrderAdminTitle" xml:space="preserve"><value>Order management</value></data>
+  <data name="E_OrderAdminSubtitle" xml:space="preserve"><value>All marketplace orders.</value></data>
+  <data name="E_OrderSearchPlaceholder" xml:space="preserve"><value>Order ID / buyer name</value></data>
+  <data name="E_OrderAllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="E_OrderAllShops" xml:space="preserve"><value>All shops</value></data>
+  <data name="E_OrderFromDate" xml:space="preserve"><value>From date</value></data>
+  <data name="E_OrderToDate" xml:space="preserve"><value>To date</value></data>
+  <data name="E_OrderFilter" xml:space="preserve"><value>Filter</value></data>
+  <data name="E_OrderClearFilter" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="E_OrderBuyer" xml:space="preserve"><value>BUYER</value></data>
+  <data name="E_OrderShop" xml:space="preserve"><value>SHOP</value></data>
+  <data name="E_OrderTotal" xml:space="preserve"><value>TOTAL</value></data>
+  <data name="E_OrderPayment" xml:space="preserve"><value>PAYMENT</value></data>
+  <data name="E_OrderDate" xml:space="preserve"><value>ORDER DATE</value></data>
+  <data name="E_OrderDetails" xml:space="preserve"><value>Details</value></data>
+  <data name="E_OrderNoOrders" xml:space="preserve"><value>No orders found.</value></data>
+  <data name="E_OrderTotalCount" xml:space="preserve"><value>{0} orders total</value></data>
+  <data name="E_OrderBackToList" xml:space="preserve"><value>Back to orders</value></data>
+  <data name="E_OrderBuyerShopMeta" xml:space="preserve"><value>Buyer: {0} · Shop: {1} (owner: {2}) · {3}</value></data>
+  <data name="E_OrderDeliveryWindow" xml:space="preserve"><value>Delivery window:</value></data>
+  <data name="E_OrderIntervene" xml:space="preserve"><value>Order actions</value></data>
+  <data name="E_OrderCancelledNote" xml:space="preserve"><value>Cancelled by {0}. Reason: {1}</value></data>
+  <data name="E_OrderNoActions" xml:space="preserve"><value>This order is complete; no further actions are available.</value></data>
+  <data name="E_OrderChangeStatus" xml:space="preserve"><value>Change status to</value></data>
+  <data name="E_OrderReasonLabel" xml:space="preserve"><value>Required reason (sent to both buyer and seller)</value></data>
+  <data name="E_OrderUpdateStatus" xml:space="preserve"><value>Update status</value></data>
+  <data name="E_OrderStatusConfirm" xml:space="preserve"><value>Confirm the order status change?</value></data>
+  <data name="E_OrderAuditNote" xml:space="preserve"><value>All admin actions are recorded in the system audit log.</value></data>
+  <data name="E_OrderCode" xml:space="preserve"><value>ORDER</value></data>
+  <data name="E_OrderStatus" xml:space="preserve"><value>STATUS</value></data>
+  <data name="E_OrderDetailTitle" xml:space="preserve"><value>Order {0}</value></data>
+  <data name="E_ChartTitle" xml:space="preserve"><value>Revenue and orders</value></data>
+  <data name="E_ChartDays" xml:space="preserve"><value>30 days</value></data>
+  <data name="E_ChartMonths" xml:space="preserve"><value>12 months</value></data>
+  <data name="E_ChartRevenue" xml:space="preserve"><value>Revenue (VND)</value></data>
+  <data name="E_ChartOrders" xml:space="preserve"><value>Orders</value></data>
 </root>

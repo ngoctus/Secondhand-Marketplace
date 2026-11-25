@@ -2,8 +2,10 @@
 @using SecondHandMarketplace.Web.Common
 @using SecondHandMarketplace.Web.Services.Products
 @using SecondHandMarketplace.Web.Services.Reviews
+@using SecondHandMarketplace.Web.Services.Auctions
 @inject IProductService ProductService
 @inject IReviewService Reviews
+@inject IAuctionService Auctions
 @{
     ViewData["Title"] = Model.Name;
 
@@ -12,6 +14,7 @@
         ? Url.Action("Index", "Products", new { CategoryId = maDanhMuc })
         : Url.Action("Index", "Products");
     var urlXemShop = Url.Action("Details", "Shops", new { id = Model.ShopId });
+    var openAuctionId = await Auctions.GetOpenAuctionIdForProductAsync(Model.Id);
 
     // Vài đánh giá mới nhất của shop (dữ liệu của C: bảng DanhGia + vw_DiemCuaHang).
     var danhGia = await Reviews.LayDanhGiaTheoShopAsync(Model.ShopId, page: 1, pageSize: 3);
@@ -88,6 +91,16 @@
                 <span class="badge bg-warning text-dark px-2 py-1 ms-2" style="font-size: 13px;">@Model.TrangThaiHienThi</span>
             }
         </div>
+
+        @if (openAuctionId.HasValue && User.LayNguoiDungId() != Model.SellerUserId)
+        {
+            <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3 mb-0" role="status">
+                <span><i class="bi bi-hammer me-1" aria-hidden="true"></i>@L["E_ProductAuctionNotice"]</span>
+                <a class="btn btn-rm-outline btn-sm rounded-pill px-3 text-nowrap" asp-area="" asp-controller="PublicAuctions" asp-action="Details" asp-route-id="@openAuctionId.Value">
+                    @L["E_ProductAuctionCta"] <span aria-hidden="true">→</span>
+                </a>
+            </div>
+        }
 
         <div class="detail-tags-row">
             <span class="tag-badge">@(string.IsNullOrWhiteSpace(Model.ConditionName) ? (string)L["Detail_ConditionUnknown"] : HienThi.TenTinhTrang(Model.ConditionName))</span>

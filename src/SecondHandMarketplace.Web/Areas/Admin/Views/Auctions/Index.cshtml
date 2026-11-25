@@ -1,28 +1,29 @@
 @model PagedResult<AuctionCardVm>
 @{
-    ViewData["Title"] = "Quản lý đấu giá";
+    ViewData["Title"] = L["E_AdminAuctionsTitle"];
     var status = (string?)ViewBag.Status;
     var q = (string?)ViewBag.Q;
 }
-<div class="page-head"><div><h2>Quản lý đấu giá</h2><p class="muted">Theo dõi mọi phiên đấu giá và xử lý phiên vi phạm.</p></div></div>
+<div class="page-head"><div><h2>@L["E_AdminAuctionsTitle"]</h2><p class="muted">@L["E_AdminAuctionsSubtitle"]</p></div></div>
 
-<form method="get" class="row g-2 mb-3">
-    <div class="col-md-5"><input name="q" value="@q" class="form-control" placeholder="Mã phiên, tên sản phẩm hoặc cửa hàng" /></div>
+<form method="get" class="panel row g-2 mb-3 align-items-end">
+    <div class="col-md-5"><label class="form-label visually-hidden" for="auction-filter-q">@L["E_AuctionSearchAdmin"]</label><input id="auction-filter-q" name="q" value="@q" class="form-control" placeholder="@L["E_AuctionSearchAdmin"]" /></div>
     <div class="col-md-3">
-        <select name="status" class="form-select">
-            <option value="">Tất cả trạng thái</option>
-            <option value="RUNNING" selected="@(status == "RUNNING")">Đang diễn ra</option>
-            <option value="SCHEDULED" selected="@(status == "SCHEDULED")">Sắp diễn ra</option>
-            <option value="ENDED" selected="@(status == "ENDED")">Đã kết thúc</option>
-            <option value="CANCELLED" selected="@(status == "CANCELLED")">Đã hủy</option>
+        <label class="form-label visually-hidden" for="auction-filter-status">@L["E_AuctionAllStatuses"]</label>
+        <select id="auction-filter-status" name="status" class="form-select">
+            <option value="">@L["E_AuctionAllStatuses"]</option>
+            <option value="RUNNING" selected="@(status == "RUNNING")">@HienThi.TrangThaiPhien("RUNNING")</option>
+            <option value="SCHEDULED" selected="@(status == "SCHEDULED")">@HienThi.TrangThaiPhien("SCHEDULED")</option>
+            <option value="ENDED" selected="@(status == "ENDED")">@HienThi.TrangThaiPhien("ENDED")</option>
+            <option value="CANCELLED" selected="@(status == "CANCELLED")">@HienThi.TrangThaiPhien("CANCELLED")</option>
         </select>
     </div>
-    <div class="col-auto"><button class="btn btn-primary">Lọc</button></div>
+    <div class="col-auto"><button class="btn btn-rm-primary"><i class="bi bi-funnel me-1" aria-hidden="true"></i>@L["E_AuctionFilter"]</button></div>
 </form>
 
 <div class="panel table-wrap">
-    <table class="table align-middle">
-        <thead><tr><th>MÃ</th><th>SẢN PHẨM</th><th>CỬA HÀNG</th><th>GIÁ HIỆN TẠI</th><th>LƯỢT</th><th>KẾT THÚC</th><th>TRẠNG THÁI</th><th></th></tr></thead>
+        <div class="table-responsive"><table class="table align-middle">
+        <thead><tr><th scope="col">@L["E_AuctionSessionCode"]</th><th scope="col">@L["E_AuctionProduct"]</th><th scope="col">@L["E_AuctionShopColumn"]</th><th scope="col">@L["E_AuctionCurrentPrice"]</th><th scope="col">@L["E_AuctionBidTotal"]</th><th scope="col">@L["E_AuctionEndColumn"]</th><th scope="col">@L["E_AuctionStatus"]</th><th scope="col" class="text-end">@L["E_AuctionAction"]</th></tr></thead>
         <tbody>
         @foreach (var a in Model.Items)
         {
@@ -34,11 +35,11 @@
                 <td>@a.BidCount</td>
                 <td class="small">@HienThi.NgayGio(a.EndAt)</td>
                 <td><span class="@HienThi.LopTrangThai(a.Status)">@HienThi.TrangThaiPhien(a.Status)</span></td>
-                <td><a class="smallbtn text-decoration-none" asp-action="Details" asp-route-id="@a.Id">Chi tiết</a></td>
+                <td class="text-end"><a class="btn btn-rm-outline btn-sm rounded-pill text-decoration-none" asp-action="Details" asp-route-id="@a.Id">@L["E_AuctionDetails"]</a></td>
             </tr>
         }
-        @if (Model.Items.Count == 0) { <tr><td colspan="8" class="text-center text-muted">Không có dữ liệu.</td></tr> }
+        @if (Model.Items.Count == 0) { <tr><td colspan="8" class="text-center text-muted py-4">@L["E_AuctionNoData"]</td></tr> }
         </tbody>
-    </table>
+        </table></div>
 </div>
 <partial name="_Pager" model="new PagerVm(Model.Page, Model.TotalPages)" />

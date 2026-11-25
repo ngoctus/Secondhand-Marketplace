@@ -1,24 +1,28 @@
 @model SellerDashboardVm
 @{
-    ViewData["Title"] = "Thống kê cửa hàng";
+    ViewData["Title"] = L["E_SellerDashTitle"];
     var tt = new[] { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" };
 }
-<div class="page-head"><div><h2>Thống kê cửa hàng</h2><p class="muted">@Model.ShopName</p></div>
-    <a class="primary text-decoration-none" asp-controller="SellerOrders" asp-action="Index">Xử lý đơn hàng</a></div>
+<div class="page-head"><div><h2>@L["E_SellerDashTitle"]</h2><p class="muted">@Model.ShopName</p><p class="small text-muted mb-0">@L["E_DashboardExportHint"]</p></div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-rm-outline" asp-action="ExportCsv" title="@L["E_DashboardExportHint"]"><i class="bi bi-download me-1" aria-hidden="true"></i>@L["E_ExportCsv"]</a>
+        <a class="btn btn-rm-primary text-decoration-none" asp-controller="SellerOrders" asp-action="Index">@L["SellerOrder_Title"]</a>
+    </div>
+</div>
 
 <div class="kpi-grid">
-    <div class="kpi"><span>Doanh thu (đơn hoàn tất)</span><b>@HienThi.Tien(Model.DoanhThu)</b></div>
-    <div class="kpi"><span>Đơn chờ xác nhận</span><b>@Model.DonChoXuLy</b></div>
-    <div class="kpi"><span>Đơn hoàn tất / tổng đơn</span><b>@Model.DonHoanTat / @Model.TongDon</b></div>
-    <div class="kpi"><span>Sản phẩm đang bán</span><b>@Model.SanPhamDangBan</b><small>@Model.SanPhamDaBan đã bán · @Model.TongSanPham tổng</small></div>
-    <div class="kpi"><span>Phiên đấu giá đang mở</span><b>@Model.PhienDangMo</b></div>
+    <div class="kpi"><span>@L["E_DashRevenueCompleted"]</span><b>@HienThi.Tien(Model.DoanhThu)</b></div>
+    <div class="kpi"><span>@L["E_SellerDashOrdersPending"]</span><b>@Model.DonChoXuLy</b></div>
+    <div class="kpi"><span>@L["E_SellerDashCompletedOrders"]</span><b>@Model.DonHoanTat / @Model.TongDon</b></div>
+    <div class="kpi"><span>@L["E_SellerDashProductsActive"]</span><b>@Model.SanPhamDangBan</b><small>@L["E_SellerDashProductsCount", Model.SanPhamDaBan, Model.TongSanPham]</small></div>
+    <a class="kpi text-decoration-none" asp-area="User" asp-controller="Auctions" asp-action="Index" title="@L["E_SellerAuctionsNav"]"><span>@L["E_SellerDashAuctionsOpen"]</span><b>@Model.PhienDangMo</b></a>
 </div>
 
 <div class="row g-3">
     <div class="col-lg-8"><partial name="_BieuDo" /></div>
     <div class="col-lg-4">
         <div class="panel">
-            <h3>Đơn theo trạng thái</h3>
+            <h3>@L["E_DashOrdersByStatus"]</h3>
             @foreach (var s in tt)
             {
                 var n = Model.DonTheoTrangThai.GetValueOrDefault(s);
@@ -33,12 +37,12 @@
 </div>
 
 <div class="panel">
-    <h3>Sản phẩm bán chạy (theo doanh thu)</h3>
-    @if (Model.SanPhamBanChay.Count == 0) { <div class="empty">Chưa có đơn hoàn tất nào.</div> }
+    <h3>@L["E_SellerDashTopProducts"]</h3>
+    @if (Model.SanPhamBanChay.Count == 0) { <div class="empty">@L["E_SellerDashNoOrders"]</div> }
     else
     {
-        <table class="table">
-            <thead><tr><th>#</th><th>SẢN PHẨM</th><th class="text-end">DOANH THU</th></tr></thead>
+        <div class="table-responsive"><table class="table align-middle">
+            <thead><tr><th scope="col">@L["E_DashRank"]</th><th scope="col">@L["E_AdminProducts"]</th><th scope="col" class="text-end">@L["E_DashRevenue"]</th></tr></thead>
             <tbody>
             @for (var i = 0; i < Model.SanPhamBanChay.Count; i++)
             {
@@ -46,7 +50,7 @@
                 <tr><td>@(i + 1)</td><td><a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@p.ProductId">@p.Name</a></td><td class="text-end"><b>@HienThi.Tien(p.Revenue)</b></td></tr>
             }
             </tbody>
-        </table>
+        </table></div>
     }
 </div>
 

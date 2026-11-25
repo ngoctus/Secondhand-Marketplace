@@ -1,27 +1,28 @@
 @model PagedResult<AuctionCardVm>
 @{
-    ViewData["Title"] = "Sàn đấu giá";
+    ViewData["Title"] = L["E_AuctionPageTitle"];
     var tab = (string)ViewBag.Tab;
     var q = (string?)ViewBag.Q;
-    var tabs = new[] { ("dang-dien-ra", "Đang diễn ra"), ("sap-dien-ra", "Sắp diễn ra"), ("da-ket-thuc", "Đã kết thúc") };
+    var tabs = new[] { ("dang-dien-ra", (string)L["E_AuctionTabRunning"]), ("sap-dien-ra", (string)L["E_AuctionTabScheduled"]), ("da-ket-thuc", (string)L["E_AuctionTabEnded"]) };
 }
 
 <div class="container py-4">
-    <nav class="rm-breadcrumb" aria-label="Đường dẫn trang">
-        <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+    <nav class="rm-breadcrumb" aria-label="@L["Detail_BreadcrumbAria"]">
+        <a asp-controller="Home" asp-action="Index">@L["E_AuctionBreadcrumbHome"]</a>
         <span class="sep">/</span>
-        <span>Sàn đấu giá</span>
+        <span>@L["E_AuctionPageTitle"]</span>
     </nav>
 
     <div class="rm-page-head">
         <div>
-            <div class="section-label">SÀN ĐẤU GIÁ</div>
-            <h1 class="rm-page-title">Săn đồ cũ giá tốt</h1>
+            <div class="section-label">@L["E_AuctionEyebrow"]</div>
+            <h1 class="rm-page-title">@L["E_AuctionHeadline"]</h1>
         </div>
         <form method="get" class="auction-search">
             <input type="hidden" name="tab" value="@tab" />
-            <input name="q" value="@q" placeholder="Tìm sản phẩm đang đấu giá..." />
-            <button type="submit" class="btn-rm-primary">Tìm</button>
+            <label class="visually-hidden" for="auction-search-q">@L["E_AuctionSearchPlaceholder"]</label>
+            <input id="auction-search-q" name="q" value="@q" placeholder="@L["E_AuctionSearchPlaceholder"]" />
+            <button type="submit" class="btn-rm-primary">@L["E_AuctionSearch"]</button>
         </form>
     </div>
 
@@ -35,8 +36,8 @@
     @if (Model.Items.Count == 0)
     {
         <div class="rm-empty-state">
-            <p>Chưa có phiên đấu giá nào trong mục này.</p>
-            <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">Xem tất cả sản phẩm</a>
+            <p>@L["E_AuctionEmpty"]</p>
+            <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">@L["E_AuctionBrowseProducts"]</a>
         </div>
     }
     else
@@ -55,7 +56,7 @@
                                 else
                                 {
                                     <div class="wireframe-placeholder">
-                                        <span>Ảnh sản phẩm 4:5</span>
+                                    <span>@L["E_AuctionImagePlaceholder"] 4:5</span>
                                     </div>
                                 }
                             </a>
@@ -71,22 +72,22 @@
                             </div>
                             <div class="rm-card-seller">
                                 <span class="seller-circle" aria-hidden="true"></span>
-                                <span>@a.ShopName · @a.BidCount lượt đặt</span>
+                                <span>@a.ShopName · @L["E_AuctionBidCount", a.BidCount]</span>
                             </div>
                             <div class="rm-auction-foot">
                                 @if (a.Status == "RUNNING")
                                 {
-                                    <span class="rm-auction-time">Còn <span class="js-countdown" data-end="@HienThi.Iso(a.EndAt)"></span></span>
+                                    <span class="rm-auction-time"><span class="js-countdown" data-end="@HienThi.Iso(a.EndAt)" data-prefix="@L["E_AuctionTimePrefix"]"></span></span>
                                 }
                                 else if (a.Status == "SCHEDULED")
                                 {
-                                    <span class="rm-auction-time">Bắt đầu @HienThi.NgayGio(a.StartAt)</span>
+                                    <span class="rm-auction-time">@L["E_AuctionStartsAt", HienThi.NgayGio(a.StartAt)]</span>
                                 }
                                 else
                                 {
-                                    <span class="rm-auction-time">Kết thúc @HienThi.NgayGio(a.EndAt)</span>
+                                    <span class="rm-auction-time">@L["E_AuctionEndedAt", HienThi.NgayGio(a.EndAt)]</span>
                                 }
-                                <a asp-action="Details" asp-route-id="@a.Id" class="btn-rm-outline rm-auction-cta">Xem phiên</a>
+                                <a asp-action="Details" asp-route-id="@a.Id" class="btn-rm-outline rm-auction-cta">@L["E_AuctionViewSession"]</a>
                             </div>
                         </div>
                     </article>
