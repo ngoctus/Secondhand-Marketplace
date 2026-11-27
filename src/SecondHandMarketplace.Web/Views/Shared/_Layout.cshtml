@@ -154,9 +154,6 @@
 
             <!-- Cụm hành động người dùng theo Wireframe -->
             <div class="rm-header-actions">
-                <div class="rm-lang-slot">
-                    <partial name="_LanguageSwitcher" />
-                </div>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     @if (User.IsInRole("USER"))
@@ -213,6 +210,7 @@
                             @if (User.IsInRole("USER"))
                             {
                                 <div class="rm-dropdown-divider"></div>
+                                <a class="rm-dropdown-item fw-semibold" asp-area="User" asp-controller="Products" asp-action="Create">@L["Nav_SellNow"]</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">@L["Nav_MyOrders"]</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">@L["Nav_MyReviews"]</a>
                                 <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">@L["Nav_SellerOrders"]</a>
@@ -232,11 +230,7 @@
                         </div>
                     </div>
 
-                    @if (User.IsInRole("USER"))
-                    {
-                        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">@L["Nav_SellNow"]</a>
-                    }
-                    else if (User.IsInRole("ADMIN"))
+                    @if (User.IsInRole("ADMIN"))
                     {
                         <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn-rm-primary">@L["Nav_Admin"]</a>
                     }
@@ -247,9 +241,11 @@
                         <i class="bi bi-shop"></i>
                         <span>@L["Nav_SellerChannel"]</span>
                     </a>
-                    <a asp-area="" asp-controller="Account" asp-action="Login" class="btn-rm-outline">@L["Nav_Login"]</a>
-                    <a asp-area="" asp-controller="Account" asp-action="Register" class="btn-rm-outline">@L["Nav_Register"]</a>
-                    <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Products/Create" class="btn-rm-primary">@L["Nav_SellNow"]</a>
+                    <div class="rm-auth-guest">
+                        <a class="rm-auth-link" asp-area="" asp-controller="Account" asp-action="Register">@L["Nav_Register"]</a>
+                        <span class="rm-auth-sep" aria-hidden="true"></span>
+                        <a class="rm-auth-link" asp-area="" asp-controller="Account" asp-action="Login">@L["Nav_Login"]</a>
+                    </div>
                 }
                 <partial name="_LanguageSwitcher" />
             </div>

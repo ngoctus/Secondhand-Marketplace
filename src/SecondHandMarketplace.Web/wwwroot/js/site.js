@@ -88,6 +88,25 @@ window.rmT = (key, fallback, ...args) => {
     });
 })();
 
+// Tìm kiếm nở khi nhập: box phủ đúng phần menu ngang, blur thì co lại như cũ.
+(() => {
+    const form = document.querySelector('.rm-header-search');
+    const nav = document.querySelector('.rm-nav');
+    if (!form || !nav) return;
+
+    form.addEventListener('focusin', () => {
+        const navWidth = nav.getBoundingClientRect().width;
+        if (navWidth === 0) return;
+        const gap = parseFloat(getComputedStyle(form.parentElement).columnGap) || 0;
+        form.style.setProperty('--rm-search-overlap', `${navWidth + gap}px`);
+        form.classList.add('is-expanded');
+    });
+
+    form.addEventListener('focusout', (e) => {
+        if (!form.contains(e.relatedTarget)) form.classList.remove('is-expanded');
+    });
+})();
+
 // Xử lý ảnh sản phẩm fallback (4:5) khi đường dẫn ảnh lỗi hoặc chưa có ảnh
 (() => {
     const thayBangKhungDuPhong = (img) => {
