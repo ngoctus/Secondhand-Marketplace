@@ -1,21 +1,59 @@
 ﻿@model ProductFormVm
 @{
     ViewData["Title"] = L["Form_EditTitle"];
+    var returnUrl = ViewBag.ReturnUrl as string;
+    var backUrl = !string.IsNullOrWhiteSpace(returnUrl) ? returnUrl : Url.Action("Index");
 }
 
 <div class="rm-main-content" style="padding-top:8px; max-width:860px; margin:0 auto;">
     <div class="card shadow-sm border-0 rounded-3 p-4">
-        <h2 style="font-family:'Playfair Display',serif; font-size:22px;" class="mb-3">@L["Form_EditTitle"]</h2>
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-3">
+            <h2 style="font-family:'Playfair Display',serif; font-size:22px;" class="mb-0">@L["Form_EditTitle"]</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.TrangThai))
+            {
+                <span class="st st-@Model.TrangThai.ToLowerInvariant()">@HienThi.TrangThaiSanPham(Model.TrangThai)</span>
+            }
+        </div>
 
         <form asp-area="User" asp-controller="Products" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+            @if (!string.IsNullOrWhiteSpace(returnUrl))
+            {
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+            }
             <partial name="_ProductForm" model="Model" />
         </form>
 
-        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-            <a asp-action="Index" class="text-decoration-none">← @L["Form_BackToList"]</a>
-            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('@L["Form_ConfirmDeleteThis"]');">
-                <button type="submit" class="btn btn-outline-danger btn-sm">@L["Form_DeleteThis"]</button>
-            </form>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4 pt-3 border-top">
+            <a href="@backUrl" class="text-decoration-none">← @L["Form_BackToList"]</a>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                @if (Model.TrangThai == "ACTIVE")
+                {
+                    <form asp-action="An" asp-route-id="@Model.Id" method="post" class="m-0" data-confirm="@L["Seller_ConfirmHide"]" data-confirm-danger="false">
+                        @if (!string.IsNullOrWhiteSpace(returnUrl))
+                        {
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        }
+                        <button type="submit" class="rm-act-btn rm-act-neutral">@L["Seller_Hide"]</button>
+                    </form>
+                }
+                else if (Model.TrangThai == "HIDDEN" && Model.CoTheMoAnNgay)
+                {
+                    <form asp-action="MoAn" asp-route-id="@Model.Id" method="post" class="m-0">
+                        @if (!string.IsNullOrWhiteSpace(returnUrl))
+                        {
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        }
+                        <button type="submit" class="rm-act-btn rm-act-primary">@L["Seller_Unhide"]</button>
+                    </form>
+                }
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="m-0" data-confirm="@L["Form_ConfirmDeleteThis"]">
+                    @if (!string.IsNullOrWhiteSpace(returnUrl))
+                    {
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    }
+                    <button type="submit" class="rm-act-btn rm-act-danger">@L["Form_DeleteThis"]</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

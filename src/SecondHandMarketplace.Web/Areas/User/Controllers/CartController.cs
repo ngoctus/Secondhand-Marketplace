@@ -25,10 +25,10 @@ public class CartController : UserBaseController
     /// <summary>Thêm một sản phẩm vào giỏ hàng.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Them(int maSanPham, string? returnUrl = null)
+    public async Task<IActionResult> Them(int maSanPham, int soLuong = 1, string? returnUrl = null)
     {
         var userId = User.LayNguoiDungId()!.Value;
-        var (thanhCong, thongBao) = await _cartService.ThemVaoGioAsync(userId, maSanPham);
+        var (thanhCong, thongBao) = await _cartService.ThemVaoGioAsync(userId, maSanPham, soLuong);
 
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
@@ -49,6 +49,25 @@ public class CartController : UserBaseController
         {
             return Redirect(returnUrl);
         }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>Cập nhật số lượng một món hàng trong giỏ.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CapNhatSoLuong(int maGioHang, int soLuong)
+    {
+        var userId = User.LayNguoiDungId()!.Value;
+        var (thanhCong, thongBao, soLuongMoi) = await _cartService.CapNhatSoLuongAsync(userId, maGioHang, soLuong);
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return Json(new { success = thanhCong, message = thongBao, soLuong = soLuongMoi });
+        }
+
+        if (!thanhCong) this.ThongBaoLoi(thongBao ?? "Không thể cập nhật số lượng.");
+        else if (!string.IsNullOrEmpty(thongBao)) this.ThongBaoThanhCong(thongBao);
 
         return RedirectToAction(nameof(Index));
     }

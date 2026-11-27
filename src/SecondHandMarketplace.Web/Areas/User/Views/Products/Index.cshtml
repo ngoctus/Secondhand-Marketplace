@@ -1,18 +1,21 @@
-@model PagedResult<MyProductVm>
+@model SellerProductListVm
 @{
     ViewData["Title"] = L["Seller_Title"];
+    var f = Model.Filter;
+    var pager = new PagerVm(Model.Result.Page, Model.Result.TotalPages);
+    var currentListUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
 <div class="rm-main-content" style="padding-top:8px">
-    <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
         <div>
-            <h2 style="font-family:'Playfair Display',serif; font-size:24px;">@L["Seller_Title"]</h2>
-            <p class="text-muted mb-0" style="font-size:13.5px;">@L["Seller_Desc"]</p>
+            <h2 style="font-family: var(--font-serif); font-size: 24px; margin-bottom: 4px;">@L["Seller_Title"]</h2>
+            <p class="text-muted mb-0" style="font-size: 13.5px;">@L["Seller_Desc"]</p>
         </div>
         <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary">+ @L["Nav_SellNow"]</a>
     </div>
 
-    @if (Model.Items.Count == 0)
+    @if (Model.TongTatCaSanPham == 0 && !f.CoBoLoc)
     {
         <div class="rm-empty-state">
             <h3>@L["Seller_EmptyTitle"]</h3>
@@ -31,85 +34,329 @@
     }
     else
     {
-        <div class="card p-0 overflow-hidden shadow-sm border-0 rounded-3">
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>@L["Seller_ColProduct"]</th>
-                            <th>@L["Seller_ColPrice"]</th>
-                            <th>@L["Seller_ColStatus"]</th>
-                            <th>@L["Seller_ColUpdated"]</th>
-                            <th class="text-end">@L["Seller_ColActions"]</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var p in Model.Items)
+        <!-- Thanh lọc sản phẩm: Từ khóa · Danh mục · Ngày tạo · Trạng thái -->
+        <form method="get" asp-action="Index" id="sellerFilterForm" class="rm-seller-filter-card">
+            <input type="hidden" name="PageSize" id="sellerHiddenPageSize" value="@f.PageSize" />
+            <input type="hidden" name="Sort" id="sellerHiddenSort" value="@(f.Sort ?? "updated_desc")" />
+
+            <div class="rm-seller-filter-row">
+                <div class="rm-seller-search-box">
+                    <input type="search"
+                           name="Keyword"
+                           value="@f.Keyword"
+                           class="rm-seller-input"
+                           placeholder="@L["Seller_FilterSearchPlaceholder"]"
+                           autocomplete="off"
+                           aria-label="@L["Seller_FilterSearchPlaceholder"]" />
+                    <i class="bi bi-search rm-seller-search-ico" aria-hidden="true"></i>
+                </div>
+
+                <select name="CategoryId" class="rm-seller-select" aria-label="@L["Seller_FilterCategory"]">
+                    <option value="">@L["Seller_FilterCategory"]</option>
+                    @foreach (var c in Model.DanhSachDanhMuc)
+                    {
+                        <option value="@c.MaDanhMuc" selected="@(f.CategoryId == c.MaDanhMuc)">@HienThi.TenDanhMuc(c.Ten)</option>
+                    }
+                </select>
+
+                <label class="rm-seller-date-wrap" title="@L["Seller_FilterCreatedDate"]">
+                    <span class="rm-date-prefix">@L["Seller_FilterCreatedDate"]</span>
+                    <input type="date"
+                           name="CreatedDate"
+                           value="@(f.CreatedDate?.ToString("yyyy-MM-dd"))"
+                           class="rm-seller-date-input"
+                           aria-label="@L["Seller_FilterCreatedDate"]" />
+                </label>
+
+                <select name="Status" class="rm-seller-select" aria-label="@L["Seller_FilterStatus"]">
+                    <option value="">@L["Seller_FilterStatus"]</option>
+                    @foreach (var st in SellerProductFilterVm.DanhSachTrangThai)
+                    {
+                        <option value="@st" selected="@string.Equals(f.Status, st, StringComparison.OrdinalIgnoreCase)">@HienThi.TrangThaiSanPham(st)</option>
+                    }
+                </select>
+
+                <button type="submit" class="btn-rm-primary rm-seller-search-btn" aria-label="@L["Header_SearchSubmitAria"]">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                </button>
+
+                @if (f.CoBoLoc)
+                {
+                    <a asp-action="Index" asp-route-PageSize="@f.PageSize" asp-route-Sort="@f.Sort" class="rm-seller-filter-reset">
+                        @L["Seller_FilterReset"]
+                    </a>
+                }
+            </div>
+        </form>
+
+        <!-- Thanh công cụ: Tổng số · Hiển thị X/Trang · Sắp xếp -->
+        <div class="rm-seller-toolbar">
+            <div class="rm-seller-count">@L["Seller_FilterCount", Model.Result.TotalItems]</div>
+            <div class="rm-seller-toolbar-right">
+                <label class="rm-seller-inline-ctrl">
+                    <span>@L["Seller_PerPageLabel"]</span>
+                    <select id="sellerPageSizeSelect" class="rm-seller-select rm-seller-select-sm" aria-label="@L["Seller_PerPageLabel"]">
+                        @foreach (var size in SellerProductFilterVm.CacMucHienThi)
                         {
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        @if (!string.IsNullOrEmpty(p.AnhDaiDien))
-                                        {
-                                            <img src="@p.AnhDaiDien" alt="" class="rounded" width="48" height="48" style="object-fit:cover;" />
-                                        }
-                                        else
-                                        {
-                                            <span class="rounded bg-light d-inline-block" style="width:48px;height:48px;"></span>
-                                        }
-                                        <div>
-                                            <b>@p.Ten</b>
-                                            <div class="text-muted small">@L["Seller_PhotoCount", p.SoLuongAnh]</div>
-                                            @if (p.TrangThai == "REJECTED" && !string.IsNullOrWhiteSpace(p.LyDoTuChoiGanNhat))
-                                            {
-                                                <div class="small text-danger mt-1"><strong>@L["Seller_RejectReason"]</strong> @p.LyDoTuChoiGanNhat</div>
-                                            }
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>@(p.Gia is null ? "—" : HienThi.Tien(p.Gia.Value))</td>
-                                <td><span class="st st-@p.TrangThai.ToLowerInvariant()">@HienThi.TrangThaiSanPham(p.TrangThai)</span></td>
-                                <td class="small text-muted">@HienThi.NgayGio(p.NgayCapNhat)</td>
-                                <td class="text-end">
-                                    <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
-                                        @if (p.TrangThai is "DRAFT" or "REJECTED" or "HIDDEN" or "REMOVED"
-                                             || (p.TrangThai == "PENDING_REVIEW" && p.PhanTichThatBai))
-                                        {
-                                            <form asp-action="GuiDuyet" method="post" class="d-inline">
-                                                <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit" class="btn-rm-outline btn-sm">@(p.TrangThai == "PENDING_REVIEW" ? (string)L["Seller_Reanalyze"] : (string)L["Seller_SubmitReview"])</button>
-                                            </form>
-                                        }
-                                        @if (p.TrangThai == "ACTIVE")
-                                        {
-                                            <form asp-action="An" method="post" class="d-inline" onsubmit="return confirm('@L["Seller_ConfirmHide"]');">
-                                                <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit" class="btn-rm-secondary btn-sm">@L["Seller_Hide"]</button>
-                                            </form>
-                                        }
-                                        @if (p.TrangThai != "PENDING_REVIEW" && p.TrangThai != "RESERVED" && p.TrangThai != "SOLD")
-                                        {
-                                            <a asp-action="Edit" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">@L["Seller_EditShort"]</a>
-                                        }
-                                        @if (p.TrangThai is "ACTIVE" or "RESERVED" or "SOLD")
-                                        {
-                                            <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@p.Id" class="btn-rm-secondary btn-sm text-decoration-none">@L["Seller_ViewListing"]</a>
-                                        }
-                                        @if (p.TrangThai != "RESERVED" && p.TrangThai != "SOLD")
-                                        {
-                                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('@L["Seller_ConfirmDelete"]');">
-                                                <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit" class="btn btn-outline-danger btn-sm" style="padding: 4px 10px; font-size: 13px; border-radius: 6px;">@L["Btn_Delete"]</button>
-                                            </form>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
+                            <option value="@size" selected="@(f.PageSize == size)">@L["Seller_PerPageOption", size]</option>
                         }
-                    </tbody>
-                </table>
+                    </select>
+                </label>
+
+                <label class="rm-seller-inline-ctrl">
+                    <span>@L["Seller_SortLabel"]</span>
+                    <select id="sellerSortSelect" class="rm-seller-select rm-seller-select-sm" aria-label="@L["Seller_SortLabel"]">
+                        <option value="updated_desc" selected="@((f.Sort ?? "updated_desc") == "updated_desc")">@L["Seller_SortUpdatedDesc"]</option>
+                        <option value="updated_asc" selected="@(f.Sort == "updated_asc")">@L["Seller_SortUpdatedAsc"]</option>
+                        <option value="price_asc" selected="@(f.Sort == "price_asc")">@L["Seller_SortPriceAsc"]</option>
+                        <option value="price_desc" selected="@(f.Sort == "price_desc")">@L["Seller_SortPriceDesc"]</option>
+                    </select>
+                </label>
             </div>
         </div>
-        <partial name="_Pager" model="new PagerVm(Model.Page, Model.TotalPages)" />
+
+        @if (Model.Result.Items.Count == 0)
+        {
+            <div class="rm-seller-empty-filter">
+                <h3>@L["Seller_FilterEmptyTitle"]</h3>
+                <p>@L["Seller_FilterEmptyDesc"]</p>
+                <a asp-action="Index" class="btn-rm-outline">@L["Seller_FilterReset"]</a>
+            </div>
+        }
+        else
+        {
+            <div class="rm-seller-table-card">
+                <div class="table-responsive">
+                    <table class="table rm-seller-table align-middle mb-0">
+                        <colgroup>
+                            <col class="rm-col-product" />
+                            <col class="rm-col-price" />
+                            <col class="rm-col-status" />
+                            <col class="rm-col-updated" />
+                            <col class="rm-col-actions" />
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>@L["Seller_ColProduct"]</th>
+                                <th>@L["Seller_ColPrice"]</th>
+                                <th>@L["Seller_ColStatus"]</th>
+                                <th>@L["Seller_ColUpdated"]</th>
+                                <th class="text-end">@L["Seller_ColActions"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.Result.Items)
+                            {
+                                var canUnhide = p.TrangThai == "HIDDEN" && p.CoTheMoAnNgay;
+                                var canSubmit = !canUnhide && (p.TrangThai is "DRAFT" or "REJECTED" or "HIDDEN" or "REMOVED"
+                                                || (p.TrangThai == "PENDING_REVIEW" && p.PhanTichThatBai));
+                                var canHide = p.TrangThai == "ACTIVE";
+                                var canEdit = p.TrangThai != "PENDING_REVIEW" && p.TrangThai != "RESERVED" && p.TrangThai != "SOLD";
+                                var canView = p.TrangThai is "ACTIVE" or "RESERVED" or "SOLD";
+                                var canDelete = p.TrangThai != "RESERVED" && p.TrangThai != "SOLD";
+                                var hasReason = p.TrangThai == "REJECTED" && !string.IsNullOrWhiteSpace(p.LyDoTuChoiGanNhat);
+                                var isLongReason = hasReason && p.LyDoTuChoiGanNhat!.Length > 105;
+
+                                <tr data-product-row="@p.Id">
+                                    <td>
+                                        <div class="rm-seller-prod">
+                                            @if (!string.IsNullOrEmpty(p.AnhDaiDien))
+                                            {
+                                                <img src="@p.AnhDaiDien" alt="@p.Ten" class="rm-seller-thumb" loading="lazy" data-fallback />
+                                            }
+                                            else
+                                            {
+                                                <span class="rm-seller-thumb rm-seller-thumb-empty" aria-hidden="true"></span>
+                                            }
+                                            <div class="rm-seller-prod-info">
+                                                <div class="rm-seller-prod-name" title="@p.Ten">@p.Ten</div>
+                                                <div class="rm-seller-prod-meta">
+                                                    @if (!string.IsNullOrWhiteSpace(p.TenDanhMuc))
+                                                    {
+                                                        <span>@HienThi.TenDanhMuc(p.TenDanhMuc)</span>
+                                                        <span class="rm-meta-dot" aria-hidden="true">·</span>
+                                                    }
+                                                    <span>@L["Seller_PhotoCount", p.SoLuongAnh]</span>
+                                                </div>
+                                                @if (hasReason)
+                                                {
+                                                    <div class="rm-reject-reason @(isLongReason ? "is-clamped" : "")">
+                                                        <div class="rm-reject-reason-text">
+                                                            <strong>@L["Seller_RejectReason"]</strong> @p.LyDoTuChoiGanNhat
+                                                        </div>
+                                                        @if (isLongReason)
+                                                        {
+                                                            <button type="button"
+                                                                    class="rm-reject-toggle"
+                                                                    data-rm-reason-toggle
+                                                                    data-label-more="@L["Seller_ReasonMore"]"
+                                                                    data-label-less="@L["Seller_ReasonLess"]">
+                                                                @L["Seller_ReasonMore"]
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="rm-seller-price">
+                                        @(p.Gia is null ? "—" : HienThi.Tien(p.Gia.Value))
+                                    </td>
+                                    <td>
+                                        <span class="st st-@p.TrangThai.ToLowerInvariant()">@HienThi.TrangThaiSanPham(p.TrangThai)</span>
+                                    </td>
+                                    <td class="rm-seller-date">
+                                        @HienThi.NgayGio(p.NgayCapNhat)
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="rm-act-group">
+                                            @if (canUnhide)
+                                            {
+                                                <form asp-action="MoAn" method="post" class="d-inline m-0" data-rm-save-pos="@p.Id">
+                                                    <input type="hidden" name="id" value="@p.Id" />
+                                                    <input type="hidden" name="returnUrl" value="@currentListUrl" />
+                                                    <button type="submit" class="rm-act-btn rm-act-primary">@L["Seller_Unhide"]</button>
+                                                </form>
+                                            }
+                                            else if (canSubmit)
+                                            {
+                                                <form asp-action="GuiDuyet" method="post" class="d-inline m-0" data-rm-save-pos="@p.Id">
+                                                    <input type="hidden" name="id" value="@p.Id" />
+                                                    <input type="hidden" name="returnUrl" value="@currentListUrl" />
+                                                    <button type="submit" class="rm-act-btn rm-act-primary">
+                                                        @(p.TrangThai == "PENDING_REVIEW" ? (string)L["Seller_Reanalyze"] : (string)L["Seller_SubmitReview"])
+                                                    </button>
+                                                </form>
+                                            }
+                                            @if (canView)
+                                            {
+                                                <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@p.Id"
+                                                   class="rm-act-btn rm-act-neutral"
+                                                   title="@L["Seller_ViewListing"]">
+                                                    @(canHide ? L["Seller_ViewShort"] : L["Seller_ViewListing"])
+                                                </a>
+                                            }
+                                            @if (canEdit)
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@p.Id" asp-route-returnUrl="@currentListUrl"
+                                                   class="rm-act-btn rm-act-neutral"
+                                                   data-rm-save-pos="@p.Id">@L["Seller_EditShort"]</a>
+                                            }
+                                            @if (canHide)
+                                            {
+                                                <form asp-action="An" method="post" class="d-inline m-0" data-confirm="@L["Seller_ConfirmHide"]" data-confirm-danger="false" data-rm-save-pos="@p.Id">
+                                                    <input type="hidden" name="id" value="@p.Id" />
+                                                    <input type="hidden" name="returnUrl" value="@currentListUrl" />
+                                                    <button type="submit" class="rm-act-btn rm-act-neutral">@L["Seller_Hide"]</button>
+                                                </form>
+                                            }
+                                            @if (canDelete)
+                                            {
+                                                <form asp-action="Delete" method="post" class="d-inline m-0" data-confirm="@L["Seller_ConfirmDelete"]" data-rm-save-pos="@p.Id">
+                                                    <input type="hidden" name="id" value="@p.Id" />
+                                                    <input type="hidden" name="returnUrl" value="@currentListUrl" />
+                                                    <button type="submit" class="rm-act-btn rm-act-danger">@L["Btn_Delete"]</button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <partial name="_Pager" model="pager" />
+
+            <script>
+                (() => {
+                    const KEY = 'rm_seller_products_pos';
+                    const raw = sessionStorage.getItem(KEY);
+                    if (!raw) return;
+                    try {
+                        const saved = JSON.parse(raw);
+                        const cur = location.pathname + location.search;
+                        if (!saved || saved.url !== cur || typeof saved.y !== 'number') return;
+
+                        sessionStorage.removeItem(KEY);
+                        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+                        const html = document.documentElement;
+                        const jump = () => {
+                            html.style.scrollBehavior = 'auto';
+                            window.scrollTo({ top: saved.y, left: 0, behavior: 'instant' });
+                        };
+
+                        jump();
+                        requestAnimationFrame(() => {
+                            jump();
+                            requestAnimationFrame(() => { html.style.scrollBehavior = ''; });
+                        });
+                    } catch {
+                        sessionStorage.removeItem(KEY);
+                    }
+                })();
+            </script>
+        }
     }
 </div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const POS_KEY = 'rm_seller_products_pos';
+            const savePosition = (productId) => {
+                try {
+                    sessionStorage.setItem(POS_KEY, JSON.stringify({
+                        url: location.pathname + location.search,
+                        y: Math.round(window.scrollY || window.pageYOffset || 0),
+                        id: productId || null
+                    }));
+                } catch { /* bỏ qua nếu trình duyệt khóa sessionStorage */ }
+            };
+
+            // Ghi nhớ vị trí hiện tại ngay khi bấm Sửa hoặc thao tác trên từng dòng sản phẩm.
+            document.addEventListener('click', (e) => {
+                const trigger = e.target.closest('a[data-rm-save-pos], form[data-rm-save-pos] button[type="submit"]');
+                if (!trigger) return;
+                const holder = trigger.closest('[data-rm-save-pos]');
+                savePosition(holder ? holder.dataset.rmSavePos : null);
+            }, true);
+
+            const form = document.getElementById('sellerFilterForm');
+            const pageSizeSel = document.getElementById('sellerPageSizeSelect');
+            const sortSel = document.getElementById('sellerSortSelect');
+            const hiddenSize = document.getElementById('sellerHiddenPageSize');
+            const hiddenSort = document.getElementById('sellerHiddenSort');
+
+            if (form) {
+                if (pageSizeSel && hiddenSize) {
+                    pageSizeSel.addEventListener('change', () => {
+                        hiddenSize.value = pageSizeSel.value;
+                        form.submit();
+                    });
+                }
+                if (sortSel && hiddenSort) {
+                    sortSel.addEventListener('change', () => {
+                        hiddenSort.value = sortSel.value;
+                        form.submit();
+                    });
+                }
+                form.querySelectorAll('select, input[type="date"]').forEach((el) => {
+                    el.addEventListener('change', () => form.submit());
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-rm-reason-toggle]');
+                if (!btn) return;
+                const box = btn.closest('.rm-reject-reason');
+                if (!box) return;
+                const expanded = box.classList.toggle('is-expanded');
+                box.classList.toggle('is-clamped', !expanded);
+                btn.textContent = expanded ? (btn.dataset.labelLess || 'Thu gọn') : (btn.dataset.labelMore || 'Xem đầy đủ');
+            });
+        })();
+    </script>
+}

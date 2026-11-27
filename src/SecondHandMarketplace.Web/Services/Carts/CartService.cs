@@ -31,8 +31,9 @@ public class CartService : ICartService
         {
             var sp = gh.SanPham;
             var ch = sp?.CuaHang;
-            var coTheMua = sp != null && !sp.DaXoa && sp.TrangThai == "ACTIVE" 
-                           && ch != null && ch.TrangThai == "ACTIVE" 
+            var tonKho = sp?.SoLuong ?? 0;
+            var coTheMua = sp != null && !sp.DaXoa && sp.TrangThai == "ACTIVE" && tonKho > 0
+                           && ch != null && ch.TrangThai == "ACTIVE"
                            && ch.NguoiDung != null && ch.NguoiDung.TrangThai == "ACTIVE"
                            && ch.MaNguoiDung != maNguoiDung;
 
@@ -42,6 +43,8 @@ public class CartService : ICartService
                 MaSanPham = gh.MaSanPham,
                 TenSanPham = sp?.Ten ?? "Sản phẩm không tồn tại",
                 Gia = sp?.Gia ?? 0,
+                SoLuong = tonKho > 0 ? Math.Clamp(gh.SoLuong, 1, tonKho) : Math.Max(1, gh.SoLuong),
+                SoLuongTon = tonKho,
                 DaChon = gh.DaChon,
                 CoTheMua = coTheMua,
                 TrangThaiSanPham = sp?.TrangThai ?? "UNKNOWN",
@@ -67,21 +70,17 @@ public class CartService : ICartService
         };
     }
 
-    public async Task<(bool ThanhCong, string? ThongBao)> ThemVaoGioAsync(int maNguoiDung, int maSanPham)
+    public async Task<(bool ThanhCong, string? ThongBao)> ThemVaoGioAsync(int maNguoiDung, int maSanPham, int soLuong = 1)
     {
         try
         {
-            var daCoTrongGio = await _db.GioHangs.AnyAsync(g => g.MaNguoiDung == maNguoiDung && g.MaSanPham == maSanPham);
-            if (daCoTrongGio)
-            {
-                return (true, "Sản phẩm này đã có sẵn trong giỏ hàng của bạn.");
-            }
+            soLuong = Math.Clamp(soLuong, 1, 9999);
 
             if (_db.Database.IsRelational())
             {
-                // Gọi stored procedure sp_ThemVaoGio
+                // Gọi stored procedure sp_ThemVaoGio (tự cộng dồn số lượng nếu đã có trong giỏ và chặn vượt tồn kho)
                 await _db.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC sp_ThemVaoGio @MaNguoiDung={maNguoiDung}, @MaSanPham={maSanPham}");
+                    $"EXEC sp_ThemVaoGio @MaNguoiDung={maNguoiDung}, @MaSanPham={maSanPham}, @SoLuong={soLuong}");
             }
             else
             {
@@ -90,9 +89,22 @@ public class CartService : ICartService
                     .Include(s => s.CuaHang)
                     .FirstOrDefaultAsync(s => s.MaSanPham == maSanPham && !s.DaXoa);
 
-                if (sp == null || sp.TrangThai != "ACTIVE" || sp.CuaHang?.TrangThai != "ACTIVE")
+                var existing = await _db.GioHangs.FirstOrDefaultAsync(g => g.MaNguoiDung == maNguoiDung && g.MaSanPham == maSanPham);
+                if (existing != null)
                 {
-                    return (false, "Sản phẩm không còn bán hoặc không tồn tại.");
+                    if (sp == null || existing.SoLuong >= sp.SoLuong)
+                    {
+                        return (true, "Sản phẩm này đã có sẵn trong giỏ hàng của bạn.");
+                    }
+                    existing.SoLuong = Math.Min(sp.SoLuong, existing.SoLuong + soLuong);
+                    existing.DaChon = true;
+                    await _db.SaveChangesAsync();
+                    return (true, "Đã cập nhật số lượng sản phẩm trong giỏ hàng.");
+                }
+
+                if (sp == null || sp.TrangThai != "ACTIVE" || sp.SoLuong <= 0 || sp.CuaHang?.TrangThai != "ACTIVE")
+                {
+                    return (false, "Sản phẩm đã hết hàng hoặc không còn bán.");
                 }
 
                 if (sp.CuaHang.MaNguoiDung == maNguoiDung)
@@ -104,6 +116,7 @@ public class CartService : ICartService
                 {
                     MaNguoiDung = maNguoiDung,
                     MaSanPham = maSanPham,
+                    SoLuong = Math.Min(sp.SoLuong, soLuong),
                     DaChon = true,
                     ThoiGianThem = DateTime.UtcNow
                 });
@@ -116,6 +129,26 @@ public class CartService : ICartService
         {
             return (false, SqlLoi.ThongBao(ex));
         }
+    }
+
+    public async Task<(bool ThanhCong, string? ThongBao, int SoLuongMoi)> CapNhatSoLuongAsync(int maNguoiDung, int maGioHang, int soLuong)
+    {
+        var item = await _db.GioHangs
+            .Include(x => x.SanPham)
+            .FirstOrDefaultAsync(x => x.MaGioHang == maGioHang && x.MaNguoiDung == maNguoiDung);
+
+        if (item == null) return (false, "Không tìm thấy sản phẩm trong giỏ hàng.", 0);
+        if (item.SanPham == null || item.SanPham.DaXoa || item.SanPham.TrangThai != "ACTIVE" || item.SanPham.SoLuong <= 0)
+            return (false, "Sản phẩm đã hết hàng hoặc không còn bán.", item.SoLuong);
+
+        var clamped = Math.Clamp(soLuong, 1, item.SanPham.SoLuong);
+        item.SoLuong = clamped;
+        await _db.SaveChangesAsync();
+
+        var warning = soLuong > item.SanPham.SoLuong
+            ? $"Chỉ còn {item.SanPham.SoLuong} sản phẩm trong kho."
+            : null;
+        return (true, warning, clamped);
     }
 
     public async Task<bool> CapNhatTrangThaiChonAsync(int maNguoiDung, int maGioHang, bool daChon)

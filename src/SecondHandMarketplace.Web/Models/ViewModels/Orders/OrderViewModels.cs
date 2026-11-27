@@ -45,6 +45,7 @@ public class CheckoutViewModel : IValidatableObject
     /// </summary>
     public string HinhThucNhan { get; set; } = "GIAO_HANG";
     public int? MaSanPhamMuaNgay { get; set; }
+    public int SoLuongMuaNgay { get; set; } = 1;
     public CartIndexViewModel? GioHang { get; set; }
     public CartItemViewModel? SanPhamMuaNgay { get; set; }
     public List<ThongTinThanhToanShopVm> ThanhToanTheoShop { get; set; } = new();
@@ -125,6 +126,8 @@ public class ChiTietDonHangItemViewModel
     public string TenSanPham { get; set; } = string.Empty;
     public string? AnhDaiDien { get; set; }
     public decimal Gia { get; set; }
+    public int SoLuong { get; set; } = 1;
+    public decimal ThanhTien => Gia * SoLuong;
 }
 
 /// <summary>Chi tiết đầy đủ đơn hàng phía người mua.</summary>

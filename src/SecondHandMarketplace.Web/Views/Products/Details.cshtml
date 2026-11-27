@@ -94,6 +94,16 @@
             {
                 <span class="badge bg-warning text-dark px-2 py-1 ms-2" style="font-size: 13px;">@Model.TrangThaiHienThi</span>
             }
+            else if (Model.SoLuong > 0)
+            {
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 ms-2" style="font-size: 13px;">
+                    @HienThi.Chon($"Còn {Model.SoLuong} sản phẩm", $"{Model.SoLuong} in stock")
+                </span>
+            }
+            else
+            {
+                <span class="badge bg-secondary px-2 py-1 ms-2" style="font-size: 13px;">@HienThi.Chon("Hết hàng", "Out of stock")</span>
+            }
         </div>
 
         @if (openAuctionId.HasValue && User.LayNguoiDungId() != Model.SellerUserId)
@@ -137,12 +147,25 @@
         }
         else if (Model.CanBuy)
         {
+            @if (User.IsInRole("USER"))
+            {
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="text-muted small fw-semibold">@HienThi.Chon("Số lượng", "Quantity"):</span>
+                    <div class="input-group input-group-sm" style="width: 120px;">
+                        <button type="button" class="btn btn-outline-secondary" id="qtyDecBtn" aria-label="Giảm số lượng">−</button>
+                        <input type="number" id="detailQtyInput" class="form-control text-center fw-semibold" value="1" min="1" max="@Model.SoLuong" />
+                        <button type="button" class="btn btn-outline-secondary" id="qtyIncBtn" aria-label="Tăng số lượng">+</button>
+                    </div>
+                    <span class="text-muted small">@HienThi.Chon($"(Có sẵn {Model.SoLuong})", $"({Model.SoLuong} available)")</span>
+                </div>
+            }
             <div class="detail-actions-row">
                 @if (User.IsInRole("USER"))
                 {
                     <form asp-area="User" asp-controller="Cart" asp-action="Them" method="post" class="rm-add-to-cart-form" data-product-id="@Model.Id" data-product-name="@Model.Name" data-product-price="@Model.Price.ToString("N0") ₫" data-product-image="@(Model.Images.FirstOrDefault() ?? "")">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="maSanPham" value="@Model.Id" />
+                        <input type="hidden" name="soLuong" id="cartQtyHidden" value="1" />
                         <input type="hidden" name="returnUrl" value="@currentUrl" />
                         <button type="submit" class="btn-rm-outline" style="padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -153,9 +176,32 @@
                             @L["Btn_AddToCart"]
                         </button>
                     </form>
-                    <a asp-area="User" asp-controller="Orders" asp-action="Checkout" asp-route-maSanPham="@Model.Id" class="btn-main text-decoration-none text-center" style="padding: 10px 24px; font-weight: 600;">
+                    <a id="buyNowLink" asp-area="User" asp-controller="Orders" asp-action="Checkout" asp-route-maSanPham="@Model.Id" asp-route-soLuong="1" class="btn-main text-decoration-none text-center" style="padding: 10px 24px; font-weight: 600;">
                         @L["Btn_BuyNow"]
                     </a>
+                    <script>
+                        (function () {
+                            const input = document.getElementById('detailQtyInput');
+                            const hidden = document.getElementById('cartQtyHidden');
+                            const buyLink = document.getElementById('buyNowLink');
+                            const dec = document.getElementById('qtyDecBtn');
+                            const inc = document.getElementById('qtyIncBtn');
+                            if (!input || !hidden || !buyLink) return;
+                            const max = parseInt(input.max, 10) || 1;
+                            const baseUrl = buyLink.getAttribute('href').split('?')[0];
+                            const params = new URLSearchParams(buyLink.getAttribute('href').split('?')[1] || '');
+                            function sync(val) {
+                                const q = Math.min(max, Math.max(1, parseInt(val, 10) || 1));
+                                input.value = q;
+                                hidden.value = q;
+                                params.set('soLuong', q);
+                                buyLink.setAttribute('href', baseUrl + '?' + params.toString());
+                            }
+                            dec && dec.addEventListener('click', () => sync((parseInt(input.value, 10) || 1) - 1));
+                            inc && inc.addEventListener('click', () => sync((parseInt(input.value, 10) || 1) + 1));
+                            input.addEventListener('change', () => sync(input.value));
+                        })();
+                    </script>
                 }
                 else if (User.Identity?.IsAuthenticated != true)
                 {

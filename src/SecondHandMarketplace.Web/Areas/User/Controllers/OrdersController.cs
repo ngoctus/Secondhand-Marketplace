@@ -54,14 +54,14 @@ public class OrdersController : UserBaseController
 
     /// <summary>Màn hình thanh toán (Checkout từ giỏ hoặc Mua ngay).</summary>
     [HttpGet]
-    public async Task<IActionResult> Checkout(int? maSanPham = null)
+    public async Task<IActionResult> Checkout(int? maSanPham = null, int soLuong = 1)
     {
         var userId = User.LayNguoiDungId()!.Value;
         CheckoutViewModel vm;
 
         if (maSanPham.HasValue && maSanPham.Value > 0)
         {
-            var muaNgayVm = await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, maSanPham.Value);
+            var muaNgayVm = await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, maSanPham.Value, soLuong);
             if (muaNgayVm == null)
             {
                 this.ThongBaoLoi("Sản phẩm không khả dụng hoặc bạn không thể mua sản phẩm của chính mình.");
@@ -117,12 +117,12 @@ public class OrdersController : UserBaseController
         if (model.PhuongThucThanhToan == "BANK_TRANSFER")
         {
             checkoutData = model.MaSanPhamMuaNgay is int productId && productId > 0
-                ? await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, productId)
+                ? await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, productId, model.SoLuongMuaNgay)
                 : await _orderService.ChuanBiCheckoutTuGioAsync(userId);
             if (checkoutData?.CoTheChuyenKhoan != true)
             {
                 this.ThongBaoLoi("Một hoặc nhiều cửa hàng chưa có đủ thông tin nhận chuyển khoản. Vui lòng chọn COD hoặc liên hệ cửa hàng.");
-                return RedirectToAction(nameof(Checkout), new { maSanPham = model.MaSanPhamMuaNgay });
+                return RedirectToAction(nameof(Checkout), new { maSanPham = model.MaSanPhamMuaNgay, soLuong = model.SoLuongMuaNgay });
             }
         }
 
@@ -136,9 +136,10 @@ public class OrdersController : UserBaseController
             await NapKhuVucChoCheckoutAsync(model);
             if (model.MaSanPhamMuaNgay.HasValue)
             {
-                var prep = await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, model.MaSanPhamMuaNgay.Value);
+                var prep = await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, model.MaSanPhamMuaNgay.Value, model.SoLuongMuaNgay);
                 model.SanPhamMuaNgay = prep?.SanPhamMuaNgay;
                 model.ThanhToanTheoShop = prep?.ThanhToanTheoShop ?? new();
+                model.TienHang = prep?.TienHang ?? model.TienHang;
             }
             else
             {

@@ -9,6 +9,7 @@ public class ProductDetailVm
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public decimal Price { get; set; }
+    public int SoLuong { get; set; } = 1;
     public string Status { get; set; } = string.Empty;   // ACTIVE | RESERVED | SOLD
     public bool CanBuy { get; set; }
     public int? CategoryId { get; set; }

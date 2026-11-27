@@ -77,7 +77,7 @@ public class OrderService : IOrderService
         };
     }
 
-    public async Task<CheckoutViewModel?> ChuanBiCheckoutMuaNgayAsync(int maNguoiDung, int maSanPham)
+    public async Task<CheckoutViewModel?> ChuanBiCheckoutMuaNgayAsync(int maNguoiDung, int maSanPham, int soLuong = 1)
     {
         var user = await _db.NguoiDungs.FindAsync(maNguoiDung);
         var sp = await _db.SanPhams
@@ -86,7 +86,7 @@ public class OrderService : IOrderService
             .Include(x => x.Anh)
             .FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && !x.DaXoa);
 
-        if (sp == null || sp.TrangThai != "ACTIVE" || sp.CuaHang.TrangThai != "ACTIVE" || (sp.CuaHang.NguoiDung != null && sp.CuaHang.NguoiDung.TrangThai != "ACTIVE"))
+        if (sp == null || sp.TrangThai != "ACTIVE" || sp.SoLuong <= 0 || sp.CuaHang.TrangThai != "ACTIVE" || (sp.CuaHang.NguoiDung != null && sp.CuaHang.NguoiDung.TrangThai != "ACTIVE"))
         {
             return null;
         }
@@ -96,12 +96,16 @@ public class OrderService : IOrderService
             return null; // Không thể mua sản phẩm của shop mình
         }
 
+        var sl = Math.Clamp(soLuong, 1, sp.SoLuong);
+
         var itemVm = new CartItemViewModel
         {
             MaGioHang = 0,
             MaSanPham = sp.MaSanPham,
             TenSanPham = sp.Ten,
             Gia = sp.Gia ?? 0,
+            SoLuong = sl,
+            SoLuongTon = sp.SoLuong,
             DaChon = true,
             CoTheMua = true,
             TrangThaiSanPham = sp.TrangThai,
@@ -120,6 +124,7 @@ public class OrderService : IOrderService
             DiaChiNhan = diaChiNhan,
             KhungGioNhan = string.Empty,
             MaSanPhamMuaNgay = maSanPham,
+            SoLuongMuaNgay = sl,
             SanPhamMuaNgay = itemVm,
             ThanhToanTheoShop = new List<ThongTinThanhToanShopVm>
             {
@@ -133,7 +138,7 @@ public class OrderService : IOrderService
                     TenChuTaiKhoan = sp.CuaHang.TenChuTaiKhoan
                 }
             },
-            TienHang = itemVm.Gia,
+            TienHang = itemVm.ThanhTien,
             PhiVanChuyen = 0,
             PhuongThucThanhToan = "COD",
             HinhThucNhan = "GIAO_HANG"
@@ -146,13 +151,13 @@ public class OrderService : IOrderService
 
         try
         {
-            // Fix #4: Tự động bỏ chọn các sản phẩm trong giỏ không còn khả dụng
+            // Fix #4: Tự động bỏ chọn các sản phẩm trong giỏ không còn khả dụng hoặc không đủ tồn kho
             var itemsKhongKhaDung = await _db.GioHangs
                 .Include(g => g.SanPham)
                 .ThenInclude(s => s.CuaHang)
                 .ThenInclude(c => c.NguoiDung)
                 .Where(g => g.MaNguoiDung == maNguoiDung && g.DaChon &&
-                            (g.SanPham.TrangThai != "ACTIVE" || g.SanPham.DaXoa ||
+                            (g.SanPham.TrangThai != "ACTIVE" || g.SanPham.DaXoa || g.SanPham.SoLuong < g.SoLuong ||
                              g.SanPham.CuaHang.TrangThai != "ACTIVE" || g.SanPham.CuaHang.NguoiDung.TrangThai != "ACTIVE"))
                 .ToListAsync();
 
@@ -171,10 +176,10 @@ public class OrderService : IOrderService
                 return new DatHangResultViewModel
                 {
                     ThanhCong = false,
-                    ThongBao = "Không có sản phẩm khả dụng nào được chọn trong giỏ hàng."
+                    ThongBao = "Không có sản phẩm khả dụng (hoặc đủ tồn kho) nào được chọn trong giỏ hàng."
                 };
             }
-            // Kiến trúc: Stored procedure sp_DatHangTuGio trong database/06_procedures.sql đã tự động
+            // Kiến trúc: Stored procedure sp_DatHangTuGio đã tự động
             // tạo thông báo (NotificationTypes.Order) cho chủ cửa hàng (người bán), đồng thời ghi nhận bản ghi ThanhToan với trạng thái tương ứng, đảm bảo tính toàn vẹn (ACID).
             if (_db.Database.IsRelational())
             {
@@ -232,12 +237,12 @@ public class OrderService : IOrderService
                     };
                 }
 
-                if (cartItems.Any(g => g.SanPham.TrangThai != "ACTIVE" || g.SanPham.DaXoa || g.SanPham.CuaHang.TrangThai != "ACTIVE"))
+                if (cartItems.Any(g => g.SanPham.TrangThai != "ACTIVE" || g.SanPham.DaXoa || g.SanPham.SoLuong < g.SoLuong || g.SanPham.CuaHang.TrangThai != "ACTIVE"))
                 {
                     return new DatHangResultViewModel
                     {
                         ThanhCong = false,
-                        ThongBao = "Có sản phẩm không còn bán hoặc không thuộc cửa hàng này."
+                        ThongBao = "Có sản phẩm không còn bán, hết tồn kho hoặc không thuộc cửa hàng này."
                     };
                 }
 
@@ -249,7 +254,7 @@ public class OrderService : IOrderService
                 {
                     var shopId = group.Key;
                     var itemsInShop = group.ToList();
-                    var tienHangShop = itemsInShop.Sum(i => i.SanPham.Gia ?? 0);
+                    var tienHangShop = itemsInShop.Sum(i => (i.SanPham.Gia ?? 0) * Math.Max(1, i.SoLuong));
                     var tongTienShop = tienHangShop + phiMoiDon;
                     var maDonCode = $"DH{DateTime.UtcNow.Ticks.ToString()[^6..]}_{shopId}_{++counter}";
 
@@ -276,16 +281,22 @@ public class OrderService : IOrderService
 
                     foreach (var item in itemsInShop)
                     {
+                        var sl = Math.Max(1, item.SoLuong);
                         _db.ChiTietDonHangs.Add(new ChiTietDonHang
                         {
                             MaDonHang = don.MaDonHang,
                             MaSanPham = item.MaSanPham,
                             TenSanPham = item.SanPham.Ten,
                             Gia = item.SanPham.Gia ?? 0,
+                            SoLuong = sl,
                             DangGiuCho = true
                         });
 
-                        item.SanPham.TrangThai = "RESERVED";
+                        item.SanPham.SoLuong = Math.Max(0, item.SanPham.SoLuong - sl);
+                        if (item.SanPham.SoLuong <= 0)
+                        {
+                            item.SanPham.TrangThai = "RESERVED";
+                        }
                         item.SanPham.NgayCapNhat = DateTime.UtcNow;
                     }
 
@@ -366,6 +377,7 @@ public class OrderService : IOrderService
     public async Task<DatHangResultViewModel> MuaNgayAsync(int maNguoiDung, int maSanPham, CheckoutViewModel model)
     {
         var phiVcMua = model.HinhThucNhan == "GAP_TRUC_TIEP" ? 0 : Math.Max(0, model.PhiVanChuyen);
+        var soLuongMua = Math.Clamp(model.SoLuongMuaNgay, 1, 9999);
         try
         {
             if (_db.Database.IsRelational())
@@ -386,6 +398,7 @@ public class OrderService : IOrderService
                 cmd.Parameters.Add(new SqlParameter("@PhiVanChuyen", phiVcMua));
                 cmd.Parameters.Add(new SqlParameter("@PhuongThucThanhToan", model.PhuongThucThanhToan));
                 cmd.Parameters.Add(new SqlParameter("@HinhThucNhan", model.HinhThucNhan ?? "GIAO_HANG"));
+                cmd.Parameters.Add(new SqlParameter("@SoLuong", soLuongMua));
 
                 var outParam = new SqlParameter("@MaDonHangMoi", SqlDbType.Int)
                 {
@@ -411,12 +424,20 @@ public class OrderService : IOrderService
             {
                 // In-Memory fallback phục vụ Unit Test logic và concurrency/race condition
                 var sp = await _db.SanPhams.Include(s => s.CuaHang).FirstOrDefaultAsync(s => s.MaSanPham == maSanPham && !s.DaXoa);
-                if (sp == null || sp.TrangThai != "ACTIVE" || sp.CuaHang?.TrangThai != "ACTIVE")
+                if (sp == null || sp.TrangThai != "ACTIVE" || sp.SoLuong <= 0 || sp.CuaHang?.TrangThai != "ACTIVE")
                 {
                     return new DatHangResultViewModel
                     {
                         ThanhCong = false,
-                        ThongBao = "Sản phẩm không tồn tại hoặc đã được bán."
+                        ThongBao = "Sản phẩm không tồn tại hoặc đã được bán hết."
+                    };
+                }
+                if (sp.SoLuong < soLuongMua)
+                {
+                    return new DatHangResultViewModel
+                    {
+                        ThanhCong = false,
+                        ThongBao = $"Số lượng tồn kho không đủ (chỉ còn {sp.SoLuong} sản phẩm)."
                     };
                 }
                 if (sp.CuaHang.MaNguoiDung == maNguoiDung)
@@ -428,16 +449,21 @@ public class OrderService : IOrderService
                     };
                 }
 
-                sp.TrangThai = "RESERVED";
+                sp.SoLuong = Math.Max(0, sp.SoLuong - soLuongMua);
+                if (sp.SoLuong <= 0)
+                {
+                    sp.TrangThai = "RESERVED";
+                }
                 sp.NgayCapNhat = DateTime.UtcNow;
                 var phiVc = phiVcMua;
+                var tienHang = (sp.Gia ?? 0) * soLuongMua;
                 var don = new DonHang
                 {
                     MaDon = "DH" + DateTime.UtcNow.Ticks.ToString()[^8..],
                     MaNguoiDung = maNguoiDung,
                     MaCuaHang = sp.MaCuaHang,
-                    TienHang = sp.Gia ?? 0,
-                    TongTien = (sp.Gia ?? 0) + phiVc,
+                    TienHang = tienHang,
+                    TongTien = tienHang + phiVc,
                     PhiVanChuyen = phiVc,
                     TrangThai = "PENDING",
                     TrangThaiThanhToan = "UNPAID",
@@ -458,6 +484,7 @@ public class OrderService : IOrderService
                     MaSanPham = sp.MaSanPham,
                     TenSanPham = sp.Ten,
                     Gia = sp.Gia ?? 0,
+                    SoLuong = soLuongMua,
                     DangGiuCho = true
                 });
 
@@ -564,7 +591,8 @@ public class OrderService : IOrderService
                 MaSanPham = ct.MaSanPham,
                 TenSanPham = ct.TenSanPham,
                 AnhDaiDien = ct.AnhDaiDien,
-                Gia = ct.Gia
+                Gia = ct.Gia,
+                SoLuong = ct.SoLuong
             }).ToList()
         }).ToList();
     }
@@ -618,7 +646,8 @@ public class OrderService : IOrderService
                 MaSanPham = ct.MaSanPham,
                 TenSanPham = ct.TenSanPham,
                 AnhDaiDien = ct.AnhDaiDien,
-                Gia = ct.Gia
+                Gia = ct.Gia,
+                SoLuong = ct.SoLuong
             }).ToList(),
             LichSuTrangThai = d.LichSu.OrderBy(ls => ls.ThoiGian).ThenBy(ls => ls.MaLichSuTrangThaiDonHang).Select(ls => new LichSuTrangThaiDonViewModel
             {
@@ -676,9 +705,13 @@ public class OrderService : IOrderService
                 foreach (var ct in chiTiets)
                 {
                     ct.DangGiuCho = false;
-                    if (ct.SanPham != null && ct.SanPham.TrangThai == "RESERVED")
+                    if (ct.SanPham != null)
                     {
-                        ct.SanPham.TrangThai = "ACTIVE";
+                        ct.SanPham.SoLuong += Math.Max(1, ct.SoLuong);
+                        if (ct.SanPham.TrangThai is "RESERVED" or "SOLD")
+                        {
+                            ct.SanPham.TrangThai = "ACTIVE";
+                        }
                     }
                 }
 
@@ -724,7 +757,7 @@ public class OrderService : IOrderService
                 {
                     ct.DangGiuCho = false;
                     var sp = await _db.SanPhams.FindAsync(ct.MaSanPham);
-                    if (sp != null)
+                    if (sp != null && sp.SoLuong <= 0)
                     {
                         sp.TrangThai = "SOLD";
                         sp.NgayCapNhat = DateTime.UtcNow;
@@ -784,7 +817,8 @@ public class OrderService : IOrderService
                 MaSanPham = c.MaSanPham,
                 TenSanPham = c.TenSanPham,
                 AnhDaiDien = c.AnhDaiDien,
-                Gia = c.Gia
+                Gia = c.Gia,
+                SoLuong = c.SoLuong
             }).ToList()
         }).ToList();
     }

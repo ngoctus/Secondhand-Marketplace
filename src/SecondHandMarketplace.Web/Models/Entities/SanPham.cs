@@ -1,4 +1,4 @@
-﻿namespace SecondHandMarketplace.Web.Models.Entities;
+namespace SecondHandMarketplace.Web.Models.Entities;
 
 /// <summary>
 /// Bảng SanPham. TrangThai là chữ hoa đúng như DB:
@@ -14,6 +14,7 @@ public class SanPham
     public string ChuoiTimKiem { get; set; } = string.Empty;
     public string? MoTa { get; set; }
     public decimal? Gia { get; set; }
+    public int SoLuong { get; set; } = 1;
     public string TrangThai { get; set; } = "DRAFT";
     public string? LyDoGo { get; set; }
     public bool DaXoa { get; set; }

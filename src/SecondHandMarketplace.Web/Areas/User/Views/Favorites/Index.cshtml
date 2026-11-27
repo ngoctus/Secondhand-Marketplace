@@ -4,8 +4,16 @@
 }
 
 <div class="rm-main-content" style="padding-top:8px">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2 style="font-family:'Playfair Display',serif; font-size:24px;">@L["Fav_Title"]</h2>
+    <div class="rm-fav-header">
+        <div class="rm-fav-title-wrap">
+            <h2 class="rm-fav-title">@L["Fav_Title"]</h2>
+            <span class="rm-fav-count-pill"
+                  id="rmFavTotalCount"
+                  data-total="@Model.TotalItems"
+                  data-template="@L["Fav_TotalCount", "{0}"]">
+                @L["Fav_TotalCount", Model.TotalItems]
+            </span>
+        </div>
         <a asp-area="" asp-controller="Products" asp-action="Index" class="btn-rm-outline">@L["Fav_Continue"]</a>
     </div>
 

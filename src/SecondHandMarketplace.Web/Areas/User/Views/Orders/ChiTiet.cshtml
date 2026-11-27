@@ -283,9 +283,9 @@
                             @sp.TenSanPham
                         </a>
                     </div>
-                    <div class="text-muted small" style="font-size: 11px;">@L["OrderDetail_UniqueItemNote"]</div>
+                    <div class="text-muted small" style="font-size: 11px;">@HienThi.Chon($"Số lượng: {sp.SoLuong} × {sp.Gia:N0} ₫", $"Qty: {sp.SoLuong} × {sp.Gia:N0} ₫")</div>
                 </div>
-                <div class="fw-bold text-success text-nowrap">@sp.Gia.ToString("N0") ₫</div>
+                <div class="fw-bold text-success text-nowrap">@sp.ThanhTien.ToString("N0") ₫</div>
             </div>
         }
 

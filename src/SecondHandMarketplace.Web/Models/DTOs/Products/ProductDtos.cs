@@ -28,6 +28,9 @@ public class CreateProductRequest
     [Range(1000, 1000000000, ErrorMessage = "Giá sản phẩm từ 1.000 đến 1.000.000.000 VNĐ.")]
     public decimal Price { get; set; }
 
+    [Range(1, 9999, ErrorMessage = "Số lượng phải từ 1 đến 9.999.")]
+    public int Quantity { get; set; } = 1;
+
     [Required(ErrorMessage = "Vui lòng chọn danh mục.")]
     public int CategoryId { get; set; }
 
@@ -50,6 +53,9 @@ public class UpdateProductRequest
     [Required(ErrorMessage = "Giá bán không được để trống.")]
     [Range(1000, 1000000000, ErrorMessage = "Giá sản phẩm từ 1.000 đến 1.000.000.000 VNĐ.")]
     public decimal Price { get; set; }
+
+    [Range(1, 9999, ErrorMessage = "Số lượng phải từ 1 đến 9.999.")]
+    public int Quantity { get; set; } = 1;
 
     [Required(ErrorMessage = "Vui lòng chọn danh mục.")]
     public int CategoryId { get; set; }
