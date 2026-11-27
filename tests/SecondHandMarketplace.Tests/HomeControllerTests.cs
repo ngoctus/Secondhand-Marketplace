@@ -4,10 +4,13 @@ using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Controllers;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
+using SecondHandMarketplace.Web.Models.ViewModels.Auctions;
 using SecondHandMarketplace.Web.Models.ViewModels.Home;
+using SecondHandMarketplace.Web.Services.Auctions;
 using SecondHandMarketplace.Web.Services.Banners;
 using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Products;
+using SecondHandMarketplace.Web.Services.Realtime;
 using SecondHandMarketplace.Web.Services.Reviews;
 using Xunit;
 
@@ -19,6 +22,13 @@ namespace SecondHandMarketplace.Tests;
 /// </summary>
 public class HomeControllerTests
 {
+    private sealed class NoopAuctionRealtime : IAuctionRealtime
+    {
+        public Task BroadcastStatusAsync(int auctionId, AuctionStatusDto status) => Task.CompletedTask;
+        public Task PushLatestNotificationAsync(int userId, string? url = null) => Task.CompletedTask;
+        public Task PushToParticipantsAsync(int auctionId) => Task.CompletedTask;
+    }
+
     private static AppDbContext NewDb([System.Runtime.CompilerServices.CallerMemberName] string name = "")
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -36,6 +46,7 @@ public class HomeControllerTests
             new CategoryService(db, cache),
             new BannerService(db),
             reviews,
+            new AuctionService(db, new NoopAuctionRealtime()),
             cache,
             db);
     }
@@ -201,5 +212,60 @@ public class HomeControllerTests
         var filteredItems = Assert.IsAssignableFrom<IReadOnlyList<SecondHandMarketplace.Web.Models.ViewModels.Products.ProductCardVm>>(filteredResult.Model);
         var only = Assert.Single(filteredItems);
         Assert.Equal(2, only.Id);
+    }
+
+    [Fact]
+    public async Task Index_NapPhienDauGiaDangDienRaVaBuPhienSapMo()
+    {
+        var db = NewDb();
+        await NapDuLieuAsync(db, (1, "Đồ điện tử", 4));
+        var now = DateTime.UtcNow;
+
+        db.PhienDauGias.AddRange(
+            new PhienDauGia
+            {
+                MaPhienDauGia = 10,
+                MaSanPham = 100,
+                GiaKhoiDiem = 100_000,
+                BuocGia = 10_000,
+                GiaHienTai = 150_000,
+                SoLuotDat = 3,
+                ThoiGianBatDau = now.AddHours(-1),
+                ThoiGianKetThuc = now.AddHours(2),
+                TrangThai = "RUNNING"
+            },
+            new PhienDauGia
+            {
+                MaPhienDauGia = 11,
+                MaSanPham = 101,
+                GiaKhoiDiem = 200_000,
+                BuocGia = 20_000,
+                GiaHienTai = 200_000,
+                SoLuotDat = 0,
+                ThoiGianBatDau = now.AddHours(3),
+                ThoiGianKetThuc = now.AddHours(8),
+                TrangThai = "SCHEDULED"
+            },
+            new PhienDauGia
+            {
+                MaPhienDauGia = 12,
+                MaSanPham = 102,
+                GiaKhoiDiem = 50_000,
+                BuocGia = 5_000,
+                GiaHienTai = 90_000,
+                SoLuotDat = 4,
+                ThoiGianBatDau = now.AddHours(-5),
+                ThoiGianKetThuc = now.AddHours(-1),
+                TrangThai = "ENDED"
+            });
+        await db.SaveChangesAsync();
+
+        var vm = await TrangChuAsync(NewController(db));
+
+        Assert.Equal(2, vm.PhienDauGiaNoiBat.Count);
+        Assert.Equal(10, vm.PhienDauGiaNoiBat[0].Id);
+        Assert.Equal("RUNNING", vm.PhienDauGiaNoiBat[0].Status);
+        Assert.Equal(11, vm.PhienDauGiaNoiBat[1].Id);
+        Assert.Equal("SCHEDULED", vm.PhienDauGiaNoiBat[1].Status);
     }
 }

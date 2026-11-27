@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models;
+using SecondHandMarketplace.Web.Models.ViewModels.Auctions;
 using SecondHandMarketplace.Web.Models.ViewModels.Home;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
+using SecondHandMarketplace.Web.Services.Auctions;
 using SecondHandMarketplace.Web.Services.Banners;
 using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Products;
@@ -18,6 +20,7 @@ namespace SecondHandMarketplace.Web.Controllers
         ICategoryService categories,
         IBannerService banners,
         IReviewService reviews,
+        IAuctionService auctions,
         IMemoryCache cache,
         SecondHandMarketplace.Web.Data.AppDbContext db) : Controller
     {
@@ -53,6 +56,17 @@ namespace SecondHandMarketplace.Web.Controllers
             var anhBanner = await MocAnToan(() => banners.LayBannerHienThiAsync());
             var danhGia = await MocAnToan(() => reviews.LayDanhGiaNoiBatAsync(SoTinNoiBat));
 
+            // Nạp phiên đấu giá nổi bật cho khối dưới Hero: ưu tiên phiên đang diễn ra, thiếu thì bù phiên sắp diễn ra.
+            var phienDangChay = await MocAnToan(async () =>
+                (await auctions.SearchPublicAsync("dang-dien-ra", null, 1, SoTinNoiBat)).Items);
+            IReadOnlyList<AuctionCardVm> phienDauGia = phienDangChay;
+            if (phienDangChay.Count < SoTinNoiBat)
+            {
+                var phienSapMo = await MocAnToan(async () =>
+                    (await auctions.SearchPublicAsync("sap-dien-ra", null, 1, SoTinNoiBat - phienDangChay.Count)).Items);
+                phienDauGia = phienDangChay.Concat(phienSapMo).Take(SoTinNoiBat).ToList();
+            }
+
             // Một query duy nhất lấy 60 tin mới nhất, mọi khối còn lại tách trong bộ nhớ.
             // Trước đây view gọi SearchAsync rồi lặp theo từng danh mục nên sinh N+1.
             var tatCaTin = await MocAnToan(async () =>
@@ -73,6 +87,7 @@ namespace SecondHandMarketplace.Web.Controllers
             return new HomeIndexVm
             {
                 Banners = anhBanner,
+                PhienDauGiaNoiBat = phienDauGia,
                 DanhMucs = danhMuc,
                 SanPhamNoiBat = ChonSanPhamGoiY(tatCaTin, SoTinNoiBat, daDangDanhMuc: true),
                 TabsDanhMuc = tabs,

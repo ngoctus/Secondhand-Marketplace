@@ -42,6 +42,14 @@
   <!-- Navigation & Header -->
   <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
   <data name="Nav_Categories" xml:space="preserve"><value>Categories</value></data>
+  <data name="Nav_AllCategories" xml:space="preserve"><value>All categories</value></data>
+  <data name="Header_GroupBuying" xml:space="preserve"><value>Buying</value></data>
+  <data name="Header_GroupSelling" xml:space="preserve"><value>Selling</value></data>
+  <data name="Header_GroupAccount" xml:space="preserve"><value>Account</value></data>
+  <data name="Header_GroupSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Header_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Header_ManageProfile" xml:space="preserve"><value>View &amp; edit profile</value></data>
+  <data name="Header_SearchSubmitAria" xml:space="preserve"><value>Search</value></data>
   <data name="Nav_ViewAll" xml:space="preserve"><value>View All</value></data>
   <data name="Nav_Newest" xml:space="preserve"><value>New Arrivals</value></data>
   <data name="Nav_BestPrice" xml:space="preserve"><value>Best Deals</value></data>
@@ -286,6 +294,14 @@
   <data name="Home_RecEmptyTitle" xml:space="preserve"><value>No matching products yet</value></data>
   <data name="Home_RecEmptyDesc" xml:space="preserve"><value>Try another filter or return to default recommendations to explore more.</value></data>
   <data name="Home_RecReset" xml:space="preserve"><value>Back to default</value></data>
+  <data name="Home_AuctionTitle" xml:space="preserve"><value>Featured auctions</value></data>
+  <data name="Home_AuctionSubtitle" xml:space="preserve"><value>Bid in real time with transparent closing when the timer ends.</value></data>
+  <data name="Home_AuctionViewAll" xml:space="preserve"><value>View all auctions</value></data>
+  <data name="Home_AuctionCurrentPrice" xml:space="preserve"><value>Current bid</value></data>
+  <data name="Home_AuctionBidNow" xml:space="preserve"><value>Place bid</value></data>
+  <data name="Home_AuctionEmptyTitle" xml:space="preserve"><value>No live auctions right now</value></data>
+  <data name="Home_AuctionEmptyDesc" xml:space="preserve"><value>Browse past auctions or start an auction session for your standout item.</value></data>
+  <data name="Home_AuctionCreateCta" xml:space="preserve"><value>Create auction</value></data>
   <data name="Home_HowLabel" xml:space="preserve"><value>HOW IT WORKS</value></data>
   <data name="Home_HowTitle" xml:space="preserve"><value>3 simple steps</value></data>
   <data name="Home_Step1Title" xml:space="preserve"><value>Find a product</value></data>

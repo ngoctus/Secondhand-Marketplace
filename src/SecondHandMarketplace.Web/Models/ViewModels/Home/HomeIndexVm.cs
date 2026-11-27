@@ -1,4 +1,5 @@
 using SecondHandMarketplace.Web.Models.Entities;
+using SecondHandMarketplace.Web.Models.ViewModels.Auctions;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Models.ViewModels.Reviews;
 
@@ -14,6 +15,7 @@ public sealed record HomeCategoryTabVm(int MaDanhMuc, string TenDanhMuc, IReadOn
 public class HomeIndexVm
 {
     public IReadOnlyList<Banner> Banners { get; init; } = [];
+    public IReadOnlyList<AuctionCardVm> PhienDauGiaNoiBat { get; init; } = [];
     public IReadOnlyList<DanhMuc> DanhMucs { get; init; } = [];
     public IReadOnlyList<ProductCardVm> SanPhamNoiBat { get; init; } = [];
     public IReadOnlyList<HomeCategoryTabVm> TabsDanhMuc { get; init; } = [];

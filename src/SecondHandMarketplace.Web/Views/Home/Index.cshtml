@@ -69,52 +69,113 @@
     </div>
 </section>
 
-@if (Model.Banners.Count > 0)
-{
-<!-- 1b. BANNER (B5) -->
-<section class="landing-section" style="padding-top:0">
-    <div id="rmBannerCarousel" class="carousel slide rounded-4 overflow-hidden shadow-sm" data-bs-ride="carousel">
-        @if (Model.Banners.Count > 1)
+<!-- 1b. ĐẤU GIÁ NỔI BẬT (thay thế khối banner) -->
+<section class="landing-section rm-home-auction" data-rm-reveal>
+    <div class="rm-home-auction-box">
+        <div class="landing-section-header rm-home-auction-header">
+            <div>
+                <div class="rm-home-auction-eyebrow">
+                    <span class="section-label">@L["E_AuctionEyebrow"]</span>
+                    @if (Model.PhienDauGiaNoiBat.Any(a => a.Status == "RUNNING"))
+                    {
+                        <span class="rm-auction-live-pill">
+                            <span class="rm-auction-live-dot" aria-hidden="true"></span>
+                            @L["E_AuctionTabRunning"]
+                        </span>
+                    }
+                </div>
+                <h2 class="section-title">@L["Home_AuctionTitle"]</h2>
+                <p class="rm-home-auction-sub">@L["Home_AuctionSubtitle"]</p>
+            </div>
+            <a asp-controller="PublicAuctions" asp-action="Index" class="btn-rm-rec-more rm-home-auction-all">
+                <span>@L["Home_AuctionViewAll"]</span>
+                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+        </div>
+
+        @if (Model.PhienDauGiaNoiBat.Count == 0)
         {
-            <div class="carousel-indicators">
-                @for (var i = 0; i < Model.Banners.Count; i++)
+            <div class="rm-home-auction-empty">
+                <div class="rm-home-auction-empty-copy">
+                    <h3>@L["Home_AuctionEmptyTitle"]</h3>
+                    <p>@L["Home_AuctionEmptyDesc"]</p>
+                </div>
+                <div class="rm-home-auction-empty-actions">
+                    <a asp-controller="PublicAuctions" asp-action="Index" class="btn-rm-outline">@L["Home_AuctionViewAll"]</a>
+                    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("USER"))
+                    {
+                        <a asp-area="User" asp-controller="Auctions" asp-action="Create" class="btn-rm-primary">@L["Home_AuctionCreateCta"]</a>
+                    }
+                    else if (User.Identity?.IsAuthenticated != true)
+                    {
+                        <a asp-area="" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/User/Auctions/Create" class="btn-rm-primary">@L["Home_AuctionCreateCta"]</a>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3" data-rm-stagger>
+                @foreach (var a in Model.PhienDauGiaNoiBat)
                 {
-                    <button type="button" data-bs-target="#rmBannerCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : null)" aria-label="@L["Home_BannerAria", i + 1]"></button>
+                    var isRunning = a.Status == "RUNNING";
+                    <div class="col">
+                        <article class="rm-product-card rm-home-auction-card">
+                            <div class="rm-card-media rm-home-auction-media" data-rm-media>
+                                <a asp-controller="PublicAuctions" asp-action="Details" asp-route-id="@a.Id" class="rm-card-image-link" tabindex="-1">
+                                    @if (!string.IsNullOrEmpty(a.Image))
+                                    {
+                                        <img src="@a.Image" alt="@a.ProductName" class="rm-card-image" loading="lazy" data-fallback />
+                                    }
+                                    else
+                                    {
+                                        <div class="wireframe-placeholder">
+                                            <span>@L["E_AuctionImagePlaceholder"]</span>
+                                        </div>
+                                    }
+                                </a>
+                                <span class="rm-card-badge @(isRunning ? "rm-auction-badge-live" : "rm-auction-badge-soon")">
+                                    @HienThi.TrangThaiPhien(a.Status)
+                                </span>
+                                <div class="rm-home-auction-timer">
+                                    @if (isRunning)
+                                    {
+                                        <span class="js-countdown" data-end="@HienThi.Iso(a.EndAt)" data-prefix="@L["E_AuctionTimePrefix"]"></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@L["E_AuctionStartsAt", HienThi.NgayGio(a.StartAt)]</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="rm-card-body rm-home-auction-body">
+                                <h3 class="rm-card-title">
+                                    <a asp-controller="PublicAuctions" asp-action="Details" asp-route-id="@a.Id" title="@a.ProductName">@a.ProductName</a>
+                                </h3>
+
+                                <div class="rm-home-auction-price-row">
+                                    <div>
+                                        <div class="rm-home-auction-price-label">@L["Home_AuctionCurrentPrice"]</div>
+                                        <div class="rm-card-price">@HienThi.Tien(a.CurrentPrice)</div>
+                                    </div>
+                                    <span class="rm-home-auction-bids">@L["E_AuctionBidCount", a.BidCount]</span>
+                                </div>
+
+                                <div class="rm-home-auction-foot">
+                                    <span class="rm-home-auction-shop" title="@a.ShopName">@a.ShopName</span>
+                                    <a asp-controller="PublicAuctions" asp-action="Details" asp-route-id="@a.Id" class="@(isRunning ? "btn-rm-primary" : "btn-rm-outline") rm-home-auction-btn">
+                                        @(isRunning ? L["Home_AuctionBidNow"] : L["E_AuctionViewSession"])
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
                 }
             </div>
         }
-        <div class="carousel-inner">
-            @for (var i = 0; i < Model.Banners.Count; i++)
-            {
-                var b = Model.Banners[i];
-                <div class="carousel-item @(i == 0 ? "active" : null)">
-                    @if (!string.IsNullOrWhiteSpace(b.LienKet))
-                    {
-                        <a href="@(SecondHandMarketplace.Web.Common.UrlAnToan.HopLe(b.LienKet) ? b.LienKet : "#")" class="d-block">
-                            <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100 d-none d-md-block" style="aspect-ratio:10/3; object-fit:cover;" data-fallback />
-                            <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100 d-md-none" style="aspect-ratio:16/9; object-fit:cover;" data-fallback />
-                        </a>
-                    }
-                    else
-                    {
-                        <img src="@b.DuongDanAnh" alt="@b.TieuDe" class="w-100" style="aspect-ratio:10/3; object-fit:cover;" data-fallback />
-                    }
-
-                </div>
-            }
-        </div>
-        @if (Model.Banners.Count > 1)
-        {
-            <button class="carousel-control-prev" type="button" data-bs-target="#rmBannerCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">@L["Btn_Prev"]</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#rmBannerCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">@L["Btn_Next"]</span>
-            </button>
-        }
     </div>
 </section>
-}
 
 <!-- 2. DANH MỤC (Ảnh 2) -->
 <section class="landing-section" data-rm-reveal>
@@ -380,5 +441,6 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/auction.js" asp-append-version="true"></script>
     <script src="~/js/home-recommendations.js" asp-append-version="true"></script>
 }

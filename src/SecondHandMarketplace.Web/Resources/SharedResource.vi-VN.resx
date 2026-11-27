@@ -42,6 +42,14 @@
   <!-- Navigation & Header -->
   <data name="Nav_Home" xml:space="preserve"><value>Trang chủ</value></data>
   <data name="Nav_Categories" xml:space="preserve"><value>Danh mục</value></data>
+  <data name="Nav_AllCategories" xml:space="preserve"><value>Tất cả danh mục</value></data>
+  <data name="Header_GroupBuying" xml:space="preserve"><value>Mua hàng</value></data>
+  <data name="Header_GroupSelling" xml:space="preserve"><value>Bán hàng</value></data>
+  <data name="Header_GroupAccount" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="Header_GroupSettings" xml:space="preserve"><value>Cài đặt</value></data>
+  <data name="Header_Language" xml:space="preserve"><value>Ngôn ngữ</value></data>
+  <data name="Header_ManageProfile" xml:space="preserve"><value>Xem &amp; chỉnh sửa hồ sơ</value></data>
+  <data name="Header_SearchSubmitAria" xml:space="preserve"><value>Tìm kiếm</value></data>
   <data name="Nav_ViewAll" xml:space="preserve"><value>Xem tất cả</value></data>
   <data name="Nav_Newest" xml:space="preserve"><value>Mới đăng</value></data>
   <data name="Nav_BestPrice" xml:space="preserve"><value>Giá tốt</value></data>
@@ -286,6 +294,14 @@
   <data name="Home_RecEmptyTitle" xml:space="preserve"><value>Chưa có sản phẩm phù hợp</value></data>
   <data name="Home_RecEmptyDesc" xml:space="preserve"><value>Thử chọn chế độ khác hoặc quay về danh sách mặc định để khám phá thêm nhé.</value></data>
   <data name="Home_RecReset" xml:space="preserve"><value>Về mặc định</value></data>
+  <data name="Home_AuctionTitle" xml:space="preserve"><value>Phiên đấu giá nổi bật</value></data>
+  <data name="Home_AuctionSubtitle" xml:space="preserve"><value>Đặt giá theo thời gian thực, chốt đơn minh bạch khi hết giờ.</value></data>
+  <data name="Home_AuctionViewAll" xml:space="preserve"><value>Xem tất cả phiên đấu giá</value></data>
+  <data name="Home_AuctionCurrentPrice" xml:space="preserve"><value>Giá hiện tại</value></data>
+  <data name="Home_AuctionBidNow" xml:space="preserve"><value>Đặt giá</value></data>
+  <data name="Home_AuctionEmptyTitle" xml:space="preserve"><value>Chưa có phiên đấu giá nào đang mở</value></data>
+  <data name="Home_AuctionEmptyDesc" xml:space="preserve"><value>Khám phá các phiên trước đây hoặc mở phiên đấu giá cho món đồ nổi bật của bạn.</value></data>
+  <data name="Home_AuctionCreateCta" xml:space="preserve"><value>Tạo phiên đấu giá</value></data>
   <data name="Home_HowLabel" xml:space="preserve"><value>CÁCH THỨC HOẠT ĐỘNG</value></data>
   <data name="Home_HowTitle" xml:space="preserve"><value>3 bước đơn giản</value></data>
   <data name="Home_Step1Title" xml:space="preserve"><value>Tìm sản phẩm</value></data>

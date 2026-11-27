@@ -168,26 +168,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .rm-header-search {
     flex: 1;
-    max-width: 440px;
+    min-width: 180px;
     position: relative;
-    display: flex;
-    align-items: center;
-    z-index: 2;
-    transition: max-width 0.18s ease, margin-right 0.18s ease;
-}
-
-/* site.js đo bề rộng .rm-nav rồi đổ vào --rm-search-overlap; margin âm giữ nguyên vị trí các cụm bên phải. */
-.rm-header-search.is-expanded {
-    max-width: none;
-    margin-right: calc(-1 * var(--rm-search-overlap, 0px));
-    z-index: 1040;
-}
-
-.rm-header-search .search-icon {
-    position: absolute;
-    left: 14px;
-    color: var(--color-text-muted);
-    pointer-events: none;
     display: flex;
     align-items: center;
 }
@@ -195,29 +177,55 @@ h1, h2, h3, h4, h5, h6 {
 .rm-header-search .search-input {
     width: 100%;
     height: 42px;
-    padding: 0 16px 0 40px;
-    background-color: var(--color-surface-white);
+    padding: 0 44px 0 16px;
+    background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-md);
     color: var(--color-text-primary);
     font-family: var(--font-main);
     font-size: 13.5px;
     outline: none;
-    transition: border-color 0.15s ease;
+    transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .rm-header-search .search-input:focus {
+    background-color: var(--color-surface-white);
     border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(104, 112, 90, 0.14);
 }
 
 .rm-header-search .search-input::placeholder {
     color: #9E9382;
 }
 
+.rm-header-search .search-submit-btn {
+    position: absolute;
+    right: 4px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.rm-header-search .search-submit-btn:hover,
+.rm-header-search .search-submit-btn:focus-visible {
+    color: var(--color-primary);
+    background-color: var(--color-primary-subtle);
+    outline: none;
+}
+
 .rm-nav {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .rm-nav-link {
@@ -232,11 +240,27 @@ h1, h2, h3, h4, h5, h6 {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    white-space: nowrap;
+    transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .rm-nav-link:hover {
     color: var(--color-primary);
+    background-color: rgba(104, 112, 90, 0.08);
+}
+
+.rm-cat-trigger {
+    font-weight: 600;
+}
+
+.rm-chevron {
+    transition: transform 0.18s ease;
+    opacity: 0.72;
+}
+
+[aria-expanded="true"] > .rm-chevron {
+    transform: rotate(180deg);
 }
 
 .rm-dropdown {
@@ -247,7 +271,7 @@ h1, h2, h3, h4, h5, h6 {
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    min-width: 200px;
+    min-width: 220px;
     background-color: var(--color-surface-white);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -288,15 +312,16 @@ h1, h2, h3, h4, h5, h6 {
 .rm-header-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-left: auto;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
-/* Đăng ký | Đăng nhập kiểu Shopee: chữ trần, phân tách bằng vạch dọc. */
+/* Đăng ký | Đăng nhập gọn gàng, phân tách bằng vạch dọc. */
 .rm-auth-guest {
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    padding: 0 4px;
 }
 
 .rm-auth-link {
@@ -318,37 +343,225 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .rm-user-trigger {
-    height: 38px;
-    padding: 0 12px 0 6px;
+    height: 40px;
+    padding: 3px 10px 3px 4px;
     border-radius: var(--radius-pill);
     border: 1px solid var(--color-border);
-    background-color: transparent;
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
+    transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
-.rm-user-trigger:hover {
-    background-color: var(--color-surface);
+.rm-user-trigger:hover,
+.rm-user-trigger[aria-expanded="true"] {
+    background-color: var(--color-primary-subtle);
+    border-color: var(--color-primary);
 }
 
 .user-avatar {
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background-color: var(--color-primary);
     color: #FFFFFF;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
+/* Mega-Menu tài khoản 2 cột (Mua hàng · Bán hàng | Tài khoản · Cài đặt & Ngôn ngữ) */
+.rm-account-mega {
+    right: 0;
+    left: auto;
+    top: calc(100% + 10px);
+    width: min(500px, calc(100vw - 24px));
+    padding: 18px 20px 20px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+}
+
+.rm-mega-profile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+}
+
+.rm-mega-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--color-primary);
+    color: #FFFFFF;
+    font-size: 18px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 2px solid var(--color-surface-white);
+    box-shadow: var(--shadow-sm);
+}
+
+.rm-mega-profile-info {
+    min-width: 0;
+}
+
+.rm-mega-name {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rm-mega-sublink {
+    display: inline-block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.rm-mega-sublink:hover {
+    color: var(--color-primary-hover);
+}
+
+.rm-mega-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 16px;
+}
+
+.rm-mega-col-left {
+    padding-right: 18px;
+    border-right: 1px solid var(--color-border-subtle);
+}
+
+.rm-mega-col-right {
+    padding-left: 18px;
+}
+
+.rm-mega-group + .rm-mega-group {
+    margin-top: 16px;
+}
+
+.rm-mega-heading {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.rm-mega-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 10px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-family: var(--font-main);
+    font-size: 13.5px;
+    font-weight: 400;
+    text-decoration: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.rm-mega-item i {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+}
+
+.rm-mega-item:hover,
+.rm-mega-item:focus-visible {
+    background-color: var(--color-surface);
+    color: var(--color-primary);
+    outline: none;
+}
+
+.rm-mega-item:hover i,
+.rm-mega-item:focus-visible i {
+    color: var(--color-primary);
+}
+
+.rm-mega-item-danger,
+.rm-mega-item-danger i {
+    color: var(--color-error);
+}
+
+.rm-mega-item-danger:hover,
+.rm-mega-item-danger:focus-visible {
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+}
+
+.rm-mega-item-danger:hover i,
+.rm-mega-item-danger:focus-visible i {
+    color: var(--color-error);
+}
+
+.rm-mega-lang-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+}
+
+.rm-mega-lang-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    color: var(--color-text-primary);
+}
+
+.rm-mega-lang-label i {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    width: 18px;
+    text-align: center;
+}
+
+.rm-mega-admin-list {
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.rm-header-icon-btn,
 .rm-notify-slot .iconbtn {
+    width: 38px;
     height: 38px;
-    padding: 0 9px;
+    padding: 0;
     border: none;
     border-radius: var(--radius-md);
     background-color: transparent;
@@ -358,33 +571,45 @@ h1, h2, h3, h4, h5, h6 {
     text-decoration: none;
     color: var(--color-text-primary);
     position: relative;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
 }
 
+.rm-header-icon-btn:hover,
 .rm-notify-slot .iconbtn:hover {
     color: var(--color-primary);
+    background-color: rgba(104, 112, 90, 0.08);
 }
 
-/* Đồng bộ badge chuông với badge giỏ hàng (.rm-cart-badge) để một kiểu đếm trên thanh. */
+/* Đồng bộ badge chuông với badge giỏ hàng (.rm-cart-badge) trên nút 38×38. */
 .rm-notify-slot .count {
     position: absolute;
-    top: -5px;
-    right: -7px;
+    top: 1px;
+    right: 0;
     background-color: #dc2626;
     color: #FFFFFF;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     line-height: 1;
     min-width: 17px;
     height: 17px;
-    border: 2px solid #FFFFFF;
+    border: 2px solid var(--color-bg);
     border-radius: 9999px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0 4px;
-    box-shadow: 0 2px 5px rgba(220, 38, 38, 0.4);
+    box-shadow: 0 2px 5px rgba(220, 38, 38, 0.35);
     pointer-events: none;
     user-select: none;
+}
+
+.rm-header-cta {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* 3. BUTTONS (UI Kit) */
@@ -1572,11 +1797,15 @@ img.shop-snippet-avatar {
         padding: 0 16px;
         gap: 12px;
     }
+
+    .rm-header-actions {
+        margin-left: auto;
+    }
     .rm-header-search {
-        max-width: 260px;
+        min-width: 160px;
     }
     .rm-nav {
-        gap: 8px;
+        gap: 4px;
     }
     .rm-nav-link {
         padding: 6px 8px;
@@ -2917,6 +3146,10 @@ a.kpi:hover, button.kpi:hover {
         gap: 12px;
     }
 
+    .rm-header-actions {
+        margin-left: auto;
+    }
+
     .rm-mobile-drawer:not([hidden]) {
         display: block;
         position: absolute;
@@ -2937,7 +3170,8 @@ a.kpi:hover, button.kpi:hover {
         gap: 6px;
     }
 
-    .rm-header-actions .btn-rm-outline {
+    .rm-header-actions .btn-rm-outline,
+    .rm-header-actions .rm-lang-switcher {
         display: none;
     }
 
@@ -2945,8 +3179,30 @@ a.kpi:hover, button.kpi:hover {
         display: none;
     }
 
-    .rm-user-trigger > span:not(.user-avatar) {
-        display: none;
+    .rm-header-cta {
+        padding: 0 12px;
+        font-size: 13px;
+        height: 36px;
+    }
+
+    .rm-account-mega {
+        max-height: 75vh;
+        overflow-y: auto;
+        padding: 14px;
+    }
+
+    .rm-mega-columns {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .rm-mega-col-left {
+        padding-right: 0;
+        border-right: none;
+    }
+
+    .rm-mega-col-right {
+        padding-left: 0;
     }
 }
 
@@ -3135,11 +3391,11 @@ body.rm-modal-open {
 
 .rm-cart-badge {
     position: absolute;
-    top: -5px;
-    right: -7px;
+    top: 1px;
+    right: 0;
     background-color: #dc2626;
     color: #ffffff;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     line-height: 1;
     min-width: 17px;
@@ -4834,6 +5090,232 @@ body.rmc-open {
     .rm-rec-mode-btn {
         padding: 6px 12px;
         font-size: 12.5px;
+    }
+}
+
+/* ==========================================================================
+   KHOI DAU GIA NOI BAT TREN TRANG CHU (thay the banner)
+   ========================================================================== */
+.rm-home-auction {
+    padding-top: 0;
+}
+
+.rm-home-auction-box {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+}
+
+.rm-home-auction-header {
+    margin-bottom: 22px;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.rm-home-auction-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.rm-auction-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-primary-subtle);
+    border: 1px solid rgba(104, 112, 90, 0.28);
+    color: var(--color-primary-active);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+@keyframes rmLivePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.82); }
+}
+
+.rm-auction-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--color-success);
+    animation: rmLivePulse 1.8s ease-in-out infinite;
+}
+
+.rm-home-auction-sub {
+    margin: 6px 0 0;
+    color: var(--color-text-muted);
+    font-size: 13.5px;
+}
+
+.rm-home-auction-all {
+    padding: 9px 18px;
+    flex-shrink: 0;
+}
+
+.rm-home-auction-card {
+    background-color: var(--color-surface-white);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 12px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rm-home-auction-card:hover {
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-md);
+}
+
+.rm-home-auction-media {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.rm-auction-badge-live {
+    background-color: var(--color-primary) !important;
+    color: #FFFFFF !important;
+    border-color: transparent !important;
+}
+
+.rm-auction-badge-soon {
+    background-color: var(--color-surface) !important;
+    color: var(--color-text-secondary) !important;
+}
+
+.rm-home-auction-timer {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(41, 35, 29, 0.8);
+    backdrop-filter: blur(4px);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rm-home-auction-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 0;
+}
+
+.rm-home-auction-body .rm-card-title {
+    margin-bottom: 10px;
+    min-height: 2.7em;
+}
+
+.rm-home-auction-price-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.rm-home-auction-price-label {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    line-height: 1.2;
+    margin-bottom: 2px;
+}
+
+.rm-home-auction-bids {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-pill);
+    padding: 2px 9px;
+    white-space: nowrap;
+}
+
+.rm-home-auction-foot {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px dashed var(--color-border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.rm-home-auction-shop {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.rm-home-auction-btn {
+    padding: 6px 14px;
+    font-size: 12.5px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.rm-home-auction-empty {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 22px 24px;
+    background-color: var(--color-surface-white);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.rm-home-auction-empty-copy h3 {
+    margin: 0 0 4px;
+    font-family: var(--font-serif);
+    font-size: 19px;
+    color: var(--color-text-primary);
+}
+
+.rm-home-auction-empty-copy p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--color-text-muted);
+}
+
+.rm-home-auction-empty-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 767.98px) {
+    .rm-home-auction-box {
+        padding: 18px 16px;
+    }
+
+    .rm-home-auction-empty {
+        padding: 18px 16px;
     }
 }
 
