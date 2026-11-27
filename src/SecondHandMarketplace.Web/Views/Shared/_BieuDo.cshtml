@@ -15,6 +15,7 @@
         if (typeof Chart === 'undefined') return;
         const root = document.getElementById('dashboardRevenueChart');
         const ctx = document.getElementById('revenueChart');
+        if (!root || !ctx) return;
         const chart = new Chart(ctx, {
             data: { labels: [], datasets: [
                 { type: 'bar', label: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["E_ChartRevenue"].Value)), data: [], backgroundColor: 'rgba(104, 112, 90, 0.78)', hoverBackgroundColor: '#68705A', borderRadius: 6, yAxisID: 'y' },

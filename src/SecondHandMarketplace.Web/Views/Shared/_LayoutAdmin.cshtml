@@ -148,9 +148,12 @@
             const currentPath = window.location.pathname.toLowerCase();
             document.querySelectorAll('.admin-nav-item').forEach(link => {
                 const href = link.getAttribute('href')?.toLowerCase();
-                if (href && currentPath.startsWith(href) && href !== '/admin') {
-                    link.classList.add('active');
-                } else if (href === '/admin' && (currentPath === '/admin' || currentPath === '/admin/dashboard')) {
+                if (!href) return;
+                if (href === '/admin') {
+                    if (currentPath === '/admin' || currentPath === '/admin/' || currentPath.startsWith('/admin/dashboard')) {
+                        link.classList.add('active');
+                    }
+                } else if (currentPath === href || currentPath.startsWith(href + '/')) {
                     link.classList.add('active');
                 }
             });

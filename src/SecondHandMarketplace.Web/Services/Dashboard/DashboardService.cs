@@ -152,7 +152,7 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
             .ToDictionaryAsync(x => x.Key, x => x.N, ct);
 
         var tranhChapDangMo = await db.TranhChaps.AsNoTracking()
-            .CountAsync(t => t.TrangThai == "OPEN" || t.TrangThai == "IN_REVIEW", ct);
+            .CountAsync(t => t.TrangThai == "OPEN" || t.TrangThai == "PROCESSING", ct);
 
         var khieuNaiChoXuLy = await db.KhieuNaiTaiKhoans.AsNoTracking()
             .CountAsync(k => k.TrangThai == "PENDING", ct);

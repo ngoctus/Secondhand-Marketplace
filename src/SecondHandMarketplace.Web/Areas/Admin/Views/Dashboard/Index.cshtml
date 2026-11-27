@@ -239,7 +239,7 @@
                             <b>@activeRate%</b>
                         </div>
                         <div class="progress" style="height: 8px;">
-                            <div class="progress-bar" style="width: @activeRate%; background-color: var(--color-primary);"></div>
+                            <div class="progress-bar" style="width: @activeRate.ToString(System.Globalization.CultureInfo.InvariantCulture)%; background-color: var(--color-primary);"></div>
                         </div>
                     </div>
                     <div class="admin-health-item">
@@ -248,7 +248,7 @@
                             <b>@completionRate%</b>
                         </div>
                         <div class="progress" style="height: 8px;">
-                            <div class="progress-bar" style="width: @completionRate%; background-color: var(--color-success);"></div>
+                            <div class="progress-bar" style="width: @completionRate.ToString(System.Globalization.CultureInfo.InvariantCulture)%; background-color: var(--color-success);"></div>
                         </div>
                     </div>
                 </div>
@@ -347,7 +347,12 @@
                     <td class="text-end">
                         <div class="d-inline-flex gap-1">
                             <button type="button" class="btn btn-sm btn-outline-primary"
-                                    onclick="openEditOrderModal(@o.Id, '@Html.Raw((o.MaDon ?? "").Replace("'", "\\'"))', '@Html.Raw((o.FirstItem ?? "").Replace("'", "\\'"))', @o.Total.ToString(System.Globalization.CultureInfo.InvariantCulture), '@o.Status')">
+                                    data-order-id="@o.Id"
+                                    data-order-code="@(o.MaDon ?? "")"
+                                    data-order-product="@(o.FirstItem ?? "")"
+                                    data-order-amount="@o.Total.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                    data-order-status="@o.Status"
+                                    onclick="openEditOrderModal(this)">
                                 @L["E_DashEdit"]
                             </button>
                             <form asp-action="DeleteOrder" method="post" class="d-inline" onsubmit="return confirm('@L["E_DashCancelOrder", o.MaDon ?? ""].Value');">
@@ -465,12 +470,13 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script>
-        function openEditOrderModal(id, code, product, amount, status) {
-            document.getElementById('editOrderId').value = id;
-            document.getElementById('editOrderCode').textContent = '(' + code + ')';
-            document.getElementById('editOrderProduct').value = product;
-            document.getElementById('editOrderAmount').value = amount;
-            document.getElementById('editOrderStatus').value = status;
+        function openEditOrderModal(btn) {
+            const { orderId, orderCode, orderProduct, orderAmount, orderStatus } = btn.dataset;
+            document.getElementById('editOrderId').value = orderId;
+            document.getElementById('editOrderCode').textContent = '(' + (orderCode || '') + ')';
+            document.getElementById('editOrderProduct').value = orderProduct || '';
+            document.getElementById('editOrderAmount').value = orderAmount || '';
+            document.getElementById('editOrderStatus').value = orderStatus || '';
             new bootstrap.Modal(document.getElementById('modalSuaDoanhThu')).show();
         }
 
