@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Services.Categories;
@@ -23,15 +23,17 @@ public class ProductsController : UserBaseController
     private readonly IModerationService _moderation;
     private readonly ILogger<ProductsController> _logger;
     private readonly IUploadStorage _uploadStorage;
+    private readonly IDistributedCache _distributedCache;
 
     public ProductsController(IProductService products, ICategoryService categories, IModerationService moderation,
-        IUploadStorage uploadStorage, ILogger<ProductsController> logger)
+        IUploadStorage uploadStorage, ILogger<ProductsController> logger, IDistributedCache distributedCache)
     {
         _products = products;
         _categories = categories;
         _moderation = moderation;
         _uploadStorage = uploadStorage;
         _logger = logger;
+        _distributedCache = distributedCache;
     }
 
     [HttpGet]
@@ -108,7 +110,7 @@ public class ProductsController : UserBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ProductFormVm form, List<IFormFile>? AnhMoi, bool? GuiDuyet, string? returnUrl = null)
+    public async Task<IActionResult> Edit(int id, ProductFormVm form, List<IFormFile>? AnhMoi, bool? GuiDuyet, string? returnUrl = null, CancellationToken cancellationToken = default)
     {
         var userId = User.LayNguoiDungId()!.Value;
         var validReturnUrl = LayReturnUrlHopLe(returnUrl);
@@ -140,7 +142,7 @@ public class ProductsController : UserBaseController
             return View(form);
         }
 
-        HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+        await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache, cancellationToken);
 
         // Sản phẩm đang bán mà sửa nội dung/ảnh thì phải duyệt lại để không lách kiểm duyệt.
         if (GuiDuyet == true || truoc?.TrangThai == "ACTIVE")
@@ -166,7 +168,7 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.HideAsync(userId, id);
         if (ok)
         {
-            HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
             this.ThongBaoThanhCong("Đã ẩn sản phẩm.");
         }
         else this.ThongBaoLoi(loi ?? "Không ẩn được sản phẩm.");
@@ -181,7 +183,7 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.UnhideAsync(userId, id);
         if (ok)
         {
-            HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
             this.ThongBaoThanhCong("Đã mở ẩn sản phẩm và hiển thị bán trở lại.");
         }
         else this.ThongBaoLoi(loi ?? "Không mở ẩn được sản phẩm.");
@@ -196,7 +198,7 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.DeleteAsync(userId, id);
         if (ok)
         {
-            HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
             this.ThongBaoThanhCong("Đã xóa sản phẩm thành công.");
         }
         else this.ThongBaoLoi(loi ?? "Không thể xóa sản phẩm.");
@@ -209,7 +211,7 @@ public class ProductsController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
         var (ok, loi) = await _products.DatAnhChinhAsync(userId, id, maAnh);
-        if (ok) HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+        if (ok) await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
         if (YeuCauTuAjax()) return Json(new { ok, error = ok ? null : loi });
 
         if (!ok) this.ThongBaoLoi(loi ?? "Không đặt được ảnh chính.");
@@ -222,7 +224,7 @@ public class ProductsController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
         var (ok, loi, maAnhChinhMoi) = await _products.XoaAnhAsync(userId, id, maAnh);
-        if (ok) HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+        if (ok) await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
         if (YeuCauTuAjax()) return Json(new { ok, error = ok ? null : loi, coverId = maAnhChinhMoi });
 
         if (!ok) this.ThongBaoLoi(loi ?? "Không xóa được ảnh.");
@@ -267,7 +269,7 @@ public class ProductsController : UserBaseController
             _logger.LogWarning(ex, "Phân tích từ khóa lỗi sau khi gửi duyệt sản phẩm {ProductId}.", maSanPham);
         }
 
-        HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+        await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
         this.ThongBaoThanhCong("Đã gửi sản phẩm đi kiểm duyệt. Admin sẽ duyệt trong thời gian tới.");
         return ChuyenVeDanhSach(returnUrl);
     }

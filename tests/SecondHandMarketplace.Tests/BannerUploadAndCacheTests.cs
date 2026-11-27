@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Services.Banners;
@@ -44,51 +47,51 @@ public class BannerUploadAndCacheTests
             OpenReadStream().CopyToAsync(target, cancellationToken);
     }
 
-    private static void BanDoCache(MemoryCache cache) =>
-        cache.Set(HomeCacheHelper.CatalogCacheKey, new object(), TimeSpan.FromMinutes(5));
+    private static async Task BanDoCache(IDistributedCache cache) =>
+        await cache.SetStringAsync(HomeCacheHelper.CatalogCacheKey, "cached", new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) });
 
     [Fact]
     public async Task LuuBanner_XoaCacheTrangChuDeSliderCapNhatNgay()
     {
         using var db = NewDb();
-        var cache = new MemoryCache(new MemoryCacheOptions());
-        BanDoCache(cache);
+        var cache = new TestDistributedCache();
+        await BanDoCache(cache);
 
         var (success, _, _) = await new BannerService(db, cache).SaveAsync(
             null, "Tuần lễ đồ cũ", "Giảm giá", "/uploads/banners/new.jpg", null, 1, true, null, null);
 
         Assert.True(success);
-        Assert.False(cache.TryGetValue(HomeCacheHelper.CatalogCacheKey, out _));
+        Assert.Null(await cache.GetStringAsync(HomeCacheHelper.CatalogCacheKey));
     }
 
     [Fact]
     public async Task XoaBanner_CungXoaCacheTrangChu()
     {
         using var db = NewDb();
-        var cache = new MemoryCache(new MemoryCacheOptions());
+        var cache = new TestDistributedCache();
         var banners = new BannerService(db, cache);
         var (_, _, maBanner) = await banners.SaveAsync(
             null, "Banner demo", null, "/uploads/banners/old.jpg", null, 1, true, null, null);
-        BanDoCache(cache);
+        await BanDoCache(cache);
 
         var (success, _) = await banners.DeleteAsync(maBanner);
 
         Assert.True(success);
-        Assert.False(cache.TryGetValue(HomeCacheHelper.CatalogCacheKey, out _));
+        Assert.Null(await cache.GetStringAsync(HomeCacheHelper.CatalogCacheKey));
     }
 
     [Fact]
     public async Task BannerBiChuoiValidate_GiuNguyenCache()
     {
         using var db = NewDb();
-        var cache = new MemoryCache(new MemoryCacheOptions());
-        BanDoCache(cache);
+        var cache = new TestDistributedCache();
+        await BanDoCache(cache);
 
         var (success, _, _) = await new BannerService(db, cache).SaveAsync(
             null, "A", null, "/uploads/banners/x.jpg", null, 1, true, null, null);
 
         Assert.False(success);
-        Assert.True(cache.TryGetValue(HomeCacheHelper.CatalogCacheKey, out _));
+        Assert.Equal("cached", await cache.GetStringAsync(HomeCacheHelper.CatalogCacheKey));
     }
 
     [Fact]
@@ -110,7 +113,18 @@ public class BannerUploadAndCacheTests
             var (hopLe, _, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(file);
             Assert.True(hopLe);
 
-            var (duongDan, fullPath) = await UploadAnhAnToan.LuuAnhAsync(file, webRoot, "banners", ext!);
+            var environment = new TestWebHostEnvironment(webRoot);
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Storage:RootPath"] = webRoot,
+                ["Storage:PrivateRootPath"] = Path.Combine(webRoot, "private")
+            }).Build();
+            var storage = new SecondHandMarketplace.Web.Services.Storage.UploadStorage(
+                environment, configuration, NullLogger<SecondHandMarketplace.Web.Services.Storage.UploadStorage>.Instance);
+            var relativePath = $"/uploads/banners/{Guid.NewGuid():N}{ext}";
+            await using var input = file.OpenReadStream();
+            var duongDan = await storage.SaveAsync(input, relativePath, false, file.ContentType);
+            var fullPath = UploadStoragePaths.ResolveLocalUpload(duongDan, webRoot, "banners")!;
 
             Assert.StartsWith("/uploads/banners/", duongDan);
             Assert.EndsWith(".jpg", duongDan);
@@ -118,7 +132,7 @@ public class BannerUploadAndCacheTests
         }
         finally
         {
-            Directory.Delete(webRoot, recursive: true);
+            if (Directory.Exists(webRoot)) Directory.Delete(webRoot, recursive: true);
         }
     }
 }
