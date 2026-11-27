@@ -14,7 +14,8 @@ public class FakeCartService : ICartService
     public CartIndexViewModel GioHangReturn { get; set; } = new();
 
     public Task<CartIndexViewModel> LayGioHangAsync(int maNguoiDung) => Task.FromResult(GioHangReturn);
-    public Task<(bool ThanhCong, string? ThongBao)> ThemVaoGioAsync(int maNguoiDung, int maSanPham) => Task.FromResult((true, (string?)"OK"));
+    public Task<(bool ThanhCong, string? ThongBao)> ThemVaoGioAsync(int maNguoiDung, int maSanPham, int soLuong = 1) => Task.FromResult((true, (string?)"OK"));
+    public Task<(bool ThanhCong, string? ThongBao, int SoLuongMoi)> CapNhatSoLuongAsync(int maNguoiDung, int maGioHang, int soLuong) => Task.FromResult((true, (string?)null, soLuong));
     public Task<bool> CapNhatTrangThaiChonAsync(int maNguoiDung, int maGioHang, bool daChon) => Task.FromResult(true);
     public Task<bool> CapNhatChonTatCaTheoShopAsync(int maNguoiDung, int maCuaHang, bool daChon) => Task.FromResult(true);
     public Task<bool> XoaKhoiGioAsync(int maNguoiDung, int maGioHang) => Task.FromResult(true);

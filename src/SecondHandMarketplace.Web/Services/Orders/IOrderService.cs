@@ -6,7 +6,7 @@ namespace SecondHandMarketplace.Web.Services.Orders;
 public interface IOrderService
 {
     Task<CheckoutViewModel> ChuanBiCheckoutTuGioAsync(int maNguoiDung);
-    Task<CheckoutViewModel?> ChuanBiCheckoutMuaNgayAsync(int maNguoiDung, int maSanPham);
+    Task<CheckoutViewModel?> ChuanBiCheckoutMuaNgayAsync(int maNguoiDung, int maSanPham, int soLuong = 1);
     Task<DatHangResultViewModel> DatHangTuGioAsync(int maNguoiDung, CheckoutViewModel model);
     Task<DatHangResultViewModel> MuaNgayAsync(int maNguoiDung, int maSanPham, CheckoutViewModel model);
     Task<List<DonHangItemViewModel>> LayDanhSachDonMuaAsync(int maNguoiDung, string? trangThai);

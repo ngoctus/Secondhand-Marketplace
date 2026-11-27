@@ -6,6 +6,7 @@ public class GioHang
     public int MaGioHang { get; set; }
     public int MaNguoiDung { get; set; }
     public int MaSanPham { get; set; }
+    public int SoLuong { get; set; } = 1;
     public bool DaChon { get; set; } = true;
     public DateTime ThoiGianThem { get; set; }
 

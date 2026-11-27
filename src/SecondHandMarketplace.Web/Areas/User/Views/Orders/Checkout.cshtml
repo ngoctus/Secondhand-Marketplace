@@ -22,6 +22,7 @@
     <form asp-area="User" asp-controller="Orders" asp-action="DatHang" method="post" id="checkoutForm">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="MaSanPhamMuaNgay" />
+        <input type="hidden" asp-for="SoLuongMuaNgay" />
         <input type="hidden" asp-for="TienHang" />
         <input type="hidden" asp-for="PhiVanChuyen" />
 
@@ -204,10 +205,10 @@
                                     <div class="text-muted small" style="font-size: 11px;">
                                         <i class="bi bi-shop me-1 text-success"></i>Shop: @Model.SanPhamMuaNgay.TenShop
                                     </div>
-                                    <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">@L["Checkout_SingleUniqueItem"]</div>
+                                    <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">@HienThi.Chon($"Số lượng: {Model.SanPhamMuaNgay.SoLuong}", $"Qty: {Model.SanPhamMuaNgay.SoLuong}")</div>
                                 </div>
                                 <div class="fw-bold text-success text-nowrap small">
-                                    @Model.SanPhamMuaNgay.Gia.ToString("N0") ₫
+                                    @Model.SanPhamMuaNgay.ThanhTien.ToString("N0") ₫
                                 </div>
                             </div>
                         }
@@ -230,10 +231,10 @@
                                                 <div class="fw-semibold text-truncate small text-dark" title="@it.TenSanPham">
                                                     @it.TenSanPham
                                                 </div>
-                                                <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">@L["Checkout_SingleUniqueItem"]</div>
+                                                <div class="badge bg-white text-secondary border mt-1" style="font-size: 10px;">@HienThi.Chon($"Số lượng: {it.SoLuong}", $"Qty: {it.SoLuong}")</div>
                                             </div>
                                             <div class="fw-bold text-success text-nowrap small">
-                                                @it.Gia.ToString("N0") ₫
+                                                @it.ThanhTien.ToString("N0") ₫
                                             </div>
                                         </div>
                                     }

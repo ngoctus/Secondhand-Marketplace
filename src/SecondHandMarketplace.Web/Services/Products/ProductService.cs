@@ -292,6 +292,7 @@ public class ProductService : IProductService
                 p.Ten,
                 p.MoTa,
                 p.Gia,
+                p.SoLuong,
                 p.TrangThai,
                 p.NgayTao,
                 CategoryName = p.DanhMuc != null ? p.DanhMuc.Ten : null,
@@ -316,8 +317,9 @@ public class ProductService : IProductService
             Name = duLieuTho.Ten,
             Description = duLieuTho.MoTa,
             Price = duLieuTho.Gia ?? 0m,
+            SoLuong = duLieuTho.SoLuong,
             Status = duLieuTho.TrangThai,
-            CanBuy = duLieuTho.TrangThai == "ACTIVE",
+            CanBuy = duLieuTho.TrangThai == "ACTIVE" && duLieuTho.SoLuong > 0,
             CategoryId = duLieuTho.MaDanhMuc,
             CategoryName = duLieuTho.CategoryName,
             ConditionName = duLieuTho.ConditionName,
@@ -363,6 +365,7 @@ public class ProductService : IProductService
                 Id = p.MaSanPham,
                 Ten = p.Ten,
                 Gia = p.Gia,
+                SoLuong = p.SoLuong,
                 TrangThai = p.TrangThai,
                 NgayTao = p.NgayTao,
                 NgayCapNhat = p.NgayCapNhat,
@@ -395,6 +398,7 @@ public class ProductService : IProductService
                 Ten = p.Ten,
                 MoTa = p.MoTa,
                 Gia = p.Gia,
+                SoLuong = p.SoLuong,
                 MaDanhMuc = p.MaDanhMuc,
                 MaTinhTrang = p.MaTinhTrang,
                 TrangThai = p.TrangThai,
@@ -424,6 +428,7 @@ public class ProductService : IProductService
             ChuoiTimKiem = LamChuoiTimKiem(form.Ten),
             MoTa = string.IsNullOrWhiteSpace(form.MoTa) ? null : form.MoTa.Trim(),
             Gia = form.Gia,
+            SoLuong = Math.Clamp(form.SoLuong, 1, 9999),
             TrangThai = "DRAFT",
             NgayTao = DateTime.UtcNow,
             NgayCapNhat = DateTime.UtcNow
@@ -478,6 +483,7 @@ public class ProductService : IProductService
         sp.ChuoiTimKiem = LamChuoiTimKiem(form.Ten);
         sp.MoTa = string.IsNullOrWhiteSpace(form.MoTa) ? null : form.MoTa.Trim();
         sp.Gia = form.Gia;
+        sp.SoLuong = Math.Clamp(form.SoLuong, 1, 9999);
         sp.NgayCapNhat = DateTime.UtcNow;
         if (wasActive)
         {

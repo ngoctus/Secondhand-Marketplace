@@ -18,7 +18,7 @@
         <span asp-validation-for="Ten" class="text-danger small"></span>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label asp-for="Gia" class="form-label">@L["Form_Price"] <span class="text-danger">*</span></label>
         <input asp-for="Gia" type="number" min="1000" step="1000" class="form-control" placeholder="@L["Form_PricePlaceholder"]" />
         <span asp-validation-for="Gia" class="text-danger small"></span>
@@ -40,6 +40,12 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="col-md-2">
+        <label asp-for="SoLuong" class="form-label">@HienThi.Chon("Số lượng", "Quantity") <span class="text-danger">*</span></label>
+        <input asp-for="SoLuong" type="number" min="1" max="9999" step="1" class="form-control" />
+        <span asp-validation-for="SoLuong" class="text-danger small"></span>
     </div>
 
     <div class="col-md-3">

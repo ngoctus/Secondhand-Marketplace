@@ -59,7 +59,7 @@
                                         }
                                         <div>
                                             <b>@p.Ten</b>
-                                            <div class="text-muted small">@L["Seller_PhotoCount", p.SoLuongAnh]</div>
+                                            <div class="text-muted small">@L["Seller_PhotoCount", p.SoLuongAnh] · <span class="fw-semibold text-dark">@HienThi.Chon($"Tồn kho: {p.SoLuong}", $"Stock: {p.SoLuong}")</span></div>
                                             @if (p.TrangThai == "REJECTED" && !string.IsNullOrWhiteSpace(p.LyDoTuChoiGanNhat))
                                             {
                                                 <div class="small text-danger mt-1"><strong>@L["Seller_RejectReason"]</strong> @p.LyDoTuChoiGanNhat</div>

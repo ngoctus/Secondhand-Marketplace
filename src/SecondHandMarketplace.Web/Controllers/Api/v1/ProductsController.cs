@@ -151,6 +151,7 @@ public class ProductsController(
             Ten = request.Name,
             MoTa = request.Description,
             Gia = request.Price,
+            SoLuong = request.Quantity,
             MaDanhMuc = request.CategoryId,
             MaTinhTrang = request.ConditionId
         };
@@ -199,6 +200,7 @@ public class ProductsController(
             Ten = request.Name,
             MoTa = request.Description,
             Gia = request.Price,
+            SoLuong = request.Quantity,
             MaDanhMuc = request.CategoryId,
             MaTinhTrang = request.ConditionId
         };

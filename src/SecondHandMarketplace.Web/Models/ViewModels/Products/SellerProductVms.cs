@@ -9,6 +9,7 @@ public class MyProductVm
     public int Id { get; set; }
     public string Ten { get; set; } = string.Empty;
     public decimal? Gia { get; set; }
+    public int SoLuong { get; set; } = 1;
     public string TrangThai { get; set; } = string.Empty;
     public DateTime NgayTao { get; set; }
     public DateTime NgayCapNhat { get; set; }
@@ -51,6 +52,10 @@ public class ProductFormVm
     [Required(ErrorMessage = "Giá sản phẩm là bắt buộc.")]
     [Range(1, 99_999_999_999, ErrorMessage = "Giá phải lớn hơn 0.")]
     public decimal? Gia { get; set; }
+
+    [Display(Name = "Số lượng")]
+    [Range(1, 9999, ErrorMessage = "Số lượng phải từ 1 đến 9.999.")]
+    public int SoLuong { get; set; } = 1;
 
     [Display(Name = "Danh mục")]
     [Required(ErrorMessage = "Vui lòng chọn danh mục sản phẩm.")]

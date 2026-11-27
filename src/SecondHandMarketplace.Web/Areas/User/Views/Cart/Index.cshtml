@@ -80,7 +80,7 @@
                                                     @if (item.CoTheMua)
                                                     {
                                                         <input class="form-check-input item-checkbox" type="checkbox"
-                                                               data-id="@item.MaGioHang" data-price="@item.Gia"
+                                                               data-id="@item.MaGioHang" data-price="@item.Gia" data-qty="@item.SoLuong"
                                                                data-shop-id="@shop.MaCuaHang"
                                                                @(item.DaChon ? "checked" : "") />
                                                     }
@@ -114,10 +114,28 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span class="fw-bold text-success">@item.Gia.ToString("N0") ₫</span>
+                                                    <span class="fw-bold text-success item-subtotal" data-id="@item.MaGioHang">@item.ThanhTien.ToString("N0") ₫</span>
+                                                    @if (item.SoLuong > 1)
+                                                    {
+                                                        <div class="small text-muted item-unit-price" data-id="@item.MaGioHang">@item.Gia.ToString("N0") ₫ / sp</div>
+                                                    }
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="badge bg-light text-dark border px-2 py-1">1</span>
+                                                    @if (item.CoTheMua)
+                                                    {
+                                                        <div class="input-group input-group-sm justify-content-center" style="width: 105px; margin: 0 auto;">
+                                                            <button type="button" class="btn btn-outline-secondary cart-qty-btn" data-id="@item.MaGioHang" data-delta="-1" aria-label="Giảm">−</button>
+                                                            <input type="number" class="form-control text-center px-1 fw-semibold cart-qty-input"
+                                                                   data-id="@item.MaGioHang" data-price="@item.Gia"
+                                                                   value="@item.SoLuong" min="1" max="@item.SoLuongTon" />
+                                                            <button type="button" class="btn btn-outline-secondary cart-qty-btn" data-id="@item.MaGioHang" data-delta="1" aria-label="Tăng">+</button>
+                                                        </div>
+                                                        <div class="small text-muted mt-1">@HienThi.Chon($"Còn {item.SoLuongTon}", $"{item.SoLuongTon} left")</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-light text-dark border px-2 py-1">@item.SoLuong</span>
+                                                    }
                                                     <div class="text-muted small" style="font-size: 10px;">@L["Cart_UniqueItem"]</div>
                                                 </td>
                                                 <td class="text-end pe-4">
@@ -220,13 +238,62 @@
                 });
             });
 
+            // Cập nhật số lượng sản phẩm trong giỏ
+            function capNhatSoLuong(id, newQty) {
+                const input = document.querySelector('.cart-qty-input[data-id="' + id + '"]');
+                const chk = document.querySelector('.item-checkbox[data-id="' + id + '"]');
+                if (!input) return;
+                const max = parseInt(input.max, 10) || 1;
+                const clamped = Math.min(max, Math.max(1, parseInt(newQty, 10) || 1));
+                input.value = clamped;
+
+                fetch('@Url.Action("CapNhatSoLuong", "Cart", new { area = "User" })', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': afToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: 'maGioHang=' + encodeURIComponent(id) + '&soLuong=' + encodeURIComponent(clamped) + '&__RequestVerificationToken=' + encodeURIComponent(afToken)
+                }).then(res => res.json()).then(data => {
+                    const finalQty = (data && data.soLuong) ? data.soLuong : clamped;
+                    input.value = finalQty;
+                    if (chk) chk.setAttribute('data-qty', finalQty);
+                    const price = parseFloat(input.getAttribute('data-price') || 0);
+                    const lblSub = document.querySelector('.item-subtotal[data-id="' + id + '"]');
+                    if (lblSub) lblSub.innerText = new Intl.NumberFormat('vi-VN').format(price * finalQty) + ' ₫';
+                    capNhatGiaoDien();
+                }).catch(() => {
+                    capNhatGiaoDien();
+                });
+            }
+
+            document.querySelectorAll('.cart-qty-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    const delta = parseInt(this.getAttribute('data-delta'), 10) || 0;
+                    const input = document.querySelector('.cart-qty-input[data-id="' + id + '"]');
+                    if (!input) return;
+                    capNhatSoLuong(id, (parseInt(input.value, 10) || 1) + delta);
+                });
+            });
+
+            document.querySelectorAll('.cart-qty-input').forEach(function (inp) {
+                inp.addEventListener('change', function () {
+                    const id = this.getAttribute('data-id');
+                    capNhatSoLuong(id, this.value);
+                });
+            });
+
             function capNhatGiaoDien() {
                 let tongTien = 0;
                 let tongMon = 0;
 
                 document.querySelectorAll('.item-checkbox:checked').forEach(function (chk) {
-                    tongMon += 1;
-                    tongTien += parseFloat(chk.getAttribute('data-price') || 0);
+                    const qty = Math.max(1, parseInt(chk.getAttribute('data-qty') || '1', 10));
+                    const price = parseFloat(chk.getAttribute('data-price') || 0);
+                    tongMon += qty;
+                    tongTien += price * qty;
                 });
 
                 document.querySelectorAll('.shop-select-all').forEach(function (chkShop) {
