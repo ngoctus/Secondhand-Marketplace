@@ -281,4 +281,63 @@ public class ProductSearchServiceTests
         Assert.Single(ketQua.Items);
         Assert.Equal(201, ketQua.Items[0].Id);
     }
+
+    [Fact]
+    public async Task GetMyFilteredAsync_LocTuKhoaDanhMucNgayTaoTrangThaiVaSapXep()
+    {
+        using var db = NewDb();
+        db.NguoiDungs.Add(User(1));
+        db.CuaHangs.Add(Shop(1, 1));
+        db.DanhMucs.AddRange(
+            new DanhMuc { MaDanhMuc = 1, Ten = "Đồ điện tử", ThuTuHienThi = 1 },
+            new DanhMuc { MaDanhMuc = 2, Ten = "Thời trang", ThuTuHienThi = 2 });
+
+        var p1 = Product(301, 1, 500_000m, "Tai nghe kiểm âm");
+        p1.MaDanhMuc = 1;
+        p1.TrangThai = "ACTIVE";
+        p1.NgayTao = new DateTime(2026, 11, 24, 2, 0, 0, DateTimeKind.Utc); // 24/11 09:00 VN
+        p1.NgayCapNhat = p1.NgayTao;
+
+        var p2 = Product(302, 1, 300_000m, "Dây cáp sạc USB-C");
+        p2.MaDanhMuc = 1;
+        p2.TrangThai = "REJECTED";
+        p2.NgayTao = new DateTime(2026, 11, 23, 20, 0, 0, DateTimeKind.Utc); // 24/11 03:00 VN
+        p2.NgayCapNhat = new DateTime(2026, 11, 24, 5, 0, 0, DateTimeKind.Utc);
+
+        var p3 = Product(303, 1, 150_000m, "Áo khoác denim");
+        p3.MaDanhMuc = 2;
+        p3.TrangThai = "ACTIVE";
+        p3.NgayTao = new DateTime(2026, 11, 20, 4, 0, 0, DateTimeKind.Utc); // 20/11 11:00 VN
+        p3.NgayCapNhat = p3.NgayTao;
+
+        db.SanPhams.AddRange(p1, p2, p3);
+        await db.SaveChangesAsync();
+
+        var service = new ProductService(db, new ReviewService(db));
+
+        // Lọc theo trạng thái REJECTED
+        var (biTuChoi, tongTatCa) = await service.GetMyFilteredAsync(1, new SellerProductFilterVm { Status = "REJECTED" });
+        Assert.Equal(3, tongTatCa);
+        Assert.Equal(new[] { 302 }, biTuChoi.Items.Select(x => x.Id));
+
+        // Lọc theo ngày tạo (giờ VN 24/11/2026 khớp cả p1 và p2, bỏ p3)
+        var (theoNgay, _) = await service.GetMyFilteredAsync(1, new SellerProductFilterVm
+        {
+            CreatedDate = new DateOnly(2026, 11, 24),
+            Sort = "price_asc"
+        });
+        Assert.Equal(new[] { 302, 301 }, theoNgay.Items.Select(x => x.Id));
+
+        // Lọc kết hợp từ khóa + danh mục
+        var (theoTuKhoa, _) = await service.GetMyFilteredAsync(1, new SellerProductFilterVm
+        {
+            Keyword = "tai nghe",
+            CategoryId = 1
+        });
+        Assert.Equal(new[] { 301 }, theoTuKhoa.Items.Select(x => x.Id));
+
+        // Sắp xếp giá cao xuống thấp
+        var (giaGiam, _) = await service.GetMyFilteredAsync(1, new SellerProductFilterVm { Sort = "price_desc" });
+        Assert.Equal(new[] { 301, 302, 303 }, giaGiam.Items.Select(x => x.Id));
+    }
 }

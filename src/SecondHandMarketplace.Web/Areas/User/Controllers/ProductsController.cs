@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Services.Categories;
@@ -31,10 +32,24 @@ public class ProductsController : UserBaseController
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1)
+    public async Task<IActionResult> Index([FromQuery] SellerProductFilterVm filter)
     {
         var userId = User.LayNguoiDungId()!.Value;
-        return View(await _products.GetMyAsync(userId, page));
+        filter.Page = Math.Clamp(filter.Page, 1, 10000);
+        if (!SellerProductFilterVm.CacMucHienThi.Contains(filter.PageSize))
+            filter.PageSize = 12;
+
+        // Không truyền HttpContext.RequestAborted vào truy vấn EF để khi người dùng bấm F5 nhanh
+        // hoặc chuyển trang đột ngột, Visual Studio không bật ngắt TaskCanceledException.
+        var (result, totalAll) = await _products.GetMyFilteredAsync(userId, filter);
+        var vm = new SellerProductListVm
+        {
+            Filter = filter,
+            Result = result,
+            DanhSachDanhMuc = await _categories.GetCategoriesAsync(),
+            TongTatCaSanPham = totalAll
+        };
+        return View(vm);
     }
 
     [HttpGet]
@@ -76,20 +91,23 @@ public class ProductsController : UserBaseController
     }
 
     [HttpGet]
-    public async Task<IActionResult> Edit(int id)
+    public async Task<IActionResult> Edit(int id, string? returnUrl = null)
     {
         var userId = User.LayNguoiDungId()!.Value;
         var form = await _products.GetFormAsync(userId, id);
         if (form is null) return NotFound();
         await DienDanhMucAsync(form);
+        ViewBag.ReturnUrl = LayReturnUrlHopLe(returnUrl);
         return View(form);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ProductFormVm form, List<IFormFile>? AnhMoi, bool? GuiDuyet)
+    public async Task<IActionResult> Edit(int id, ProductFormVm form, List<IFormFile>? AnhMoi, bool? GuiDuyet, string? returnUrl = null)
     {
         var userId = User.LayNguoiDungId()!.Value;
+        var validReturnUrl = LayReturnUrlHopLe(returnUrl);
+        ViewBag.ReturnUrl = validReturnUrl;
         if (form.Id is null || form.Id != id) form.Id = id;
 
         var truoc = await _products.GetFormAsync(userId, id);
@@ -101,6 +119,7 @@ public class ProductsController : UserBaseController
         {
             XoaAnhDaLuu(anh);
             form.AnhHienTai = truoc?.AnhHienTai ?? new();
+            form.TrangThai = truoc?.TrangThai ?? string.Empty;
             await DienDanhMucAsync(form);
             return View(form);
         }
@@ -111,46 +130,72 @@ public class ProductsController : UserBaseController
             XoaAnhDaLuu(anh);
             ModelState.AddModelError(string.Empty, loi!);
             form.AnhHienTai = truoc?.AnhHienTai ?? new();
+            form.TrangThai = truoc?.TrangThai ?? string.Empty;
             await DienDanhMucAsync(form);
             return View(form);
         }
 
+        HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+
         // Sản phẩm đang bán mà sửa nội dung/ảnh thì phải duyệt lại để không lách kiểm duyệt.
         if (GuiDuyet == true || truoc?.TrangThai == "ACTIVE")
-            return await GuiDuyetVaChuyenVeIndexAsync(userId, id);
+            return await GuiDuyetVaChuyenVeIndexAsync(userId, id, validReturnUrl);
 
         this.ThongBaoThanhCong("Đã cập nhật sản phẩm.");
-        return RedirectToAction(nameof(Index));
+        return ChuyenVeDanhSach(validReturnUrl);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> GuiDuyet(int id)
+    public async Task<IActionResult> GuiDuyet(int id, string? returnUrl = null)
     {
         var userId = User.LayNguoiDungId()!.Value;
-        return await GuiDuyetVaChuyenVeIndexAsync(userId, id);
+        return await GuiDuyetVaChuyenVeIndexAsync(userId, id, LayReturnUrlHopLe(returnUrl));
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> An(int id)
+    public async Task<IActionResult> An(int id, string? returnUrl = null)
     {
         var userId = User.LayNguoiDungId()!.Value;
         var (ok, loi) = await _products.HideAsync(userId, id);
-        if (ok) this.ThongBaoThanhCong("Đã ẩn sản phẩm.");
+        if (ok)
+        {
+            HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+            this.ThongBaoThanhCong("Đã ẩn sản phẩm.");
+        }
         else this.ThongBaoLoi(loi ?? "Không ẩn được sản phẩm.");
-        return RedirectToAction(nameof(Index));
+        return ChuyenVeDanhSach(LayReturnUrlHopLe(returnUrl));
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> MoAn(int id, string? returnUrl = null)
+    {
+        var userId = User.LayNguoiDungId()!.Value;
+        var (ok, loi) = await _products.UnhideAsync(userId, id);
+        if (ok)
+        {
+            HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+            this.ThongBaoThanhCong("Đã mở ẩn sản phẩm và hiển thị bán trở lại.");
+        }
+        else this.ThongBaoLoi(loi ?? "Không mở ẩn được sản phẩm.");
+        return ChuyenVeDanhSach(LayReturnUrlHopLe(returnUrl));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id, string? returnUrl = null)
     {
         var userId = User.LayNguoiDungId()!.Value;
         var (ok, loi) = await _products.DeleteAsync(userId, id);
-        if (ok) this.ThongBaoThanhCong("Đã xóa sản phẩm thành công.");
+        if (ok)
+        {
+            HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+            this.ThongBaoThanhCong("Đã xóa sản phẩm thành công.");
+        }
         else this.ThongBaoLoi(loi ?? "Không thể xóa sản phẩm.");
-        return RedirectToAction(nameof(Index));
+        return ChuyenVeDanhSach(LayReturnUrlHopLe(returnUrl));
     }
 
     [HttpPost]
@@ -159,6 +204,7 @@ public class ProductsController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
         var (ok, loi) = await _products.DatAnhChinhAsync(userId, id, maAnh);
+        if (ok) HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
         if (YeuCauTuAjax()) return Json(new { ok, error = ok ? null : loi });
 
         if (!ok) this.ThongBaoLoi(loi ?? "Không đặt được ảnh chính.");
@@ -171,6 +217,7 @@ public class ProductsController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
         var (ok, loi, maAnhChinhMoi) = await _products.XoaAnhAsync(userId, id, maAnh);
+        if (ok) HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
         if (YeuCauTuAjax()) return Json(new { ok, error = ok ? null : loi, coverId = maAnhChinhMoi });
 
         if (!ok) this.ThongBaoLoi(loi ?? "Không xóa được ảnh.");
@@ -182,18 +229,26 @@ public class ProductsController : UserBaseController
     private bool YeuCauTuAjax() =>
         StringComparer.OrdinalIgnoreCase.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest");
 
+    private string? LayReturnUrlHopLe(string? returnUrl) =>
+        !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl) ? returnUrl : null;
+
+    private IActionResult ChuyenVeDanhSach(string? returnUrl) =>
+        !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+            ? LocalRedirect(returnUrl)
+            : RedirectToAction(nameof(Index));
+
     // =====================================================================
 
     /// <summary>Gửi duyệt (B1) rồi phân tích từ khóa (B2 – bàn giao C2), sau đó quay về danh sách.</summary>
-    private async Task<IActionResult> GuiDuyetVaChuyenVeIndexAsync(int userId, int maSanPham)
+    private async Task<IActionResult> GuiDuyetVaChuyenVeIndexAsync(int userId, int maSanPham, string? returnUrl = null)
     {
         var (ok, loi) = await _products.GuiDuyetAsync(userId, maSanPham);
         if (!ok)
         {
             // Tránh lách kiểm duyệt: nếu gửi duyệt thất bại, ẩn sản phẩm để nội dung chưa duyệt không còn hiển thị công khai.
-            await _products.HideAsync(userId, maSanPham);
+            await _products.HideDueToFailedReviewAsync(userId, maSanPham);
             this.ThongBaoLoi((loi ?? "Không gửi duyệt được.") + " Sản phẩm đã được chuyển về trạng thái ẩn để bảo vệ hệ thống.");
-            return RedirectToAction(nameof(Edit), new { id = maSanPham });
+            return RedirectToAction(nameof(Edit), new { id = maSanPham, returnUrl });
         }
 
         // C2: gọi ngay sau khi sp_GuiDuyetSanPham thành công; lỗi quét đã được service chuyển thành FAILED, không ném.
@@ -207,8 +262,9 @@ public class ProductsController : UserBaseController
             _logger.LogWarning(ex, "Phân tích từ khóa lỗi sau khi gửi duyệt sản phẩm {ProductId}.", maSanPham);
         }
 
+        HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
         this.ThongBaoThanhCong("Đã gửi sản phẩm đi kiểm duyệt. Admin sẽ duyệt trong thời gian tới.");
-        return RedirectToAction(nameof(Index));
+        return ChuyenVeDanhSach(returnUrl);
     }
 
     private async Task DienDanhMucAsync(ProductFormVm form)

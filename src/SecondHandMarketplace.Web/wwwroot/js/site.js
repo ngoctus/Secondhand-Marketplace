@@ -323,6 +323,13 @@ window.rmT = (key, fallback, ...args) => {
             if (!data.isFavorite && window.location.pathname.toLowerCase().startsWith('/user/favorites')) {
                 const item = btn.closest('.col') ?? btn.closest('.rm-product-card');
                 item?.remove();
+                const totalBadge = document.getElementById('rmFavTotalCount');
+                if (totalBadge) {
+                    const nextTotal = Math.max(0, (parseInt(totalBadge.dataset.total || '0', 10) || 0) - 1);
+                    totalBadge.dataset.total = String(nextTotal);
+                    const tpl = totalBadge.dataset.template || '{0} sản phẩm đã lưu';
+                    totalBadge.textContent = tpl.replace('{0}', String(nextTotal));
+                }
                 if (!document.querySelector('.rm-product-card')) window.location.reload();
             }
         } catch {
@@ -685,6 +692,9 @@ window.rmT = (key, fallback, ...args) => {
 
         try {
             const formData = new FormData(form);
+            if (!formData.has('__RequestVerificationToken') && csrf) {
+                formData.append('__RequestVerificationToken', csrf);
+            }
             const res = await fetch(form.action, {
                 method: 'POST',
                 headers: {

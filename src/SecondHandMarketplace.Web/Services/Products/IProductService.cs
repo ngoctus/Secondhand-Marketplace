@@ -19,6 +19,14 @@ public interface IProductService
     /// <summary>Danh sách sản phẩm của người bán (mọi trạng thái, không gồm xóa mềm).</summary>
     Task<PagedResult<MyProductVm>> GetMyAsync(int maNguoiDung, int page = 1, CancellationToken cancellationToken = default);
 
+    /// <summary>Danh sách sản phẩm của người bán kèm lọc (từ khóa, danh mục, ngày tạo, trạng thái) và sắp xếp.</summary>
+    async Task<(PagedResult<MyProductVm> Result, int TotalAll)> GetMyFilteredAsync(
+        int maNguoiDung, SellerProductFilterVm filter, CancellationToken cancellationToken = default)
+    {
+        var paged = await GetMyAsync(maNguoiDung, filter.Page, cancellationToken);
+        return (paged, paged.TotalItems);
+    }
+
     /// <summary>Nạp form sửa sản phẩm của chính người bán; null nếu không tồn tại hoặc không thuộc về họ.</summary>
     Task<ProductFormVm?> GetFormAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default);
 
@@ -34,6 +42,14 @@ public interface IProductService
 
     /// <summary>Ẩn sản phẩm đang bán (ACTIVE → HIDDEN) qua sp_ChuyenTrangThaiSanPham.</summary>
     Task<(bool Success, string? Error)> HideAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default);
+
+    /// <summary>Ẩn sản phẩm do gửi duyệt thất bại (không cho mở ẩn trực tiếp để tránh lách duyệt).</summary>
+    Task<(bool Success, string? Error)> HideDueToFailedReviewAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
+        => HideAsync(maNguoiDung, maSanPham, cancellationToken);
+
+    /// <summary>Mở ẩn sản phẩm (HIDDEN → ACTIVE) không cần duyệt lại nếu tin chỉ bị ẩn mà chưa chỉnh sửa.</summary>
+    Task<(bool Success, string? Error)> UnhideAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
+        => Task.FromResult<(bool, string?)>((false, "Không hỗ trợ mở ẩn trực tiếp."));
 
     /// <summary>Gửi duyệt qua sp_GuiDuyetSanPham. Khi rule fail, Error chứa các lỗi gộp từ procedure.</summary>
     Task<(bool Success, string? Error)> GuiDuyetAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default);

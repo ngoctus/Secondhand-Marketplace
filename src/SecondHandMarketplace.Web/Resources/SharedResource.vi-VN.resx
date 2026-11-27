@@ -66,7 +66,7 @@
   <data name="Nav_ChangePassword" xml:space="preserve"><value>Đổi mật khẩu</value></data>
   <data name="Nav_MyOrders" xml:space="preserve"><value>Đơn mua của tôi</value></data>
   <data name="Nav_MyReviews" xml:space="preserve"><value>Đánh giá của tôi</value></data>
-  <data name="Nav_SellerOrders" xml:space="preserve"><value>Đơn bán (Shop)</value></data>
+  <data name="Nav_SellerOrders" xml:space="preserve"><value>Đơn bán</value></data>
   <data name="Nav_ShopReviews" xml:space="preserve"><value>Đánh giá cửa hàng</value></data>
   <data name="Nav_RevenueStats" xml:space="preserve"><value>Thống kê doanh thu</value></data>
   <data name="Nav_MyShop" xml:space="preserve"><value>Cửa hàng của tôi</value></data>
@@ -459,8 +459,28 @@
   <data name="Seller_ConfirmHide" xml:space="preserve"><value>Ẩn sản phẩm này khỏi trang bán?</value></data>
   <data name="Seller_EditShort" xml:space="preserve"><value>Sửa</value></data>
   <data name="Seller_Hide" xml:space="preserve"><value>Ẩn</value></data>
+  <data name="Seller_Unhide" xml:space="preserve"><value>Mở ẩn</value></data>
+  <data name="Seller_ConfirmUnhide" xml:space="preserve"><value>Mở bán lại sản phẩm này ngay?</value></data>
   <data name="Seller_ViewListing" xml:space="preserve"><value>Xem trang bán</value></data>
+  <data name="Seller_ViewShort" xml:space="preserve"><value>Xem</value></data>
   <data name="Seller_ConfirmDelete" xml:space="preserve"><value>Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này không? Thao tác này không thể hoàn tác.</value></data>
+  <data name="Seller_FilterSearchPlaceholder" xml:space="preserve"><value>Tìm kiếm ở đây</value></data>
+  <data name="Seller_FilterCategory" xml:space="preserve"><value>Danh mục</value></data>
+  <data name="Seller_FilterCreatedDate" xml:space="preserve"><value>Ngày tạo</value></data>
+  <data name="Seller_FilterStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="Seller_FilterReset" xml:space="preserve"><value>Xóa lọc</value></data>
+  <data name="Seller_PerPageLabel" xml:space="preserve"><value>Hiển thị:</value></data>
+  <data name="Seller_PerPageOption" xml:space="preserve"><value>{0}/Trang</value></data>
+  <data name="Seller_SortLabel" xml:space="preserve"><value>Sắp xếp:</value></data>
+  <data name="Seller_SortUpdatedDesc" xml:space="preserve"><value>Cập nhật - mới nhất</value></data>
+  <data name="Seller_SortUpdatedAsc" xml:space="preserve"><value>Cập nhật - cũ nhất</value></data>
+  <data name="Seller_SortPriceAsc" xml:space="preserve"><value>Giá - thấp đến cao</value></data>
+  <data name="Seller_SortPriceDesc" xml:space="preserve"><value>Giá - cao xuống thấp</value></data>
+  <data name="Seller_FilterCount" xml:space="preserve"><value>{0} sản phẩm</value></data>
+  <data name="Seller_FilterEmptyTitle" xml:space="preserve"><value>Không tìm thấy sản phẩm phù hợp</value></data>
+  <data name="Seller_FilterEmptyDesc" xml:space="preserve"><value>Thử đổi từ khóa, danh mục, ngày tạo hoặc trạng thái lọc.</value></data>
+  <data name="Seller_ReasonMore" xml:space="preserve"><value>Xem đầy đủ</value></data>
+  <data name="Seller_ReasonLess" xml:space="preserve"><value>Thu gọn</value></data>
   <!-- B-04: Kênh Người Bán - form Đăng/Sửa sản phẩm -->
   <data name="Form_CreateTitle" xml:space="preserve"><value>Đăng bán sản phẩm</value></data>
   <data name="Form_EditTitle" xml:space="preserve"><value>Sửa sản phẩm</value></data>
@@ -506,6 +526,8 @@
   <data name="Form_ApproveNote" xml:space="preserve"><value>Lưu nháp khi chưa xong; hệ thống chỉ kiểm duyệt khi bạn bấm "Lưu và gửi duyệt".</value></data>
   <!-- B-04: Trang yêu thích -->
   <data name="Fav_Title" xml:space="preserve"><value>Sản phẩm yêu thích</value></data>
+  <data name="Fav_TotalCount" xml:space="preserve"><value>{0} sản phẩm đã lưu</value></data>
+  <data name="Card_AddToCart" xml:space="preserve"><value>Thêm vào giỏ hàng</value></data>
   <data name="Fav_Continue" xml:space="preserve"><value>Tiếp tục khám phá</value></data>
   <data name="Fav_EmptyTitle" xml:space="preserve"><value>Bạn chưa lưu sản phẩm nào</value></data>
   <data name="Fav_EmptyDesc" xml:space="preserve"><value>Lưu món đồ bạn quan tâm để quay lại xem trạng thái, giá và thông tin cửa hàng bất cứ lúc nào.</value></data>
