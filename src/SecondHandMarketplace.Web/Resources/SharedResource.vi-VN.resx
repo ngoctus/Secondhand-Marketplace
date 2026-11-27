@@ -166,6 +166,77 @@
   <data name="Account_Profile_Subtitle" xml:space="preserve"><value>Cập nhật thông tin tài khoản của bạn.</value></data>
   <data name="Account_EmailReadonlyHint" xml:space="preserve"><value>Email không thể thay đổi.</value></data>
   <data name="Account_Profile_Utilities" xml:space="preserve"><value>Tiện ích tài khoản &amp; Kênh Người Bán</value></data>
+  <data name="KhuVuc_ProvinceLabel" xml:space="preserve"><value>Tỉnh/Thành phố</value></data>
+  <data name="KhuVuc_WardLabel" xml:space="preserve"><value>Phường/Xã</value></data>
+  <data name="Profile_InfoHeading" xml:space="preserve"><value>Thông tin cá nhân</value></data>
+  <data name="Profile_AvatarTitle" xml:space="preserve"><value>Ảnh đại diện cá nhân</value></data>
+  <data name="Profile_AvatarHint" xml:space="preserve"><value>Hỗ trợ JPG, PNG, WEBP tối đa 5MB.</value></data>
+  <data name="Profile_ChooseAvatar" xml:space="preserve"><value>Chọn ảnh mới</value></data>
+  <data name="Profile_CurrentSavedAddress" xml:space="preserve"><value>Địa chỉ hiện tại</value></data>
+  <data name="Profile_StreetDetail" xml:space="preserve"><value>Địa chỉ chi tiết (số nhà, tên đường)</value></data>
+  <data name="Profile_StreetPlaceholder" xml:space="preserve"><value>Ví dụ: 25 Lê Lợi, Chung cư A...</value></data>
+  <data name="Profile_AddressBookTitle" xml:space="preserve"><value>Sổ địa chỉ &amp; địa chỉ dự phòng</value></data>
+  <data name="Profile_AddressBookDesc" xml:space="preserve"><value>Lưu sẵn nhiều địa chỉ để chọn nhanh khi đặt hàng.</value></data>
+  <data name="Profile_AddBackupAddress" xml:space="preserve"><value>Thêm địa chỉ</value></data>
+  <data name="Profile_AddressLabel" xml:space="preserve"><value>Nhãn địa chỉ (tùy chọn)</value></data>
+  <data name="Profile_AddressLabelPlaceholder" xml:space="preserve"><value>Ví dụ: Nhà riêng, Văn phòng...</value></data>
+  <data name="Profile_SetAsDefault" xml:space="preserve"><value>Đặt mặc định</value></data>
+  <data name="Profile_SaveNewAddress" xml:space="preserve"><value>Lưu địa chỉ</value></data>
+  <data name="Profile_AddressBookEmpty" xml:space="preserve"><value>Chưa có địa chỉ nào được lưu. Thêm địa chỉ phía trên để chọn nhanh khi đặt hàng.</value></data>
+  <data name="Profile_DefaultBadge" xml:space="preserve"><value>Mặc định</value></data>
+  <data name="Profile_BackupBadge" xml:space="preserve"><value>Dự phòng</value></data>
+  <data name="Profile_ConfirmDeleteAddress" xml:space="preserve"><value>Xóa địa chỉ này khỏi sổ địa chỉ?</value></data>
+  <data name="Checkout_SavedAddresses" xml:space="preserve"><value>Chọn địa chỉ giao hàng</value></data>
+  <data name="Checkout_ManageAddresses" xml:space="preserve"><value>Quản lý sổ địa chỉ</value></data>
+  <data name="Checkout_UseNewAddress" xml:space="preserve"><value>Nhập địa chỉ khác</value></data>
+  <data name="Checkout_NoSavedAddressHint" xml:space="preserve"><value>Bạn chưa lưu địa chỉ trong hồ sơ. Hãy điền thông tin bên dưới hoặc lưu sẵn trong Hồ sơ cá nhân.</value></data>
+  <data name="Checkout_ReceiverNamePlaceholder" xml:space="preserve"><value>Ví dụ: Nguyễn Văn An</value></data>
+  <data name="Checkout_ReceiverPhonePlaceholder" xml:space="preserve"><value>Ví dụ: 0912345678</value></data>
+  <data name="Shop_Subtitle" xml:space="preserve"><value>Mỗi tài khoản người dùng được tạo tối đa một cửa hàng.</value></data>
+  <data name="Shop_ViewReviews" xml:space="preserve"><value>Xem đánh giá cửa hàng</value></data>
+  <data name="Shop_MissingAddressWarning" xml:space="preserve"><value>Cửa hàng của bạn chưa có địa chỉ. Vui lòng chọn tỉnh/thành, phường/xã và nhập địa chỉ chi tiết rồi bấm lưu.</value></data>
+  <data name="Shop_AvatarTitle" xml:space="preserve"><value>Ảnh đại diện / Logo cửa hàng</value></data>
+  <data name="Shop_ChooseAvatar" xml:space="preserve"><value>Tải ảnh cửa hàng</value></data>
+  <data name="Shop_Name" xml:space="preserve"><value>Tên cửa hàng</value></data>
+  <data name="Shop_ContactPhone" xml:space="preserve"><value>Số điện thoại liên hệ</value></data>
+  <data name="Shop_Description" xml:space="preserve"><value>Mô tả cửa hàng</value></data>
+  <data name="Shop_AddressLegend" xml:space="preserve"><value>Địa chỉ cửa hàng</value></data>
+  <data name="Shop_AddressDetail" xml:space="preserve"><value>Địa chỉ chi tiết (số nhà, đường, thôn/xóm)</value></data>
+  <data name="Shop_AreaDisplayName" xml:space="preserve"><value>Tên khu vực quen thuộc (không bắt buộc)</value></data>
+  <data name="Shop_AreaPlaceholder" xml:space="preserve"><value>Ví dụ: Gần chợ Bến Thành</value></data>
+  <data name="Shop_BankLegend" xml:space="preserve"><value>Thông tin nhận chuyển khoản</value></data>
+  <data name="Shop_BankHint" xml:space="preserve"><value>Không bắt buộc. Nếu nhập, vui lòng điền đủ ngân hàng, số tài khoản và tên chủ tài khoản để người mua thấy mã QR thanh toán.</value></data>
+  <data name="Shop_BankLabel" xml:space="preserve"><value>Ngân hàng</value></data>
+  <data name="Shop_BankEmptyOption" xml:space="preserve"><value>-- Chưa chọn ngân hàng --</value></data>
+  <data name="Shop_BankAccountNumber" xml:space="preserve"><value>Số tài khoản</value></data>
+  <data name="Shop_BankAccountHolder" xml:space="preserve"><value>Tên chủ tài khoản</value></data>
+  <data name="Shop_StatusLabel" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="Shop_UpdateBtn" xml:space="preserve"><value>Cập nhật cửa hàng</value></data>
+  <data name="Shop_CreateBtn" xml:space="preserve"><value>Tạo cửa hàng</value></data>
+  <data name="OrderDetail_HintPending" xml:space="preserve"><value>Shop đang xem đơn. Bạn có thể hủy nếu chưa còn nhu cầu và thao tác hủy vẫn khả dụng.</value></data>
+  <data name="OrderDetail_HintConfirmed" xml:space="preserve"><value>Shop đã xác nhận và đang chuẩn bị giao hàng hoặc thống nhất lịch hẹn.</value></data>
+  <data name="OrderDetail_HintShipping" xml:space="preserve"><value>Đơn đang được giao hoặc hai bên đang thực hiện lịch hẹn nhận hàng.</value></data>
+  <data name="OrderDetail_HintDelivered" xml:space="preserve"><value>Kiểm tra sản phẩm trước khi xác nhận đã nhận. Chỉ xác nhận khi hàng đã ở với bạn.</value></data>
+  <data name="OrderDetail_HintCompleted" xml:space="preserve"><value>Giao dịch đã hoàn tất. Bạn có thể đánh giá shop để chia sẻ trải nghiệm.</value></data>
+  <data name="OrderDetail_HintCancelled" xml:space="preserve"><value>Đơn hàng đã bị hủy. Xem lý do bên dưới hoặc trong lịch sử trạng thái.</value></data>
+  <data name="OrderDetail_HintDefault" xml:space="preserve"><value>Theo dõi lịch sử bên dưới để xem các lần cập nhật của đơn hàng.</value></data>
+  <data name="OrderDetail_PayCod" xml:space="preserve"><value>Thanh toán khi nhận hàng (COD)</value></data>
+  <data name="OrderDetail_PayVietQr" xml:space="preserve"><value>Chuyển khoản VietQR</value></data>
+  <data name="OrderDetail_PayOnline" xml:space="preserve"><value>Trực tuyến</value></data>
+  <data name="OrderDetail_Star1" xml:space="preserve"><value>1 sao - Rất không hài lòng</value></data>
+  <data name="OrderDetail_Star2" xml:space="preserve"><value>2 sao - Không hài lòng</value></data>
+  <data name="OrderDetail_Star3" xml:space="preserve"><value>3 sao - Bình thường</value></data>
+  <data name="OrderDetail_Star4" xml:space="preserve"><value>4 sao - Hài lòng</value></data>
+  <data name="OrderDetail_Star5" xml:space="preserve"><value>5 sao - Rất hài lòng</value></data>
+  <data name="Account_OtpStep1Badge" xml:space="preserve"><value>Bước 1/2 · Xác thực OTP</value></data>
+  <data name="Account_ChangePwdStep2Badge" xml:space="preserve"><value>Bước 2/2 · Đổi mật khẩu</value></data>
+  <data name="Account_ResetStep2Badge" xml:space="preserve"><value>Bước 2/2 · Đặt mật khẩu mới</value></data>
+  <data name="Account_ChangePwdOtpDesc" xml:space="preserve"><value>Để bảo mật tài khoản, bạn cần xác thực mã OTP gửi về email &lt;strong&gt;{0}&lt;/strong&gt; trước khi đổi mật khẩu.</value></data>
+  <data name="Account_SendOtpEmail" xml:space="preserve"><value>Gửi mã OTP về email</value></data>
+  <data name="Account_ResendOtpEmail" xml:space="preserve"><value>Gửi lại mã OTP về email</value></data>
+  <data name="Account_ConfirmOtpBtn" xml:space="preserve"><value>Xác nhận mã OTP</value></data>
+  <data name="Account_ResetOtpDesc" xml:space="preserve"><value>Nhập mã xác nhận OTP 6 chữ số đã được gửi đến &lt;strong&gt;{0}&lt;/strong&gt; để tiếp tục đổi mật khẩu.</value></data>
+  <data name="Account_ResetNewPwdDesc" xml:space="preserve"><value>Nhập mật khẩu mới cho tài khoản &lt;strong&gt;{0}&lt;/strong&gt;.</value></data>
   <data name="Account_Forgot_Subtitle" xml:space="preserve"><value>Nhập email đã đăng ký để nhận mã OTP đặt lại mật khẩu.</value></data>
   <data name="Account_SendOtp" xml:space="preserve"><value>Gửi mã OTP</value></data>
   <data name="Account_Reset_Title" xml:space="preserve"><value>Đặt lại mật khẩu</value></data>

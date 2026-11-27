@@ -8,13 +8,13 @@
         : null;
     var huongDanTrangThai = Model.TrangThai switch
     {
-        "PENDING" => "Shop đang xem đơn. Bạn có thể hủy nếu chưa còn nhu cầu và thao tác hủy vẫn khả dụng.",
-        "CONFIRMED" => "Shop đã xác nhận và đang chuẩn bị giao hàng hoặc thống nhất lịch hẹn.",
-        "SHIPPING" => "Đơn đang được giao hoặc hai bên đang thực hiện lịch hẹn nhận hàng.",
-        "DELIVERED" => "Kiểm tra sản phẩm trước khi xác nhận đã nhận. Chỉ xác nhận khi hàng đã ở với bạn.",
-        "COMPLETED" => "Giao dịch đã hoàn tất. Bạn có thể đánh giá shop để chia sẻ trải nghiệm.",
-        "CANCELLED" => "Đơn hàng đã bị hủy. Xem lý do bên dưới hoặc trong lịch sử trạng thái.",
-        _ => "Theo dõi lịch sử bên dưới để xem các lần cập nhật của đơn hàng."
+        "PENDING" => L["OrderDetail_HintPending"].Value,
+        "CONFIRMED" => L["OrderDetail_HintConfirmed"].Value,
+        "SHIPPING" => L["OrderDetail_HintShipping"].Value,
+        "DELIVERED" => L["OrderDetail_HintDelivered"].Value,
+        "COMPLETED" => L["OrderDetail_HintCompleted"].Value,
+        "CANCELLED" => L["OrderDetail_HintCancelled"].Value,
+        _ => L["OrderDetail_HintDefault"].Value
     };
 }
 <div class="container my-4" style="max-width: 950px;">
@@ -207,7 +207,7 @@
                 <div class="small mb-2">
                     <span class="text-muted">@L["OrderDetail_PaymentMethodLabel"]</span>
                     <strong class="text-dark">
-                        @(Model.PhuongThucThanhToan == "COD" ? "Thanh toán khi nhận hàng (COD)" : Model.PhuongThucThanhToan == "BANK_TRANSFER" ? "Chuyển khoản VietQR" : "Trực tuyến")
+                        @(Model.PhuongThucThanhToan == "COD" ? L["OrderDetail_PayCod"].Value : Model.PhuongThucThanhToan == "BANK_TRANSFER" ? L["OrderDetail_PayVietQr"].Value : L["OrderDetail_PayOnline"].Value)
                     </strong>
                 </div>
                 <div class="small mb-2">
@@ -403,11 +403,11 @@
             var input = document.getElementById('inputSoSao');
             var text = document.getElementById('starRatingText');
             var labels = {
-                1: '1 sao - Rất không hài lòng',
-                2: '2 sao - Không hài lòng',
-                3: '3 sao - Bình thường',
-                4: '4 sao - Hài lòng',
-                5: '5 sao - Rất hài lòng'
+                1: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["OrderDetail_Star1"].Value)),
+                2: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["OrderDetail_Star2"].Value)),
+                3: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["OrderDetail_Star3"].Value)),
+                4: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["OrderDetail_Star4"].Value)),
+                5: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["OrderDetail_Star5"].Value))
             };
 
             function setStars(val) {

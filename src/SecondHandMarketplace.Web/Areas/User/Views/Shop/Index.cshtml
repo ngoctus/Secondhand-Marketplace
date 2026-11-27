@@ -1,59 +1,168 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Shop.ShopVm
 @{
-    ViewData["Title"] = "Cửa hàng của tôi";
+    ViewData["Title"] = L["Nav_MyShop"].Value;
     var thieuDiaChi = Model.MaCuaHang.HasValue && (Model.MaTinhThanh is null || Model.MaPhuongXa is null || string.IsNullOrWhiteSpace(Model.DiaChiChiTiet));
+    var shopInitial = !string.IsNullOrWhiteSpace(Model.TenShop) ? Model.TenShop.Trim()[..1].ToUpperInvariant() : "S";
 }
-<div class="container py-4" style="max-width:760px">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+
+<div class="rm-main-content" style="max-width: 820px; padding-top: 8px;">
+    <div class="rm-profile-head">
         <div>
-            <h2 class="mb-1">Cửa hàng của tôi</h2>
-            <p class="text-muted mb-0">Mỗi tài khoản USER được tạo tối đa một cửa hàng.</p>
+            <h1 class="rm-profile-title">@L["Nav_MyShop"]</h1>
+            <p class="rm-profile-sub">@L["Shop_Subtitle"]</p>
         </div>
         @if (Model.MaCuaHang.HasValue)
         {
-            <a asp-area="User" asp-controller="Reviews" asp-action="Shop" class="btn btn-outline-success btn-sm rounded-pill px-3">
-                <i class="bi bi-star me-1"></i> Xem đánh giá cửa hàng
+            <a asp-area="User" asp-controller="Reviews" asp-action="Shop" class="btn-rm-outline rm-profile-head-btn">
+                <i class="bi bi-star me-1" aria-hidden="true"></i> @L["Shop_ViewReviews"]
             </a>
         }
     </div>
-@if (thieuDiaChi)
-{
-    <div class="alert alert-warning d-flex align-items-center gap-3">
-        <i class="bi bi-exclamation-triangle-fill fs-4 text-warning flex-shrink-0"></i>
-        <div>Cửa hàng của bạn chưa có địa chỉ. Vui lòng chọn tỉnh/thành, phường/xã và nhập địa chỉ chi tiết rồi bấm lưu.</div>
-    </div>
-}
-<form asp-action="Index" method="post" class="card card-body gap-3"><div asp-validation-summary="ModelOnly" class="text-danger"></div>
-<div><label asp-for="TenShop" class="form-label"></label><input asp-for="TenShop" class="form-control"/><span asp-validation-for="TenShop" class="text-danger"></span></div>
-<div><label asp-for="SoDienThoaiLienHe" class="form-label"></label><input asp-for="SoDienThoaiLienHe" class="form-control"/><span asp-validation-for="SoDienThoaiLienHe" class="text-danger"></span></div>
-<div><label asp-for="MoTa" class="form-label"></label><textarea asp-for="MoTa" class="form-control" rows="3"></textarea><span asp-validation-for="MoTa" class="text-danger"></span></div>
-<div><label asp-for="Logo" class="form-label"></label><input asp-for="Logo" class="form-control" placeholder="/uploads/shop-logo.png"/><span asp-validation-for="Logo" class="text-danger"></span></div>
 
-<fieldset class="border rounded p-3">
-    <legend class="fs-6 fw-semibold px-2 w-auto">Địa chỉ cửa hàng</legend>
-    <partial name="_ChonKhuVuc" model="new SecondHandMarketplace.Web.Models.ViewModels.Areas.ChonKhuVucVm {
-        TenFieldTinh = nameof(Model.MaTinhThanh), TenFieldXa = nameof(Model.MaPhuongXa),
-        MaTinh = Model.MaTinhThanh, MaXa = Model.MaPhuongXa,
-        TinhThanhs = Model.TinhThanhs, PhuongXas = Model.PhuongXas, ChoPhepTatCa = false }" />
-    <div class="mt-3"><label asp-for="DiaChiChiTiet" class="form-label"></label><input asp-for="DiaChiChiTiet" class="form-control" maxlength="300"/><span asp-validation-for="DiaChiChiTiet" class="text-danger"></span></div>
-    <div class="mt-3"><label asp-for="KhuVucHienThi" class="form-label"></label><input asp-for="KhuVucHienThi" class="form-control" maxlength="100" placeholder="Ví dụ: Gần chợ Bến Thành"/><span asp-validation-for="KhuVucHienThi" class="text-danger"></span></div>
-</fieldset>
+    @if (thieuDiaChi)
+    {
+        <div class="alert alert-warning d-flex align-items-center gap-3 rounded-3">
+            <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0" aria-hidden="true"></i>
+            <div class="small">@L["Shop_MissingAddressWarning"]</div>
+        </div>
+    }
 
-<fieldset class="border rounded p-3">
-    <legend class="fs-6 fw-semibold px-2 w-auto">Thông tin nhận chuyển khoản</legend>
-    <p class="small text-muted mb-3">Không bắt buộc. Nếu nhập, vui lòng điền đủ ngân hàng, số tài khoản và tên chủ tài khoản. Chưa nhập thì người mua sẽ không thấy mã QR thanh toán của shop.</p>
-    <div class="mb-3"><label asp-for="MaNganHang" class="form-label"></label>
-        <select asp-for="MaNganHang" class="form-select">
-            <option value="">-- Chưa chọn ngân hàng --</option>
-            @foreach (var b in Model.NganHangs)
-            {
-                <option value="@b.Bin" selected="@(Model.MaNganHang == b.Bin)">@b.TenHienThi</option>
+    <form asp-action="Index" method="post" enctype="multipart/form-data" class="rm-profile-card rm-profile-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+        <input type="hidden" asp-for="Logo" />
+
+        <!-- Ảnh đại diện / Logo cửa hàng -->
+        <div class="rm-avatar-uploader">
+            <div class="rm-avatar-preview-wrap">
+                @if (!string.IsNullOrWhiteSpace(Model.Logo))
+                {
+                    <img src="@Model.Logo" alt="@Model.TenShop" id="shopLogoPreview" class="rm-avatar-preview-img"
+                         onerror="this.style.display='none'; document.getElementById('shopLogoFallback').style.display='inline-flex';" />
+                    <span id="shopLogoFallback" class="rm-avatar-preview-fallback" style="display:none;" aria-hidden="true">@shopInitial</span>
+                }
+                else
+                {
+                    <img src="" alt="@Model.TenShop" id="shopLogoPreview" class="rm-avatar-preview-img" style="display:none;" />
+                    <span id="shopLogoFallback" class="rm-avatar-preview-fallback" aria-hidden="true">@shopInitial</span>
+                }
+            </div>
+            <div class="rm-avatar-upload-meta">
+                <div class="rm-avatar-upload-title">@L["Shop_AvatarTitle"]</div>
+                <div class="rm-avatar-upload-hint">@L["Profile_AvatarHint"]</div>
+                <label class="btn-rm-outline rm-avatar-upload-btn" for="shopLogoFileInput">
+                    @L["Shop_ChooseAvatar"]
+                </label>
+                <input id="shopLogoFileInput" name="logoFile" type="file" accept=".jpg,.jpeg,.png,.webp" class="visually-hidden" />
+                <span asp-validation-for="Logo" class="text-danger small d-block mt-1"></span>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="TenShop" class="form-label fw-semibold small">@L["Shop_Name"] <span class="text-danger">*</span></label>
+                <input asp-for="TenShop" class="form-control" />
+                <span asp-validation-for="TenShop" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="SoDienThoaiLienHe" class="form-label fw-semibold small">@L["Shop_ContactPhone"] <span class="text-danger">*</span></label>
+                <input asp-for="SoDienThoaiLienHe" class="form-control" />
+                <span asp-validation-for="SoDienThoaiLienHe" class="text-danger small"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="MoTa" class="form-label fw-semibold small">@L["Shop_Description"]</label>
+                <textarea asp-for="MoTa" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="MoTa" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <fieldset class="rm-profile-fieldset">
+            <legend>@L["Shop_AddressLegend"]</legend>
+            @{
+                var khuVucShop = new SecondHandMarketplace.Web.Models.ViewModels.Areas.ChonKhuVucVm
+                {
+                    TenFieldTinh = nameof(Model.MaTinhThanh),
+                    TenFieldXa = nameof(Model.MaPhuongXa),
+                    MaTinh = Model.MaTinhThanh,
+                    MaXa = Model.MaPhuongXa,
+                    TinhThanhs = Model.TinhThanhs,
+                    PhuongXas = Model.PhuongXas,
+                    ChoPhepTatCa = false,
+                    NhanTinh = L["KhuVuc_ProvinceLabel"].Value,
+                    NhanXa = L["KhuVuc_WardLabel"].Value
+                };
             }
-        </select><span asp-validation-for="MaNganHang" class="text-danger"></span></div>
-    <div class="mb-3"><label asp-for="SoTaiKhoan" class="form-label"></label><input asp-for="SoTaiKhoan" class="form-control" inputmode="numeric" maxlength="30"/><span asp-validation-for="SoTaiKhoan" class="text-danger"></span></div>
-    <div><label asp-for="TenChuTaiKhoan" class="form-label"></label><input asp-for="TenChuTaiKhoan" class="form-control" maxlength="100" placeholder="NGUYEN VAN A"/><span asp-validation-for="TenChuTaiKhoan" class="text-danger"></span></div>
-</fieldset>
+            <partial name="_ChonKhuVuc" model="khuVucShop" />
+            <div class="mt-3">
+                <label asp-for="DiaChiChiTiet" class="form-label fw-semibold small">@L["Shop_AddressDetail"] <span class="text-danger">*</span></label>
+                <input asp-for="DiaChiChiTiet" class="form-control" maxlength="300" />
+                <span asp-validation-for="DiaChiChiTiet" class="text-danger small"></span>
+            </div>
+            <div class="mt-3">
+                <label asp-for="KhuVucHienThi" class="form-label fw-semibold small">@L["Shop_AreaDisplayName"]</label>
+                <input asp-for="KhuVucHienThi" class="form-control" maxlength="100" placeholder="@L["Shop_AreaPlaceholder"]" />
+                <span asp-validation-for="KhuVucHienThi" class="text-danger small"></span>
+            </div>
+        </fieldset>
 
-@if(Model.MaCuaHang.HasValue){<p>Trạng thái: <strong class="@(Model.TrangThai == "ACTIVE" ? "text-success" : "text-danger")">@(Model.TrangThai == "ACTIVE" ? "Đang hoạt động" : Model.TrangThai == "LOCKED" ? "Đang bị khóa" : Model.TrangThai)</strong></p>}
-<button class="btn btn-primary" type="submit">@(Model.MaCuaHang.HasValue ? "Cập nhật cửa hàng" : "Tạo cửa hàng")</button></form></div>
-@section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/khu-vuc.js" asp-append-version="true"></script> }
+        <fieldset class="rm-profile-fieldset">
+            <legend>@L["Shop_BankLegend"]</legend>
+            <p class="small text-muted mb-3">@L["Shop_BankHint"]</p>
+            <div class="mb-3">
+                <label asp-for="MaNganHang" class="form-label fw-semibold small">@L["Shop_BankLabel"]</label>
+                <select asp-for="MaNganHang" class="form-select">
+                    <option value="">@L["Shop_BankEmptyOption"]</option>
+                    @foreach (var b in Model.NganHangs)
+                    {
+                        <option value="@b.Bin" selected="@(Model.MaNganHang == b.Bin)">@b.TenHienThi</option>
+                    }
+                </select>
+                <span asp-validation-for="MaNganHang" class="text-danger small"></span>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="SoTaiKhoan" class="form-label fw-semibold small">@L["Shop_BankAccountNumber"]</label>
+                    <input asp-for="SoTaiKhoan" class="form-control" inputmode="numeric" maxlength="30" />
+                    <span asp-validation-for="SoTaiKhoan" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="TenChuTaiKhoan" class="form-label fw-semibold small">@L["Shop_BankAccountHolder"]</label>
+                    <input asp-for="TenChuTaiKhoan" class="form-control" maxlength="100" placeholder="NGUYEN VAN A" />
+                    <span asp-validation-for="TenChuTaiKhoan" class="text-danger small"></span>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pt-1">
+            @if (Model.MaCuaHang.HasValue)
+            {
+                <div class="small text-muted">
+                    @L["Shop_StatusLabel"]:
+                    <span class="st st-@Model.TrangThai.ToLowerInvariant() ms-1">@HienThi.TrangThaiTaiKhoan(Model.TrangThai)</span>
+                </div>
+            }
+            <button class="btn-rm-primary ms-auto" type="submit">
+                @(Model.MaCuaHang.HasValue ? L["Shop_UpdateBtn"] : L["Shop_CreateBtn"])
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/khu-vuc.js" asp-append-version="true"></script>
+    <script>
+        (() => {
+            const input = document.getElementById('shopLogoFileInput');
+            const img = document.getElementById('shopLogoPreview');
+            const fallback = document.getElementById('shopLogoFallback');
+            if (!input || !img) return;
+            input.addEventListener('change', () => {
+                const file = input.files && input.files[0];
+                if (!file) return;
+                img.src = URL.createObjectURL(file);
+                img.style.display = 'block';
+                if (fallback) fallback.style.display = 'none';
+            });
+        })();
+    </script>
+}

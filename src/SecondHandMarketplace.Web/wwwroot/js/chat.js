@@ -94,12 +94,14 @@
     const launcher = el('button', 'rmc-launcher');
     launcher.type = 'button';
     launcher.setAttribute('aria-expanded', 'false');
+    launcher.setAttribute('aria-label', T.messages);
+    launcher.title = T.messages;
     const badge = el('span', 'rmc-badge');
     badge.hidden = true;
     const launcherIcon = el('span', 'rmc-launcher-icon');
     launcherIcon.setAttribute('aria-hidden', 'true');
-    launcherIcon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-    launcher.append(launcherIcon, el('span', null, T.messages), badge);
+    launcherIcon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+    launcher.append(launcherIcon, badge);
 
     const panel = el('section', 'rmc-panel');
     panel.hidden = true;
@@ -325,12 +327,13 @@
         }
     }
 
-    let closingAi = false;
     function setOpen(open) {
         st.open = open;
         panel.hidden = !open;
         launcher.setAttribute('aria-expanded', String(open));
         if (open) {
+            // Không cho bật đồng thời Tin nhắn và Trợ lý AI
+            window.dispatchEvent(new CustomEvent('rm:chat-widget-open', { detail: { source: 'p2p' } }));
             root.classList.add('rmc-active');
             if (window.innerWidth < 768) {
                 document.body.classList.add('rmc-open');
@@ -345,9 +348,6 @@
             panel.classList.remove('rmc-keyboard-open');
             return;
         }
-        // Chỉ mở một cửa sổ một lúc: đóng cửa sổ Trợ lý AI nếu đang mở.
-        const ai = document.querySelector('.rmchat-toggle[aria-expanded="true"]');
-        if (ai) { closingAi = true; ai.click(); closingAi = false; }
         if (st.view === 'thread' && st.cur) showThread(st.cur);   // tải lại phòng trường hợp có tin đến khi đang đóng
         else showList();
     }
@@ -409,8 +409,8 @@
     back.addEventListener('click', showList);
     more.addEventListener('click', () => loadMessages(true).catch((e) => showHint(e.message)));
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && st.open) setOpen(false); });
-    document.addEventListener('click', (e) => {
-        if (!closingAi && st.open && e.target.closest('.rmchat-toggle')) setOpen(false);
+    window.addEventListener('rm:chat-widget-open', (e) => {
+        if (e.detail?.source !== 'p2p' && st.open) setOpen(false);
     });
 
     input.addEventListener('input', () => {

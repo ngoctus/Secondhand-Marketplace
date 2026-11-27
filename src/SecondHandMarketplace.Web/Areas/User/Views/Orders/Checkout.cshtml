@@ -61,13 +61,73 @@
                         </div>
                     </div>
 
+                    <!-- Sổ địa chỉ đã lưu: chọn nhanh địa chỉ mặc định / dự phòng hoặc nhập địa chỉ mới -->
+                    <div class="rm-checkout-addr-box mb-3">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <span class="fw-semibold small text-dark">@L["Checkout_SavedAddresses"]</span>
+                            <a asp-area="" asp-controller="Account" asp-action="Profile" asp-fragment="so-dia-chi" class="small text-decoration-underline" style="color: var(--color-primary);">
+                                @L["Checkout_ManageAddresses"]
+                            </a>
+                        </div>
+
+                        @if (Model.DiaChiDaLuu.Count > 0)
+                        {
+                            <div class="rm-checkout-addr-list" id="checkoutSavedAddressList">
+                                @foreach (var addr in Model.DiaChiDaLuu)
+                                {
+                                    var isSelected = Model.MaDiaChiDaChon == addr.MaDiaChi;
+                                    <label class="rm-checkout-addr-item @(isSelected ? "is-selected" : "")">
+                                        <input type="radio"
+                                               name="MaDiaChiDaChon"
+                                               value="@addr.MaDiaChi"
+                                               class="form-check-input mt-1"
+                                               checked="@isSelected"
+                                               data-addr-name="@addr.TenNguoiNhan"
+                                               data-addr-phone="@addr.SoDienThoaiNhan"
+                                               data-addr-tinh="@addr.MaTinhThanh"
+                                               data-addr-xa="@addr.MaPhuongXa"
+                                               data-addr-detail="@addr.DiaChiChiTiet" />
+                                        <div class="min-w-0 flex-grow-1">
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <strong class="small text-dark">@addr.TenNguoiNhan</strong>
+                                                <span class="text-muted small">@addr.SoDienThoaiNhan</span>
+                                                @if (addr.LaMacDinh)
+                                                {
+                                                    <span class="rm-addr-badge rm-addr-badge-default">@L["Profile_DefaultBadge"]</span>
+                                                }
+                                                else if (!string.IsNullOrWhiteSpace(addr.NhanDiaChi))
+                                                {
+                                                    <span class="rm-addr-badge">@addr.NhanDiaChi</span>
+                                                }
+                                            </div>
+                                            <div class="small text-muted mt-1">@addr.DiaChiDayDu()</div>
+                                        </div>
+                                    </label>
+                                }
+                                <label class="rm-checkout-addr-item @(Model.MaDiaChiDaChon is null or 0 ? "is-selected" : "")">
+                                    <input type="radio"
+                                           name="MaDiaChiDaChon"
+                                           value="0"
+                                           class="form-check-input mt-1"
+                                           checked="@(Model.MaDiaChiDaChon is null or 0)"
+                                           data-addr-custom="true" />
+                                    <div class="small fw-semibold text-dark">@L["Checkout_UseNewAddress"]</div>
+                                </label>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="small text-muted">@L["Checkout_NoSavedAddressHint"]</div>
+                        }
+                    </div>
+
                     <div class="mb-3">
                         <label asp-for="TenNguoiNhan" class="form-label fw-semibold small text-dark">
                             @L["Checkout_ReceiverName"] <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-person"></i></span>
-                            <input asp-for="TenNguoiNhan" class="form-control rounded-end-3 border-start-0" placeholder="Ví dụ: Nguyễn Văn An" required maxlength="100" />
+                            <input asp-for="TenNguoiNhan" class="form-control rounded-end-3 border-start-0" placeholder="@L["Checkout_ReceiverNamePlaceholder"]" required maxlength="100" />
                         </div>
                         <span asp-validation-for="TenNguoiNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
@@ -78,7 +138,7 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-telephone"></i></span>
-                            <input asp-for="SoDienThoaiNhan" class="form-control rounded-end-3 border-start-0" placeholder="Ví dụ: 0912345678" required maxlength="15" />
+                            <input asp-for="SoDienThoaiNhan" class="form-control rounded-end-3 border-start-0" placeholder="@L["Checkout_ReceiverPhonePlaceholder"]" required maxlength="15" />
                         </div>
                         <span asp-validation-for="SoDienThoaiNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
@@ -351,12 +411,12 @@
         const lblDiaChiChiTiet = document.getElementById('lblDiaChiChiTiet');
         const txtDiaChiChiTiet = document.getElementById('txtDiaChiChiTiet');
 
-        const meetupLocationText = '@Html.Raw(L["Checkout_MeetupLocation"].Value)';
-        const deliveryAddressText = '@Html.Raw(L["Checkout_DeliveryAddress"].Value)';
-        const meetupPlaceholderText = '@Html.Raw(L["Checkout_MeetupPlaceholder"].Value)';
-        const addressPlaceholderText = '@Html.Raw(L["Checkout_AddressPlaceholder"].Value)';
-        const freeShippingZeroText = '@Html.Raw(L["Checkout_FreeShippingZero"].Value)';
-        const freeShippingText = '@Html.Raw(L["Checkout_FreeShipping"].Value)';
+        const meetupLocationText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Checkout_MeetupLocation"].Value));
+        const deliveryAddressText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Checkout_DeliveryAddress"].Value));
+        const meetupPlaceholderText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Checkout_MeetupPlaceholder"].Value));
+        const addressPlaceholderText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Checkout_AddressPlaceholder"].Value));
+        const freeShippingZeroText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Checkout_FreeShippingZero"].Value));
+        const freeShippingText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Checkout_FreeShipping"].Value));
 
         function updateDeliveryUI() {
             let selectedVal = 'GIAO_HANG';
@@ -370,8 +430,8 @@
                 }
             });
 
-            const tienHang = @Model.TienHang;
-            const originalPhiVc = @Model.PhiVanChuyen;
+            const tienHang = @Model.TienHang.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const originalPhiVc = @Model.PhiVanChuyen.ToString(System.Globalization.CultureInfo.InvariantCulture);
             const phiVcTxt = document.getElementById('phiVanChuyenTxt');
             const totalTxt = document.getElementById('tongThanhToanTxt');
             const inputPhiVc = document.getElementById('PhiVanChuyen');
@@ -395,6 +455,32 @@
             radio.addEventListener('change', updateDeliveryUI);
         });
         updateDeliveryUI();
+
+        // Chọn địa chỉ đã lưu: tự điền tên, SĐT, Tỉnh/Thành, Phường/Xã và địa chỉ chi tiết
+        const addrRadios = document.querySelectorAll('input[name="MaDiaChiDaChon"]');
+        const inpName = document.getElementById('TenNguoiNhan');
+        const inpPhone = document.getElementById('SoDienThoaiNhan');
+        const inpDetail = document.getElementById('txtDiaChiChiTiet');
+
+        addrRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                addrRadios.forEach(r => r.closest('.rm-checkout-addr-item')?.classList.toggle('is-selected', r.checked));
+                if (!radio.checked) return;
+
+                if (radio.dataset.addrCustom === 'true') {
+                    if (inpDetail) inpDetail.value = '';
+                    if (typeof window.rmChonKhuVuc === 'function') window.rmChonKhuVuc('', '');
+                    return;
+                }
+
+                if (inpName && radio.dataset.addrName) inpName.value = radio.dataset.addrName;
+                if (inpPhone && radio.dataset.addrPhone) inpPhone.value = radio.dataset.addrPhone;
+                if (inpDetail) inpDetail.value = radio.dataset.addrDetail || '';
+                if (typeof window.rmChonKhuVuc === 'function') {
+                    window.rmChonKhuVuc(radio.dataset.addrTinh || '', radio.dataset.addrXa || '');
+                }
+            });
+        });
     });
     </script>
 }

@@ -80,7 +80,7 @@
                                                     @if (item.CoTheMua)
                                                     {
                                                         <input class="form-check-input item-checkbox" type="checkbox"
-                                                               data-id="@item.MaGioHang" data-price="@item.Gia" data-qty="@item.SoLuong"
+                                                               data-id="@item.MaGioHang" data-price="@item.Gia.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-qty="@item.SoLuong"
                                                                data-shop-id="@shop.MaCuaHang"
                                                                @(item.DaChon ? "checked" : "") />
                                                     }
@@ -126,7 +126,7 @@
                                                         <div class="input-group input-group-sm justify-content-center" style="width: 105px; margin: 0 auto;">
                                                             <button type="button" class="btn btn-outline-secondary cart-qty-btn" data-id="@item.MaGioHang" data-delta="-1" aria-label="Giảm">−</button>
                                                             <input type="number" class="form-control text-center px-1 fw-semibold cart-qty-input"
-                                                                   data-id="@item.MaGioHang" data-price="@item.Gia"
+                                                                   data-id="@item.MaGioHang" data-price="@item.Gia.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                                                    value="@item.SoLuong" min="1" max="@item.SoLuongTon" />
                                                             <button type="button" class="btn btn-outline-secondary cart-qty-btn" data-id="@item.MaGioHang" data-delta="1" aria-label="Tăng">+</button>
                                                         </div>

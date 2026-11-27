@@ -1,9 +1,9 @@
-﻿/* Chat 1-1 Người mua ↔ Người bán. Mọi class có tiền tố rmc- để không đụng CSS chung. */
+﻿/* Chat 1-1 Người mua ↔ Người bán. Nút icon tròn xếp ngay trên nút Trợ lý AI ở góc dưới phải; khung chat mở sang bên trái. */
 .rmc {
     position: fixed;
-    right: 172px;
-    bottom: 20px;
-    z-index: 13;
+    right: 20px;
+    bottom: 78px;
+    z-index: 1030;
     font-size: 13px;
 }
 
@@ -11,27 +11,34 @@
         box-sizing: border-box;
     }
 
-/* Nút mở chat: đặt bên trái nút "Trợ lý AI" */
+/* Nút mở chat dạng tròn chỉ hiển thị icon, gọn gàng */
 .rmc-launcher {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 18px;
-    border-radius: 999px;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
     border: 1.5px solid var(--color-primary, #68705A);
     background: #fff;
     color: var(--color-primary, #68705A);
     font: inherit;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 10px 28px rgba(40, 62, 37, .18);
-    transition: background .2s, transform .2s;
+    box-shadow: 0 8px 22px rgba(40, 62, 37, .18);
+    transition: background .2s, transform .2s, border-color .2s;
 }
 
     .rmc-launcher:hover {
         background: var(--color-primary-subtle, #EBF0E6);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+    }
+
+    .rmc-launcher[aria-expanded="true"] {
+        background: var(--color-primary, #68705A);
+        color: #fff;
     }
 
 .rmc-launcher-icon {
@@ -42,7 +49,7 @@
 
 .rmc-badge {
     position: absolute;
-    top: -6px;
+    top: -4px;
     right: -4px;
     min-width: 20px;
     height: 20px;
@@ -63,10 +70,10 @@
 
 .rmc-panel {
     position: fixed;
-    right: 20px;
-    bottom: 76px;
+    right: 80px;
+    bottom: 20px;
     width: 370px;
-    height: min(560px, calc(100vh - 120px));
+    height: min(540px, calc(100vh - 104px));
     display: flex;
     flex-direction: column;
     background: var(--color-surface-white, #FFFFFF);
@@ -343,14 +350,15 @@ body.rmc-open {
 
 @media (max-width: 767.98px) {
     .rmc {
-        right: 14px;
-        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+        right: 12px;
+        bottom: calc(66px + env(safe-area-inset-bottom, 0px));
         z-index: 1040;
     }
 
     .rmc-launcher {
-        padding: 10px 16px;
-        font-size: 13px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
         box-shadow: 0 4px 16px rgba(40, 62, 37, 0.22);
     }
 

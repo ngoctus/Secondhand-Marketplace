@@ -14,6 +14,7 @@ using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Account;
 using SecondHandMarketplace.Web.Services.Accounts;
+using SecondHandMarketplace.Web.Services.Areas;
 using SecondHandMarketplace.Web.Services.Auth;
 
 namespace SecondHandMarketplace.Web.Controllers;
@@ -26,7 +27,9 @@ public sealed class AccountController(
     IConfiguration configuration,
     IWebHostEnvironment environment,
     IAccountAppealUserService accountAppealUserService,
-    IDataProtectionProvider dataProtectionProvider) : Controller
+    IDataProtectionProvider dataProtectionProvider,
+    IKhuVucService khuVucService,
+    IUserAddressService userAddressService) : Controller
 {
     private readonly IDataProtector _appealProtector = dataProtectionProvider.CreateProtector("AccountLockedAppeal");
 
@@ -791,22 +794,107 @@ public sealed class AccountController(
         if (User.LayNguoiDungId() is not int userId) return Challenge();
         var user = await authService.GetUserAsync(userId, cancellationToken);
         if (user is null) return NotFound();
-        return View(new ProfileVm { HoTen = user.HoTen, Email = user.Email, SoDienThoai = user.SoDienThoai ?? string.Empty, DiaChiMacDinh = user.DiaChiMacDinh, AnhDaiDien = user.AnhDaiDien });
+
+        var addresses = await userAddressService.GetAllAsync(userId, cancellationToken);
+        var defaultAddr = addresses.FirstOrDefault(a => a.LaMacDinh) ?? addresses.FirstOrDefault();
+
+        var vm = new ProfileVm
+        {
+            HoTen = user.HoTen,
+            Email = user.Email,
+            SoDienThoai = user.SoDienThoai ?? string.Empty,
+            DiaChiMacDinh = user.DiaChiMacDinh,
+            MaTinhThanh = defaultAddr?.MaTinhThanh,
+            MaPhuongXa = defaultAddr?.MaPhuongXa,
+            DiaChiChiTiet = defaultAddr?.DiaChiChiTiet ?? (defaultAddr is null ? user.DiaChiMacDinh : null),
+            AnhDaiDien = user.AnhDaiDien,
+            DiaChiDaLuu = addresses
+        };
+        await NapKhuVucChoProfileAsync(vm, cancellationToken);
+        return View(vm);
     }
 
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> Profile(ProfileVm model, CancellationToken cancellationToken)
     {
         if (User.LayNguoiDungId() is not int userId) return Challenge();
-        if (!ModelState.IsValid) return View(model);
-        var result = await authService.UpdateProfileAsync(userId, model.HoTen, model.SoDienThoai, model.DiaChiMacDinh, model.AnhDaiDien, cancellationToken);
-        if (!result.Success)
+        var existingUser = await authService.GetUserAsync(userId, cancellationToken);
+        if (existingUser is null) return NotFound();
+
+        model.Email = existingUser.Email;
+
+        string? savedAvatarFullPath = null;
+        if (model.AvatarFile is { Length: > 0 })
         {
-            ModelState.AddModelError(string.Empty, result.Error ?? "Không thể cập nhật hồ sơ.");
+            var (hopLe, loiAnh, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(model.AvatarFile, cancellationToken: cancellationToken);
+            if (!hopLe)
+            {
+                ModelState.AddModelError(nameof(model.AvatarFile), loiAnh ?? "Ảnh đại diện không hợp lệ.");
+            }
+            else
+            {
+                var webRoot = environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var (relPath, fullPath) = await UploadAnhAnToan.LuuAnhAsync(model.AvatarFile, webRoot, "avatars", ext!, cancellationToken);
+                model.AnhDaiDien = relPath;
+                savedAvatarFullPath = fullPath;
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(model.AnhDaiDien))
+        {
+            model.AnhDaiDien = existingUser.AnhDaiDien;
+        }
+
+        if (model.MaTinhThanh.HasValue && !model.MaPhuongXa.HasValue)
+        {
+            ModelState.AddModelError(nameof(model.MaPhuongXa), "Vui lòng chọn Phường/Xã.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            UploadAnhAnToan.XoaAnh(savedAvatarFullPath);
+            model.DiaChiDaLuu = await userAddressService.GetAllAsync(userId, cancellationToken);
+            await NapKhuVucChoProfileAsync(model, cancellationToken);
             return View(model);
         }
+
+        string? diaChiDayDu = model.DiaChiMacDinh;
+        if (model.MaTinhThanh.HasValue && model.MaPhuongXa.HasValue)
+        {
+            var chiTiet = (model.DiaChiChiTiet ?? string.Empty).Trim();
+            var (okAddr, addrErr) = await userAddressService.UpsertDefaultFromProfileAsync(
+                userId,
+                new UserAddressInput(null, model.HoTen, model.SoDienThoai, model.MaTinhThanh.Value, model.MaPhuongXa.Value, chiTiet, true),
+                cancellationToken);
+            if (!okAddr)
+            {
+                UploadAnhAnToan.XoaAnh(savedAvatarFullPath);
+                ModelState.AddModelError(string.Empty, addrErr ?? "Không thể lưu địa chỉ.");
+                model.DiaChiDaLuu = await userAddressService.GetAllAsync(userId, cancellationToken);
+                await NapKhuVucChoProfileAsync(model, cancellationToken);
+                return View(model);
+            }
+
+            var updatedDefault = (await userAddressService.GetAllAsync(userId, cancellationToken)).FirstOrDefault(a => a.LaMacDinh);
+            if (updatedDefault is not null) diaChiDayDu = updatedDefault.DiaChiDayDu();
+        }
+        else if (!string.IsNullOrWhiteSpace(model.DiaChiChiTiet))
+        {
+            diaChiDayDu = model.DiaChiChiTiet.Trim();
+        }
+
+        var result = await authService.UpdateProfileAsync(userId, model.HoTen, model.SoDienThoai, diaChiDayDu, model.AnhDaiDien, cancellationToken);
+        if (!result.Success)
+        {
+            UploadAnhAnToan.XoaAnh(savedAvatarFullPath);
+            ModelState.AddModelError(string.Empty, result.Error ?? "Không thể cập nhật hồ sơ.");
+            model.DiaChiDaLuu = await userAddressService.GetAllAsync(userId, cancellationToken);
+            await NapKhuVucChoProfileAsync(model, cancellationToken);
+            return View(model);
+        }
+
         var user = await authService.GetUserAsync(userId, cancellationToken);
         if (user is not null)
         {
@@ -815,6 +903,69 @@ public sealed class AccountController(
         }
         TempData["ThanhCong"] = "Đã cập nhật hồ sơ.";
         return RedirectToAction(nameof(Profile));
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddAddress(BackupAddressFormVm form, CancellationToken cancellationToken)
+    {
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
+        if (!ModelState.IsValid || !form.BackupMaTinhThanh.HasValue || !form.BackupMaPhuongXa.HasValue)
+        {
+            var firstErr = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage
+                ?? "Vui lòng điền đầy đủ thông tin địa chỉ.";
+            TempData["Loi"] = firstErr;
+            return Redirect(Url.Action(nameof(Profile)) + "#so-dia-chi");
+        }
+
+        var (ok, err, _) = await userAddressService.AddAsync(
+            userId,
+            new UserAddressInput(
+                form.NhanDiaChi,
+                form.TenNguoiNhan,
+                form.SoDienThoaiNhan,
+                form.BackupMaTinhThanh.Value,
+                form.BackupMaPhuongXa.Value,
+                form.DiaChiChiTiet,
+                form.LaMacDinh),
+            cancellationToken);
+
+        if (ok) TempData["ThanhCong"] = "Đã thêm địa chỉ mới vào sổ địa chỉ.";
+        else TempData["Loi"] = err ?? "Không thể thêm địa chỉ.";
+        return Redirect(Url.Action(nameof(Profile)) + "#so-dia-chi");
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetDefaultAddress(int id, CancellationToken cancellationToken)
+    {
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
+        var (ok, err) = await userAddressService.SetDefaultAsync(userId, id, cancellationToken);
+        if (ok) TempData["ThanhCong"] = "Đã đặt làm địa chỉ mặc định.";
+        else TempData["Loi"] = err ?? "Không thể cập nhật địa chỉ mặc định.";
+        return Redirect(Url.Action(nameof(Profile)) + "#so-dia-chi");
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAddress(int id, CancellationToken cancellationToken)
+    {
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
+        var (ok, err) = await userAddressService.DeleteAsync(userId, id, cancellationToken);
+        if (ok) TempData["ThanhCong"] = "Đã xóa địa chỉ.";
+        else TempData["Loi"] = err ?? "Không thể xóa địa chỉ.";
+        return Redirect(Url.Action(nameof(Profile)) + "#so-dia-chi");
+    }
+
+    private async Task NapKhuVucChoProfileAsync(ProfileVm vm, CancellationToken ct)
+    {
+        vm.TinhThanhs = await khuVucService.GetTinhThanhAsync(ct);
+        vm.PhuongXas = vm.MaTinhThanh is > 0
+            ? await khuVucService.GetPhuongXaTheoTinhAsync(vm.MaTinhThanh.Value, ct)
+            : Array.Empty<PhuongXaItem>();
     }
 
     [Authorize]

@@ -1,68 +1,273 @@
 @model ProfileVm
 @{
     ViewData["Title"] = L["Nav_Profile"].Value;
+    var userInitial = !string.IsNullOrWhiteSpace(Model.HoTen) ? Model.HoTen.Trim()[..1].ToUpperInvariant() : "U";
 }
-<div class="container py-4 rm-account-page" style="max-width:760px">
-    <h2>@L["Nav_Profile"]</h2>
-    <p class="text-muted">@L["Account_Profile_Subtitle"]</p>
-    <form asp-action="Profile" method="post" class="card card-body border-0 shadow-sm rounded-4 gap-3 rm-account-form mb-4">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<div class="rm-main-content rm-profile-shell">
+    <div class="rm-profile-head">
         <div>
-            <label asp-for="HoTen" class="form-label fw-semibold">@L["Account_FullName"]</label>
-            <input asp-for="HoTen" class="form-control" />
-            <span asp-validation-for="HoTen" class="text-danger small"></span>
+            <h1 class="rm-profile-title">@L["Nav_Profile"]</h1>
+            <p class="rm-profile-sub">@L["Account_Profile_Subtitle"]</p>
         </div>
-        <div>
-            <label asp-for="Email" class="form-label fw-semibold">@L["Account_Email"]</label>
-            <input asp-for="Email" class="form-control bg-light" readonly />
-            <small class="text-muted">@L["Account_EmailReadonlyHint"]</small>
-        </div>
-        <div>
-            <label asp-for="SoDienThoai" class="form-label fw-semibold">@L["Account_Phone"]</label>
-            <input asp-for="SoDienThoai" class="form-control" required />
-            <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
-        </div>
-        <div>
-            <label asp-for="DiaChiMacDinh" class="form-label fw-semibold">@L["Account_DefaultAddress"]</label>
-            <textarea asp-for="DiaChiMacDinh" class="form-control" rows="2"></textarea>
-            <span asp-validation-for="DiaChiMacDinh" class="text-danger small"></span>
-        </div>
-        <div>
-            <label asp-for="AnhDaiDien" class="form-label fw-semibold">@L["Account_AvatarUrl"]</label>
-            <input asp-for="AnhDaiDien" class="form-control" placeholder="/uploads/avatar.jpg" />
-            <span asp-validation-for="AnhDaiDien" class="text-danger small"></span>
-        </div>
-        <div class="d-flex gap-2 mt-1">
-            <button class="btn btn-primary" type="submit">@L["Btn_Save"]</button>
-            <a asp-action="ChangePassword" class="btn btn-outline-secondary">@L["Nav_ChangePassword"]</a>
-        </div>
-    </form>
+        <a asp-action="ChangePassword" class="btn-rm-outline rm-profile-head-btn">@L["Nav_ChangePassword"]</a>
+    </div>
+
+    <div class="rm-profile-grid">
+        <!-- Cột trái: Thông tin cá nhân, Ảnh đại diện & Địa chỉ mặc định -->
+        <section class="rm-profile-card">
+            <h2 class="rm-profile-card-title">@L["Profile_InfoHeading"]</h2>
+
+            <form asp-action="Profile" method="post" enctype="multipart/form-data" class="rm-profile-form">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                <input type="hidden" asp-for="AnhDaiDien" />
+                <input type="hidden" asp-for="DiaChiMacDinh" />
+
+                <!-- Ảnh đại diện người dùng -->
+                <div class="rm-avatar-uploader">
+                    <div class="rm-avatar-preview-wrap">
+                        @if (!string.IsNullOrWhiteSpace(Model.AnhDaiDien))
+                        {
+                            <img src="@Model.AnhDaiDien" alt="@Model.HoTen" id="userAvatarPreview" class="rm-avatar-preview-img"
+                                 onerror="this.style.display='none'; document.getElementById('userAvatarFallback').style.display='inline-flex';" />
+                            <span id="userAvatarFallback" class="rm-avatar-preview-fallback" style="display:none;" aria-hidden="true">@userInitial</span>
+                        }
+                        else
+                        {
+                            <img src="" alt="@Model.HoTen" id="userAvatarPreview" class="rm-avatar-preview-img" style="display:none;" />
+                            <span id="userAvatarFallback" class="rm-avatar-preview-fallback" aria-hidden="true">@userInitial</span>
+                        }
+                    </div>
+                    <div class="rm-avatar-upload-meta">
+                        <div class="rm-avatar-upload-title">@L["Profile_AvatarTitle"]</div>
+                        <div class="rm-avatar-upload-hint">@L["Profile_AvatarHint"]</div>
+                        <label class="btn-rm-outline rm-avatar-upload-btn" for="avatarFileInput">
+                            @L["Profile_ChooseAvatar"]
+                        </label>
+                        <input asp-for="AvatarFile" id="avatarFileInput" type="file" accept=".jpg,.jpeg,.png,.webp" class="visually-hidden" />
+                        <span asp-validation-for="AvatarFile" class="text-danger small d-block mt-1"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="HoTen" class="form-label fw-semibold small">@L["Account_FullName"] <span class="text-danger">*</span></label>
+                        <input asp-for="HoTen" class="form-control" />
+                        <span asp-validation-for="HoTen" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="SoDienThoai" class="form-label fw-semibold small">@L["Account_Phone"] <span class="text-danger">*</span></label>
+                        <input asp-for="SoDienThoai" class="form-control" required />
+                        <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Email" class="form-label fw-semibold small">@L["Account_Email"]</label>
+                        <input asp-for="Email" class="form-control rm-readonly-input" readonly />
+                        <small class="text-muted">@L["Account_EmailReadonlyHint"]</small>
+                    </div>
+                </div>
+
+                <div class="rm-profile-divider"></div>
+
+                <div class="rm-profile-addr-block">
+                    <div class="rm-profile-section-sub">@L["Account_DefaultAddress"]</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.DiaChiMacDinh) && !Model.MaTinhThanh.HasValue)
+                    {
+                        <div class="rm-current-addr-note">
+                            <span>@L["Profile_CurrentSavedAddress"]:</span>
+                            <strong>@Model.DiaChiMacDinh</strong>
+                        </div>
+                    }
+                    @{
+                        var khuVucMacDinh = new SecondHandMarketplace.Web.Models.ViewModels.Areas.ChonKhuVucVm
+                        {
+                            TenFieldTinh = nameof(Model.MaTinhThanh),
+                            TenFieldXa = nameof(Model.MaPhuongXa),
+                            MaTinh = Model.MaTinhThanh,
+                            MaXa = Model.MaPhuongXa,
+                            TinhThanhs = Model.TinhThanhs,
+                            PhuongXas = Model.PhuongXas,
+                            ChoPhepTatCa = false,
+                            NhanTinh = L["KhuVuc_ProvinceLabel"].Value,
+                            NhanXa = L["KhuVuc_WardLabel"].Value
+                        };
+                    }
+                    <partial name="_ChonKhuVuc" model="khuVucMacDinh" />
+
+                    <div class="mt-3">
+                        <label asp-for="DiaChiChiTiet" class="form-label fw-semibold small">@L["Profile_StreetDetail"]</label>
+                        <input asp-for="DiaChiChiTiet" class="form-control" maxlength="300" placeholder="@L["Profile_StreetPlaceholder"]" />
+                        <span asp-validation-for="DiaChiChiTiet" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap pt-2">
+                    <button class="btn-rm-primary" type="submit">@L["Btn_Save"]</button>
+                    <a asp-action="ChangePassword" class="btn-rm-outline">@L["Nav_ChangePassword"]</a>
+                </div>
+            </form>
+        </section>
+
+        <!-- Cột phải: Sổ địa chỉ & Địa chỉ dự phòng -->
+        <section class="rm-profile-card" id="so-dia-chi">
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-3">
+                <div>
+                    <h2 class="rm-profile-card-title mb-1">@L["Profile_AddressBookTitle"]</h2>
+                    <p class="text-muted small mb-0">@L["Profile_AddressBookDesc"]</p>
+                </div>
+                <button type="button" class="btn-rm-outline rm-profile-add-addr-btn" data-bs-toggle="collapse" data-bs-target="#backupAddressPanel" aria-expanded="@(Model.DiaChiDaLuu.Count == 0 ? "true" : "false")">
+                    + @L["Profile_AddBackupAddress"]
+                </button>
+            </div>
+
+            <!-- Form thêm địa chỉ dự phòng -->
+            <div class="collapse @(Model.DiaChiDaLuu.Count == 0 ? "show" : "")" id="backupAddressPanel">
+                <form asp-action="AddAddress" method="post" class="rm-backup-addr-form mb-3">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold mb-1" for="backupLabel">@L["Profile_AddressLabel"]</label>
+                            <input id="backupLabel" name="NhanDiaChi" class="form-control form-control-sm" maxlength="60" placeholder="@L["Profile_AddressLabelPlaceholder"]" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold mb-1" for="backupReceiver">@L["Checkout_ReceiverName"] <span class="text-danger">*</span></label>
+                            <input id="backupReceiver" name="TenNguoiNhan" value="@Model.HoTen" class="form-control form-control-sm" maxlength="100" required />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold mb-1" for="backupPhone">@L["Checkout_ReceiverPhone"] <span class="text-danger">*</span></label>
+                            <input id="backupPhone" name="SoDienThoaiNhan" value="@Model.SoDienThoai" class="form-control form-control-sm" maxlength="15" required />
+                        </div>
+                        <div class="col-12">
+                            @{
+                                var khuVucDuPhong = new SecondHandMarketplace.Web.Models.ViewModels.Areas.ChonKhuVucVm
+                                {
+                                    TenFieldTinh = nameof(BackupAddressFormVm.BackupMaTinhThanh),
+                                    TenFieldXa = nameof(BackupAddressFormVm.BackupMaPhuongXa),
+                                    MaTinh = null,
+                                    MaXa = null,
+                                    TinhThanhs = Model.TinhThanhs,
+                                    PhuongXas = Array.Empty<SecondHandMarketplace.Web.Services.Areas.PhuongXaItem>(),
+                                    ChoPhepTatCa = false,
+                                    NhanTinh = L["KhuVuc_ProvinceLabel"].Value,
+                                    NhanXa = L["KhuVuc_WardLabel"].Value
+                                };
+                            }
+                            <partial name="_ChonKhuVuc" model="khuVucDuPhong" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold mb-1" for="backupDetail">@L["Profile_StreetDetail"] <span class="text-danger">*</span></label>
+                            <input id="backupDetail" name="DiaChiChiTiet" class="form-control form-control-sm" maxlength="300" placeholder="@L["Profile_StreetPlaceholder"]" required />
+                        </div>
+                        <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2">
+                            <label class="form-check-label small d-inline-flex align-items-center gap-2">
+                                <input type="checkbox" name="LaMacDinh" value="true" class="form-check-input mt-0" />
+                                <span>@L["Profile_SetAsDefault"]</span>
+                            </label>
+                            <button type="submit" class="btn-rm-primary btn-sm">@L["Profile_SaveNewAddress"]</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            @if (Model.DiaChiDaLuu.Count == 0)
+            {
+                <div class="rm-addr-empty">
+                    <p class="mb-0">@L["Profile_AddressBookEmpty"]</p>
+                </div>
+            }
+            else
+            {
+                <div class="rm-addr-list">
+                    @foreach (var addr in Model.DiaChiDaLuu)
+                    {
+                        <article class="rm-addr-card @(addr.LaMacDinh ? "is-default" : "")">
+                            <div class="rm-addr-card-top">
+                                <div class="rm-addr-badges">
+                                    @if (addr.LaMacDinh)
+                                    {
+                                        <span class="rm-addr-badge rm-addr-badge-default">@L["Profile_DefaultBadge"]</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="rm-addr-badge">@L["Profile_BackupBadge"]</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(addr.NhanDiaChi))
+                                    {
+                                        <span class="rm-addr-label">@addr.NhanDiaChi</span>
+                                    }
+                                </div>
+                                <div class="rm-addr-actions">
+                                    @if (!addr.LaMacDinh)
+                                    {
+                                        <form asp-action="SetDefaultAddress" method="post" class="m-0">
+                                            <input type="hidden" name="id" value="@addr.MaDiaChi" />
+                                            <button type="submit" class="rm-addr-link-btn">@L["Profile_SetAsDefault"]</button>
+                                        </form>
+                                    }
+                                    <form asp-action="DeleteAddress" method="post" class="m-0" data-confirm="@L["Profile_ConfirmDeleteAddress"]">
+                                        <input type="hidden" name="id" value="@addr.MaDiaChi" />
+                                        <button type="submit" class="rm-addr-link-btn is-danger">@L["Btn_Delete"]</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="rm-addr-receiver">
+                                <strong>@addr.TenNguoiNhan</strong>
+                                <span>· @addr.SoDienThoaiNhan</span>
+                            </div>
+                            <div class="rm-addr-full">@addr.DiaChiDayDu()</div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    </div>
 
     @if (User.IsInRole("USER"))
     {
-        <div class="card card-body border-0 shadow-sm rounded-4">
-            <h5 class="mb-3">@L["Account_Profile_Utilities"]</h5>
-            <div class="d-flex flex-wrap gap-2">
-                <a asp-area="User" asp-controller="Orders" asp-action="Index" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-bag-check me-1"></i> @L["Nav_MyOrders"]
+        <section class="rm-profile-card rm-profile-utils">
+            <h2 class="rm-profile-card-title mb-3">@L["Account_Profile_Utilities"]</h2>
+            <div class="rm-profile-util-links">
+                <a asp-area="User" asp-controller="Orders" asp-action="Index" class="rm-util-pill">
+                    <i class="bi bi-bag-check" aria-hidden="true"></i> @L["Nav_MyOrders"]
                 </a>
-                <a asp-area="User" asp-controller="Favorites" asp-action="Index" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-heart me-1"></i> @L["Nav_Favorites"]
+                <a asp-area="User" asp-controller="Favorites" asp-action="Index" class="rm-util-pill">
+                    <i class="bi bi-heart" aria-hidden="true"></i> @L["Nav_Favorites"]
                 </a>
-                <a asp-area="User" asp-controller="Reviews" asp-action="Index" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-star me-1"></i> @L["Nav_MyReviews"]
+                <a asp-area="User" asp-controller="Reviews" asp-action="Index" class="rm-util-pill">
+                    <i class="bi bi-star" aria-hidden="true"></i> @L["Nav_MyReviews"]
                 </a>
-                <a asp-area="User" asp-controller="Disputes" asp-action="Index" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-exclamation-diamond me-1"></i> @L["Nav_Disputes"]
+                <a asp-area="User" asp-controller="Disputes" asp-action="Index" class="rm-util-pill">
+                    <i class="bi bi-exclamation-diamond" aria-hidden="true"></i> @L["Nav_Disputes"]
                 </a>
-                <a asp-area="User" asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-flag me-1"></i> @L["Nav_ReportHistory"]
+                <a asp-area="User" asp-controller="Reports" asp-action="Index" class="rm-util-pill">
+                    <i class="bi bi-flag" aria-hidden="true"></i> @L["Nav_ReportHistory"]
                 </a>
-                <a asp-area="User" asp-controller="Products" asp-action="Index" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-shop me-1"></i> @L["Nav_SellerChannel"]
+                <a asp-area="User" asp-controller="Shop" asp-action="Index" class="rm-util-pill is-accent">
+                    <i class="bi bi-shop" aria-hidden="true"></i> @L["Nav_MyShop"]
+                </a>
+                <a asp-area="User" asp-controller="Products" asp-action="Index" class="rm-util-pill is-accent">
+                    <i class="bi bi-box-seam" aria-hidden="true"></i> @L["Nav_SellerChannel"]
                 </a>
             </div>
-        </div>
+        </section>
     }
 </div>
-@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/khu-vuc.js" asp-append-version="true"></script>
+    <script>
+        (() => {
+            const input = document.getElementById('avatarFileInput');
+            const img = document.getElementById('userAvatarPreview');
+            const fallback = document.getElementById('userAvatarFallback');
+            if (!input || !img) return;
+            input.addEventListener('change', () => {
+                const file = input.files && input.files[0];
+                if (!file) return;
+                img.src = URL.createObjectURL(file);
+                img.style.display = 'block';
+                if (fallback) fallback.style.display = 'none';
+            });
+        })();
+    </script>
+}

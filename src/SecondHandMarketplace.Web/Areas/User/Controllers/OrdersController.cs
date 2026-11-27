@@ -3,6 +3,7 @@ using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models.ViewModels.Areas;
 using SecondHandMarketplace.Web.Models.ViewModels.Disputes;
 using SecondHandMarketplace.Web.Models.ViewModels.Orders;
+using SecondHandMarketplace.Web.Services.Accounts;
 using SecondHandMarketplace.Web.Services.Areas;
 using SecondHandMarketplace.Web.Services.Disputes;
 using SecondHandMarketplace.Web.Services.Orders;
@@ -14,17 +15,20 @@ public class OrdersController : UserBaseController
     private readonly IOrderService _orderService;
     private readonly IDisputeService _disputeService;
     private readonly IKhuVucService _khuVucService;
+    private readonly IUserAddressService _userAddressService;
     private readonly IWebHostEnvironment _env;
 
     public OrdersController(
         IOrderService orderService, 
         IDisputeService disputeService, 
         IKhuVucService khuVucService,
+        IUserAddressService userAddressService,
         IWebHostEnvironment env)
     {
         _orderService = orderService;
         _disputeService = disputeService;
         _khuVucService = khuVucService;
+        _userAddressService = userAddressService;
         _env = env;
     }
 
@@ -79,7 +83,7 @@ public class OrdersController : UserBaseController
             }
         }
 
-        await NapKhuVucChoCheckoutAsync(vm);
+        await NapKhuVucChoCheckoutAsync(userId, vm, prefillDefault: true);
         return View(vm);
     }
 
@@ -133,7 +137,7 @@ public class OrdersController : UserBaseController
 
         if (!ModelState.IsValid)
         {
-            await NapKhuVucChoCheckoutAsync(model);
+            await NapKhuVucChoCheckoutAsync(userId, model, prefillDefault: false);
             if (model.MaSanPhamMuaNgay.HasValue)
             {
                 var prep = await _orderService.ChuanBiCheckoutMuaNgayAsync(userId, model.MaSanPhamMuaNgay.Value, model.SoLuongMuaNgay);
@@ -146,6 +150,7 @@ public class OrdersController : UserBaseController
                 var prep = await _orderService.ChuanBiCheckoutTuGioAsync(userId);
                 model.GioHang = prep.GioHang;
                 model.ThanhToanTheoShop = prep.ThanhToanTheoShop;
+                model.TienHang = prep.TienHang;
             }
             return View("Checkout", model);
         }
@@ -167,7 +172,7 @@ public class OrdersController : UserBaseController
         }
 
         this.ThongBaoLoi(result.ThongBao ?? "Không thể đặt hàng. Sản phẩm có thể đã được người khác mua trước.");
-        return RedirectToAction(nameof(Checkout), new { maSanPham = model.MaSanPhamMuaNgay });
+        return RedirectToAction(nameof(Checkout), new { maSanPham = model.MaSanPhamMuaNgay, soLuong = model.SoLuongMuaNgay });
     }
 
     /// <summary>Màn hình xác nhận đặt hàng thành công.</summary>
@@ -302,8 +307,20 @@ public class OrdersController : UserBaseController
         return RedirectToAction(nameof(ChiTiet), new { id = maDonHang });
     }
 
-    private async Task NapKhuVucChoCheckoutAsync(CheckoutViewModel vm, CancellationToken cancellationToken = default)
+    private async Task NapKhuVucChoCheckoutAsync(int userId, CheckoutViewModel vm, bool prefillDefault, CancellationToken cancellationToken = default)
     {
+        vm.DiaChiDaLuu = await _userAddressService.GetAllAsync(userId, cancellationToken);
+        if (prefillDefault && !vm.MaTinhThanh.HasValue && vm.DiaChiDaLuu.Count > 0)
+        {
+            var macDinh = vm.DiaChiDaLuu.FirstOrDefault(a => a.LaMacDinh) ?? vm.DiaChiDaLuu[0];
+            vm.MaDiaChiDaChon = macDinh.MaDiaChi;
+            if (!string.IsNullOrWhiteSpace(macDinh.TenNguoiNhan)) vm.TenNguoiNhan = macDinh.TenNguoiNhan;
+            if (!string.IsNullOrWhiteSpace(macDinh.SoDienThoaiNhan)) vm.SoDienThoaiNhan = macDinh.SoDienThoaiNhan;
+            vm.MaTinhThanh = macDinh.MaTinhThanh;
+            vm.MaPhuongXa = macDinh.MaPhuongXa;
+            vm.DiaChiChiTiet = macDinh.DiaChiChiTiet;
+        }
+
         var tinhThanhs = await _khuVucService.GetTinhThanhAsync(cancellationToken);
         IReadOnlyList<PhuongXaItem> phuongXas = Array.Empty<PhuongXaItem>();
         if (vm.MaTinhThanh.HasValue)
@@ -320,8 +337,8 @@ public class OrdersController : UserBaseController
             TinhThanhs = tinhThanhs,
             PhuongXas = phuongXas,
             ChoPhepTatCa = false,
-            NhanTinh = "Tỉnh/Thành phố *",
-            NhanXa = "Phường/Xã *"
+            NhanTinh = HienThi.Chon("Tỉnh/Thành phố *", "Province / City *"),
+            NhanXa = HienThi.Chon("Phường/Xã *", "Ward / Commune *")
         };
     }
 }

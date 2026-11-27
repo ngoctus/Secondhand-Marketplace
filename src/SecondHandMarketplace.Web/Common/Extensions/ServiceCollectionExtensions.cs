@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
         // Khiếu nại & Mở khóa tài khoản:
         services.AddScoped<IAccountAppealAdminService, AccountAppealAdminService>();
         services.AddScoped<IAccountAppealUserService, AccountAppealUserService>();
+        services.AddScoped<IUserAddressService, UserAddressService>();
         services.AddScoped<IShopService, ShopService>();
         services.AddScoped<IKhuVucService, KhuVucService>();
         services.AddScoped<IProductService, ProductService>();

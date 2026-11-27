@@ -73,7 +73,9 @@
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-controls', 'rmchat-panel');
-    toggle.append(el('span', 'rmchat-toggle-icon', '✦'), el('span', 'rmchat-toggle-label', T.toggleLabel));
+    toggle.setAttribute('aria-label', T.toggleLabel);
+    toggle.title = T.toggleLabel;
+    toggle.append(el('span', 'rmchat-toggle-icon', '✦'));
 
     const panel = el('section', 'rmchat-panel');
     panel.id = 'rmchat-panel';
@@ -179,6 +181,8 @@
         toggle.setAttribute('aria-expanded', String(open));
         toggle.classList.toggle('is-open', open);
         if (open) {
+            // Không cho bật đồng thời Trợ lý AI và Tin nhắn
+            window.dispatchEvent(new CustomEvent('rm:chat-widget-open', { detail: { source: 'ai' } }));
             if (log.children.length === 0) {
                 addMessage('bot', T.welcome);
             }
@@ -279,6 +283,9 @@
     // Gắn ở document (không phải panel): khi ô nhập bị khóa thì focus rơi ra ngoài panel nhưng Esc vẫn phải đóng được.
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && !panel.hidden) setOpen(false, true);
+    });
+    window.addEventListener('rm:chat-widget-open', (event) => {
+        if (event.detail?.source !== 'ai' && !panel.hidden) setOpen(false, false);
     });
 
     document.body.append(root);

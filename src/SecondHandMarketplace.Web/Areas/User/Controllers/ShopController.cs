@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Common.Constants;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Models.ViewModels.Shop;
@@ -9,7 +11,7 @@ using SecondHandMarketplace.Web.Services.Shops;
 namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
 [Authorize(Roles = AppRoles.User)]
-public sealed class ShopController(IShopService shops, IKhuVucService khuVuc) : UserBaseController
+public sealed class ShopController(IShopService shops, IKhuVucService khuVuc, IWebHostEnvironment env) : UserBaseController
 {
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -40,10 +42,33 @@ public sealed class ShopController(IShopService shops, IKhuVucService khuVuc) : 
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Index(ShopVm model, CancellationToken cancellationToken)
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    public async Task<IActionResult> Index(ShopVm model, IFormFile? logoFile, CancellationToken cancellationToken)
     {
         if (User.LayNguoiDungId() is not int userId) return Challenge();
-        if (!ModelState.IsValid) return await HienLaiFormAsync(model, cancellationToken);
+
+        string? savedLogoFullPath = null;
+        if (logoFile is { Length: > 0 })
+        {
+            var (hopLe, loiAnh, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(logoFile, cancellationToken: cancellationToken);
+            if (!hopLe)
+            {
+                ModelState.AddModelError(nameof(model.Logo), loiAnh ?? "Ảnh đại diện cửa hàng không hợp lệ.");
+            }
+            else
+            {
+                var webRoot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var (relPath, fullPath) = await UploadAnhAnToan.LuuAnhAsync(logoFile, webRoot, "shops", ext!, cancellationToken);
+                model.Logo = relPath;
+                savedLogoFullPath = fullPath;
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            UploadAnhAnToan.XoaAnh(savedLogoFullPath);
+            return await HienLaiFormAsync(model, cancellationToken);
+        }
 
         var result = await shops.SaveAsync(userId, new ShopSaveInput(
             model.TenShop, model.SoDienThoaiLienHe, model.MoTa, model.Logo,
@@ -51,9 +76,12 @@ public sealed class ShopController(IShopService shops, IKhuVucService khuVuc) : 
             model.MaNganHang, model.SoTaiKhoan, model.TenChuTaiKhoan), cancellationToken);
         if (!result.Success)
         {
+            UploadAnhAnToan.XoaAnh(savedLogoFullPath);
             ModelState.AddModelError(string.Empty, result.Error ?? "Không thể lưu cửa hàng.");
             return await HienLaiFormAsync(model, cancellationToken);
         }
+
+        HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
         TempData["ThanhCong"] = "Đã lưu thông tin cửa hàng.";
         return RedirectToAction(nameof(Index));
     }

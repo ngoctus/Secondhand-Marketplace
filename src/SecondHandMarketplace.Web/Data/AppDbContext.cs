@@ -43,6 +43,7 @@ public class AppDbContext : DbContext
     public DbSet<PasswordResetOtp> PasswordResetOtps => Set<PasswordResetOtp>();
     public DbSet<KhieuNaiTaiKhoan> KhieuNaiTaiKhoans => Set<KhieuNaiTaiKhoan>();
     public DbSet<CauHinhKhieuNaiTaiKhoan> CauHinhKhieuNaiTaiKhoans => Set<CauHinhKhieuNaiTaiKhoan>();
+    public DbSet<DiaChiNguoiDung> DiaChiNguoiDungs => Set<DiaChiNguoiDung>();
     /// <summary>View tổng hợp điểm shop — chỉ đọc (xem database/11_danhgia.sql).</summary>
     public DbSet<DiemCuaHangView> DiemCuaHangViews => Set<DiemCuaHangView>();
 
@@ -484,6 +485,23 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.NguoiCapNhatId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<DiaChiNguoiDung>(e =>
+        {
+            e.ToTable("DiaChiNguoiDung");
+            e.HasKey(x => x.MaDiaChi);
+            e.Property(x => x.NhanDiaChi).HasMaxLength(60);
+            e.Property(x => x.TenNguoiNhan).HasMaxLength(100);
+            e.Property(x => x.SoDienThoaiNhan).IsUnicode(false).HasMaxLength(15);
+            e.Property(x => x.TenTinhThanh).HasMaxLength(100);
+            e.Property(x => x.TenPhuongXa).HasMaxLength(100);
+            e.Property(x => x.DiaChiChiTiet).HasMaxLength(300);
+            e.HasIndex(x => new { x.MaNguoiDung, x.LaMacDinh, x.MaDiaChi });
+            e.HasOne(x => x.NguoiDung)
+                .WithMany()
+                .HasForeignKey(x => x.MaNguoiDung)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

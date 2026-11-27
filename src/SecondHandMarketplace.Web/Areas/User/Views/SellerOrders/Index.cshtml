@@ -39,7 +39,7 @@ else
             @foreach (var o in Model.Result.Items)
             {
                 <tr class="rm-order-row-card">
-                    <td data-label="Đơn hàng" class="rm-td-order-title">
+                    <td data-label="@L["SellerOrder_ColOrder"]" class="rm-td-order-title">
                         <div class="d-flex align-items-center gap-2">
                             @if (!string.IsNullOrEmpty(o.FirstImage)) { <img class="thumb" src="@o.FirstImage" alt="" data-fallback /> }
                             <div><b>@o.MaDon</b><div class="small text-muted">@o.FirstItem@(o.ItemCount > 1 ? $" +{o.ItemCount - 1} " + L["Cart_ItemCountSuffix"].Value : "")</div></div>

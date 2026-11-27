@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Areas;
 using SecondHandMarketplace.Web.Models.ViewModels.Cart;
 
@@ -31,6 +32,12 @@ public class CheckoutViewModel : IValidatableObject
 
     /// <summary>Dropdown khu vực 2 cấp (Tỉnh/Thành - Phường/Xã) dùng partial _ChonKhuVuc.</summary>
     public ChonKhuVucVm? KhuVuc { get; set; }
+
+    /// <summary>Sổ địa chỉ đã lưu của người mua (mặc định + dự phòng) để chọn nhanh khi đặt hàng.</summary>
+    public IReadOnlyList<DiaChiNguoiDung> DiaChiDaLuu { get; set; } = Array.Empty<DiaChiNguoiDung>();
+
+    /// <summary>Mã địa chỉ đang chọn (0 hoặc null = nhập tay địa chỉ mới).</summary>
+    public int? MaDiaChiDaChon { get; set; }
 
     [StringLength(200)]
     public string? KhungGioNhan { get; set; }

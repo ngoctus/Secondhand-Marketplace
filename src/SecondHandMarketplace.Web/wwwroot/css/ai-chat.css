@@ -1,15 +1,16 @@
-/* Widget Chatbox AI. Mọi class đều có tiền tố rmchat- để không đụng CSS chung (site.css).
-   Màu và font lấy đồng nhất từ token Design System của site.css. */
-.rmchat{position:fixed;right:20px;bottom:20px;z-index:12;font-family:var(--font-main, 'Be Vietnam Pro', sans-serif);font-size:13px;color:var(--color-text-primary,#29231D)}
+/* Widget Chatbox AI. Nút icon tròn góc dưới phải; khung chat mở sang bên trái, không chồng lên nút Tin nhắn. */
+.rmchat{position:fixed;right:20px;bottom:20px;z-index:1030;font-family:var(--font-main, 'Be Vietnam Pro', sans-serif);font-size:13px;color:var(--color-text-primary,#29231D)}
 .rmchat[hidden]{display:none}
 .rmchat *{box-sizing:border-box}
 
-.rmchat-toggle{display:flex;align-items:center;gap:8px;border:0;border-radius:var(--radius-pill,999px);padding:13px 19px;background:var(--color-primary,#68705A);color:#fff;font:600 13px var(--font-main, 'Be Vietnam Pro', sans-serif);cursor:pointer;box-shadow:var(--shadow-md,0 8px 24px rgba(41,35,29,.18));transition:background .2s,transform .2s}
-.rmchat-toggle:hover{background:var(--color-primary-hover,#535B47);transform:translateY(-1px)}
-.rmchat-toggle-icon{color:var(--color-primary-subtle,#EBF0E6);font-size:15px}
+.rmchat-toggle{display:flex;align-items:center;justify-content:center;width:48px;height:48px;padding:0;border:0;border-radius:50%;background:var(--color-primary,#68705A);color:#fff;font:600 18px var(--font-main, 'Be Vietnam Pro', sans-serif);cursor:pointer;box-shadow:var(--shadow-md,0 8px 22px rgba(41,35,29,.2));transition:background .2s,transform .2s}
+.rmchat-toggle:hover{background:var(--color-primary-hover,#535B47);transform:translateY(-2px)}
+.rmchat-toggle.is-open{background:var(--color-primary-active,#434A38)}
+.rmchat-toggle-icon{color:var(--color-primary-subtle,#EBF0E6);font-size:20px;line-height:1}
+.rmchat-toggle-label{display:none}
 .rmchat-toggle:focus-visible,.rmchat-close:focus-visible,.rmchat-send:focus-visible{outline:2px solid var(--color-primary-subtle,#EBF0E6);outline-offset:2px}
 
-.rmchat-panel{position:absolute;right:0;bottom:62px;width:370px;height:min(560px,calc(100vh - 120px));display:flex;flex-direction:column;background:var(--color-surface-white,#FFFFFF);border:1px solid var(--color-border,#D5C8B3);border-radius:var(--radius-lg,12px);overflow:hidden;box-shadow:var(--shadow-lg,0 12px 32px rgba(41,35,29,.14))}
+.rmchat-panel{position:fixed;right:80px;bottom:20px;width:370px;height:min(540px,calc(100vh - 104px));display:flex;flex-direction:column;background:var(--color-surface-white,#FFFFFF);border:1px solid var(--color-border,#D5C8B3);border-radius:var(--radius-lg,12px);overflow:hidden;box-shadow:var(--shadow-lg,0 12px 32px rgba(41,35,29,.14))}
 .rmchat-panel[hidden]{display:none}
 
 .rmchat-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;background:var(--color-primary,#68705A);color:#fff}
@@ -48,7 +49,7 @@
    nút nổi thu về hình tròn 44px gọn ở góc phải và chừa vùng an toàn dưới đáy điện thoại. */
 @media (max-width:576px){
   .rmchat{right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px))}
-  .rmchat-toggle{width:44px;height:44px;padding:0;justify-content:center;gap:0}
+  .rmchat-toggle{width:44px;min-width:44px;height:44px;padding:0;justify-content:center;gap:0}
   .rmchat-toggle-label{display:none}
   .rmchat-panel{position:fixed;left:10px;right:10px;top:auto;bottom:calc(64px + env(safe-area-inset-bottom, 0px));
     width:auto;height:58vh;max-height:calc(100dvh - 200px)}
