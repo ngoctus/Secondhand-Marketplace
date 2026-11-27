@@ -29,7 +29,8 @@ public class ProductService : IProductService
     public async Task<PagedResult<ProductCardVm>> SearchAsync(ProductSearchVm f)
     {
         f.GiaiPhanGia();
-        var query = TaoTruyVanTimKiem(f);
+        var matchedCategoryIds = await TimDanhMucKhopTuKhoaAsync(f.Keyword);
+        var query = TaoTruyVanTimKiem(f, matchedCategoryIds);
         var page = Math.Clamp(f.Page, 1, 10000);
         var pageSize = Math.Clamp(f.PageSize, 1, 100);
         var total = await query.CountAsync();
@@ -87,9 +88,58 @@ public class ProductService : IProductService
         return bien is null ? (0m, 0m) : (bien.Min ?? 0m, bien.Max ?? 0m);
     }
 
+    /// <summary>
+    /// Tìm danh mục khớp từ khóa theo chuẩn không dấu (ví dụ "thoi trang" hoặc "thời trang" đều khớp "Thời trang"),
+    /// đồng thời bắt buộc khớp ranh giới từ đối với token ngắn (≤ 3 ký tự) để "ao" không khớp nhầm vào "Thể thao" (thao).
+    /// </summary>
+    private async Task<List<int>> TimDanhMucKhopTuKhoaAsync(string? keyword)
+    {
+        if (string.IsNullOrWhiteSpace(keyword)) return [];
+
+        var tuKhoa = keyword.Trim();
+        if (tuKhoa.Length > 200) tuKhoa = tuKhoa[..200];
+        var chuanHoa = TextHelper.ChuanHoa(tuKhoa);
+        var tokens = chuanHoa.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0) return [];
+
+        var categories = await _db.DanhMucs.AsNoTracking()
+            .Select(d => new { d.MaDanhMuc, d.Ten })
+            .ToListAsync();
+
+        var matched = new List<int>();
+        foreach (var c in categories)
+        {
+            var catNorm = TextHelper.ChuanHoa(c.Ten);
+            var catPadded = " " + catNorm + " ";
+            var allMatch = true;
+            foreach (var token in tokens)
+            {
+                if (token.Length <= 3)
+                {
+                    if (!catPadded.Contains(" " + token + " ", StringComparison.Ordinal))
+                    {
+                        allMatch = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (!catNorm.Contains(token, StringComparison.Ordinal))
+                    {
+                        allMatch = false;
+                        break;
+                    }
+                }
+            }
+            if (allMatch) matched.Add(c.MaDanhMuc);
+        }
+        return matched;
+    }
+
     // Giống view vw_SanPhamCongKhai: chỉ sản phẩm đã duyệt (ACTIVE), chưa xóa mềm,
     // cửa hàng và chủ cửa hàng đều đang hoạt động.
-    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f)    {
+    private IQueryable<SanPham> TaoTruyVanTimKiem(ProductSearchVm f, IReadOnlyCollection<int> matchedCategoryIds)
+    {
         var query = _db.SanPhams
             .AsNoTracking()
             .Include(p => p.CuaHang)
@@ -105,8 +155,13 @@ public class ProductService : IProductService
         if (!string.IsNullOrWhiteSpace(f.Keyword))
         {
             var tuKhoa = f.Keyword.Trim();
+            if (tuKhoa.Length > 200)
+            {
+                tuKhoa = tuKhoa[..200];
+            }
             var tuKhoaChuanHoa = TextHelper.ChuanHoa(tuKhoa);
             var tokens = tuKhoaChuanHoa.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var hasMatchedCategories = matchedCategoryIds.Count > 0;
 
             if (tokens.Length <= 1)
             {
@@ -114,13 +169,13 @@ public class ProductService : IProductService
                 if (token.Length <= 3)
                 {
                     // Đối với từ ngắn (<= 3 ký tự: "ao", "xe", "mu", "tu", "ban"...):
-                    // Bắt buộc khớp ranh giới từ (whole-word boundary) trong ChuoiTimKiem:
+                    // Bắt buộc khớp ranh giới từ (whole-word boundary) trong ChuoiTimKiem hoặc Ten:
                     // để "áo" (ao) KHÔNG bị khớp nhầm vào "mũ bảo hiểm" (bao), "lưng cao" (cao), "thể thao" (thao), "giáo trình" (giao)...
                     var boundaryToken = " " + token + " ";
+                    var boundaryTuKhoa = " " + tuKhoa + " ";
                     query = query.Where(p => (" " + p.ChuoiTimKiem + " ").Contains(boundaryToken)
-                                             || (" " + p.Ten + " ").Contains(" " + tuKhoa + " ")
-                                             || (p.MoTa != null && (" " + p.MoTa + " ").Contains(" " + tuKhoa + " "))
-                                             || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
+                                             || (" " + p.Ten + " ").Contains(boundaryTuKhoa)
+                                             || (hasMatchedCategories && p.MaDanhMuc != null && matchedCategoryIds.Contains(p.MaDanhMuc.Value)));
                 }
                 else
                 {
@@ -128,12 +183,12 @@ public class ProductService : IProductService
                                              || p.Ten.Contains(tuKhoa)
                                              || (p.MoTa != null && p.MoTa.Contains(tuKhoa))
                                              || p.CuaHang.TenShop.Contains(tuKhoa)
-                                             || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(tuKhoa)));
+                                             || (hasMatchedCategories && p.MaDanhMuc != null && matchedCategoryIds.Contains(p.MaDanhMuc.Value)));
                 }
             }
             else
             {
-                // Tìm kiếm đa từ: mỗi từ khóa phải có mặt trong sản phẩm
+                // Tìm kiếm đa từ: mỗi từ khóa phải có mặt trong sản phẩm (hoặc sản phẩm thuộc danh mục khớp đủ từ khóa)
                 foreach (var t in tokens)
                 {
                     var token = t;
@@ -141,10 +196,8 @@ public class ProductService : IProductService
                     {
                         var boundaryToken = " " + token + " ";
                         query = query.Where(p => (" " + p.ChuoiTimKiem + " ").Contains(boundaryToken)
-                                                 || (" " + p.Ten + " ").Contains(" " + token + " ")
-                                                 || (p.MoTa != null && (" " + p.MoTa + " ").Contains(" " + token + " "))
-                                                 || p.CuaHang.TenShop.Contains(token)
-                                                 || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(token)));
+                                                 || (" " + p.Ten + " ").Contains(boundaryToken)
+                                                 || (hasMatchedCategories && p.MaDanhMuc != null && matchedCategoryIds.Contains(p.MaDanhMuc.Value)));
                     }
                     else
                     {
@@ -152,7 +205,7 @@ public class ProductService : IProductService
                                                  || p.Ten.Contains(token)
                                                  || (p.MoTa != null && p.MoTa.Contains(token))
                                                  || p.CuaHang.TenShop.Contains(token)
-                                                 || (p.DanhMuc != null && p.DanhMuc.Ten.Contains(token)));
+                                                 || (hasMatchedCategories && p.MaDanhMuc != null && matchedCategoryIds.Contains(p.MaDanhMuc.Value)));
                     }
                 }
             }
@@ -418,6 +471,7 @@ public class ProductService : IProductService
         var (hopLe, thongBao) = await KiemTraDanhMucTinhTrangAsync(form, cancellationToken);
         if (!hopLe) return (false, thongBao);
 
+        var wasActive = sp.TrangThai == "ACTIVE";
         sp.MaDanhMuc = form.MaDanhMuc;
         sp.MaTinhTrang = form.MaTinhTrang;
         sp.Ten = form.Ten.Trim();
@@ -425,6 +479,10 @@ public class ProductService : IProductService
         sp.MoTa = string.IsNullOrWhiteSpace(form.MoTa) ? null : form.MoTa.Trim();
         sp.Gia = form.Gia;
         sp.NgayCapNhat = DateTime.UtcNow;
+        if (wasActive)
+        {
+            sp.TrangThai = "DRAFT";
+        }
 
         // Đếm theo số ảnh để giới hạn 10, nhưng thứ tự mới phải nối sau ThuTu lớn nhất:
         // xóa một ảnh ở giữa để lại khoảng trống (2,3,4) nên Count+1 sẽ trùng unique key.

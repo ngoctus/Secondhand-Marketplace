@@ -83,14 +83,23 @@ public sealed class ChatService(AppDbContext db) : IChatService
         if (me is null || me.VaiTro != "USER" || me.TrangThai != "ACTIVE")
             return (false, "Chỉ tài khoản người dùng đang hoạt động mới nhắn tin được.", null);
 
-        // Người nhận luôn lấy từ sản phẩm trên server, không tin dữ liệu client gửi lên.
         var shop = await db.SanPhams.AsNoTracking()
             .Where(p => p.MaSanPham == productId && !p.DaXoa
                         && p.CuaHang.TrangThai == "ACTIVE" && p.CuaHang.NguoiDung.TrangThai == "ACTIVE")
-            .Select(p => new { OwnerId = p.CuaHang.MaNguoiDung })
+            .Select(p => new { OwnerId = p.CuaHang.MaNguoiDung, p.TrangThai })
             .FirstOrDefaultAsync(ct);
         if (shop is null) return (false, "Không tìm thấy người bán của sản phẩm này.", null);
         if (shop.OwnerId == userId) return (false, "Đây là sản phẩm của bạn.", null);
+
+        if (shop.TrangThai is "SOLD" or "RESERVED" or "REMOVED")
+        {
+            var hasOrder = await db.ChiTietDonHangs.AsNoTracking()
+                .AnyAsync(ctdh => ctdh.MaSanPham == productId && ctdh.DonHang.MaNguoiDung == userId, ct);
+            if (!hasOrder)
+            {
+                return (false, "Sản phẩm này đã bán, đang được giữ chỗ hoặc đã ngừng hiển thị.", null);
+            }
+        }
 
         var a = Math.Min(userId, shop.OwnerId);
         var b = Math.Max(userId, shop.OwnerId);

@@ -108,11 +108,7 @@ public sealed class AuthService(
         if (await db.NguoiDungs.AnyAsync(x => x.SoDienThoai == normalizedPhone, cancellationToken))
             return (false, "Số điện thoại đã được đăng ký.", null);
 
-        var passwordHash = (password.StartsWith("$2a$", StringComparison.Ordinal) ||
-                            password.StartsWith("$2b$", StringComparison.Ordinal) ||
-                            password.StartsWith("$2y$", StringComparison.Ordinal)) && password.Length == 60
-            ? password
-            : passwordService.Bam(password);
+        var passwordHash = passwordService.Bam(password);
 
         var user = new NguoiDung
         {

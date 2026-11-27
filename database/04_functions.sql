@@ -1,4 +1,4 @@
-﻿SET ANSI_NULLS ON;
+SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 SET ARITHABORT ON;
 GO
@@ -93,9 +93,7 @@ BEGIN
             ('SHIPPING',  'DELIVERED'),
             ('SHIPPING',  'COMPLETED'),
             ('SHIPPING',  'CANCELLED'),
-            ('DELIVERED', 'COMPLETED'),
-            ('DELIVERED', 'CANCELLED'),
-            ('COMPLETED', 'CANCELLED')
+            ('DELIVERED', 'COMPLETED')
         ) t (Cu, Moi)
         WHERE t.Cu = @Cu AND t.Moi = @Moi) THEN 1 ELSE 0 END;
 END

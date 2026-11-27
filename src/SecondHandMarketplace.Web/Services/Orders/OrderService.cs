@@ -798,6 +798,19 @@ public class OrderService : IOrderService
         if (don.TrangThaiThanhToan == "PAID") return (true, "Shop đã xác nhận đơn hàng này đã thanh toán.");
         if (don.TrangThaiThanhToan == "REFUNDED") return (false, "Đơn hàng đã được hoàn tiền, chỉ người bán mới được xác nhận.");
 
+        // Chống spam: Kiểm tra xem người mua đã xác nhận trong vòng 5 phút trước chưa
+        var ganDay = DateTime.UtcNow.AddMinutes(-5);
+        var daXacNhanGanDay = await _db.LichSuTrangThaiDonHangs.AnyAsync(l =>
+            l.MaDonHang == don.MaDonHang &&
+            l.LoaiNguoiThucHien == "BUYER" &&
+            l.ThoiGian >= ganDay &&
+            l.LyDo != null && l.LyDo.Contains("xác nhận chuyển khoản"));
+
+        if (daXacNhanGanDay)
+        {
+            return (true, "Bạn đã gửi thông báo xác nhận chuyển khoản cho đơn hàng này rồi. Vui lòng chờ người bán kiểm tra tài khoản.");
+        }
+
         // Ghi lại lịch sử xác nhận đã chuyển khoản
         _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
         {
@@ -850,10 +863,18 @@ public class OrderService : IOrderService
         }
 
         int countNotified = 0;
+        var ganDayBatch = DateTime.UtcNow.AddMinutes(-5);
         foreach (var don in ownedOrders)
         {
             if (don.TrangThai != "CANCELLED" && don.PhuongThucThanhToan == "BANK_TRANSFER" && don.TrangThaiThanhToan != "PAID" && don.TrangThaiThanhToan != "REFUNDED")
             {
+                var daXacNhanGanDay = await _db.LichSuTrangThaiDonHangs.AnyAsync(l =>
+                    l.MaDonHang == don.MaDonHang &&
+                    l.LoaiNguoiThucHien == "BUYER" &&
+                    l.ThoiGian >= ganDayBatch &&
+                    l.LyDo != null && l.LyDo.Contains("xác nhận chuyển khoản"));
+                if (daXacNhanGanDay) continue;
+
                 _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
                 {
                     MaDonHang = don.MaDonHang,

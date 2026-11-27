@@ -7,9 +7,10 @@ public sealed class ResetPasswordOtpVm
     [Required, EmailAddress, MaxLength(256)]
     public string Email { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Nhập mã OTP.")]
+    public string? VerifiedToken { get; set; }
+
     [RegularExpression("^[0-9]{6}$", ErrorMessage = "Mã OTP gồm 6 chữ số.")]
-    public string Code { get; set; } = string.Empty;
+    public string? Code { get; set; }
 
     [Required(ErrorMessage = "Vui lòng nhập mật khẩu mới"), DataType(DataType.Password)]
     [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$",

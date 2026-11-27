@@ -69,7 +69,7 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
 
         var top = await (from ct2 in db.ChiTietDonHangs.AsNoTracking()
                          join dh in db.DonHangs.AsNoTracking() on ct2.MaDonHang equals dh.MaDonHang
-                         where dh.MaCuaHang == shopId && dh.TrangThai == "COMPLETED"
+                         where dh.MaCuaHang == shopId && dh.TrangThai == "COMPLETED" && dh.TrangThaiThanhToan == "PAID"
                          group ct2 by new { ct2.MaSanPham, ct2.TenSanPham } into g
                          orderby g.Sum(x => x.Gia) descending
                          select new TopProductVm { ProductId = g.Key.MaSanPham, Name = g.Key.TenSanPham, QuantitySold = g.Count(), Revenue = g.Sum(x => x.Gia) })
@@ -110,7 +110,7 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
         var dauThangUtc = HienThi.TuGioVnSangUtc(dauThangVn);
 
         var donThang = await db.DonHangs.AsNoTracking()
-            .Where(d => d.TrangThai == "COMPLETED" && (d.ThoiGianHoanTat ?? d.NgayTao) >= dauThangUtc)
+            .Where(d => d.TrangThai == "COMPLETED" && d.TrangThaiThanhToan == "PAID" && (d.ThoiGianHoanTat ?? d.NgayTao) >= dauThangUtc)
             .Select(d => d.TongTien)
             .ToListAsync(ct);
 
@@ -123,7 +123,7 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
         var chiTietHoanTat = await (from ct2 in db.ChiTietDonHangs.AsNoTracking()
                                     join dh in db.DonHangs.AsNoTracking() on ct2.MaDonHang equals dh.MaDonHang
                                     join ch in db.CuaHangs.AsNoTracking() on dh.MaCuaHang equals ch.MaCuaHang
-                                    where dh.TrangThai == "COMPLETED"
+                                    where dh.TrangThai == "COMPLETED" && dh.TrangThaiThanhToan == "PAID"
                                     select new { ct2.MaSanPham, ct2.TenSanPham, ct2.Gia, ch.TenShop })
             .ToListAsync(ct);
 
@@ -208,7 +208,7 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
             return theoThang ? new DateTime(v.Year, v.Month, 1) : v.Date;
         }
 
-        var hoanTat = await q.Where(d => d.TrangThai == "COMPLETED" && (d.ThoiGianHoanTat ?? d.NgayTao) >= batDauUtc)
+        var hoanTat = await q.Where(d => d.TrangThai == "COMPLETED" && d.TrangThaiThanhToan == "PAID" && (d.ThoiGianHoanTat ?? d.NgayTao) >= batDauUtc)
             .Select(d => new { T = d.ThoiGianHoanTat ?? d.NgayTao, d.TongTien }).ToListAsync(ct);
         var taoMoi = await q.Where(d => d.NgayTao >= batDauUtc).Select(d => d.NgayTao).ToListAsync(ct);
 

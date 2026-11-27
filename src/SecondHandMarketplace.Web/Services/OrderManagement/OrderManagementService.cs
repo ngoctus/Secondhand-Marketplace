@@ -59,19 +59,18 @@ public sealed class OrderManagementService(AppDbContext db, IAuditLogService aud
 
 
     private static async Task<PagedResult<OrderRowVm>> PageAsync(IQueryable<DonHang> q, int page, int pageSize, CancellationToken ct)
-
     {
-
-        page = Math.Max(1, page);
+        page = Math.Clamp(page, 1, 100000);
+        pageSize = Math.Clamp(pageSize, 1, 100);
 
         var total = await q.CountAsync(ct);
 
-        var items = await Rows(q.OrderByDescending(d => d.NgayTao).ThenByDescending(d => d.MaDonHang))
+        var skip = (int)Math.Min((long)(page - 1) * pageSize, (long)int.MaxValue);
 
-            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        var items = await Rows(q.OrderByDescending(d => d.NgayTao).ThenByDescending(d => d.MaDonHang))
+            .Skip(skip).Take(pageSize).ToListAsync(ct);
 
         return new PagedResult<OrderRowVm> { Items = items, Page = page, PageSize = pageSize, TotalItems = total };
-
     }
 
 

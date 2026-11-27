@@ -20,7 +20,8 @@ namespace SecondHandMarketplace.Web.Controllers.Api.v1;
 public class AuthController(
     IAuthService authService,
     IShopService shopService,
-    JwtTokenService tokenService) : ControllerBase
+    JwtTokenService tokenService,
+    IRegistrationOtpService registrationOtpService) : ControllerBase
 {
     /// <summary>
     /// Đăng nhập hệ thống, sinh Access Token (JWT).
@@ -72,10 +73,45 @@ public class AuthController(
     }
 
     /// <summary>
+    /// Gửi mã OTP xác nhận đăng ký tài khoản qua email.
+    /// </summary>
+    [HttpPost("send-otp")]
+    [AllowAnonymous]
+    [EnableRateLimiting("register")]
+    [ProducesResponseType(typeof(ServiceResult<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ServiceResult), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SendRegistrationOtp([FromBody] SendRegistrationOtpRequest request, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return ServiceResult<object>.Fail(ErrorCodes.ValidationError, "Dữ liệu không hợp lệ.",
+                ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()).ToActionResult(this);
+        }
+
+        var vm = new SecondHandMarketplace.Web.Models.ViewModels.Account.RegisterVm
+        {
+            FullName = request.FullName,
+            Email = request.Email,
+            Phone = request.PhoneNumber,
+            Password = request.Password,
+            ConfirmPassword = request.Password
+        };
+
+        var (success, error, token) = await registrationOtpService.StartRegistrationAsync(vm, cancellationToken);
+        if (!success || string.IsNullOrEmpty(token))
+        {
+            return ServiceResult<object>.Fail(ErrorCodes.BadRequest, error ?? "Không thể gửi mã xác nhận OTP.").ToActionResult(this);
+        }
+
+        return ServiceResult<object>.Ok(new { OtpToken = token }, "Mã xác nhận OTP đã được gửi đến email của bạn.").ToActionResult(this);
+    }
+
+    /// <summary>
     /// Đăng ký tài khoản người dùng mới.
     /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]
+    [EnableRateLimiting("register")]
     [ProducesResponseType(typeof(ServiceResult<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ServiceResult), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
@@ -86,19 +122,15 @@ public class AuthController(
                 ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()).ToActionResult(this);
         }
 
-        var (success, error, user) = await authService.RegisterAsync(
-            request.FullName, request.Email, request.PhoneNumber, request.Password, cancellationToken);
+        var (otpSuccess, otpError, verifiedUser, _) = await registrationOtpService.VerifyOtpAsync(
+            request.OtpToken, request.OtpCode, cancellationToken);
 
-        if (!success || user is null)
+        if (!otpSuccess || verifiedUser is null)
         {
-            var errStr = error ?? string.Empty;
-            var code = errStr.Contains("Email", StringComparison.OrdinalIgnoreCase) && !errStr.Contains("điện thoại", StringComparison.OrdinalIgnoreCase)
-                ? ErrorCodes.EmailExists
-                : errStr.Contains("điện thoại", StringComparison.OrdinalIgnoreCase) && !errStr.Contains("Email", StringComparison.OrdinalIgnoreCase)
-                    ? ErrorCodes.PhoneExists
-                    : ErrorCodes.BadRequest;
-            return ServiceResult<UserDto>.Fail(code, error ?? "Đăng ký không thành công.").ToActionResult(this);
+            return ServiceResult<UserDto>.Fail(ErrorCodes.BadRequest, otpError ?? "Xác thực mã OTP không thành công.").ToActionResult(this);
         }
+
+        var user = verifiedUser;
 
         if (!string.IsNullOrWhiteSpace(request.Address))
         {

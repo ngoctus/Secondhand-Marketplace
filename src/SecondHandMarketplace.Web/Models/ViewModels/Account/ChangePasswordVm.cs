@@ -13,4 +13,5 @@ public sealed class ChangePasswordVm
     public string NewPassword { get; set; } = string.Empty;
     [Required, DataType(DataType.Password), Compare(nameof(NewPassword), ErrorMessage = "Mật khẩu xác nhận không khớp"), Display(Name = "Xác nhận mật khẩu mới")]
     public string ConfirmPassword { get; set; } = string.Empty;
+    public string? VerifiedToken { get; set; }
 }

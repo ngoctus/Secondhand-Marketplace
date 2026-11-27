@@ -38,38 +38,65 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
         var shop = await db.CuaHangs.SingleOrDefaultAsync(x => x.MaNguoiDung == userId, cancellationToken);
         if (shop is null)
         {
-            // sp_TaoCuaHang tự kiểm tra tài khoản, giới hạn 1 shop và tự ghi nhật ký.
-            var shopId = new SqlParameter("@CuaHangId", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            try
+            if (db.Database.IsRelational())
             {
-                await db.Database.ExecuteSqlRawAsync(
-                    "EXEC dbo.sp_TaoCuaHang @MaNguoiDung, @TenShop, @SoDienThoaiLienHe, @MoTa, @Logo, @CuaHangId OUTPUT",
-                    new object[]
+                var strategy = db.Database.CreateExecutionStrategy();
+                return await strategy.ExecuteAsync(async () =>
+                {
+                    await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
+                    var shopId = new SqlParameter("@CuaHangId", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                    try
                     {
-                        new SqlParameter("@MaNguoiDung", SqlDbType.Int) { Value = userId },
-                        new SqlParameter("@TenShop", SqlDbType.NVarChar, 100) { Value = name },
-                        new SqlParameter("@SoDienThoaiLienHe", SqlDbType.VarChar, 15) { Value = phone },
-                        new SqlParameter("@MoTa", SqlDbType.NVarChar, 1000) { Value = (object?)description ?? DBNull.Value },
-                        new SqlParameter("@Logo", SqlDbType.VarChar, 500) { Value = (object?)logo ?? DBNull.Value },
-                        shopId
-                    }, cancellationToken);
-            }
-            catch (SqlException ex) when (ex.Number is 50001 or 50002)
-            {
-                return (false, ex.Message);
-            }
-            catch (SqlException)
-            {
-                return (false, "Không thể tạo cửa hàng, vui lòng kiểm tra lại thông tin.");
-            }
+                        await db.Database.ExecuteSqlRawAsync(
+                            "EXEC dbo.sp_TaoCuaHang @MaNguoiDung, @TenShop, @SoDienThoaiLienHe, @MoTa, @Logo, @CuaHangId OUTPUT",
+                            new object[]
+                            {
+                                new SqlParameter("@MaNguoiDung", SqlDbType.Int) { Value = userId },
+                                new SqlParameter("@TenShop", SqlDbType.NVarChar, 100) { Value = name },
+                                new SqlParameter("@SoDienThoaiLienHe", SqlDbType.VarChar, 15) { Value = phone },
+                                new SqlParameter("@MoTa", SqlDbType.NVarChar, 1000) { Value = (object?)description ?? DBNull.Value },
+                                new SqlParameter("@Logo", SqlDbType.VarChar, 500) { Value = (object?)logo ?? DBNull.Value },
+                                shopId
+                            }, cancellationToken);
 
-            // Procedure cũ chưa biết các cột mới nên ghi tiếp địa chỉ/ngân hàng cho shop vừa tạo.
-            shop = await db.CuaHangs.SingleAsync(x => x.MaCuaHang == (int)shopId.Value, cancellationToken);
-            ApplyExtras(shop, input, addressDetail, areaLabel, bank);
-            try { await db.SaveChangesAsync(cancellationToken); }
-            catch (DbUpdateException) { return (false, "Đã tạo cửa hàng nhưng chưa lưu được địa chỉ, vui lòng cập nhật lại."); }
-            HomeCacheHelper.XoaCacheTrangChu(cache);
-            return (true, null);
+                        var createdShop = await db.CuaHangs.SingleAsync(x => x.MaCuaHang == (int)shopId.Value, cancellationToken);
+                        ApplyExtras(createdShop, input, addressDetail, areaLabel, bank);
+                        await db.SaveChangesAsync(cancellationToken);
+                        await tx.CommitAsync(cancellationToken);
+                        HomeCacheHelper.XoaCacheTrangChu(cache);
+                        return (true, (string?)null);
+                    }
+                    catch (SqlException ex) when (ex.Number is 50001 or 50002)
+                    {
+                        await tx.RollbackAsync(cancellationToken);
+                        return (false, (string?)ex.Message);
+                    }
+                    catch (Exception)
+                    {
+                        await tx.RollbackAsync(cancellationToken);
+                        return (false, (string?)"Không thể tạo cửa hàng, vui lòng kiểm tra lại thông tin.");
+                    }
+                });
+            }
+            else
+            {
+                var newShop = new CuaHang
+                {
+                    MaNguoiDung = userId,
+                    TenShop = name,
+                    SoDienThoaiLienHe = phone,
+                    MoTa = description,
+                    Logo = logo,
+                    TrangThai = "ACTIVE",
+                    NgayTao = DateTime.UtcNow,
+                    NgayCapNhat = DateTime.UtcNow
+                };
+                ApplyExtras(newShop, input, addressDetail, areaLabel, bank);
+                db.CuaHangs.Add(newShop);
+                await db.SaveChangesAsync(cancellationToken);
+                HomeCacheHelper.XoaCacheTrangChu(cache);
+                return (true, null);
+            }
         }
 
         if (shop.TrangThai == "LOCKED") return (false, "Cửa hàng đang bị khóa, không thể chỉnh sửa.");

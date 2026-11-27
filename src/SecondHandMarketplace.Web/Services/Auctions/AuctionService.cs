@@ -71,7 +71,10 @@ public sealed class AuctionService(AppDbContext db, IAuctionRealtime realtime) :
 
         if (!string.IsNullOrWhiteSpace(q))
         {
-            var k = TextHelper.ChuanHoa(q);
+            var trimmed = q.Trim();
+            if (trimmed.Length > 200) trimmed = trimmed[..200];
+            var k = TextHelper.ChuanHoa(trimmed);
+            if (k.Length > 200) k = k[..200];
             query = query.Where(p => p.SanPham.ChuoiTimKiem.Contains(k));
         }
 
