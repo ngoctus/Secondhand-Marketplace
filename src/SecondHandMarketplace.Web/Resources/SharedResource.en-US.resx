@@ -280,6 +280,12 @@
   <data name="Home_BargainPrices" xml:space="preserve"><value>Budget prices</value></data>
   <data name="Home_MoreProducts" xml:space="preserve"><value>See more products</value></data>
   <data name="Home_ViewAllIn" xml:space="preserve"><value>View all {0}</value></data>
+  <data name="Home_RecDefault" xml:space="preserve"><value>Default</value></data>
+  <data name="Home_RecAllCategories" xml:space="preserve"><value>All</value></data>
+  <data name="Home_ViewDetails" xml:space="preserve"><value>View details</value></data>
+  <data name="Home_RecEmptyTitle" xml:space="preserve"><value>No matching products yet</value></data>
+  <data name="Home_RecEmptyDesc" xml:space="preserve"><value>Try another filter or return to default recommendations to explore more.</value></data>
+  <data name="Home_RecReset" xml:space="preserve"><value>Back to default</value></data>
   <data name="Home_HowLabel" xml:space="preserve"><value>HOW IT WORKS</value></data>
   <data name="Home_HowTitle" xml:space="preserve"><value>3 simple steps</value></data>
   <data name="Home_Step1Title" xml:space="preserve"><value>Find a product</value></data>

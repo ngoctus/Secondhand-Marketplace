@@ -137,67 +137,93 @@
     </div>
 </section>
 
-<!-- 3. SẢN PHẨM THEO DANH MỤC: một khối tab thay cho N khối danh mục trải dài (B-02) -->
-<section class="landing-section" data-rm-reveal>
-    <div class="landing-section-header">
+<!-- 3. CÓ THỂ BẠN SẼ THÍCH: lọc gợi ý ngay trên trang chủ, chỉ chuyển sang /Products khi bấm Xem chi tiết -->
+<section class="landing-section rm-rec-section"
+         id="rmHomeRecSection"
+         data-rm-reveal
+         data-endpoint="@Url.Action("SanPhamGoiY", "Home")"
+         data-products-url="@Url.Action("Index", "Products")"
+         data-label-base="@L["Home_ViewDetails"]">
+    <div class="landing-section-header rm-rec-header">
         <div>
             <div class="section-label">@L["Home_FeatLabel"]</div>
             <h2 class="section-title">@L["Home_FeatTitle"]</h2>
         </div>
-        <div class="d-flex gap-2 landing-header-actions">
-            <a asp-controller="Products" asp-action="Index" asp-route-Sort="newest" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">@L["Nav_Newest"]</a>
-            <a asp-controller="Products" asp-action="Index" asp-route-PriceRange="1" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">@L["Nav_BestPrice"]</a>
-            <a asp-controller="Products" asp-action="Index" asp-route-Sort="price_asc" class="btn-rm-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 999px;">@L["Home_BargainPrices"]</a>
+
+        <div class="rm-rec-modes" role="tablist" aria-label="@L["Home_FeatTitle"]">
+            <button type="button"
+                    class="rm-rec-mode-btn is-active"
+                    role="tab"
+                    aria-selected="true"
+                    data-rm-mode="default"
+                    data-rm-mode-label="">
+                <span>@L["Home_RecDefault"]</span>
+            </button>
+            <button type="button"
+                    class="rm-rec-mode-btn"
+                    role="tab"
+                    aria-selected="false"
+                    data-rm-mode="newest"
+                    data-rm-mode-label="@L["Nav_Newest"]">
+                <span>@L["Nav_Newest"]</span>
+            </button>
+            <button type="button"
+                    class="rm-rec-mode-btn"
+                    role="tab"
+                    aria-selected="false"
+                    data-rm-mode="best_price"
+                    data-rm-mode-label="@L["Nav_BestPrice"]">
+                <span>@L["Nav_BestPrice"]</span>
+            </button>
+            <button type="button"
+                    class="rm-rec-mode-btn"
+                    role="tab"
+                    aria-selected="false"
+                    data-rm-mode="bargain"
+                    data-rm-mode-label="@L["Home_BargainPrices"]">
+                <span>@L["Home_BargainPrices"]</span>
+            </button>
         </div>
     </div>
 
-    <ul class="nav nav-pills rm-cat-tabs" role="tablist">
+    <ul class="nav nav-pills rm-cat-tabs" role="tablist" aria-label="@L["Home_CatTitle"]">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="rm-tab-moi" type="button" role="tab"
-                    data-bs-toggle="pill" data-bs-target="#rm-pane-moi"
-                    aria-controls="rm-pane-moi" aria-selected="true">@L["Nav_Newest"]</button>
+            <button class="nav-link active"
+                    type="button"
+                    role="tab"
+                    aria-selected="true"
+                    data-rm-cat=""
+                    data-rm-cat-label="">
+                @L["Home_RecAllCategories"]
+            </button>
         </li>
         @foreach (var tab in Model.TabsDanhMuc)
         {
+            var tenDm = HienThi.TenDanhMuc(tab.TenDanhMuc);
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="rm-tab-@tab.MaDanhMuc" type="button" role="tab"
-                        data-bs-toggle="pill" data-bs-target="#rm-pane-@tab.MaDanhMuc"
-                        aria-controls="rm-pane-@tab.MaDanhMuc" aria-selected="false"><i class="bi @LayIconDanhMuc(tab.TenDanhMuc)" aria-hidden="true"></i> @HienThi.TenDanhMuc(tab.TenDanhMuc)</button>
+                <button class="nav-link"
+                        type="button"
+                        role="tab"
+                        aria-selected="false"
+                        data-rm-cat="@tab.MaDanhMuc"
+                        data-rm-cat-label="@tenDm">
+                    @tenDm
+                </button>
             </li>
         }
     </ul>
 
-    <div class="tab-content rm-cat-contents">
-        <div class="tab-pane fade show active pane-cat" id="rm-pane-moi" role="tabpanel" aria-labelledby="rm-tab-moi">
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3" data-rm-stagger data-rm-featured>
-                @foreach (var p in Model.SanPhamNoiBat)
-                {
-                    <div class="col">
-                        <partial name="_ProductCard" model="p" />
-                    </div>
-                }
-            </div>
-            <div class="rm-cat-more">
-                <a asp-controller="Products" asp-action="Index" class="btn-rm-outline">@L["Home_MoreProducts"]</a>
-            </div>
+    <div class="rm-cat-contents">
+        <div id="rmHomeRecStage" class="rm-rec-stage" aria-live="polite">
+            <partial name="_HomeRecGrid" model="Model.SanPhamNoiBat" />
         </div>
 
-        @foreach (var tab in Model.TabsDanhMuc)
-        {
-            <div class="tab-pane fade pane-cat" id="rm-pane-@tab.MaDanhMuc" role="tabpanel" aria-labelledby="rm-tab-@tab.MaDanhMuc">
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3" data-rm-stagger>
-                    @foreach (var p in tab.SanPhams)
-                    {
-                        <div class="col">
-                            <partial name="_ProductCard" model="p" />
-                        </div>
-                    }
-                </div>
-                <div class="rm-cat-more">
-                    <a asp-controller="Products" asp-action="Index" asp-route-CategoryId="@tab.MaDanhMuc" class="btn-rm-outline">@L["Home_ViewAllIn", HienThi.TenDanhMuc(tab.TenDanhMuc)]</a>
-                </div>
-            </div>
-        }
+        <div class="rm-cat-more">
+            <a id="rmHomeSeeMore" asp-controller="Products" asp-action="Index" class="btn-rm-rec-more">
+                <span data-rm-more-text>@L["Home_ViewDetails"]</span>
+                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+        </div>
     </div>
 </section>
 
@@ -352,3 +378,7 @@
     }
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/home-recommendations.js" asp-append-version="true"></script>
+}

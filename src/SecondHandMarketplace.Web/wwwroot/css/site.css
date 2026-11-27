@@ -4603,7 +4603,187 @@ body.rmc-open {
 
 .rm-cat-more {
     text-align: center;
-    padding-top: 18px;
+    padding-top: 22px;
+}
+
+/* ==========================================================================
+   GOI Y SAN PHAM TRUC TIEP TREN TRANG CHU ("Co the ban se thich")
+   ========================================================================== */
+.rm-rec-header {
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.rm-rec-modes {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-sm);
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.rm-rec-modes::-webkit-scrollbar {
+    display: none;
+}
+
+.rm-rec-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: var(--font-main);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.rm-rec-mode-btn i {
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+.rm-rec-mode-btn:hover,
+.rm-rec-mode-btn:focus-visible {
+    color: var(--color-primary);
+    background: var(--color-primary-subtle);
+    outline: none;
+}
+
+.rm-rec-mode-btn.is-active,
+.rm-rec-mode-btn.is-active:hover {
+    color: #fff;
+    background: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(104, 112, 90, 0.28);
+}
+
+.rm-rec-mode-btn.is-active i {
+    opacity: 1;
+}
+
+.rm-rec-stage {
+    min-height: 220px;
+    transition: opacity 0.18s ease;
+}
+
+.rm-rec-stage.is-loading {
+    opacity: 0.48;
+    pointer-events: none;
+}
+
+@keyframes rmRecFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+.rm-rec-grid-in {
+    animation: rmRecFadeIn 0.26s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+.rm-rec-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--color-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-xl);
+    animation: rmRecFadeIn 0.24s ease both;
+}
+
+.rm-rec-empty-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    font-size: 20px;
+    margin-bottom: 12px;
+}
+
+.rm-rec-empty-title {
+    margin: 0 0 6px;
+    font-family: var(--font-serif);
+    font-size: 19px;
+    color: var(--color-text-primary);
+}
+
+.rm-rec-empty-desc {
+    margin: 0 0 16px;
+    max-width: 420px;
+    font-size: 13.5px;
+    color: var(--color-text-muted);
+}
+
+.rm-rec-empty-btn {
+    gap: 6px;
+    border-radius: var(--radius-pill);
+    padding: 7px 16px;
+    font-weight: 600;
+}
+
+.btn-rm-rec-more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-white);
+    color: var(--color-text-primary) !important;
+    font-family: var(--font-main);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-rm-rec-more i {
+    font-size: 14px;
+    transition: transform 0.2s ease;
+}
+
+.btn-rm-rec-more:hover,
+.btn-rm-rec-more:focus-visible {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(104, 112, 90, 0.25);
+    outline: none;
+}
+
+.btn-rm-rec-more:hover i {
+    transform: translateX(3px);
+}
+
+@media (max-width: 767.98px) {
+    .rm-rec-modes {
+        width: 100%;
+    }
+
+    .rm-rec-mode-btn {
+        padding: 6px 12px;
+        font-size: 12.5px;
+    }
 }
 
 /* ==========================================================================

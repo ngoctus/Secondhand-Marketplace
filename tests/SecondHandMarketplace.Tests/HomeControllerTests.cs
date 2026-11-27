@@ -146,4 +146,60 @@ public class HomeControllerTests
         var sauKhiCoDuLieu = await TrangChuAsync(controller);
         Assert.NotEmpty(sauKhiCoDuLieu.SanPhamNoiBat);
     }
+
+    [Fact]
+    public async Task SanPhamGoiY_HoTroCheDoMoiDangGiaTotGiaTietKiemVaLocDanhMuc()
+    {
+        var db = NewDb();
+        db.NguoiDungs.Add(new NguoiDung { MaNguoiDung = 1, HoTen = "Chủ shop", Email = "shop@test.local", TrangThai = "ACTIVE" });
+        db.CuaHangs.Add(new CuaHang
+        {
+            MaCuaHang = 1,
+            MaNguoiDung = 1,
+            TenShop = "Shop 1",
+            SoDienThoaiLienHe = "0100000000",
+            TrangThai = "ACTIVE",
+            NgayTao = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        });
+        db.DanhMucs.AddRange(
+            new DanhMuc { MaDanhMuc = 1, Ten = "Đồ điện tử", ThuTuHienThi = 1 },
+            new DanhMuc { MaDanhMuc = 2, Ten = "Thời trang", ThuTuHienThi = 2 });
+
+        var goc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        db.SanPhams.AddRange(
+            new SanPham { MaSanPham = 1, MaCuaHang = 1, MaDanhMuc = 1, Ten = "Laptop cũ", ChuoiTimKiem = "laptop cu", MoTa = "mota", Gia = 3_500_000, TrangThai = "ACTIVE", NgayTao = goc.AddMinutes(1), NgayCapNhat = goc.AddMinutes(1) },
+            new SanPham { MaSanPham = 2, MaCuaHang = 1, MaDanhMuc = 1, Ten = "Cáp sạc nhanh", ChuoiTimKiem = "cap sac nhanh", MoTa = "mota", Gia = 60_000, TrangThai = "ACTIVE", NgayTao = goc.AddMinutes(2), NgayCapNhat = goc.AddMinutes(2) },
+            new SanPham { MaSanPham = 3, MaCuaHang = 1, MaDanhMuc = 2, Ten = "Áo thun cotton", ChuoiTimKiem = "ao thun cotton", MoTa = "mota", Gia = 85_000, TrangThai = "ACTIVE", NgayTao = goc.AddMinutes(3), NgayCapNhat = goc.AddMinutes(3) },
+            new SanPham { MaSanPham = 4, MaCuaHang = 1, MaDanhMuc = 2, Ten = "Áo khoác denim", ChuoiTimKiem = "ao khoac denim", MoTa = "mota", Gia = 250_000, TrangThai = "ACTIVE", NgayTao = goc.AddMinutes(4), NgayCapNhat = goc.AddMinutes(4) },
+            new SanPham { MaSanPham = 5, MaCuaHang = 1, MaDanhMuc = 1, Ten = "Chuột không dây", ChuoiTimKiem = "chuot khong day", MoTa = "mota", Gia = 180_000, TrangThai = "ACTIVE", NgayTao = goc.AddMinutes(5), NgayCapNhat = goc.AddMinutes(5) });
+        await db.SaveChangesAsync();
+
+        var controller = NewController(db);
+
+        // Mới đăng: trả đúng thứ tự mới nhất trước (MaSanPham = 5 đầu tiên)
+        var newestResult = Assert.IsType<Microsoft.AspNetCore.Mvc.PartialViewResult>(await controller.SanPhamGoiY("newest", null));
+        Assert.Equal("_HomeRecGrid", newestResult.ViewName);
+        var newestItems = Assert.IsAssignableFrom<IReadOnlyList<SecondHandMarketplace.Web.Models.ViewModels.Products.ProductCardVm>>(newestResult.Model);
+        Assert.Equal(4, newestItems.Count);
+        Assert.Equal(5, newestItems[0].Id);
+
+        // Giá tốt (PriceRange = 1 -> dưới 100.000đ): chỉ gồm sản phẩm 60k và 85k
+        var bestPriceResult = Assert.IsType<Microsoft.AspNetCore.Mvc.PartialViewResult>(await controller.SanPhamGoiY("best_price", null));
+        var bestPriceItems = Assert.IsAssignableFrom<IReadOnlyList<SecondHandMarketplace.Web.Models.ViewModels.Products.ProductCardVm>>(bestPriceResult.Model);
+        Assert.Equal(2, bestPriceItems.Count);
+        Assert.All(bestPriceItems, p => Assert.True(p.Price <= 100_000));
+
+        // Giá tiết kiệm (price_asc): giá tăng dần, rẻ nhất 60k đứng đầu
+        var bargainResult = Assert.IsType<Microsoft.AspNetCore.Mvc.PartialViewResult>(await controller.SanPhamGoiY("bargain", null));
+        var bargainItems = Assert.IsAssignableFrom<IReadOnlyList<SecondHandMarketplace.Web.Models.ViewModels.Products.ProductCardVm>>(bargainResult.Model);
+        Assert.Equal(4, bargainItems.Count);
+        Assert.Equal(60_000, bargainItems[0].Price);
+        Assert.Equal(85_000, bargainItems[1].Price);
+
+        // Kết hợp chế độ Giá tốt + danh mục 1 (Đồ điện tử): chỉ còn cáp sạc 60k
+        var filteredResult = Assert.IsType<Microsoft.AspNetCore.Mvc.PartialViewResult>(await controller.SanPhamGoiY("best_price", 1));
+        var filteredItems = Assert.IsAssignableFrom<IReadOnlyList<SecondHandMarketplace.Web.Models.ViewModels.Products.ProductCardVm>>(filteredResult.Model);
+        var only = Assert.Single(filteredItems);
+        Assert.Equal(2, only.Id);
+    }
 }

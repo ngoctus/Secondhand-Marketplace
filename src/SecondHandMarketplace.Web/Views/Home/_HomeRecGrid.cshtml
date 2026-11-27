@@ -1,0 +1,23 @@
+@model IReadOnlyList<ProductCardVm>
+
+@if (Model.Count == 0)
+{
+    <div class="rm-rec-empty" role="status">
+        <h3 class="rm-rec-empty-title">@L["Home_RecEmptyTitle"]</h3>
+        <p class="rm-rec-empty-desc">@L["Home_RecEmptyDesc"]</p>
+        <button type="button" class="btn-rm-outline rm-rec-empty-btn" data-rm-rec-reset>
+            <span>@L["Home_RecReset"]</span>
+        </button>
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 rm-rec-grid-in" data-rm-stagger data-rm-featured>
+        @foreach (var p in Model)
+        {
+            <div class="col">
+                <partial name="_ProductCard" model="p" />
+            </div>
+        }
+    </div>
+}

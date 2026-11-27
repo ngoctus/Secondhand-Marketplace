@@ -74,13 +74,111 @@ namespace SecondHandMarketplace.Web.Controllers
             {
                 Banners = anhBanner,
                 DanhMucs = danhMuc,
-                SanPhamNoiBat = tatCaTin.Take(SoTinNoiBat).ToList(),
+                SanPhamNoiBat = ChonSanPhamGoiY(tatCaTin, SoTinNoiBat, daDangDanhMuc: true),
                 TabsDanhMuc = tabs,
                 DanhGiaNoiBat = danhGia,
                 TongSanPham = await DemAnToan(() => db.SanPhams.CountAsync(p => p.TrangThai == "ACTIVE" && !p.DaXoa)),
                 TongNguoiBan = await DemAnToan(() => db.CuaHangs.CountAsync(c => c.TrangThai == "ACTIVE")),
                 TongDonHoanTat = await DemAnToan(() => db.DonHangs.CountAsync(d => d.TrangThai == "COMPLETED"))
             };
+        }
+
+        /// <summary>
+        /// Trả về khối lưới sản phẩm gợi ý (4 thẻ) ngay trên trang chủ khi người dùng bấm
+        /// Mặc định / Mới đăng / Giá tốt / Giá tiết kiệm hoặc chuyển danh mục.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> SanPhamGoiY(string? mode = null, int? categoryId = null)
+        {
+            var cheDo = (mode ?? "default").Trim().ToLowerInvariant();
+            IReadOnlyList<ProductCardVm> ketQua = cheDo switch
+            {
+                "newest" => await MocAnToan(async () =>
+                    (await products.SearchAsync(new ProductSearchVm
+                    {
+                        CategoryId = categoryId,
+                        Sort = "newest",
+                        PageSize = SoTinNoiBat
+                    })).Items),
+                "best_price" => await MocAnToan(async () =>
+                    (await products.SearchAsync(new ProductSearchVm
+                    {
+                        CategoryId = categoryId,
+                        PriceRange = 1,
+                        Sort = "newest",
+                        PageSize = SoTinNoiBat
+                    })).Items),
+                "bargain" => await MocAnToan(async () =>
+                    (await products.SearchAsync(new ProductSearchVm
+                    {
+                        CategoryId = categoryId,
+                        Sort = "price_asc",
+                        PageSize = SoTinNoiBat
+                    })).Items),
+                _ => await LayGoiYMacDinhAsync(categoryId)
+            };
+
+            return PartialView("_HomeRecGrid", ketQua);
+        }
+
+        private async Task<IReadOnlyList<ProductCardVm>> LayGoiYMacDinhAsync(int? categoryId)
+        {
+            var nguon = await MocAnToan(async () =>
+                (await products.SearchAsync(new ProductSearchVm
+                {
+                    CategoryId = categoryId,
+                    PageSize = categoryId is null ? SoTinDuocVeMotLan : 24
+                })).Items);
+
+            return ChonSanPhamGoiY(nguon, SoTinNoiBat, daDangDanhMuc: categoryId is null);
+        }
+
+        /// <summary>
+        /// Chọn sản phẩm cho chế độ "Mặc định" (gợi ý nổi bật): ưu tiên tin có ảnh và shop đánh giá tốt,
+        /// đồng thời rải đều theo danh mục khi đang xem tất cả để khác biệt với chế độ "Mới đăng".
+        /// </summary>
+        private static IReadOnlyList<ProductCardVm> ChonSanPhamGoiY(
+            IReadOnlyList<ProductCardVm> nguon,
+            int soLuong,
+            bool daDangDanhMuc)
+        {
+            if (nguon.Count <= soLuong)
+                return nguon.ToList();
+
+            var sapXep = nguon
+                .Select((item, index) => new { item, index })
+                .OrderByDescending(x => !string.IsNullOrWhiteSpace(x.item.ImageUrl))
+                .ThenByDescending(x => x.item.DiemTrungBinh ?? 0m)
+                .ThenByDescending(x => x.item.SoDanhGia)
+                .ThenBy(x => x.index)
+                .Select(x => x.item)
+                .ToList();
+
+            if (!daDangDanhMuc)
+                return sapXep.Take(soLuong).ToList();
+
+            var ketQua = new List<ProductCardVm>(soLuong);
+            var danhMucDaChon = new HashSet<int>();
+
+            foreach (var sp in sapXep)
+            {
+                if (ketQua.Count >= soLuong) break;
+                if (sp.CategoryId is int maDm && danhMucDaChon.Add(maDm))
+                    ketQua.Add(sp);
+            }
+
+            if (ketQua.Count < soLuong)
+            {
+                var idDaChon = new HashSet<int>(ketQua.Select(p => p.Id));
+                foreach (var sp in sapXep)
+                {
+                    if (ketQua.Count >= soLuong) break;
+                    if (idDaChon.Add(sp.Id))
+                        ketQua.Add(sp);
+                }
+            }
+
+            return ketQua;
         }
 
         // Ba con số thống kê chỉ mang tính trang trí: thiếu bảng thì hiện 0 chứ không làm trang chủ 500.
