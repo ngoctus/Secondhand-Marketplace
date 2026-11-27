@@ -401,6 +401,9 @@ BEGIN
             IF LEN(LTRIM(RTRIM(ISNULL(@LyDo, N'')))) = 0
                 THROW 51207, N'Hủy đơn bắt buộc phải có lý do.', 1;
 
+            IF @TrangThaiCu IN ('DELIVERED', 'COMPLETED')
+                THROW 51212, N'Không thể hủy đơn hàng đã giao hoặc đã hoàn tất. Vui lòng tạo tranh chấp hoặc khiếu nại nếu có vấn đề.', 1;
+
             IF @Loai = 'BUYER' AND @TrangThaiCu NOT IN ('PENDING', 'CONFIRMED')
                 THROW 51208, N'Người mua chỉ được hủy đơn khi shop chưa giao hàng.', 1;
 

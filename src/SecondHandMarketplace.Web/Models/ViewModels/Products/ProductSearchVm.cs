@@ -8,6 +8,7 @@ namespace SecondHandMarketplace.Web.Models.ViewModels.Products;
 /// <summary>Bộ lọc tìm kiếm sản phẩm (query string: /Products?Keyword=iphone&amp;PriceRange=2&amp;sort=price_asc&amp;page=2)</summary>
 public class ProductSearchVm
 {
+    [System.ComponentModel.DataAnnotations.StringLength(200, ErrorMessage = "Từ khóa tìm kiếm không vượt quá 200 ký tự.")]
     public string? Keyword { get; set; }          // tên sản phẩm, tên cửa hàng hoặc tên danh mục
     public int? CategoryId { get; set; }          // DanhMuc.MaDanhMuc
     public int? ConditionId { get; set; }         // TinhTrangSanPham.MaTinhTrang

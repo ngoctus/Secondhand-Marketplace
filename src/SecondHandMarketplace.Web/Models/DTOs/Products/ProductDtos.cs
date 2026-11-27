@@ -21,11 +21,11 @@ public class CreateProductRequest
     public string Name { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Mô tả sản phẩm không được để trống.")]
-    [StringLength(2000, MinimumLength = 10, ErrorMessage = "Mô tả phải từ 10 đến 2000 ký tự.")]
+    [StringLength(2000, MinimumLength = 20, ErrorMessage = "Mô tả phải từ 20 đến 2000 ký tự.")]
     public string Description { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Giá bán không được để trống.")]
-    [Range(1000, 10000000000, ErrorMessage = "Giá sản phẩm từ 1.000 đến 10.000.000.000 VNĐ.")]
+    [Range(1000, 1000000000, ErrorMessage = "Giá sản phẩm từ 1.000 đến 1.000.000.000 VNĐ.")]
     public decimal Price { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn danh mục.")]
@@ -44,11 +44,11 @@ public class UpdateProductRequest
     public string Name { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Mô tả sản phẩm không được để trống.")]
-    [StringLength(2000, MinimumLength = 10, ErrorMessage = "Mô tả phải từ 10 đến 2000 ký tự.")]
+    [StringLength(2000, MinimumLength = 20, ErrorMessage = "Mô tả phải từ 20 đến 2000 ký tự.")]
     public string Description { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Giá bán không được để trống.")]
-    [Range(1000, 10000000000, ErrorMessage = "Giá sản phẩm từ 1.000 đến 10.000.000.000 VNĐ.")]
+    [Range(1000, 1000000000, ErrorMessage = "Giá sản phẩm từ 1.000 đến 1.000.000.000 VNĐ.")]
     public decimal Price { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn danh mục.")]

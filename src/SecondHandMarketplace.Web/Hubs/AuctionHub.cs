@@ -11,6 +11,20 @@ public class AuctionHub : Hub
 
     private const int MaxRooms = 2000;
     private const int MaxViewersPerRoom = 1000;
+    private const int MaxConnectionsPerIp = 20;
+    private static readonly ConcurrentDictionary<string, int> IpConnections = new();
+
+    public override async Task OnConnectedAsync()
+    {
+        var ip = Context.GetHttpContext()?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var count = IpConnections.AddOrUpdate(ip, 1, (_, c) => c + 1);
+        if (count > MaxConnectionsPerIp)
+        {
+            Context.Abort();
+            return;
+        }
+        await base.OnConnectedAsync();
+    }
 
     public async Task JoinAuction(int auctionId)
     {
@@ -35,6 +49,9 @@ public class AuctionHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        var ip = Context.GetHttpContext()?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        IpConnections.AddOrUpdate(ip, 0, (_, c) => Math.Max(0, c - 1));
+
         foreach (var (id, set) in Viewers)
         {
             if (!set.TryRemove(Context.ConnectionId, out _)) continue;

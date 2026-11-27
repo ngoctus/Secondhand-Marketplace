@@ -155,8 +155,12 @@ public class ProductsController(
             MaTinhTrang = request.ConditionId
         };
 
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
         var images = (request.ImageUrls ?? new List<string>())
-            .Where(url => UrlAnToan.HopLe(url))
+            .Where(url => UrlAnToan.HopLe(url) &&
+                          (url.StartsWith("/uploads/products/", StringComparison.OrdinalIgnoreCase) ||
+                           url.StartsWith("/img/", StringComparison.OrdinalIgnoreCase)) &&
+                          allowedExtensions.Any(ext => url.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
             .Select(url => new ProductImageInput(url, 0))
             .ToList();
 
@@ -199,10 +203,31 @@ public class ProductsController(
             MaTinhTrang = request.ConditionId
         };
 
+        var productBefore = await productService.GetDetailAsync(id);
+        var wasActive = productBefore?.Status == "ACTIVE";
+
         var (success, error) = await productService.UpdateAsync(userId, id, form, Array.Empty<ProductImageInput>(), cancellationToken);
         if (!success)
         {
             return ServiceResult.Fail(ErrorCodes.BadRequest, error ?? "Không thể cập nhật sản phẩm.").ToActionResult(this);
+        }
+
+        if (wasActive)
+        {
+            var (submitOk, _) = await productService.GuiDuyetAsync(userId, id, cancellationToken);
+            if (submitOk)
+            {
+                try
+                {
+                    await moderationService.PhanTichSanPhamAsync(id, cancellationToken);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    logger.LogWarning(ex, "Phân tích từ khóa lỗi sau khi tự động gửi duyệt lại sản phẩm {ProductId}.", id);
+                }
+                return ServiceResult.Ok("Cập nhật sản phẩm thành công. Sản phẩm đã được chuyển sang trạng thái chờ duyệt (PENDING_REVIEW).").ToActionResult(this);
+            }
+            return ServiceResult.Ok("Cập nhật sản phẩm thành công. Sản phẩm đã chuyển về bản nháp (DRAFT) để chờ kiểm duyệt lại.").ToActionResult(this);
         }
 
         return ServiceResult.Ok("Cập nhật sản phẩm thành công.").ToActionResult(this);

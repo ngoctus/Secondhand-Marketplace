@@ -41,7 +41,7 @@ public sealed class DashboardController(IDashboardService dashboard, SecondHandM
         if (shopId is null) return NotFound();
 
         var orders = await db.DonHangs.AsNoTracking()
-            .Where(x => x.MaCuaHang == shopId && x.TrangThai == "COMPLETED")
+            .Where(x => x.MaCuaHang == shopId && x.TrangThai == "COMPLETED" && x.TrangThaiThanhToan == "PAID")
             .OrderBy(x => x.ThoiGianHoanTat ?? x.NgayTao)
             .Select(x => new
             {
@@ -54,14 +54,21 @@ public sealed class DashboardController(IDashboardService dashboard, SecondHandM
 
         var rows = new List<IEnumerable<string?>>
         {
-            new[] { "Mã đơn", "Ngày hoàn tất (UTC)", "Doanh thu (VND)", "Phương thức thanh toán" }
+            new[] { "Mã đơn", "Ngày hoàn tất (UTC)", "Tổng tiền (VND)", "Phí sàn 5% (VND)", "Thực nhận (VND)", "Phương thức thanh toán" }
         };
-        rows.AddRange(orders.Select(x => (IEnumerable<string?>)new[]
+        rows.AddRange(orders.Select(x =>
         {
-            x.MaDon,
-            x.CompletedAt.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture),
-            CsvExport.Money(x.TongTien),
-            HienThi.PhuongThucThanhToan(x.PhuongThucThanhToan)
+            var fee = Math.Round(x.TongTien * 0.05m, 0);
+            var net = x.TongTien - fee;
+            return (IEnumerable<string?>)new[]
+            {
+                x.MaDon,
+                x.CompletedAt.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture),
+                CsvExport.Money(x.TongTien),
+                CsvExport.Money(fee),
+                CsvExport.Money(net),
+                HienThi.PhuongThucThanhToan(x.PhuongThucThanhToan)
+            };
         }));
 
         return CsvExport.Create($"remarket-shop-revenue-{DateTime.UtcNow:yyyyMMdd}.csv", rows);

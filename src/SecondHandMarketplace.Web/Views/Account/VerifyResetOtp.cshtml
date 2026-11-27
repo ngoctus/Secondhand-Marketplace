@@ -1,0 +1,41 @@
+@model VerifyResetOtpVm
+@{
+    ViewData["Title"] = L["Account_Reset_Title"].Value;
+}
+<div class="form-page page rm-auth-page"><div class="row justify-content-center py-5"><div class="col-12 col-md-7 col-lg-5">
+    <div class="card shadow-sm border-0 rm-auth-card"><div class="card-body p-4 p-md-5">
+        <div class="text-center mb-3">
+            <span class="badge rounded-pill text-bg-primary px-3 py-2">Bước 1/2 · Xác thực OTP</span>
+        </div>
+        <h2 class="text-center mb-2">@L["Account_Reset_Title"]</h2>
+        @if (TempData["ThongBao"] is string info) { <div class="alert alert-info d-flex align-items-center gap-2" role="alert"><i class="bi bi-envelope-check-fill fs-5 flex-shrink-0"></i><div>@info</div></div> }
+        @if (TempData["Loi"] is string error) { <div class="alert alert-danger d-flex align-items-center gap-2" role="alert"><i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0 text-danger"></i><div>@error</div></div> }
+        <p class="text-center text-muted mb-4">Nhập mã xác nhận OTP 6 chữ số đã được gửi đến <strong>@Model.Email</strong> để tiếp tục đổi mật khẩu.</p>
+        <form asp-action="VerifyResetOtp" method="post">
+            <input asp-for="Email" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div class="mb-3">
+                <label asp-for="Code" class="form-label">@L["Account_OtpCode"]</label>
+                <input asp-for="Code" class="form-control text-center fs-4 fw-bold" style="letter-spacing: 6px;" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" autofocus />
+                <span asp-validation-for="Code" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Xác nhận mã OTP</button>
+        </form>
+        <form asp-action="ResendResetCode" method="post" class="text-center mt-3">
+            <input type="hidden" name="Email" value="@Model.Email" />
+            <button type="submit" class="btn btn-link">@L["Account_ResendOtp"]</button>
+        </form>
+        <p class="text-center mt-2 mb-0"><a asp-action="Login">@L["Btn_BackToLogin"]</a></p>
+    </div></div>
+</div></div></div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $('form').on('submit', function () {
+            if ($(this).valid()) {
+                const btn = $(this).find('button[type="submit"]');
+                btn.prop('disabled', true);
+            }
+        });
+    </script>
+}

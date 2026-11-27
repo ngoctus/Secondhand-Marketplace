@@ -9,8 +9,11 @@ namespace SecondHandMarketplace.Web.Areas.Admin.Controllers;
 public sealed class SellersController(AppDbContext db, IShopService shops) : AdminBaseController
 {
     [HttpGet]
-    public async Task<IActionResult> Index(string? search, string? status, CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(string? search, string? status, int page = 1, int pageSize = 30, CancellationToken cancellationToken = default)
     {
+        page = Math.Clamp(page, 1, 1000);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         var query = db.CuaHangs.AsNoTracking()
             .Include(x => x.NguoiDung).Include(x => x.TinhThanh).Include(x => x.PhuongXa).AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
@@ -19,9 +22,19 @@ public sealed class SellersController(AppDbContext db, IShopService shops) : Adm
             query = query.Where(x => x.TenShop.Contains(keyword) || x.NguoiDung.HoTen.Contains(keyword) || x.NguoiDung.Email.Contains(keyword));
         }
         if (status is "ACTIVE" or "LOCKED") query = query.Where(x => x.TrangThai == status);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query.OrderByDescending(x => x.NgayTao)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
         ViewBag.Search = search;
         ViewBag.Status = status;
-        return View(await query.OrderByDescending(x => x.NgayTao).ToListAsync(cancellationToken));
+        ViewBag.Page = page;
+        ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
+        ViewBag.Total = total;
+        return View(items);
     }
 
     [HttpPost]

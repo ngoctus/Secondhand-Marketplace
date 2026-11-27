@@ -37,7 +37,7 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
     public async Task<IActionResult> ExportCsv(CancellationToken ct)
     {
         var orders = await db.DonHangs.AsNoTracking()
-            .Where(x => x.TrangThai == "COMPLETED")
+            .Where(x => x.TrangThai == "COMPLETED" && x.TrangThaiThanhToan == "PAID")
             .OrderBy(x => x.ThoiGianHoanTat ?? x.NgayTao)
             .Select(x => new
             {
@@ -76,14 +76,17 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
             return RedirectToAction(nameof(Index));
         }
 
-        var shop = await db.CuaHangs.AsNoTracking().FirstOrDefaultAsync(x => x.MaCuaHang == shopId, ct)
-                   ?? await db.CuaHangs.AsNoTracking().FirstOrDefaultAsync(ct);
-        var buyer = await db.NguoiDungs.AsNoTracking().FirstOrDefaultAsync(x => x.MaNguoiDung == buyerId, ct)
-                    ?? await db.NguoiDungs.AsNoTracking().FirstOrDefaultAsync(x => x.VaiTro == "USER", ct);
-
-        if (shop is null || buyer is null)
+        var shop = await db.CuaHangs.AsNoTracking().FirstOrDefaultAsync(x => x.MaCuaHang == shopId, ct);
+        if (shop is null)
         {
-            TempData["Loi"] = "Không tìm thấy cửa hàng hoặc người mua hợp lệ.";
+            TempData["Loi"] = $"Không tìm thấy cửa hàng với mã #{shopId}.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var buyer = await db.NguoiDungs.AsNoTracking().FirstOrDefaultAsync(x => x.MaNguoiDung == buyerId, ct);
+        if (buyer is null)
+        {
+            TempData["Loi"] = $"Không tìm thấy người mua với mã #{buyerId}.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -175,11 +178,54 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
         order.PhiVanChuyen = 0m;
         order.TongTien = amount;
         order.TrangThai = normalizedStatus;
+
+        var items = await db.ChiTietDonHangs.Where(ctdh => ctdh.MaDonHang == id).ToListAsync(ct);
+
         if (normalizedStatus == "COMPLETED")
         {
             order.TrangThaiThanhToan = "PAID";
             order.ThoiGianHoanTat ??= DateTime.UtcNow;
+            foreach (var item in items)
+            {
+                item.DangGiuCho = false;
+                var sp = await db.SanPhams.FirstOrDefaultAsync(s => s.MaSanPham == item.MaSanPham, ct);
+                if (sp is not null && sp.TrangThai != "SOLD")
+                {
+                    sp.TrangThai = "SOLD";
+                    sp.NgayCapNhat = DateTime.UtcNow;
+                }
+            }
         }
+        else if (normalizedStatus == "CANCELLED")
+        {
+            order.TrangThaiThanhToan = "UNPAID";
+            order.ThoiGianHoanTat = null;
+            foreach (var item in items)
+            {
+                item.DangGiuCho = false;
+                var sp = await db.SanPhams.FirstOrDefaultAsync(s => s.MaSanPham == item.MaSanPham, ct);
+                if (sp is not null && (sp.TrangThai == "RESERVED" || sp.TrangThai == "SOLD"))
+                {
+                    sp.TrangThai = "ACTIVE";
+                    sp.NgayCapNhat = DateTime.UtcNow;
+                }
+            }
+        }
+        else
+        {
+            order.ThoiGianHoanTat = null;
+            foreach (var item in items)
+            {
+                item.DangGiuCho = true;
+                var sp = await db.SanPhams.FirstOrDefaultAsync(s => s.MaSanPham == item.MaSanPham, ct);
+                if (sp is not null && sp.TrangThai != "RESERVED")
+                {
+                    sp.TrangThai = "RESERVED";
+                    sp.NgayCapNhat = DateTime.UtcNow;
+                }
+            }
+        }
+
         order.NgayCapNhat = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
@@ -213,18 +259,32 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteOrder(int id, CancellationToken ct = default)
     {
-        var order = await db.DonHangs.AsNoTracking().FirstOrDefaultAsync(x => x.MaDonHang == id, ct);
+        var order = await db.DonHangs.FirstOrDefaultAsync(x => x.MaDonHang == id, ct);
         if (order is null)
         {
             TempData["Loi"] = "Không tìm thấy đơn hàng.";
             return RedirectToAction(nameof(Index));
         }
 
+        // Hoàn lại trạng thái sản phẩm về ACTIVE nếu đang bị giam giữ bởi đơn này
+        var items = await db.ChiTietDonHangs.Where(ctdh => ctdh.MaDonHang == id).ToListAsync(ct);
+        foreach (var item in items)
+        {
+            var sp = await db.SanPhams.FirstOrDefaultAsync(s => s.MaSanPham == item.MaSanPham, ct);
+            if (sp is not null && (sp.TrangThai == "RESERVED" || sp.TrangThai == "SOLD"))
+            {
+                sp.TrangThai = "ACTIVE";
+                sp.NgayCapNhat = DateTime.UtcNow;
+            }
+        }
+        await db.SaveChangesAsync(ct);
+
         if (db.Database.IsRelational())
         {
-            await db.Database.ExecuteSqlRawAsync("DISABLE TRIGGER trg_ChiTietDonHang_KiemTra ON dbo.ChiTietDonHang;", ct);
+            await using var tx = await db.Database.BeginTransactionAsync(ct);
             try
             {
+                await db.Database.ExecuteSqlRawAsync("DISABLE TRIGGER trg_ChiTietDonHang_KiemTra ON dbo.ChiTietDonHang;", ct);
                 await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM dbo.DanhGia WHERE MaDonHang = {id}", ct);
                 await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM dbo.LichSuTranhChap WHERE MaTranhChap IN (SELECT MaTranhChap FROM dbo.TranhChap WHERE MaDonHang = {id})", ct);
                 await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM dbo.AnhMinhChungTranhChap WHERE MaTranhChap IN (SELECT MaTranhChap FROM dbo.TranhChap WHERE MaDonHang = {id})", ct);
@@ -233,20 +293,21 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
                 await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM dbo.LichSuTrangThaiDonHang WHERE MaDonHang = {id}", ct);
                 await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM dbo.ChiTietDonHang WHERE MaDonHang = {id}", ct);
                 await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM dbo.DonHang WHERE MaDonHang = {id}", ct);
+                await db.Database.ExecuteSqlRawAsync("ENABLE TRIGGER trg_ChiTietDonHang_KiemTra ON dbo.ChiTietDonHang;", ct);
+                await tx.CommitAsync(ct);
             }
-            finally
+            catch
             {
                 await db.Database.ExecuteSqlRawAsync("ENABLE TRIGGER trg_ChiTietDonHang_KiemTra ON dbo.ChiTietDonHang;", ct);
+                await tx.RollbackAsync(ct);
+                throw;
             }
         }
         else
         {
-            var entity = await db.DonHangs.FindAsync([id], ct);
-            if (entity is not null)
-            {
-                db.DonHangs.Remove(entity);
-                await db.SaveChangesAsync(ct);
-            }
+            db.ChiTietDonHangs.RemoveRange(items);
+            db.DonHangs.Remove(order);
+            await db.SaveChangesAsync(ct);
         }
 
         TempData["ThanhCong"] = $"Đã xóa đơn hàng {order.MaDon}.";

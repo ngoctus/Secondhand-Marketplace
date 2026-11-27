@@ -53,6 +53,15 @@ public class OrdersController(
             return ServiceResult.Fail(ErrorCodes.ValidationError, "Hình thức nhận hàng không hợp lệ. Chỉ chấp nhận GIAO_HANG hoặc GAP_TRUC_TIEP.").ToActionResult(this);
         }
 
+        if (string.Equals(request.PaymentMethod, "BANK_TRANSFER", StringComparison.OrdinalIgnoreCase))
+        {
+            var checkoutData = await orderService.ChuanBiCheckoutTuGioAsync(userId);
+            if (checkoutData?.CoTheChuyenKhoan != true)
+            {
+                return ServiceResult.Fail(ErrorCodes.ValidationError, "Một hoặc nhiều cửa hàng chưa có đủ thông tin nhận chuyển khoản. Vui lòng chọn COD hoặc liên hệ cửa hàng.").ToActionResult(this);
+            }
+        }
+
         var diaChi = request.ReceiverAddress.Trim();
         var extraParts = new List<string>();
         if (!string.IsNullOrWhiteSpace(request.DeliveryTimeSlot) && request.DeliveryTimeSlot != "BAT_KY")
@@ -126,6 +135,15 @@ public class OrdersController(
         if (!string.IsNullOrWhiteSpace(request.DeliveryMethod) && !validDeliveryMethods.Contains(request.DeliveryMethod))
         {
             return ServiceResult.Fail(ErrorCodes.ValidationError, "Hình thức nhận hàng không hợp lệ. Chỉ chấp nhận GIAO_HANG hoặc GAP_TRUC_TIEP.").ToActionResult(this);
+        }
+
+        if (string.Equals(request.PaymentMethod, "BANK_TRANSFER", StringComparison.OrdinalIgnoreCase))
+        {
+            var checkoutData = await orderService.ChuanBiCheckoutMuaNgayAsync(userId, request.ProductId);
+            if (checkoutData?.CoTheChuyenKhoan != true)
+            {
+                return ServiceResult.Fail(ErrorCodes.ValidationError, "Cửa hàng của sản phẩm này chưa có đủ thông tin nhận chuyển khoản. Vui lòng chọn COD hoặc liên hệ cửa hàng.").ToActionResult(this);
+            }
         }
 
         var diaChiBuyNow = request.ReceiverAddress.Trim();

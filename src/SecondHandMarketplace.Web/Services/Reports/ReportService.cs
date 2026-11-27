@@ -129,6 +129,7 @@ public class ReportService : IReportService
             .Include(x => x.NguoiXuLy)
             .Where(x => x.MaNguoiBaoCao == maNguoiBaoCao)
             .OrderByDescending(x => x.NgayTao)
+            .Take(50)
             .ToListAsync();
 
         return await NapTenDoiTuongVaMapVm(rawList);

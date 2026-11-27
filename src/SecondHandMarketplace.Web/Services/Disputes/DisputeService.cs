@@ -479,7 +479,7 @@ public class DisputeService : IDisputeService
                 lyDoAdmin = lyDoAdmin[..cut];
             }
 
-            // Fix #6: Nếu đơn đã COMPLETED thì không gọi đổi trạng thái đơn nữa
+            // Fix #6 & #5: Nếu đơn chưa COMPLETED thì đổi sang COMPLETED
             if (tc.DonHang.TrangThai != "COMPLETED")
             {
                 if (_db.Database.IsRelational())
@@ -499,7 +499,7 @@ public class DisputeService : IDisputeService
                     {
                         tt.TrangThaiThanhToan = "SUCCESS";
                         tt.ThoiGianThanhToan = now;
-                                            }
+                    }
 
                     var chiTiets = await _db.ChiTietDonHangs
                         .Include(c => c.SanPham)
@@ -537,6 +537,19 @@ public class DisputeService : IDisputeService
                         LyDo = tc.PhanQuyet,
                         ThoiGian = now
                     });
+                }
+            }
+
+            // Đảm bảo trạng thái thanh toán được chuyển sang PAID khi phán quyết thanh toán cho người bán
+            if (tc.DonHang.TrangThaiThanhToan != "PAID")
+            {
+                tc.DonHang.TrangThaiThanhToan = "PAID";
+                tc.DonHang.NgayCapNhat = now;
+                var ttOrder = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == tc.MaDonHang);
+                if (ttOrder != null)
+                {
+                    ttOrder.TrangThaiThanhToan = "SUCCESS";
+                    ttOrder.ThoiGianThanhToan ??= now;
                 }
             }
         }

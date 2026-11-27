@@ -80,6 +80,15 @@ public class Program
                     QueueLimit = 0,
                     AutoReplenishment = true
                 }));
+            options.AddPolicy("register", context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(15),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
         });
         builder.Services.AddSignalR();
         builder.Services.AddDatabase(builder.Configuration);

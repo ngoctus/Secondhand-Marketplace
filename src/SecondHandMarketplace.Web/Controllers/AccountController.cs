@@ -61,7 +61,7 @@ public sealed class AccountController(
         }
     }
     private bool IsMockOAuthEnabled() =>
-        environment.IsDevelopment() && configuration.GetValue("MockOAuth:Enabled", true);
+        configuration.GetValue("MockOAuth:Enabled", false);
 
     [AllowAnonymous]
     [HttpGet]
@@ -76,6 +76,7 @@ public sealed class AccountController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("register")]
     public async Task<IActionResult> Register(RegisterVm model, CancellationToken cancellationToken)
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
@@ -141,6 +142,7 @@ public sealed class AccountController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("register")]
     public async Task<IActionResult> ResendRegisterCode(RegisterVerifyVm model, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(model.Token)) return RedirectToAction(nameof(Register));
@@ -193,8 +195,8 @@ public sealed class AccountController(
                 ModelState.AddModelError(string.Empty, "Chưa gửi được email xác nhận. Vui lòng thử lại sau.");
                 return View(model);
             }
-            TempData["ThongBao"] = "Mã xác nhận OTP 6 chữ số đã được gửi tới email " + model.Email.Trim() + ". Vui lòng kiểm tra hộp thư (kể cả mục Spam).";
-            return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
+            TempData["ThongBao"] = "Mã xác nhận OTP 6 chữ số đã được gửi tới email " + model.Email.Trim() + ". Vui lòng nhập mã OTP để tiếp tục.";
+            return RedirectToAction(nameof(VerifyResetOtp), new { email = model.Email.Trim().ToLowerInvariant() });
         }
         catch (OperationCanceledException)
         {
@@ -205,17 +207,71 @@ public sealed class AccountController(
 
     [AllowAnonymous]
     [HttpGet]
-    public IActionResult ResetPassword(string email) => View(new ResetPasswordOtpVm { Email = email ?? string.Empty });
+    public IActionResult VerifyResetOtp(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return RedirectToAction(nameof(ForgotPassword));
+        return View(new VerifyResetOtpVm { Email = email.Trim().ToLowerInvariant() });
+    }
+
+    [AllowAnonymous]
+    [HttpPost, ValidateAntiForgeryToken]
+    [EnableRateLimiting("password-reset")]
+    public async Task<IActionResult> VerifyResetOtp(VerifyResetOtpVm model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid) return View(model);
+        try
+        {
+            var (ok, error, verifiedToken) = await passwordResetService.VerifyCodeAsync(model.Email, model.Code, cancellationToken);
+            if (!ok || string.IsNullOrEmpty(verifiedToken))
+            {
+                ModelState.AddModelError(nameof(model.Code), error ?? "Mã OTP không chính xác hoặc đã hết hạn.");
+                return View(model);
+            }
+
+            TempData["ResetVerifiedToken"] = verifiedToken;
+            TempData["ThanhCong"] = "Xác thực mã OTP thành công! Vui lòng nhập mật khẩu mới.";
+            return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
+        }
+        catch (OperationCanceledException)
+        {
+            ModelState.AddModelError(string.Empty, "Yêu cầu xác thực OTP bị quá thời gian chờ. Vui lòng thử lại.");
+            return View(model);
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult ResetPassword(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return RedirectToAction(nameof(ForgotPassword));
+        var verifiedToken = TempData["ResetVerifiedToken"] as string;
+        if (string.IsNullOrWhiteSpace(verifiedToken))
+        {
+            TempData["Loi"] = "Vui lòng nhập và xác thực mã OTP trước khi đặt lại mật khẩu.";
+            return RedirectToAction(nameof(VerifyResetOtp), new { email = email.Trim().ToLowerInvariant() });
+        }
+        return View(new ResetPasswordOtpVm
+        {
+            Email = email.Trim().ToLowerInvariant(),
+            VerifiedToken = verifiedToken
+        });
+    }
 
     [AllowAnonymous]
     [HttpPost, ValidateAntiForgeryToken]
     [EnableRateLimiting("password-reset")]
     public async Task<IActionResult> ResetPassword(ResetPasswordOtpVm model, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(model.VerifiedToken))
+        {
+            TempData["Loi"] = "Vui lòng nhập và xác thực mã OTP trước khi đặt lại mật khẩu.";
+            return RedirectToAction(nameof(VerifyResetOtp), new { email = (model.Email ?? string.Empty).Trim().ToLowerInvariant() });
+        }
+
         if (!ModelState.IsValid) return View(model);
         try
         {
-            var result = await passwordResetService.ResetPasswordAsync(model.Email, model.Code, model.NewPassword, cancellationToken);
+            var result = await passwordResetService.ResetPasswordWithTokenAsync(model.Email, model.VerifiedToken, model.NewPassword, cancellationToken);
             if (!result.Success)
             {
                 ModelState.AddModelError(string.Empty, result.Error ?? "Không thể đặt lại mật khẩu.");
@@ -253,7 +309,7 @@ public sealed class AccountController(
         {
             TempData["Loi"] = "Yêu cầu gửi lại mã bị quá thời gian chờ. Vui lòng thử lại.";
         }
-        return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim().ToLowerInvariant() });
+        return RedirectToAction(nameof(VerifyResetOtp), new { email = model.Email.Trim().ToLowerInvariant() });
     }
 
     [HttpPost, HttpGet]
@@ -291,7 +347,7 @@ public sealed class AccountController(
         }
 
         // Khi chưa cấu hình khóa API thực tế, mở màn hình chọn tài khoản trên máy người dùng (Google/Facebook Account Chooser)
-        if (!IsMockOAuthEnabled() && !environment.IsDevelopment())
+        if (!IsMockOAuthEnabled() || !environment.IsDevelopment())
         {
             TempData["Loi"] = $"Đăng nhập bằng {prov} chưa được cấu hình.";
             return RedirectToAction(nameof(Login), new { returnUrl });
@@ -315,6 +371,14 @@ public sealed class AccountController(
         {
             await HttpContext.SignOutAsync("ExternalCookie");
             TempData["Loi"] = "Không thể lấy địa chỉ email từ tài khoản liên kết.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var emailVerifiedClaim = authResult.Principal.FindFirst("email_verified")?.Value;
+        if (emailVerifiedClaim != null && emailVerifiedClaim.Equals("false", StringComparison.OrdinalIgnoreCase))
+        {
+            await HttpContext.SignOutAsync("ExternalCookie");
+            TempData["Loi"] = "Địa chỉ email từ tài khoản liên kết chưa được xác thực. Vui lòng xác thực email trước khi đăng nhập.";
             return RedirectToAction(nameof(Login));
         }
 
@@ -491,7 +555,7 @@ public sealed class AccountController(
     [AllowAnonymous]
     public async Task<IActionResult> ExternalLoginSelectAccount(string provider = "Google", string? returnUrl = null)
     {
-        if (!IsMockOAuthEnabled() && !environment.IsDevelopment()) return NotFound();
+        if (!IsMockOAuthEnabled() || !environment.IsDevelopment()) return NotFound();
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
 
         var prov = (provider ?? "Google").Trim();
@@ -526,7 +590,7 @@ public sealed class AccountController(
         string? returnUrl,
         CancellationToken cancellationToken = default)
     {
-        if (!IsMockOAuthEnabled() && !environment.IsDevelopment()) return NotFound();
+        if (!IsMockOAuthEnabled() || !environment.IsDevelopment()) return NotFound();
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
 
         var prov = (provider ?? "Google").Trim();
@@ -755,21 +819,121 @@ public sealed class AccountController(
 
     [Authorize]
     [HttpGet]
-    public IActionResult ChangePassword() => View(new ChangePasswordVm());
+    public async Task<IActionResult> ChangePassword(CancellationToken cancellationToken)
+    {
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
+        var user = await authService.GetUserAsync(userId, cancellationToken);
+        if (user is null) return Challenge();
+
+        ViewBag.UserEmail = user.Email;
+        ViewBag.OtpSent = TempData["ChangePwdOtpSent"] as bool? ?? false;
+        var verifiedToken = TempData["ChangePwdVerifiedToken"] as string;
+        return View(new ChangePasswordVm { VerifiedToken = verifiedToken });
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting("password-reset")]
+    public async Task<IActionResult> SendChangePasswordOtp(CancellationToken cancellationToken)
+    {
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
+        var user = await authService.GetUserAsync(userId, cancellationToken);
+        if (user is null) return Challenge();
+
+        try
+        {
+            var sent = await passwordResetService.SendCodeAsync(user.Email, cancellationToken);
+            if (sent)
+            {
+                TempData["ChangePwdOtpSent"] = true;
+                TempData["ThongBao"] = $"Mã xác nhận OTP 6 chữ số đã được gửi tới email {user.Email}. Vui lòng kiểm tra hộp thư.";
+            }
+            else
+            {
+                TempData["Loi"] = "Chưa gửi được email xác nhận OTP. Vui lòng thử lại sau.";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            TempData["Loi"] = "Yêu cầu gửi mã OTP bị quá thời gian chờ. Vui lòng thử lại.";
+        }
+        return RedirectToAction(nameof(ChangePassword));
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting("password-reset")]
+    public async Task<IActionResult> VerifyChangePasswordOtp(string code, CancellationToken cancellationToken)
+    {
+        if (User.LayNguoiDungId() is not int userId) return Challenge();
+        var user = await authService.GetUserAsync(userId, cancellationToken);
+        if (user is null) return Challenge();
+
+        code = (code ?? string.Empty).Trim();
+        if (code.Length != 6 || !code.All(char.IsDigit))
+        {
+            TempData["ChangePwdOtpSent"] = true;
+            TempData["Loi"] = "Mã OTP phải gồm đúng 6 chữ số.";
+            return RedirectToAction(nameof(ChangePassword));
+        }
+
+        try
+        {
+            var (ok, error, verifiedToken) = await passwordResetService.VerifyCodeAsync(user.Email, code, cancellationToken);
+            if (!ok || string.IsNullOrEmpty(verifiedToken))
+            {
+                TempData["ChangePwdOtpSent"] = true;
+                TempData["Loi"] = error ?? "Mã OTP không chính xác hoặc đã hết hạn.";
+                return RedirectToAction(nameof(ChangePassword));
+            }
+
+            TempData["ChangePwdVerifiedToken"] = verifiedToken;
+            TempData["ThanhCong"] = "Xác thực mã OTP thành công! Bây giờ bạn có thể đổi mật khẩu.";
+            return RedirectToAction(nameof(ChangePassword));
+        }
+        catch (OperationCanceledException)
+        {
+            TempData["ChangePwdOtpSent"] = true;
+            TempData["Loi"] = "Yêu cầu xác thực OTP bị quá thời gian chờ. Vui lòng thử lại.";
+            return RedirectToAction(nameof(ChangePassword));
+        }
+    }
 
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangePassword(ChangePasswordVm model, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return View(model);
         if (User.LayNguoiDungId() is not int userId) return Challenge();
+        var user = await authService.GetUserAsync(userId, cancellationToken);
+        if (user is null) return Challenge();
+
+        ViewBag.UserEmail = user.Email;
+
+        if (string.IsNullOrWhiteSpace(model.VerifiedToken))
+        {
+            TempData["Loi"] = "Vui lòng gửi và xác thực mã OTP qua email trước khi đổi mật khẩu.";
+            return RedirectToAction(nameof(ChangePassword));
+        }
+
+        if (!ModelState.IsValid) return View(model);
+
+        var (otpOk, otpError) = await passwordResetService.ConsumeVerifiedTokenAsync(user.Email, model.VerifiedToken, cancellationToken);
+        if (!otpOk)
+        {
+            TempData["Loi"] = otpError ?? "Phiên xác thực OTP đã hết hạn hoặc không hợp lệ. Vui lòng xác thực lại mã OTP.";
+            return RedirectToAction(nameof(ChangePassword));
+        }
+
         var result = await authService.ChangePasswordAsync(userId, model.CurrentPassword, model.NewPassword, cancellationToken);
         if (!result.Success)
         {
-            ModelState.AddModelError(string.Empty, result.Error ?? "Không thể đổi mật khẩu.");
-            return View(model);
+            TempData["Loi"] = (result.Error ?? "Không thể đổi mật khẩu.") + " Vui lòng gửi mã OTP mới để thử lại.";
+            return RedirectToAction(nameof(ChangePassword));
         }
+
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         TempData["ThanhCong"] = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.";
         return RedirectToAction(nameof(Login));

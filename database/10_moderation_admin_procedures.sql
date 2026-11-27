@@ -156,6 +156,9 @@ BEGIN
             RETURN;
         END
 
+        IF @TrangThaiMoi = 'CANCELLED' AND @TrangThaiCu IN ('DELIVERED', 'COMPLETED')
+            THROW 51212, N'Không thể hủy đơn hàng đã giao hoặc đã hoàn tất.', 1;
+
         IF dbo.fn_ChuyenTrangThaiDonHangHopLe(@TrangThaiCu, @TrangThaiMoi) = 0
             THROW 51203, N'Không cho phép chuyển trạng thái này.', 1;
 
