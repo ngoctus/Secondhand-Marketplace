@@ -64,6 +64,23 @@ public sealed class SellerOrdersController(IOrderManagementService orders) : Use
         return RedirectToAction(nameof(Details), new { id });
     }
 
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> XacNhanHoanTien(int id, string? maGiaoDichHoan, [FromServices] IOrderService orderService)
+    {
+        var userId = User.LayNguoiDungId();
+        if (userId is null) return Challenge();
+        if (maGiaoDichHoan?.Length > 100)
+        {
+            this.ThongBaoLoi("Mã giao dịch hoặc ghi chú hoàn tiền không được vượt quá 100 ký tự.");
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var (ok, error) = await orderService.XacNhanHoanTienShopAsync(userId.Value, id, maGiaoDichHoan);
+        if (ok) this.ThongBaoThanhCong("Đã ghi nhận shop hoàn tiền cho người mua.");
+        else this.ThongBaoLoi(error ?? "Không thể ghi nhận hoàn tiền.");
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
     private IActionResult YeuCauTaoShop()
     {
         this.ThongBaoLoi("Bạn cần tạo cửa hàng trước khi quản lý đơn bán.");

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace SecondHandMarketplace.Web.Common;
 
@@ -12,5 +12,21 @@ public static class HomeCacheHelper
 
     public static TimeSpan CacheTrangChu { get; } = TimeSpan.FromMinutes(5);
 
-    public static void XoaCacheTrangChu(IMemoryCache? cache) => cache?.Remove(CatalogCacheKey);
+    public static async Task XoaCacheTrangChuAsync(
+        IDistributedCache? distributedCache,
+        CancellationToken cancellationToken = default)
+    {
+        if (distributedCache is not null)
+        {
+            try
+            {
+                await distributedCache.RemoveAsync(CatalogCacheKey, cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                // Cache is an optimization. A cache outage must not turn a committed order or
+                // moderation action into an apparent failure; the entry naturally expires by TTL.
+            }
+        }
+    }
 }

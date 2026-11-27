@@ -5,12 +5,18 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Services.Orders;
+using SecondHandMarketplace.Web.Services.BackgroundJobs;
 using Xunit;
 
 namespace SecondHandMarketplace.Tests;
 
 public class OrderCleanupWorkerTests
 {
+    private sealed class NoopLease : IBackgroundJobLease
+    {
+        public Task<IBackgroundJobLeaseHandle?> TryAcquireAsync(string jobName, CancellationToken cancellationToken = default) => Task.FromResult<IBackgroundJobLeaseHandle?>(null);
+    }
+
     private (AppDbContext db, OrderCleanupBackgroundService worker) CreateWorker(string dbName)
     {
         var services = new ServiceCollection();
@@ -23,7 +29,7 @@ public class OrderCleanupWorkerTests
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
         var logger = NullLogger<OrderCleanupBackgroundService>.Instance;
 
-        var worker = new OrderCleanupBackgroundService(scopeFactory, config, logger);
+        var worker = new OrderCleanupBackgroundService(scopeFactory, config, new NoopLease(), logger);
         return (db, worker);
     }
 

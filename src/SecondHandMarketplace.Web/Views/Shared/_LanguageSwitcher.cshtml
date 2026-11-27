@@ -11,7 +11,7 @@
     <form asp-area="" asp-controller="Language" asp-action="SetLanguage" method="post">
         <input type="hidden" name="culture" value="vi-VN" />
         <input type="hidden" name="returnUrl" value="@returnUrl" />
-        <button type="submit" class="rm-lang-btn @(isEn ? "" : "is-active")" aria-pressed="@(!isEn)" title="Tiếng Việt">VI</button>
+        <button type="submit" class="rm-lang-btn @(isEn ? "" : "is-active")" aria-pressed="@(!isEn)" title="@(isEn ? "Vietnamese" : "Tiếng Việt")">VI</button>
     </form>
     <form asp-area="" asp-controller="Language" asp-action="SetLanguage" method="post">
         <input type="hidden" name="culture" value="en-US" />

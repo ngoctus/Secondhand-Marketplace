@@ -10,6 +10,7 @@ Các migration bổ sung trước đây đã được hợp nhất vào schema c
 
 - SQL Server Developer hoặc Express.
 - `sqlcmd` có trong `PATH`.
+- Các lệnh bootstrap luôn yêu cầu mã hóa SQL. `DB_TRUST_CERT=False` (mặc định trong `DB_MODE=deploy`) xác thực chứng chỉ máy chủ; chỉ dùng `DB_TRUST_CERT=True` cho DEV/TEST với chứng chỉ tự ký.
 - Mặc định dùng `localhost` và Windows Authentication.
 - SQL Server Express: đặt `SQL_SERVER=.\SQLEXPRESS`; SQL Authentication có thể cấu hình qua `SQL_AUTH` như hướng dẫn trong `run-db.bat`.
 
@@ -110,6 +111,8 @@ Nên chạy smoke test sau khi bootstrap trên một SQL Server thực tế. B�
 ## 7. Lưu ý về database đã tồn tại
 
 Bộ 13 file này là **bộ cài mới (fresh bootstrap)**, không phải bộ migration nâng cấp database đang hoạt động. Nếu cần cập nhật database hiện hữu, phải tạo migration riêng, kiểm tra dữ liệu thực tế và backup trước khi áp dụng.
+
+Danh sách migration đang hỗ trợ, thứ tự áp dụng, điều kiện schema, và quyền SQL được ghi tại [`migrations/README.md`](migrations/README.md). Ứng dụng không còn tự thêm cột/tạo bảng khi khởi động: database phải được nâng cấp trước khi thay ứng dụng. Chạy migration bằng tài khoản triển khai riêng; web account không cần quyền DDL.
 
 ## 8. Tài khoản dữ liệu demo
 

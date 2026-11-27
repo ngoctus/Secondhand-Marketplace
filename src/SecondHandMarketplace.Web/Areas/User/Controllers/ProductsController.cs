@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Moderation;
 using SecondHandMarketplace.Web.Services.Products;
+using SecondHandMarketplace.Web.Services.Storage;
 using SkiaSharp;
 
 namespace SecondHandMarketplace.Web.Areas.User.Controllers;
@@ -15,20 +16,24 @@ public class ProductsController : UserBaseController
     private static readonly string[] DinhDangAnhChoPhep = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
     private const long MaxAnhBytes = 5 * 1024 * 1024;
     private const int SoAnhToiDa = 10;
+    private const long MaxProductFormBytes = MaxAnhBytes * SoAnhToiDa + 1024 * 1024;
 
     private readonly IProductService _products;
     private readonly ICategoryService _categories;
     private readonly IModerationService _moderation;
-    private readonly IWebHostEnvironment _env;
     private readonly ILogger<ProductsController> _logger;
+    private readonly IUploadStorage _uploadStorage;
+    private readonly IDistributedCache _distributedCache;
 
-    public ProductsController(IProductService products, ICategoryService categories, IModerationService moderation, IWebHostEnvironment env, ILogger<ProductsController> logger)
+    public ProductsController(IProductService products, ICategoryService categories, IModerationService moderation,
+        IUploadStorage uploadStorage, ILogger<ProductsController> logger, IDistributedCache distributedCache)
     {
         _products = products;
         _categories = categories;
         _moderation = moderation;
-        _env = env;
+        _uploadStorage = uploadStorage;
         _logger = logger;
+        _distributedCache = distributedCache;
     }
 
     [HttpGet]
@@ -62,15 +67,17 @@ public class ProductsController : UserBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(ProductFormVm form, List<IFormFile>? AnhMoi, bool? GuiDuyet)
+    [RequestSizeLimit(MaxProductFormBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxProductFormBytes)]
+    public async Task<IActionResult> Create(ProductFormVm form, List<IFormFile>? AnhMoi, bool? GuiDuyet, CancellationToken cancellationToken = default)
     {
         var userId = User.LayNguoiDungId()!.Value;
-        var (anh, loiLuu) = await LuuAnhLenDiaAsync(AnhMoi);
+        var (anh, loiLuu) = await LuuAnhLenKhoAsync(AnhMoi, cancellationToken);
         if (loiLuu is not null) ModelState.AddModelError(string.Empty, loiLuu);
 
         if (!ModelState.IsValid)
         {
-            XoaAnhDaLuu(anh);
+            await XoaAnhDaLuuAsync(anh, cancellationToken);
             await DienDanhMucAsync(form);
             return View(form);
         }
@@ -78,7 +85,7 @@ public class ProductsController : UserBaseController
         var (ok, loi, maSanPham) = await _products.CreateAsync(userId, form, anh);
         if (!ok)
         {
-            XoaAnhDaLuu(anh);
+            await XoaAnhDaLuuAsync(anh, cancellationToken);
             ModelState.AddModelError(string.Empty, loi!);
             await DienDanhMucAsync(form);
             return View(form);
@@ -103,7 +110,7 @@ public class ProductsController : UserBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ProductFormVm form, List<IFormFile>? AnhMoi, bool? GuiDuyet, string? returnUrl = null)
+    public async Task<IActionResult> Edit(int id, ProductFormVm form, List<IFormFile>? AnhMoi, bool? GuiDuyet, string? returnUrl = null, CancellationToken cancellationToken = default)
     {
         var userId = User.LayNguoiDungId()!.Value;
         var validReturnUrl = LayReturnUrlHopLe(returnUrl);
@@ -112,12 +119,12 @@ public class ProductsController : UserBaseController
 
         var truoc = await _products.GetFormAsync(userId, id);
 
-        var (anh, loiLuu) = await LuuAnhLenDiaAsync(AnhMoi);
+        var (anh, loiLuu) = await LuuAnhLenKhoAsync(AnhMoi, cancellationToken);
         if (loiLuu is not null) ModelState.AddModelError(string.Empty, loiLuu);
 
         if (!ModelState.IsValid)
         {
-            XoaAnhDaLuu(anh);
+            await XoaAnhDaLuuAsync(anh, cancellationToken);
             form.AnhHienTai = truoc?.AnhHienTai ?? new();
             form.TrangThai = truoc?.TrangThai ?? string.Empty;
             await DienDanhMucAsync(form);
@@ -127,7 +134,7 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.UpdateAsync(userId, id, form, anh);
         if (!ok)
         {
-            XoaAnhDaLuu(anh);
+            await XoaAnhDaLuuAsync(anh, cancellationToken);
             ModelState.AddModelError(string.Empty, loi!);
             form.AnhHienTai = truoc?.AnhHienTai ?? new();
             form.TrangThai = truoc?.TrangThai ?? string.Empty;
@@ -135,7 +142,7 @@ public class ProductsController : UserBaseController
             return View(form);
         }
 
-        HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+        await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache, cancellationToken);
 
         // Sản phẩm đang bán mà sửa nội dung/ảnh thì phải duyệt lại để không lách kiểm duyệt.
         if (GuiDuyet == true || truoc?.TrangThai == "ACTIVE")
@@ -161,7 +168,7 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.HideAsync(userId, id);
         if (ok)
         {
-            HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
             this.ThongBaoThanhCong("Đã ẩn sản phẩm.");
         }
         else this.ThongBaoLoi(loi ?? "Không ẩn được sản phẩm.");
@@ -176,7 +183,7 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.UnhideAsync(userId, id);
         if (ok)
         {
-            HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
             this.ThongBaoThanhCong("Đã mở ẩn sản phẩm và hiển thị bán trở lại.");
         }
         else this.ThongBaoLoi(loi ?? "Không mở ẩn được sản phẩm.");
@@ -191,7 +198,7 @@ public class ProductsController : UserBaseController
         var (ok, loi) = await _products.DeleteAsync(userId, id);
         if (ok)
         {
-            HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
             this.ThongBaoThanhCong("Đã xóa sản phẩm thành công.");
         }
         else this.ThongBaoLoi(loi ?? "Không thể xóa sản phẩm.");
@@ -204,7 +211,7 @@ public class ProductsController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
         var (ok, loi) = await _products.DatAnhChinhAsync(userId, id, maAnh);
-        if (ok) HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+        if (ok) await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
         if (YeuCauTuAjax()) return Json(new { ok, error = ok ? null : loi });
 
         if (!ok) this.ThongBaoLoi(loi ?? "Không đặt được ảnh chính.");
@@ -217,7 +224,7 @@ public class ProductsController : UserBaseController
     {
         var userId = User.LayNguoiDungId()!.Value;
         var (ok, loi, maAnhChinhMoi) = await _products.XoaAnhAsync(userId, id, maAnh);
-        if (ok) HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+        if (ok) await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
         if (YeuCauTuAjax()) return Json(new { ok, error = ok ? null : loi, coverId = maAnhChinhMoi });
 
         if (!ok) this.ThongBaoLoi(loi ?? "Không xóa được ảnh.");
@@ -262,7 +269,7 @@ public class ProductsController : UserBaseController
             _logger.LogWarning(ex, "Phân tích từ khóa lỗi sau khi gửi duyệt sản phẩm {ProductId}.", maSanPham);
         }
 
-        HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+        await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
         this.ThongBaoThanhCong("Đã gửi sản phẩm đi kiểm duyệt. Admin sẽ duyệt trong thời gian tới.");
         return ChuyenVeDanhSach(returnUrl);
     }
@@ -274,33 +281,27 @@ public class ProductsController : UserBaseController
     }
 
     /// <summary>Xóa file vừa lưu nhưng không dùng được (validate/DB thất bại) để tránh file rác.</summary>
-    private void XoaAnhDaLuu(IEnumerable<ProductImageInput> anh)
+    private async Task XoaAnhDaLuuAsync(IEnumerable<ProductImageInput> anh, CancellationToken cancellationToken)
     {
         foreach (var a in anh)
         {
-            var tuongDoi = a.DuongDan.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-            var duongDan = Path.Combine(_env.WebRootPath, tuongDoi);
-            var thumbPath = Path.Combine(Path.GetDirectoryName(duongDan)!, Path.GetFileNameWithoutExtension(duongDan) + "-thumb.webp");
             try
             {
-                if (System.IO.File.Exists(duongDan)) System.IO.File.Delete(duongDan);
-                if (System.IO.File.Exists(thumbPath)) System.IO.File.Delete(thumbPath);
+                await _uploadStorage.DeleteAsync(a.DuongDan, isPrivate: false, cancellationToken);
+                await _uploadStorage.DeleteAsync(ThumbnailPath(a.DuongDan), isPrivate: false, cancellationToken);
             }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
+            catch (Exception ex) when (ex is not OperationCanceledException) { }
         }
     }
 
-    /// <summary>Lưu file lên wwwroot/uploads/products; trả về danh sách (đường dẫn, dung lượng) cho service.</summary>
-    private async Task<(List<ProductImageInput> Anh, string? Loi)> LuuAnhLenDiaAsync(List<IFormFile>? files)
+    /// <summary>Kiểm tra ảnh, tạo thumbnail rồi lưu cả hai qua provider đã cấu hình.</summary>
+    private async Task<(List<ProductImageInput> Anh, string? Loi)> LuuAnhLenKhoAsync(List<IFormFile>? files, CancellationToken cancellationToken)
     {
         var result = new List<ProductImageInput>();
         if (files is null || files.Count == 0) return (result, null);
         if (files.Count > SoAnhToiDa) return (result, $"Mỗi lần chỉ tải tối đa {SoAnhToiDa} ảnh.");
 
         var thu = DateTime.UtcNow.ToString("yyyyMM");
-        var thuMuc = Path.Combine(_env.WebRootPath, "uploads", "products", thu);
-        Directory.CreateDirectory(thuMuc);
 
         foreach (var file in files)
         {
@@ -314,17 +315,15 @@ public class ProductsController : UserBaseController
             if (!await NoiDungAnhHopLeAsync(file, ext))
                 return (result, $"Ảnh \"{Path.GetFileName(file.FileName)}\" có đuôi {ext} nhưng nội dung không phải ảnh {ext.TrimStart('.').ToUpperInvariant()}. Hãy lưu lại file đúng định dạng rồi tải lên.");
 
-            var ten = Guid.NewGuid().ToString("N") + ext;
-            var duongDanDia = Path.Combine(thuMuc, ten);
-            var thumbnailPath = Path.Combine(thuMuc, Path.GetFileNameWithoutExtension(ten) + "-thumb.webp");
-            await using (var mo = System.IO.File.Create(duongDanDia))
-            {
-                await file.CopyToAsync(mo);
-            }
-
+            byte[] originalBytes;
+            byte[] thumbnailBytes;
             try
             {
-                using var source = System.IO.File.OpenRead(duongDanDia);
+                await using var uploadStream = file.OpenReadStream();
+                using var original = new MemoryStream((int)file.Length);
+                await uploadStream.CopyToAsync(original, cancellationToken);
+                originalBytes = original.ToArray();
+                using var source = new MemoryStream(originalBytes, writable: false);
                 using var codec = SKCodec.Create(source);
                 var info = codec?.Info;
                 if (info is null || info.Value.Width > 12000 || info.Value.Height > 12000 || (long)info.Value.Width * info.Value.Height > 80_000_000)
@@ -339,20 +338,53 @@ public class ProductsController : UserBaseController
                 if (thumbnail is null) throw new InvalidDataException("Thumbnail could not be generated.");
                 using var encoded = thumbnail.Encode(SKEncodedImageFormat.Webp, 78);
                 if (encoded is null) throw new InvalidDataException("WebP encoding failed.");
-                await using var output = System.IO.File.Create(thumbnailPath);
-                encoded.SaveTo(output);
+                using var thumbStream = new MemoryStream();
+                encoded.SaveTo(thumbStream);
+                thumbnailBytes = thumbStream.ToArray();
             }
             catch (Exception)
             {
-                System.IO.File.Delete(duongDanDia);
-                if (System.IO.File.Exists(thumbnailPath)) System.IO.File.Delete(thumbnailPath);
                 return (result, $"Ảnh \"{Path.GetFileName(file.FileName)}\" không thể xử lý. Vui lòng tải lại ảnh hợp lệ.");
             }
 
-            result.Add(new ProductImageInput($"/uploads/products/{thu}/{ten}", (int)file.Length));
+            var ten = Guid.NewGuid().ToString("N") + ext;
+            var relativePath = $"/uploads/products/{thu}/{ten}";
+            try
+            {
+                await using var originalStream = new MemoryStream(originalBytes, writable: false);
+                await _uploadStorage.SaveAsync(originalStream, relativePath, isPrivate: false, UploadContentType(ext), cancellationToken);
+                await using var thumbnailStream = new MemoryStream(thumbnailBytes, writable: false);
+                await _uploadStorage.SaveAsync(thumbnailStream, ThumbnailPath(relativePath), isPrivate: false, "image/webp", cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                try
+                {
+                    await _uploadStorage.DeleteAsync(relativePath, isPrivate: false, cancellationToken);
+                    await _uploadStorage.DeleteAsync(ThumbnailPath(relativePath), isPrivate: false, cancellationToken);
+                }
+                catch (Exception cleanupEx) when (cleanupEx is not OperationCanceledException) { }
+                return (result, "Không thể lưu ảnh lên kho lưu trữ. Vui lòng thử lại sau.");
+            }
+            result.Add(new ProductImageInput(relativePath, (int)file.Length));
         }
         return (result, null);
     }
+
+    private static string ThumbnailPath(string imagePath)
+    {
+        var extension = Path.GetExtension(imagePath);
+        return imagePath[..^extension.Length] + "-thumb.webp";
+    }
+
+    private static string UploadContentType(string extension) => extension.ToLowerInvariant() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".webp" => "image/webp",
+        ".gif" => "image/gif",
+        _ => "application/octet-stream"
+    };
 
     private static async Task<bool> NoiDungAnhHopLeAsync(IFormFile file, string extension)
     {

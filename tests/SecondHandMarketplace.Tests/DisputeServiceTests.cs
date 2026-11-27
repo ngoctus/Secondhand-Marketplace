@@ -337,7 +337,7 @@ public class DisputeServiceTests
         var tc = await db.TranhChaps.FindAsync(5);
         Assert.Equal("RESOLVED", tc!.TrangThai);
         Assert.Equal("CANCELLED", don.TrangThai);
-        Assert.Equal("REFUNDED", don.TrangThaiThanhToan);
+        Assert.Equal("REFUND_DUE", don.TrangThaiThanhToan);
 
         // Kiểm tra audit log và notification
         Assert.Contains(fakeAudit.Logs, l => l.Action == "RESOLVE_DISPUTE");
@@ -404,9 +404,9 @@ public class DisputeServiceTests
         var (thanhCong, _) = await service.XuLyTranhChapAdminAsync(6, 999, "REFUND_BUYER", "Hoàn tiền cho khách");
         Assert.True(thanhCong);
 
-        // Đơn bị hủy, tiền được hoàn
+        // Đơn bị hủy, chuyển sang chờ hoàn tiền thủ công (REFUND_DUE)
         Assert.Equal("CANCELLED", don.TrangThai);
-        Assert.Equal("REFUNDED", don.TrangThaiThanhToan);
+        Assert.Equal("REFUND_DUE", don.TrangThaiThanhToan);
 
         // Sản phẩm SOLD được khôi phục về ACTIVE
         var spSauXuLy = await db.SanPhams.FindAsync(50);
@@ -642,7 +642,7 @@ public class DisputeServiceTests
 
         var donDb = await db.DonHangs.FindAsync(60);
         Assert.Equal("CANCELLED", donDb!.TrangThai);
-        Assert.Equal("REFUNDED", donDb.TrangThaiThanhToan);
+        Assert.Equal("REFUND_DUE", donDb.TrangThaiThanhToan);
 
         var ctDb = await db.ChiTietDonHangs.FirstAsync(c => c.MaDonHang == 60);
         Assert.False(ctDb.DangGiuCho);
@@ -651,7 +651,7 @@ public class DisputeServiceTests
         Assert.Equal("ACTIVE", spDb!.TrangThai);
 
         var ttDb = await db.ThanhToans.FirstAsync(t => t.MaDonHang == 60);
-        Assert.Equal("REFUNDED", ttDb.TrangThaiThanhToan);
+        Assert.Equal("REFUND_DUE", ttDb.TrangThaiThanhToan);
     }
 
     [Fact]

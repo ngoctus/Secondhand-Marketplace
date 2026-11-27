@@ -316,7 +316,7 @@ public class OrderServiceTests
         Assert.True(ok);
         var donDb = await db.DonHangs.FindAsync(23);
         Assert.Equal("CANCELLED", donDb!.TrangThai);
-        Assert.Equal("REFUNDED", donDb.TrangThaiThanhToan);
+        Assert.Equal("REFUND_DUE", donDb.TrangThaiThanhToan);
 
         var ctDb = await db.ChiTietDonHangs.FirstAsync(c => c.MaDonHang == 23);
         Assert.False(ctDb.DangGiuCho);
@@ -325,7 +325,7 @@ public class OrderServiceTests
         Assert.Equal("ACTIVE", spDb!.TrangThai);
 
         var ttDb = await db.ThanhToans.FirstAsync(t => t.MaDonHang == 23);
-        Assert.Equal("REFUNDED", ttDb.TrangThaiThanhToan);
+        Assert.Equal("REFUND_DUE", ttDb.TrangThaiThanhToan);
     }
 
     [Fact]

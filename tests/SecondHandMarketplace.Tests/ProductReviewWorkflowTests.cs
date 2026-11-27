@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -78,7 +78,7 @@ public class ProductReviewWorkflowTests
             INotificationService notifications,
             IAuditLogService auditLog,
             Microsoft.Extensions.Logging.ILogger<ProductReviewService> logger,
-            IMemoryCache? cache = null)
+            Microsoft.Extensions.Caching.Distributed.IDistributedCache? cache = null)
             : base(db, moderation, notifications, auditLog, logger, cache)
         {
             _db = db;
@@ -174,7 +174,7 @@ public class ProductReviewWorkflowTests
         public required AppDbContext Db { get; init; }
         public required ScriptedScanner Scanner { get; init; }
         public required FakeAuditLogService Audit { get; init; }
-        public required MemoryCache Cache { get; init; }
+        public required TestDistributedCache Cache { get; init; }
         public required ModerationService Moderation { get; init; }
         public required InMemoryReviewService Reviews { get; init; }
     }
@@ -189,7 +189,7 @@ public class ProductReviewWorkflowTests
         var db = new AppDbContext(options);
         var scanner = new ScriptedScanner();
         var audit = new FakeAuditLogService();
-        var cache = new MemoryCache(new MemoryCacheOptions());
+        var cache = new TestDistributedCache();
         var notifications = new NotificationService(db);
         var userAdmin = new UserAdminService(db, audit);
         var moderation = new ModerationService(db, scanner, userAdmin, notifications, audit,
@@ -896,8 +896,8 @@ public class ProductReviewWorkflowTests
     public async Task HomeCache_ClearedOnApprove_ApproveGreenLane_AndRemove_ButKeptOnFailure()
     {
         var h = NewHost();
-        void SeedHomeCache() => h.Cache.Set(HomeCacheHelper.CatalogCacheKey, new object(), TimeSpan.FromMinutes(5));
-        bool HasHomeCache() => h.Cache.TryGetValue(HomeCacheHelper.CatalogCacheKey, out _);
+        void SeedHomeCache() => h.Cache.SetString(HomeCacheHelper.CatalogCacheKey, "cached");
+        bool HasHomeCache() => h.Cache.GetString(HomeCacheHelper.CatalogCacheKey) is not null;
 
         // 1) ApproveAsync thất bại (QUEUED) -> giữ nguyên cache
         GuiDuyet(h, 410, "Máy ảnh phim cũ");

@@ -15,6 +15,10 @@
     };
 
     var statusText = HienThi.TrangThaiTranhChap(Model.TrangThai);
+    var buyerEvidenceUrl = Model.BangChungAnh?.StartsWith("/uploads/disputes/", StringComparison.OrdinalIgnoreCase) == true
+        ? $"/private-evidence/disputes/{Model.MaTranhChap}/buyer" : Model.BangChungAnh;
+    var sellerEvidenceUrl = Model.AnhPhanHoi?.StartsWith("/uploads/disputes/", StringComparison.OrdinalIgnoreCase) == true
+        ? $"/private-evidence/disputes/{Model.MaTranhChap}/seller" : Model.AnhPhanHoi;
 }
 
 <div class="container my-4" style="max-width: 900px;">
@@ -75,7 +79,7 @@
                 <span class="text-muted small d-block mb-2">@L["Dispute_EvidencePhotos"]</span>
                 @if (UrlAnToan.HopLe(Model.BangChungAnh))
                 {
-                    <img src="@Model.BangChungAnh" alt="@L["Dispute_EvidenceAlt"]" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
+                    <img src="@buyerEvidenceUrl" alt="@L["Dispute_EvidenceAlt"]" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
                 }
             </div>
         }
@@ -94,8 +98,8 @@
             {
                 <div class="mt-3">
                     <span class="text-muted small d-block mb-2"><i class="bi bi-image me-1"></i> @L["Dispute_SellerEvidence"]</span>
-                    <a href="@Model.AnhPhanHoi" target="_blank" rel="noopener noreferrer">
-                        <img src="@Model.AnhPhanHoi" alt="@L["Dispute_SellerEvidenceAlt"]" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
+                    <a href="@sellerEvidenceUrl" target="_blank" rel="noopener noreferrer">
+                        <img src="@sellerEvidenceUrl" alt="@L["Dispute_SellerEvidenceAlt"]" class="img-thumbnail rounded-3" style="max-height: 250px; object-fit: contain;" />
                     </a>
                 </div>
             }

@@ -32,15 +32,9 @@ Mặc định dùng SQL Server `localhost` với Windows Authentication. Với S
 
 ### Các file SQL
 
-- `01`–`09`: database lõi.
-- `10_banner_yeuthich.sql`: Banner và Yêu thích – người B phụ trách.
-- `11_danhgia.sql`: Đánh giá – người C phụ trách.
-- `12_tranhchap_baocao.sql`: Tranh chấp và Báo cáo – người D phụ trách.
-- `13_daugia.sql`: Đấu giá – người E phụ trách.
+`database/run-db.bat` chạy bộ bootstrap theo đúng thứ tự. Các file hiện có gồm `01_create_database.sql`–`13_seed_demo.sql`; trong đó `02`–`03` tạo schema/index, `04`–`10` tạo function/view/trigger/procedure, `11` mở rộng, `12` seed hệ thống và `13` chỉ seed dữ liệu demo. Tên file cũ trong tài liệu trước đây không còn áp dụng.
 
-Các file `10`–`13` được tạo sẵn với `USE SecondHandMarketplace; GO`; từng thành viên bổ sung SQL vào file được giao. Không thêm các bảng này vào `02_create_tables.sql`.
-
-Lưu ý: `07_functions.sql` chạy trước `06_procedures.sql` vì các stored procedure sử dụng function trong file 07.
+`run-db.bat` chỉ tạo database mới và sẽ từ chối khi database đã tồn tại. Để nâng cấp database có dữ liệu, hãy backup rồi áp dụng migration đã rà soát trong `database/migrations`; tuyệt đối không chạy `reset-db.bat` trên production.
 
 ## 3. Cấu hình và chạy ứng dụng
 
@@ -72,6 +66,12 @@ Chạy ứng dụng:
 dotnet restore
 dotnet run
 ```
+
+Ứng dụng cung cấp `/health/live` để kiểm tra tiến trình và `/health/ready` để kiểm tra SQL Server, schema/migration bắt buộc cùng Redis/object storage nếu đã cấu hình. Redis chia sẻ trạng thái giữa các host và cấp lease để chỉ một host chạy mỗi tác vụ nền; nếu không cấu hình Redis, chỉ chạy một replica. Mặc định ảnh dùng filesystem local; triển khai nhiều host có thể đặt `STORAGE_PROVIDER=S3` với bucket S3-compatible và CDN tùy chọn. Khi khóa Data Protection chưa lưu trên Redis, cần backup và giữ volume `data_protection_keys` khi thay container để cookie/phiên đã phát hành tiếp tục dùng được. Xem [hướng dẫn triển khai](docs/deployment-runbook.md) trước khi chuyển ảnh cũ sang bucket.
+
+### Thanh toán và vận chuyển
+
+Giai đoạn hiện tại hỗ trợ COD và chuyển khoản VietQR trực tiếp đến shop; shop xác nhận đã nhận tiền thủ công. Trạng thái giao hàng và phí vận chuyển cũng do shop quản lý thủ công. Ứng dụng không giữ tiền, không tự xác minh giao dịch ngân hàng và chưa kết nối API hãng vận chuyển.
 
 - `Auction:SweepSeconds` (mặc định 60): chu kỳ (giây) service nền quét và chốt các phiên đấu giá hết giờ. Tối thiểu 10.
 

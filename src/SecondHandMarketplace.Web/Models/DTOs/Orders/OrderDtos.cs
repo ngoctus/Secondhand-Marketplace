@@ -87,6 +87,7 @@ public class OrderResponse
     public decimal ShippingFee { get; set; }
     public string Status { get; set; } = string.Empty;
     public string PaymentMethod { get; set; } = string.Empty;
+    public string PaymentStatus { get; set; } = string.Empty;
     public string DeliveryMethod { get; set; } = "GIAO_HANG";
     public string ReceiverName { get; set; } = string.Empty;
     public string ReceiverPhone { get; set; } = string.Empty;

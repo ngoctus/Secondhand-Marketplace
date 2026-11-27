@@ -1601,4 +1601,32 @@
   <data name="SellerOrder_PaymentVerifyPrompt" xml:space="preserve"><value>Check your bank account or cash received, then click below:</value></data>
   <data name="SellerOrder_ProcessHeading" xml:space="preserve"><value>Process Order</value></data>
   <data name="SellerOrder_UnconfirmedPayment" xml:space="preserve"><value>Unconfirmed Payment</value></data>
+  <data name="Account_OtpStep1" xml:space="preserve"><value>Step 1/2 · Verify OTP</value></data>
+  <data name="Account_OtpStep2" xml:space="preserve"><value>Step 2/2 · Change password</value></data>
+  <data name="Account_ResetOtpDescription" xml:space="preserve"><value>Enter the 6-digit OTP sent to</value></data>
+  <data name="Account_OtpConfirm" xml:space="preserve"><value>Verify OTP</value></data>
+  <data name="Account_ChangePasswordOtpIntro" xml:space="preserve"><value>To secure your account, verify the OTP sent to</value></data>
+  <data name="SellerOrder_RefundPendingTitle" xml:space="preserve"><value>Refund pending</value></data>
+  <data name="SellerOrder_RefundPendingNote" xml:space="preserve"><value>The order is canceled. Refund the buyer directly and confirm only after the money has been returned.</value></data>
+  <data name="SellerOrder_RefundReferenceLabel" xml:space="preserve"><value>Refund transaction reference or note</value></data>
+  <data name="SellerOrder_ConfirmRefundBtn" xml:space="preserve"><value>Confirm refund sent</value></data>
+  <data name="SellerOrder_RefundConfirmPrompt" xml:space="preserve"><value>Only confirm if you have actually refunded the buyer.</value></data>
+  <data name="Buyer_RefundPendingNote" xml:space="preserve"><value>The order is canceled, but the shop has not confirmed the refund. Contact the shop; the status will update after the manual refund is sent.</value></data>
+  <data name="Shop_Phone" xml:space="preserve"><value>Contact phone</value></data>
+  <data name="Shop_Logo" xml:space="preserve"><value>Logo URL</value></data>
+  <data name="Shop_Province" xml:space="preserve"><value>Province or city</value></data>
+  <data name="Shop_Ward" xml:space="preserve"><value>Ward or commune</value></data>
+  <data name="Shop_StreetAddress" xml:space="preserve"><value>Street address</value></data>
+  <data name="Shop_Neighborhood" xml:space="preserve"><value>Neighborhood label (optional)</value></data>
+  <data name="Shop_Bank" xml:space="preserve"><value>Bank</value></data>
+  <data name="Shop_AccountNumber" xml:space="preserve"><value>Account number</value></data>
+  <data name="Shop_AccountHolder" xml:space="preserve"><value>Account holder name</value></data>
+  <data name="Shop_NameRequired" xml:space="preserve"><value>Please enter a shop name.</value></data>
+  <data name="Shop_PhoneRequired" xml:space="preserve"><value>Please enter a contact phone number.</value></data>
+  <data name="Shop_PhoneInvalid" xml:space="preserve"><value>{0} must be a valid 10-digit Vietnamese phone number starting with 03, 05, 07, 08, or 09.</value></data>
+  <data name="Shop_ProvinceRequired" xml:space="preserve"><value>Select a province or city.</value></data>
+  <data name="Shop_WardRequired" xml:space="preserve"><value>Select a ward or commune.</value></data>
+  <data name="Shop_AddressRequired" xml:space="preserve"><value>Enter a street address.</value></data>
+  <data name="Shop_FieldMaxLength" xml:space="preserve"><value>{0} must be at most {1} characters.</value></data>
+  <data name="Shop_AccountDigitsOnly" xml:space="preserve"><value>{0} can contain digits only.</value></data>
 </root>

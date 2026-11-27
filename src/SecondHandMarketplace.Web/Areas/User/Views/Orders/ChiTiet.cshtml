@@ -23,7 +23,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
             <h2 class="h3 fw-bold text-dark mb-1">
-                <i class="bi bi-receipt text-success"></i> @string.Format(L["OrderDetail_Title"].Value, "") <span class="font-monospace text-success">#@Model.MaDon</span>
+                <i class="bi bi-receipt text-success"></i> @string.Format(L["OrderDetail_Title"].Value, Model.MaDon)
             </h2>
             <div class="text-muted small">@L["OrderDetail_ShopLabel"] <strong class="text-dark">@Model.TenShop</strong>
                 <a asp-area="User" asp-controller="Reports" asp-action="Tao" asp-route-loai="SHOP" asp-route-id="@Model.MaCuaHang" asp-route-ten="@Model.TenShop"
@@ -176,7 +176,7 @@
                 }
                 else
                 {
-                    <span class="badge bg-danger-subtle text-danger rounded-pill ms-2" style="font-size: 11px;" title="Đánh giá bị ẩn bởi quản trị viên">@L["OrderDetail_ReviewHidden"]</span>
+                    <span class="badge bg-danger-subtle text-danger rounded-pill ms-2" style="font-size: 11px;" title="@HienThi.Chon("Đánh giá bị ẩn bởi quản trị viên", "This review was hidden by an administrator.")">@L["OrderDetail_ReviewHidden"]</span>
                 }
             </div>
             @if (!string.IsNullOrWhiteSpace(danhGiaHienTai.NoiDung))
@@ -216,6 +216,10 @@
                         @HienThi.TrangThaiThanhToan(Model.TrangThaiThanhToan)
                     </span>
                 </div>
+                @if (Model.TrangThaiThanhToan == "REFUND_DUE")
+                {
+                    <div class="alert alert-warning small mt-2 mb-0">@L["Buyer_RefundPendingNote"]</div>
+                }
                 @if (Model.PhuongThucThanhToan == "BANK_TRANSFER" && Model.TrangThaiThanhToan != "PAID" && Model.TrangThai != "CANCELLED")
                 {
                     <div class="mt-3 pt-2 border-top">
@@ -359,7 +363,7 @@
                             <div class="d-inline-flex gap-2 justify-content-center" id="starRatingContainer">
                                 @for (int i = 1; i <= 5; i++)
                                 {
-                                    <button type="button" class="btn p-1 border-0 star-btn" data-value="@i" title="@i sao" style="font-size: 2rem; color: #ffc107;">
+                                    <button type="button" class="btn p-1 border-0 star-btn" data-value="@i" title="@(HienThi.Chon($"{i} sao", $"{i} stars"))" style="font-size: 2rem; color: #ffc107;">
                                         <i class="bi bi-star-fill"></i>
                                     </button>
                                 }
@@ -412,7 +416,7 @@
 
             function setStars(val) {
                 if (input) input.value = val;
-                if (text) text.textContent = labels[val] || (val + ' sao');
+                if (text) text.textContent = labels[val] || (val + (@(HienThi.LaTiengAnh ? "true" : "false") ? ' stars' : ' sao'));
                 buttons.forEach(function(btn) {
                     var v = parseInt(btn.getAttribute('data-value'), 10);
                     var icon = btn.querySelector('i');

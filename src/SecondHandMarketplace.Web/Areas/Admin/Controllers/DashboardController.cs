@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Globalization;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
@@ -8,7 +9,7 @@ using SecondHandMarketplace.Web.Services.Dashboard;
 
 namespace SecondHandMarketplace.Web.Areas.Admin.Controllers;
 
-public sealed class DashboardController(IDashboardService dashboard, AppDbContext db) : AdminBaseController
+public sealed class DashboardController(IDashboardService dashboard, AppDbContext db, IDistributedCache? distributedCache = null) : AdminBaseController
 {
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken ct)
@@ -139,6 +140,7 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
         };
         db.DonHangs.Add(order);
         await db.SaveChangesAsync(ct);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, ct);
 
         db.ChiTietDonHangs.Add(new ChiTietDonHang
         {
@@ -149,6 +151,7 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
             DangGiuCho = normalizedStatus is "PENDING" or "CONFIRMED" or "SHIPPING" or "DELIVERED"
         });
         await db.SaveChangesAsync(ct);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, ct);
 
         TempData["ThanhCong"] = $"Đã thêm đơn hàng {maDon} ({HienThi.Tien(amount)}) thành công.";
         return RedirectToAction(nameof(Index));
@@ -228,6 +231,7 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
 
         order.NgayCapNhat = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, ct);
 
         if (db.Database.IsRelational())
         {
@@ -309,6 +313,8 @@ public sealed class DashboardController(IDashboardService dashboard, AppDbContex
             db.DonHangs.Remove(order);
             await db.SaveChangesAsync(ct);
         }
+
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, ct);
 
         TempData["ThanhCong"] = $"Đã xóa đơn hàng {order.MaDon}.";
         return RedirectToAction(nameof(Index));

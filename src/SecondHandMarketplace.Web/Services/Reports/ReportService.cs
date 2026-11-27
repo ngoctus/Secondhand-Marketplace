@@ -1,4 +1,5 @@
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
@@ -18,19 +19,22 @@ public class ReportService : IReportService
     private readonly IShopService _shopService;
     private readonly IAuditLogService _audit;
     private readonly INotificationService _notifications;
+    private readonly IDistributedCache? _distributedCache;
 
     public ReportService(
         AppDbContext db,
         IUserAdminService userAdmin,
         IShopService shopService,
         IAuditLogService audit,
-        INotificationService notifications)
+        INotificationService notifications,
+        IDistributedCache? distributedCache = null)
     {
         _db = db;
         _userAdmin = userAdmin;
         _shopService = shopService;
         _audit = audit;
         _notifications = notifications;
+        _distributedCache = distributedCache;
     }
 
     public async Task<(bool ThanhCong, string? ThongBao)> TaoBaoCaoAsync(int maNguoiBaoCao, TaoBaoCaoViewModel vm)
@@ -110,6 +114,7 @@ public class ReportService : IReportService
         {
             _db.BaoCaos.Add(baoCao);
             await _db.SaveChangesAsync();
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
             return (true, "Đã gửi báo cáo vi phạm thành công. Ban quản trị sẽ sớm xem xét.");
         }
         catch (DbUpdateException ex)
@@ -404,6 +409,7 @@ public class ReportService : IReportService
             {
                 await tx.CommitAsync();
             }
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
 
             // Ghi Audit Log xử lý báo cáo thành công
             await _audit.LogAsync(adminId, "RESOLVE_REPORT", "BaoCao", maBaoCao, "SUCCESS", lyDoXuLy);

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -74,7 +74,7 @@ public class RegistrationOtpTests
     private static AppDbContext GetDb(string name) =>
         new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(name).Options);
 
-    private static IMemoryCache CreateCache() => new MemoryCache(new MemoryCacheOptions());
+    private static IDistributedCache CreateCache() => new TestDistributedCache();
 
     [Fact]
     public async Task StartRegistrationAsync_ValidModel_ReturnsTokenAndSendsEmail()

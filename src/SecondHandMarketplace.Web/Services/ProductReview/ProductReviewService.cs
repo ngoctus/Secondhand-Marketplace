@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Common.Constants;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -22,7 +22,7 @@ public class ProductReviewService(
     INotificationService notifications,
     IAuditLogService auditLog,
     ILogger<ProductReviewService> logger,
-    IMemoryCache? cache = null) : IProductReviewService
+    IDistributedCache? distributedCache = null) : IProductReviewService
 {
     // Số lỗi SQL đã biết (06_procedures.sql, 15_kiemduyet_tukhoa.sql)
     private const int ErrNotPending = 50022;
@@ -213,7 +213,7 @@ public class ProductReviewService(
         {
             return DecisionFailure(ex);
         }
-        HomeCacheHelper.XoaCacheTrangChu(cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
         return await AfterDecisionAsync(adminId, maSanPham, review.MaNguoiBan, "ACTIVE", approve: true, reason: null, cancellationToken);
     }
 
@@ -248,7 +248,7 @@ public class ProductReviewService(
             return new BulkApproveResult(false, "Không có sản phẩm nào đủ điều kiện Làn Xanh để duyệt nhanh.", 0, skipped);
 
         // Đảm bảo xóa cache trang chủ (home:catalog) sau khi duyệt nhanh Làn Xanh thành công.
-        HomeCacheHelper.XoaCacheTrangChu(cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
         return new BulkApproveResult(true, null, approved, skipped);
     }
 
@@ -375,7 +375,7 @@ public class ProductReviewService(
         {
             return DecisionFailure(ex);
         }
-        HomeCacheHelper.XoaCacheTrangChu(cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
 
         await TryAuditAsync(adminId, "REMOVE_PRODUCT", maSanPham, cleanReason, cancellationToken);
         await TryNotifyAsync(product.SellerId, "Sản phẩm của bạn đã bị gỡ",

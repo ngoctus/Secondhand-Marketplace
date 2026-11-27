@@ -101,7 +101,6 @@
                     <p>@L["Home_AuctionEmptyDesc"]</p>
                 </div>
                 <div class="rm-home-auction-empty-actions">
-                    <a asp-controller="PublicAuctions" asp-action="Index" class="btn-rm-outline">@L["Home_AuctionViewAll"]</a>
                     @if (User.Identity?.IsAuthenticated == true && User.IsInRole("USER"))
                     {
                         <a asp-area="User" asp-controller="Auctions" asp-action="Create" class="btn-rm-primary">@L["Home_AuctionCreateCta"]</a>
@@ -310,7 +309,8 @@
             <p class="step-desc">@L["Home_Step3Desc"]</p>
         </div>
     </div>
-    <div class="step-seller-note">
+    <div class="step-seller-note rm-home-seller-note">
+        <i class="bi bi-shop-window" aria-hidden="true"></i>
         @L["Home_SellerNote"]
     </div>
 </section>
@@ -319,9 +319,9 @@
 <section class="landing-section" data-rm-reveal>
     <div class="sustainability-row">
         <div class="sustainability-image-wrap" data-rm-media>
-            <img src="~/images/sustainable-shopping.jpg" alt="@L["Home_ValueImageAlt"]" class="sustainability-image" style="object-fit: cover;" asp-append-version="true" />
+            <img src="~/images/sustainable-shopping.jpg" alt="@L["Home_ValueImageAlt"]" class="sustainability-image" asp-append-version="true" />
         </div>
-        <div>
+        <div class="sustainability-copy">
             <div class="section-label">@L["Home_ValueLabel"]</div>
             <h2 class="section-title" style="font-size: 26px; line-height: 1.25; margin-bottom: 12px;">
                 @L["Home_ValueTitle"]

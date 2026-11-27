@@ -12,6 +12,8 @@
         _ => "bg-secondary"
     };
     var hasValidImage = !string.IsNullOrWhiteSpace(Model.BangChungAnh) && UrlAnToan.HopLe(Model.BangChungAnh);
+    var evidenceImageUrl = Model.BangChungAnh?.StartsWith("/uploads/appeals/", StringComparison.OrdinalIgnoreCase) == true
+        ? $"/private-evidence/account-appeals/{Model.MaKhieuNai}" : Model.BangChungAnh;
 }
 
 <div class="container-fluid py-4">
@@ -102,7 +104,7 @@
                                 </div>
                                 <div class="d-flex flex-wrap align-items-start gap-3">
                                     <button type="button" class="btn p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#evidenceZoomModal">
-                                        <img src="@Model.BangChungAnh"
+                                        <img src="@evidenceImageUrl"
                                              alt="Ảnh bằng chứng / biên lai"
                                              class="img-thumbnail rounded-3"
                                              style="max-height: 300px; cursor: zoom-in;" />
@@ -111,7 +113,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#evidenceZoomModal">
                                             <i class="bi bi-zoom-in me-1"></i> @HienThi.Chon("Phóng to ảnh", "Zoom image")
                                         </button>
-                                        <a href="@Model.BangChungAnh" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+                                        <a href="@evidenceImageUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
                                             <i class="bi bi-box-arrow-up-right me-1"></i> @HienThi.Chon("Mở ảnh ở tab mới", "Open in new tab")
                                         </a>
                                     </div>
@@ -383,7 +385,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Btn_Close"]"></button>
                 </div>
                 <div class="modal-body text-center bg-dark p-3">
-                    <img src="@Model.BangChungAnh" alt="Evidence" class="img-fluid rounded" style="max-height: 80vh;" />
+                    <img src="@evidenceImageUrl" alt="Evidence" class="img-fluid rounded" style="max-height: 80vh;" />
                 </div>
             </div>
         </div>

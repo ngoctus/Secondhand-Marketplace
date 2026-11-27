@@ -4,23 +4,47 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: secondhand_web
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
-      ConnectionStrings__DefaultConnection: "Server=${DB_SERVER:?Set DB_SERVER};Database=${DB_NAME:-SecondHandMarketplace};User Id=${DB_USER:?Set DB_USER};Password=${DB_PASSWORD:?Set DB_PASSWORD};Encrypt=True;TrustServerCertificate=${DB_TRUST_CERT:-True};MultipleActiveResultSets=True"
+      DataProtection__KeysPath: ${DATA_PROTECTION_KEYS_PATH:-/app/data-protection-keys}
+      Cache__Redis__ConnectionString: ${REDIS_CONNECTION_STRING:-}
+      Storage__Provider: ${STORAGE_PROVIDER:-Local}
+      Storage__S3__Bucket: ${S3_BUCKET:-}
+      Storage__S3__Region: ${S3_REGION:-ap-southeast-1}
+      Storage__S3__Endpoint: ${S3_ENDPOINT:-}
+      Storage__S3__ForcePathStyle: ${S3_FORCE_PATH_STYLE:-true}
+      Storage__S3__PublicBaseUrl: ${S3_PUBLIC_BASE_URL:-}
+      Storage__S3__AccessKeyId: ${S3_ACCESS_KEY_ID:-}
+      Storage__S3__SecretAccessKey: ${S3_SECRET_ACCESS_KEY:-}
+      ForwardedHeaders__KnownProxies__0: ${FORWARDED_HEADERS_KNOWN_PROXY:-127.0.0.1}
+      AllowedHosts: ${ALLOWED_HOSTS:?Set ALLOWED_HOSTS to the public hostnames}
+      Site__PublicBaseUrl: ${SITE_PUBLIC_BASE_URL:?Set SITE_PUBLIC_BASE_URL to the public HTTPS origin}
+      Database__Server: ${DB_SERVER:?Set DB_SERVER}
+      Database__Name: ${DB_NAME:-SecondHandMarketplace}
+      Database__User: ${DB_USER:?Set DB_USER}
+      Database__Password: ${DB_PASSWORD:?Set DB_PASSWORD}
+      Database__TrustServerCertificate: ${DB_TRUST_CERT:-false}
       Jwt__Key: ${JWT_KEY:?Set JWT_KEY to a random secret of at least 32 bytes}
+      Email__Smtp__Host: ${SMTP_HOST:-smtp.gmail.com}
+      Email__Smtp__Port: ${SMTP_PORT:-587}
+      Email__Smtp__EnableSsl: ${SMTP_ENABLE_SSL:-true}
+      Email__Smtp__Username: ${SMTP_USERNAME:-}
+      Email__Smtp__Password: ${SMTP_PASSWORD:-}
       Ai__ApiKey: ${AI_API_KEY:-}
       Ai__ModerationApiKey: ${AI_MODERATION_API_KEY:-}
       Ai__FallbackApiKey: ${AI_FALLBACK_API_KEY:-}
     volumes:
       - product_uploads:/app/wwwroot/uploads/products
-      - dispute_uploads:/app/wwwroot/uploads/disputes
+      - dispute_uploads:/app/App_Data/private-uploads/disputes
+      - appeal_uploads:/app/App_Data/private-uploads/appeals
+      - data_protection_keys:/app/data-protection-keys
     restart: unless-stopped
 
 volumes:
   product_uploads:
   dispute_uploads:
+  appeal_uploads:
+  data_protection_keys:

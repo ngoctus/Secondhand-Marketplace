@@ -1602,4 +1602,32 @@
   <data name="SellerOrder_PaymentVerifyPrompt" xml:space="preserve"><value>Kiểm tra tài khoản ngân hàng hoặc khi nhận tiền mặt xong, người bán bấm nút xác nhận bên dưới:</value></data>
   <data name="SellerOrder_ProcessHeading" xml:space="preserve"><value>Xử lý đơn</value></data>
   <data name="SellerOrder_UnconfirmedPayment" xml:space="preserve"><value>Chưa xác nhận tiền</value></data>
+  <data name="Account_OtpStep1" xml:space="preserve"><value>Bước 1/2 · Xác thực OTP</value></data>
+  <data name="Account_OtpStep2" xml:space="preserve"><value>Bước 2/2 · Đổi mật khẩu</value></data>
+  <data name="Account_ResetOtpDescription" xml:space="preserve"><value>Nhập mã xác nhận OTP 6 chữ số đã được gửi đến</value></data>
+  <data name="Account_OtpConfirm" xml:space="preserve"><value>Xác nhận mã OTP</value></data>
+  <data name="Account_ChangePasswordOtpIntro" xml:space="preserve"><value>Để bảo mật tài khoản, bạn cần xác thực mã OTP gửi về email</value></data>
+  <data name="SellerOrder_RefundPendingTitle" xml:space="preserve"><value>Đang chờ hoàn tiền</value></data>
+  <data name="SellerOrder_RefundPendingNote" xml:space="preserve"><value>Đơn đã hủy. Hãy hoàn tiền trực tiếp cho người mua và chỉ xác nhận sau khi đã trả tiền.</value></data>
+  <data name="SellerOrder_RefundReferenceLabel" xml:space="preserve"><value>Mã giao dịch hoàn tiền hoặc ghi chú</value></data>
+  <data name="SellerOrder_ConfirmRefundBtn" xml:space="preserve"><value>Xác nhận đã hoàn tiền</value></data>
+  <data name="SellerOrder_RefundConfirmPrompt" xml:space="preserve"><value>Chỉ xác nhận nếu bạn đã thực sự hoàn tiền cho người mua.</value></data>
+  <data name="Buyer_RefundPendingNote" xml:space="preserve"><value>Đơn đã hủy nhưng shop chưa xác nhận hoàn tiền. Vui lòng liên hệ shop; trạng thái sẽ đổi sau khi shop hoàn tiền thủ công.</value></data>
+  <data name="Shop_Phone" xml:space="preserve"><value>Số điện thoại liên hệ</value></data>
+  <data name="Shop_Logo" xml:space="preserve"><value>Đường dẫn logo</value></data>
+  <data name="Shop_Province" xml:space="preserve"><value>Tỉnh/Thành phố</value></data>
+  <data name="Shop_Ward" xml:space="preserve"><value>Phường/Xã</value></data>
+  <data name="Shop_StreetAddress" xml:space="preserve"><value>Địa chỉ chi tiết</value></data>
+  <data name="Shop_Neighborhood" xml:space="preserve"><value>Tên khu vực quen thuộc (không bắt buộc)</value></data>
+  <data name="Shop_Bank" xml:space="preserve"><value>Ngân hàng</value></data>
+  <data name="Shop_AccountNumber" xml:space="preserve"><value>Số tài khoản</value></data>
+  <data name="Shop_AccountHolder" xml:space="preserve"><value>Tên chủ tài khoản</value></data>
+  <data name="Shop_NameRequired" xml:space="preserve"><value>Vui lòng nhập tên cửa hàng.</value></data>
+  <data name="Shop_PhoneRequired" xml:space="preserve"><value>Vui lòng nhập số điện thoại liên hệ.</value></data>
+  <data name="Shop_PhoneInvalid" xml:space="preserve"><value>{0} phải là số điện thoại Việt Nam gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.</value></data>
+  <data name="Shop_ProvinceRequired" xml:space="preserve"><value>Vui lòng chọn tỉnh/thành phố.</value></data>
+  <data name="Shop_WardRequired" xml:space="preserve"><value>Vui lòng chọn phường/xã.</value></data>
+  <data name="Shop_AddressRequired" xml:space="preserve"><value>Vui lòng nhập địa chỉ chi tiết.</value></data>
+  <data name="Shop_FieldMaxLength" xml:space="preserve"><value>{0} không được vượt quá {1} ký tự.</value></data>
+  <data name="Shop_AccountDigitsOnly" xml:space="preserve"><value>{0} chỉ được chứa chữ số.</value></data>
 </root>

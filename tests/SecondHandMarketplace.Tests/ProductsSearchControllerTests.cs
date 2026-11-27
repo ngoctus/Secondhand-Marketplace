@@ -9,7 +9,6 @@ using SecondHandMarketplace.Web.Services.Areas;
 using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Products;
 using SecondHandMarketplace.Web.Services.Reviews;
-using Microsoft.Extensions.Caching.Memory;
 using Xunit;
 
 namespace SecondHandMarketplace.Tests;
@@ -30,7 +29,7 @@ public class ProductsSearchControllerTests
 
     private static ProductsController NewController(AppDbContext db)
     {
-        var cache = new MemoryCache(new MemoryCacheOptions());
+        var cache = new TestDistributedCache();
         var controller = new ProductsController(
             new ProductService(db, new ReviewService(db)),
             new CategoryService(db, cache),

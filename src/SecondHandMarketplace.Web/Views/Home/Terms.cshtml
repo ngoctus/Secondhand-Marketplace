@@ -1,71 +1,55 @@
+@using SecondHandMarketplace.Web.Common
 @{
-    ViewData["Title"] = HienThi.Chon("Điều khoản sử dụng & Chính sách bảo mật - Re:Market", "Terms of Service & Privacy Policy - Re:Market");
+    ViewData["Title"] = HienThi.Chon("Điều khoản sử dụng - Re:Market", "Terms of Service - Re:Market");
+    ViewData["MetaDescription"] = HienThi.Chon(
+        "Điều khoản sử dụng Re:Market, vai trò của nền tảng, quy tắc tài khoản, nội dung và giao dịch.",
+        "Read Re:Market's terms for platform use, account responsibilities, listings, payments, and disputes.");
 }
-
-<div class="container py-5" style="max-width: 960px;">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb" style="font-size: 14px;">
-            <li class="breadcrumb-item"><a asp-area="" asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@HienThi.Chon("Điều khoản & Chính sách", "Terms & Policies")</li>
-        </ol>
+<div class="container py-5 policy-page" style="max-width: 960px;">
+    <nav aria-label="@HienThi.Chon("Điều hướng trang", "Page navigation")" class="mb-4">
+        <ol class="breadcrumb"><li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li><li class="breadcrumb-item active" aria-current="page">@HienThi.Chon("Điều khoản", "Terms")</li></ol>
     </nav>
-
-    <!-- Section: Điều khoản -->
-    <section id="dieu-khoan" class="mb-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h1 class="h2 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">@L["Footer_Terms"]</h1>
-            <p class="text-muted">@HienThi.Chon("Cập nhật lần cuối: Tháng 11/2026. Bằng việc truy cập hoặc sử dụng Re:Market, bạn đồng ý tuân thủ các điều khoản sau:", "Last updated: November 2026. By accessing or using Re:Market, you agree to comply with the following terms:")</p>
-            <div class="d-flex flex-column gap-3 text-secondary">
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("1. Tài khoản người dùng", "1. User Accounts")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Người dùng chịu trách nhiệm bảo mật thông tin đăng nhập và mọi hoạt động diễn ra dưới tài khoản của mình. Không chia sẻ tài khoản cho người thứ ba sử dụng trái phép.", "Users are responsible for safeguarding their login credentials and all activities under their account. Do not share your account with unauthorized third parties.")</p>
-                </div>
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("2. Trách nhiệm người bán", "2. Seller Responsibilities")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Người bán phải cung cấp hình ảnh thật, mô tả trung thực về tình trạng sản phẩm (độ mới, lỗi nếu có) và chỉ đăng bán hàng hóa thuộc quyền sở hữu hợp pháp.", "Sellers must provide real photos, honest descriptions of item condition (wear, defects if any), and only list items they legally own.")</p>
-                </div>
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("3. Trách nhiệm người mua", "3. Buyer Responsibilities")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Người mua cam kết nhận hàng đúng hẹn theo thỏa thuận hoặc khung giờ đã chọn, kiểm tra sản phẩm cẩn thận khi giao nhận và thanh toán đầy đủ.", "Buyers agree to receive orders on time as scheduled, inspect items carefully upon delivery, and complete payment in full.")</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section: Chính sách bảo mật -->
-    <section id="bao-mat" class="mb-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h2 class="h3 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">@L["Footer_Privacy"]</h2>
-            <p class="text-muted">@HienThi.Chon("Re:Market cam kết bảo vệ sự riêng tư và thông tin cá nhân của bạn theo tiêu chuẩn an toàn cao nhất:", "Re:Market is committed to protecting your privacy and personal data under strict security standards:")</p>
-            <div class="d-flex flex-column gap-3 text-secondary">
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("1. Thu thập dữ liệu", "1. Data Collection")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Chúng tôi chỉ thu thập thông tin cần thiết phục vụ việc xác thực tài khoản, xử lý đơn hàng và giao nhận hàng (họ tên, số điện thoại, địa chỉ nhận hàng).", "We only collect information necessary for account verification, order processing, and delivery (full name, phone number, shipping address).")</p>
-                </div>
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("2. Bảo vệ thông tin", "2. Data Protection")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Mật khẩu được mã hóa băm an toàn (BCrypt). Mọi liên lạc trao đổi nhạy cảm đều được bảo vệ trong hạ tầng máy chủ bảo mật.", "Passwords are securely hashed using BCrypt. Sensitive communications are protected within our secure server infrastructure.")</p>
-                </div>
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("3. Quyền của người dùng", "3. User Rights")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Bạn có toàn quyền truy cập, chỉnh sửa thông tin cá nhân hoặc yêu cầu xóa dữ liệu bất kỳ lúc nào tại mục Hồ sơ cá nhân.", "You have full rights to access, update your personal profile, or request data deletion at any time in My Profile.")</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section: Quy định cộng đồng -->
-    <section id="quy-dinh">
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h2 class="h3 fw-bold mb-3 text-danger"><i class="bi bi-shield-slash-fill me-2"></i>@HienThi.Chon("Quy định cộng đồng & Danh mục cấm", "Community Guidelines & Prohibited Items")</h2>
-            <p class="text-muted">@HienThi.Chon("Các hành vi và mặt hàng tuyệt đối bị nghiêm cấm trên nền tảng Re:Market:", "The following behaviors and items are strictly prohibited on Re:Market:")</p>
-            <ul class="text-secondary small d-flex flex-column gap-2 mb-0">
-                <li>@HienThi.Chon("Nghiêm cấm đăng bán hàng giả, hàng nhái, vũ khí, chất cháy nổ hoặc các mặt hàng bị pháp luật Việt Nam cấm lưu hành.", "Listing counterfeit goods, weapons, explosives, or items prohibited by law is strictly forbidden.")</li>
-                <li>@HienThi.Chon("Nghiêm cấm sử dụng ngôn từ tục tĩu, xúc phạm, phân biệt đối xử hoặc quấy rối người dùng khác trong tin nhắn và bình luận đánh giá.", "Profanity, insults, discrimination, or harassment in chat messages and reviews are strictly prohibited.")</li>
-                <li>@HienThi.Chon("Nghiêm cấm hành vi gian lận thanh toán, cố tình không giao hàng hoặc phá hoại uy tín của cửa hàng khác.", "Payment fraud, intentional non-delivery, or sabotaging other shops' reputation is prohibited.")</li>
-                <li>@HienThi.Chon("Tài khoản vi phạm nghiêm trọng sẽ bị hệ thống tự động khóa và chuyển hồ sơ xử lý theo quy định.", "Accounts with severe violations will be automatically locked and handled according to platform rules.")</li>
+    <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+        <h1 class="h2 fw-bold">@HienThi.Chon("Điều khoản sử dụng", "Terms of Service")</h1>
+        <p class="text-muted">@HienThi.Chon("Cập nhật lần cuối: 28/11/2026. Các điều khoản này mô tả cách sử dụng Re:Market và vai trò của nền tảng trong giao dịch giữa người mua và người bán.", "Last updated: November 28, 2026. These terms explain how to use Re:Market and the platform's role in transactions between buyers and sellers.")</p>
+        <div class="alert alert-info" role="note">@HienThi.Chon("Re:Market kết nối người mua với người bán độc lập. Trừ khi có thông báo khác trên một giao dịch cụ thể, Re:Market không sở hữu, lưu kho, vận chuyển hoặc nhận tiền thay cho sản phẩm được đăng bán.", "Re:Market connects buyers with independent sellers. Unless a specific transaction says otherwise, Re:Market does not own, store, ship, or collect payment for listed items.")</div>
+        <nav class="mb-4" aria-label="@HienThi.Chon("Mục lục điều khoản", "Terms contents")">
+            <ul class="d-flex flex-wrap gap-3 ps-3">
+                <li><a href="#accounts">@HienThi.Chon("Tài khoản", "Accounts")</a></li>
+                <li><a href="#marketplace">@HienThi.Chon("Vai trò nền tảng", "Marketplace role")</a></li>
+                <li><a href="#conduct">@HienThi.Chon("Quy tắc sử dụng", "Rules of use")</a></li>
+                <li><a href="#transactions">@HienThi.Chon("Giao dịch", "Transactions")</a></li>
             </ul>
-        </div>
-    </section>
+        </nav>
+        <section id="accounts" class="mb-4">
+            <h2 class="h4">@HienThi.Chon("1. Tài khoản và bảo mật", "1. Accounts and security")</h2>
+            <p>@HienThi.Chon("Bạn phải cung cấp thông tin chính xác, bảo vệ thông tin đăng nhập và chịu trách nhiệm với hoạt động được thực hiện qua tài khoản của mình. Hãy thông báo cho Re:Market nếu nghi ngờ tài khoản bị truy cập trái phép.", "You must provide accurate information, protect your login credentials, and are responsible for activity on your account. Contact Re:Market if you suspect unauthorized access.")</p>
+        </section>
+        <section id="marketplace" class="mb-4">
+            <h2 class="h4">@HienThi.Chon("2. Vai trò của Re:Market", "2. Re:Market's role")</h2>
+            <p>@HienThi.Chon("Re:Market cung cấp công cụ đăng tin, tìm kiếm, nhắn tin, đặt hàng và tiếp nhận báo cáo/tranh chấp. Người bán chịu trách nhiệm về quyền sở hữu, tính hợp pháp, mô tả, giá và việc giao sản phẩm; người mua chịu trách nhiệm xem thông tin, xác nhận đơn và phối hợp nhận hàng.", "Re:Market provides listing, search, messaging, ordering, reporting, and dispute tools. Sellers are responsible for ownership, legality, descriptions, prices, and delivery. Buyers are responsible for reviewing listings, confirming orders, and coordinating receipt.")</p>
+        </section>
+        <section id="conduct" class="mb-4">
+            <h2 class="h4">@HienThi.Chon("3. Nội dung và hành vi bị cấm", "3. Prohibited content and conduct")</h2>
+            <p>@HienThi.Chon("Không đăng hàng giả, hàng bị đánh cắp, hàng hóa bị cấm, nội dung xâm phạm quyền của người khác, thông tin gây hiểu nhầm, hoặc sử dụng nền tảng để lừa đảo, quấy rối hay né tránh các biện pháp kiểm duyệt. Re:Market có thể ẩn/gỡ nội dung hoặc hạn chế tài khoản theo quy trình xử lý và quy định áp dụng.", "Do not list counterfeit or stolen goods, prohibited items, infringing or misleading content, or use the platform for fraud, harassment, or moderation evasion. Re:Market may hide or remove content or restrict accounts under its moderation process and applicable rules.")</p>
+        </section>
+        <section id="transactions" class="mb-4">
+            <h2 class="h4">@HienThi.Chon("4. Điều kiện giao dịch", "4. Transaction terms")</h2>
+            <p>@HienThi.Chon("Giá, phí giao hàng (nếu có), phương thức thanh toán, địa điểm/khung giờ nhận và chính sách đổi trả do các bên thống nhất và phải được xem trước khi đặt hàng. Hiện tại, nền tảng hỗ trợ COD hoặc chuyển khoản VietQR trực tiếp cho người bán; nền tảng chưa giữ tiền và chưa xác minh chuyển khoản tự động.", "The parties must review and agree on price, any delivery fee, payment method, delivery or pickup details, and return terms before ordering. The platform currently supports COD or direct VietQR transfer to the seller; it does not hold funds or automatically verify bank transfers.")</p>
+            <p>@HienThi.Chon("Khi có vấn đề, các bên nên trao đổi qua đơn hàng/tin nhắn và gửi khiếu nại kèm bằng chứng. Re:Market có thể hỗ trợ xem xét theo thông tin hiện có; việc hỗ trợ không thay thế quyền, nghĩa vụ hoặc biện pháp giải quyết tranh chấp theo pháp luật.", "If a problem arises, use the order or messaging tools and submit a dispute with supporting evidence. Re:Market may review the information available; this support does not replace legal rights, duties, or dispute remedies.")</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("5. Tạm ngừng và cập nhật", "5. Suspension and changes")</h2>
+            <p>@HienThi.Chon("Re:Market có thể tạm ngừng tính năng để bảo trì hoặc bảo vệ người dùng. Chúng tôi sẽ cập nhật ngày hiệu lực khi sửa điều khoản. Việc tiếp tục sử dụng sau ngày cập nhật đồng nghĩa bạn đã đọc phiên bản mới; các thỏa thuận cho đơn đã đặt vẫn được xem xét theo thông tin tại thời điểm đặt hàng và quy định áp dụng.", "Re:Market may temporarily suspend features for maintenance or user protection. We will update the effective date when these terms change. Continued use after an update means you have reviewed the new version; existing orders are assessed using the information shown when they were placed and applicable rules.")</p>
+        </section>
+        <section>
+            <h2 class="h4">@HienThi.Chon("6. Chính sách liên quan", "6. Related policies")</h2>
+            <ul>
+                <li><a asp-action="BuyingPolicy">@HienThi.Chon("Chính sách mua hàng", "Buying policy")</a></li>
+                <li><a asp-action="SellerPolicy">@HienThi.Chon("Chính sách người bán", "Seller policy")</a></li>
+                <li><a asp-action="Privacy">@L["Footer_Privacy"]</a></li>
+            </ul>
+        </section>
+        <p class="small text-muted mt-4 mb-0">@HienThi.Chon("Email hỗ trợ: ", "Support email: ")<a href="mailto:hotro@remarket.vn">hotro@remarket.vn</a>. @HienThi.Chon("Đơn vị vận hành cần xác nhận tên pháp lý, địa chỉ và kênh hỗ trợ chính thức trước khi công bố website.", "The operator should verify its legal name, address, and official support channels before publishing the site.")</p>
+    </article>
 </div>

@@ -9,9 +9,6 @@ SET QUOTED_IDENTIFIER ON;
 SET ARITHABORT ON;
 GO
 
-USE SecondHandMarketplace;
-GO
-
 -- 1. Bổ sung cột MocTinhViPham & SoLanBiKhoa trên NguoiDung
 IF COL_LENGTH(N'dbo.NguoiDung', N'MocTinhViPham') IS NULL
 BEGIN

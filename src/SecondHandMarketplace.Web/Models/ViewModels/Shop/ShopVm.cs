@@ -8,51 +8,51 @@ namespace SecondHandMarketplace.Web.Models.ViewModels.Shop;
 public sealed class ShopVm
 {
     public int? MaCuaHang { get; set; }
-    [Required(ErrorMessage = "Nhập tên cửa hàng"), StringLength(100)]
-    [Display(Name = "Tên cửa hàng")]
+    [Required(ErrorMessage = "Shop_NameRequired"), StringLength(100, ErrorMessage = "Shop_FieldMaxLength")]
+    [Display(Name = "Shop_Name")]
     public string TenShop { get; set; } = string.Empty;
-    [Required(ErrorMessage = "Vui lòng nhập số điện thoại liên hệ")]
-    [RegularExpression(@"^0[35789][0-9]{8}$", ErrorMessage = "Số điện thoại liên hệ không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)")]
-    [Display(Name = "Số điện thoại liên hệ")]
+    [Required(ErrorMessage = "Shop_PhoneRequired")]
+    [RegularExpression(@"^0[35789][0-9]{8}$", ErrorMessage = "Shop_PhoneInvalid")]
+    [Display(Name = "Shop_Phone")]
     public string SoDienThoaiLienHe { get; set; } = string.Empty;
-    [StringLength(1000), Display(Name = "Mô tả")]
+    [StringLength(1000, ErrorMessage = "Shop_FieldMaxLength"), Display(Name = "Shop_Description")]
     public string? MoTa { get; set; }
-    [StringLength(500), Display(Name = "Logo (đường dẫn ảnh)")]
+    [StringLength(500, ErrorMessage = "Shop_FieldMaxLength"), Display(Name = "Shop_Logo")]
     public string? Logo { get; set; }
     public string TrangThai { get; set; } = "ACTIVE";
 
     // ---- Địa chỉ / khu vực (bắt buộc; shop cũ có cột NULL vẫn mở được form nhưng phải bổ sung khi lưu) ----
-    [Required(ErrorMessage = "Chọn tỉnh/thành phố")]
-    [Display(Name = "Tỉnh/Thành phố")]
+    [Required(ErrorMessage = "Shop_ProvinceRequired")]
+    [Display(Name = "Shop_Province")]
     public int? MaTinhThanh { get; set; }
 
-    [Required(ErrorMessage = "Chọn phường/xã")]
-    [Display(Name = "Phường/Xã")]
+    [Required(ErrorMessage = "Shop_WardRequired")]
+    [Display(Name = "Shop_Ward")]
     public int? MaPhuongXa { get; set; }
 
-    [Required(ErrorMessage = "Nhập địa chỉ chi tiết"), StringLength(300, ErrorMessage = "Địa chỉ chi tiết tối đa 300 ký tự")]
-    [Display(Name = "Địa chỉ chi tiết (số nhà, đường, thôn/xóm)")]
+    [Required(ErrorMessage = "Shop_AddressRequired"), StringLength(300, ErrorMessage = "Shop_FieldMaxLength")]
+    [Display(Name = "Shop_StreetAddress")]
     public string? DiaChiChiTiet { get; set; }
 
-    [StringLength(100, ErrorMessage = "Tên khu vực tối đa 100 ký tự")]
-    [Display(Name = "Tên khu vực quen thuộc (không bắt buộc)")]
+    [StringLength(100, ErrorMessage = "Shop_FieldMaxLength")]
+    [Display(Name = "Shop_Neighborhood")]
     public string? KhuVucHienThi { get; set; }
 
     // ---- Thông tin nhận chuyển khoản (tùy chọn; đã nhập thì phải đủ ngân hàng, số tài khoản, tên chủ tài khoản) ----
     [StringLength(10)]
-    [Display(Name = "Ngân hàng")]
+    [Display(Name = "Shop_Bank")]
     public string? MaNganHang { get; set; }
 
     /// <summary>Tên ngân hàng hiển thị, do server điền theo MaNganHang.</summary>
     public string? NganHang { get; set; }
 
-    [StringLength(30, ErrorMessage = "Số tài khoản tối đa 30 chữ số")]
-    [RegularExpression("^[0-9]*$", ErrorMessage = "Số tài khoản chỉ gồm chữ số")]
-    [Display(Name = "Số tài khoản")]
+    [StringLength(30, ErrorMessage = "Shop_FieldMaxLength")]
+    [RegularExpression("^[0-9]*$", ErrorMessage = "Shop_AccountDigitsOnly")]
+    [Display(Name = "Shop_AccountNumber")]
     public string? SoTaiKhoan { get; set; }
 
-    [StringLength(100, ErrorMessage = "Tên chủ tài khoản tối đa 100 ký tự")]
-    [Display(Name = "Tên chủ tài khoản")]
+    [StringLength(100, ErrorMessage = "Shop_FieldMaxLength")]
+    [Display(Name = "Shop_AccountHolder")]
     public string? TenChuTaiKhoan { get; set; }
 
     // ---- Dữ liệu nạp cho dropdown, không nhận từ form ----

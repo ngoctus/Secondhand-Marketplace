@@ -1,0 +1,42 @@
+@using SecondHandMarketplace.Web.Common
+@{
+    ViewData["Title"] = HienThi.Chon("Chính sách mua hàng - Re:Market", "Buying Policy - Re:Market");
+    ViewData["MetaDescription"] = HienThi.Chon("Quy trình đặt hàng, thanh toán COD/VietQR, nhận hàng và khiếu nại trên Re:Market.", "How ordering, COD or VietQR payment, delivery, and disputes work on Re:Market.");
+}
+<div class="container py-5 policy-page" style="max-width: 960px;">
+    <nav aria-label="@HienThi.Chon("Điều hướng trang", "Page navigation")" class="mb-4"><ol class="breadcrumb"><li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li><li class="breadcrumb-item active" aria-current="page">@HienThi.Chon("Chính sách mua hàng", "Buying policy")</li></ol></nav>
+    <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+        <h1 class="h2 fw-bold">@HienThi.Chon("Chính sách mua hàng", "Buying Policy")</h1>
+        <p class="text-muted">@HienThi.Chon("Cập nhật lần cuối: 28/11/2026. Hãy đọc trang sản phẩm và thống nhất điều kiện giao dịch trước khi đặt hàng.", "Last updated: November 28, 2026. Review the listing and agree on transaction details before placing an order.")</p>
+        <nav aria-label="@HienThi.Chon("Mục lục chính sách mua hàng", "Buying policy contents")" class="mb-4"><ul class="d-flex flex-wrap gap-3 ps-3"><li><a href="#before-order">@HienThi.Chon("Trước khi đặt", "Before ordering")</a></li><li><a href="#payment">@HienThi.Chon("Thanh toán", "Payment")</a></li><li><a href="#delivery">@HienThi.Chon("Nhận hàng", "Delivery")</a></li><li><a href="#issues">@HienThi.Chon("Đổi trả và khiếu nại", "Returns and disputes")</a></li></ul></nav>
+        <section id="before-order" class="mb-4">
+            <h2 class="h4">@HienThi.Chon("1. Trước khi đặt hàng", "1. Before ordering")</h2>
+            <ul>
+                <li>@HienThi.Chon("Đọc kỹ ảnh, tình trạng, kích thước, phụ kiện và các lỗi được người bán mô tả. Sản phẩm đã qua sử dụng có thể có dấu hiệu hao mòn.", "Review photos, condition, dimensions, included accessories, and disclosed defects. Pre-owned items may show wear.")</li>
+                <li>@HienThi.Chon("Dùng tin nhắn để hỏi điều chưa rõ và xác nhận tổng tiền, phí giao hàng, nơi nhận, thời gian giao/nhận và điều kiện đổi trả trước khi đặt.", "Use messaging to clarify questions and confirm the total, delivery fee, delivery or pickup location and time, and return terms before ordering.")</li>
+                <li>@HienThi.Chon("Đơn có thể gồm nhiều cửa hàng; mỗi cửa hàng xử lý và giao phần hàng của mình.", "A cart may contain items from multiple shops; each shop handles and delivers its own items.")</li>
+            </ul>
+        </section>
+        <section id="payment" class="mb-4">
+            <h2 class="h4">@HienThi.Chon("2. Thanh toán", "2. Payment")</h2>
+            <h3 class="h6 fw-bold">COD</h3>
+            <p>@HienThi.Chon("Thanh toán trực tiếp cho người bán khi nhận hàng theo thỏa thuận. Hãy kiểm tra hàng và số tiền phải trả trước khi bàn giao tiền.", "Pay the seller directly when you receive the item, as agreed. Check the item and amount due before handing over cash.")</p>
+            <h3 class="h6 fw-bold">@HienThi.Chon("VietQR / chuyển khoản", "VietQR / bank transfer")</h3>
+            <p>@HienThi.Chon("Chuyển tiền thẳng vào tài khoản người bán, không phải tài khoản ký quỹ của Re:Market. Kiểm tra tên người nhận, số tiền và nội dung chuyển khoản trong ứng dụng ngân hàng. Chỉ đánh dấu đã trả tiền sau khi giao dịch thành công; người bán cần tự kiểm tra tiền vào tài khoản. Re:Market hiện không tự động đối soát giao dịch với ngân hàng.", "Transfer directly to the seller's bank account; this is not an escrow account held by Re:Market. Verify the recipient, amount, and transfer reference in your banking app. Mark the order paid only after the transfer succeeds; the seller must verify receipt. Re:Market does not currently reconcile transfers with banks automatically.")</p>
+            <p>@HienThi.Chon("Không gửi mật khẩu, mã OTP hoặc thông tin đăng nhập ngân hàng cho bất kỳ ai. Nếu chuyển nhầm hoặc nghi ngờ lừa đảo, liên hệ ngân hàng ngay và gửi báo cáo cho Re:Market.", "Never share your password, OTP, or banking login. If you transfer to the wrong account or suspect fraud, contact your bank immediately and report it to Re:Market.")</p>
+        </section>
+        <section id="delivery" class="mb-4">
+            <h2 class="h4">@HienThi.Chon("3. Giao hàng và nhận trực tiếp", "3. Delivery and meet-up")</h2>
+            <p>@HienThi.Chon("Hiện chưa có kết nối tự động với hãng vận chuyển. Người mua và người bán thống nhất cách giao, phí và thời gian; người bán cập nhật trạng thái đơn thủ công. Nếu chọn gặp trực tiếp, hãy chọn địa điểm công cộng, an toàn và tự bảo vệ đồ dùng cá nhân.", "There is no automated carrier integration at this time. Buyer and seller agree on the delivery method, fee, and timing; the seller updates order status manually. For a meet-up, choose a safe public place and safeguard your belongings.")</p>
+            <p>@HienThi.Chon("Khi nhận hàng, đối chiếu sản phẩm với đơn, kiểm tra ngoại quan và xác nhận với người bán nếu có chênh lệch. Không xác nhận đã nhận đúng hàng khi bạn chưa kiểm tra.", "At delivery, compare the item with your order, inspect its condition, and tell the seller about any discrepancy. Do not confirm receipt before checking the item.")</p>
+        </section>
+        <section id="issues" class="mb-4">
+            <h2 class="h4">@HienThi.Chon("4. Đổi trả, hủy đơn và tranh chấp", "4. Returns, cancellation, and disputes")</h2>
+            <p>@HienThi.Chon("Re:Market không áp dụng một thời hạn đổi trả chung cho mọi món đồ. Điều kiện đổi trả (nếu có) cần được người mua và người bán thống nhất trước khi đặt, đồng thời phải tuân thủ quyền bắt buộc theo pháp luật áp dụng.", "Re:Market does not set one universal return window for every item. Any agreed return terms should be confirmed before ordering and remain subject to mandatory rights under applicable law.")</p>
+            <p>@HienThi.Chon("Nếu hàng không được giao, khác đáng kể so với mô tả hoặc có vấn đề khác, hãy liên hệ người bán qua đơn hàng và gửi khiếu nại càng sớm càng tốt, kèm ảnh/video, tin nhắn, biên nhận và mã giao dịch. Bộ phận quản trị sẽ xem xét bằng chứng và hỗ trợ các bên; kết quả phụ thuộc tình huống và không đồng nghĩa nền tảng giữ tiền.", "If an item is not delivered, materially differs from its description, or another issue occurs, contact the seller through the order and file a dispute promptly with photos or video, messages, receipts, and transaction references. Re:Market staff will review the evidence and assist the parties; outcomes depend on the facts, and the platform does not hold funds.")</p>
+            <p>@HienThi.Chon("Nếu đơn chuyển khoản đã được thanh toán và sau đó bị hủy/được xử lý hoàn tiền, việc chuyển tiền lại hiện do người bán thực hiện thủ công. Hãy giữ liên lạc trong đơn hàng và xác nhận giao dịch thực tế trước khi đóng khiếu nại.", "If a paid bank-transfer order is cancelled or resolved for refund, the seller currently sends the money back manually. Keep communication in the order and verify the actual transfer before closing a dispute.")</p>
+            <p>@HienThi.Chon("Để biết thêm về dữ liệu cá nhân và cách liên hệ, xem ", "For personal-data details and contact information, see the ")<a asp-action="Privacy">@L["Footer_Privacy"]</a>.</p>
+        </section>
+        <p class="small text-muted mb-0">@HienThi.Chon("Hỗ trợ: ", "Support: ")<a href="mailto:hotro@remarket.vn">hotro@remarket.vn</a></p>
+    </article>
+</div>

@@ -4,6 +4,7 @@ using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Services.AuditLogs;
 using SecondHandMarketplace.Web.Services.Banners;
+using SecondHandMarketplace.Web.Services.Storage;
 
 namespace SecondHandMarketplace.Web.Areas.Admin.Controllers;
 
@@ -11,7 +12,7 @@ namespace SecondHandMarketplace.Web.Areas.Admin.Controllers;
 public sealed class BannersController(
     IBannerService banners,
     IAuditLogService auditLog,
-    IWebHostEnvironment env) : AdminBaseController
+    IUploadStorage uploadStorage) : AdminBaseController
 {
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken) =>
@@ -33,17 +34,18 @@ public sealed class BannersController(
                 return RedirectToAction(nameof(Index));
             }
 
-            var webRoot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var (duongDan, fullPath) = await UploadAnhAnToan.LuuAnhAsync(anhTaiLen, webRoot, "banners", extension!, cancellationToken);
-            duongDanAnh = duongDan;
-            duongDanVuaTao = fullPath;
+            duongDanAnh = $"/uploads/banners/{Guid.NewGuid():N}{extension}";
+            await using var stream = anhTaiLen.OpenReadStream();
+            await uploadStorage.SaveAsync(stream, duongDanAnh, isPrivate: false, UploadContentType(extension!), cancellationToken);
+            duongDanVuaTao = duongDanAnh;
         }
 
         var result = await banners.SaveAsync(id, tieuDe, moTa, duongDanAnh ?? string.Empty, lienKet, thuTu, dangHienThi,
             SangUtc(batDauTu), SangUtc(ketThucLuc), cancellationToken);
         if (!result.Success)
         {
-            UploadAnhAnToan.XoaAnh(duongDanVuaTao);
+            if (duongDanVuaTao is not null)
+                await uploadStorage.DeleteAsync(duongDanVuaTao, isPrivate: false, cancellationToken);
             TempData["Loi"] = result.Error;
         }
         else
@@ -69,6 +71,14 @@ public sealed class BannersController(
 
     // Input datetime-local là giờ Việt Nam; DB lưu UTC (nhất quán với phần còn lại).
     private static DateTime? SangUtc(DateTime? gioVn) => gioVn is null ? null : HienThi.TuGioVnSangUtc(gioVn.Value);
+
+    private static string UploadContentType(string extension) => extension.ToLowerInvariant() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".webp" => "image/webp",
+        _ => "application/octet-stream"
+    };
 
     private Task LogAsync(string action, int id) =>
         auditLog.LogAsync(User.LayNguoiDungId(), action, "Banner", id);

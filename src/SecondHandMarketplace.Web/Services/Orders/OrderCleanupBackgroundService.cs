@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
+using SecondHandMarketplace.Web.Services.BackgroundJobs;
 
 namespace SecondHandMarketplace.Web.Services.Orders;
 
@@ -20,6 +22,7 @@ namespace SecondHandMarketplace.Web.Services.Orders;
 public sealed class OrderCleanupBackgroundService(
     IServiceScopeFactory scopes,
     IConfiguration config,
+    IBackgroundJobLease jobLease,
     ILogger<OrderCleanupBackgroundService> log) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,7 +40,12 @@ public sealed class OrderCleanupBackgroundService(
             {
                 try
                 {
-                    await QuetDonHangAsync(stoppingToken);
+                    await using var lease = await jobLease.TryAcquireAsync("order-cleanup", stoppingToken);
+                    if (lease is not null)
+                    {
+                        using var jobToken = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, lease.LeaseLost);
+                        await QuetDonHangAsync(jobToken.Token);
+                    }
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -267,6 +275,11 @@ public sealed class OrderCleanupBackgroundService(
         if (soDonHuy > 0 || soDonHoanTat > 0)
         {
             await db.SaveChangesAsync(ct);
+            if (soDonHuy > 0)
+            {
+                var cache = scope.ServiceProvider.GetService<IDistributedCache>();
+                await HomeCacheHelper.XoaCacheTrangChuAsync(cache, ct);
+            }
             log.LogInformation("OrderCleanup: Đã tự động hủy {Cancelled} đơn quá hạn 24h và tự động hoàn tất {Completed} đơn giao quá 5 ngày.", soDonHuy, soDonHoanTat);
         }
     }
