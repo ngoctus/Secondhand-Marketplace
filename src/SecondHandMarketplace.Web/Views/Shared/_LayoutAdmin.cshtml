@@ -28,18 +28,41 @@
         <aside class="admin-sidebar">
             <div class="admin-sidebar-header">
                 <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                    <i class="bi bi-shield-check text-success"></i>
+                    <span class="admin-logo-wrap"><img src="~/images/logo-remarket.svg" alt="Re:Market" asp-append-version="true" /></span>
                     <span>Re:Market</span>
                 </a>
                 <span class="admin-sidebar-badge">ADMIN</span>
             </div>
             <nav class="admin-nav" aria-label="@L["Admin_MenuAria"]">
+                <div class="admin-nav-group">@(HienThi.LaTiengAnh ? "Overview & Sales" : "Tổng quan & Kinh doanh")</div>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
                     <i class="bi bi-speedometer2"></i> <span>@L["Admin_Dashboard"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Orders" asp-action="Index">
                     <i class="bi bi-box-seam"></i> <span>@L["Admin_Orders"]</span>
                 </a>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="Auctions" asp-action="Index">
+                    <i class="bi bi-hammer"></i> <span>@L["Admin_Auctions"]</span>
+                </a>
+
+                <div class="admin-nav-group">@(HienThi.LaTiengAnh ? "Moderation & Safety" : "Kiểm duyệt & An toàn")</div>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="Products" asp-action="Index">
+                    <i class="bi bi-check2-circle"></i> <span>@L["Admin_Products"]</span>
+                </a>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="Reports" asp-action="Index">
+                    <i class="bi bi-flag"></i> <span>@L["Admin_Reports"]</span>
+                </a>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="Disputes" asp-action="Index">
+                    <i class="bi bi-exclamation-octagon"></i> <span>@L["Admin_Disputes"]</span>
+                </a>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="Violations" asp-action="Index">
+                    <i class="bi bi-shield-exclamation"></i> <span>@L["Admin_Violations"]</span>
+                </a>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="ForbiddenKeywords" asp-action="Index">
+                    <i class="bi bi-slash-circle"></i> <span>@L["Admin_ForbiddenKeywords"]</span>
+                </a>
+
+                <div class="admin-nav-group">@(HienThi.LaTiengAnh ? "Users & Catalog" : "Người dùng & Nội dung")</div>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Users" asp-action="Index">
                     <i class="bi bi-people"></i> <span>@L["Admin_Users"]</span>
                 </a>
@@ -49,11 +72,8 @@
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Reviews" asp-action="Index">
                     <i class="bi bi-star"></i> <span>@L["Admin_Reviews"]</span>
                 </a>
-                <a class="admin-nav-item" asp-area="Admin" asp-controller="Products" asp-action="Index">
-                    <i class="bi bi-check2-circle"></i> <span>@L["Admin_Products"]</span>
-                </a>
-                <a class="admin-nav-item" asp-area="Admin" asp-controller="Auctions" asp-action="Index">
-                    <i class="bi bi-hammer"></i> <span>@L["Admin_Auctions"]</span>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="AccountAppeals" asp-action="Index">
+                    <i class="bi bi-person-lock"></i> <span>@L["Admin_AccountAppeals"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Categories" asp-action="Index">
                     <i class="bi bi-grid"></i> <span>@L["Admin_Categories"]</span>
@@ -61,23 +81,10 @@
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Banners" asp-action="Index">
                     <i class="bi bi-images"></i> <span>@L["Admin_Banners"]</span>
                 </a>
-                <a class="admin-nav-item" asp-area="Admin" asp-controller="Disputes" asp-action="Index">
-                    <i class="bi bi-exclamation-octagon"></i> <span>@L["Admin_Disputes"]</span>
-                </a>
-                <a class="admin-nav-item" asp-area="Admin" asp-controller="Reports" asp-action="Index">
-                    <i class="bi bi-flag"></i> <span>@L["Admin_Reports"]</span>
-                </a>
-                <a class="admin-nav-item" asp-area="Admin" asp-controller="Violations" asp-action="Index">
-                    <i class="bi bi-shield-exclamation"></i> <span>@L["Admin_Violations"]</span>
-                </a>
-                <a class="admin-nav-item" asp-area="Admin" asp-controller="AccountAppeals" asp-action="Index">
-                    <i class="bi bi-person-lock"></i> <span>@L["Admin_AccountAppeals"]</span>
-                </a>
+
+                <div class="admin-nav-group">@(HienThi.LaTiengAnh ? "System" : "Hệ thống")</div>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Notifications" asp-action="Index">
                     <i class="bi bi-megaphone"></i> <span>@L["Admin_Notifications"]</span>
-                </a>
-                <a class="admin-nav-item" asp-area="Admin" asp-controller="ForbiddenKeywords" asp-action="Index">
-                    <i class="bi bi-slash-circle"></i> <span>@L["Admin_ForbiddenKeywords"]</span>
                 </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">
                     <i class="bi bi-journal-text"></i> <span>@L["Admin_AuditLogs"]</span>
@@ -92,22 +99,22 @@
         <div class="admin-content-wrap">
             <!-- Topbar -->
             <header class="admin-topbar">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="text-secondary small">@L["Admin_PageLabel"]</span>
-                    <strong class="text-dark small">@ViewData["Title"]</strong>
+                <div class="admin-topbar-breadcrumb">
+                    <span class="admin-topbar-label">@L["Admin_PageLabel"]</span>
+                    <strong class="admin-topbar-title">@ViewData["Title"]</strong>
                 </div>
-                <div class="d-flex align-items-center gap-3">
+                <div class="admin-topbar-actions">
                     <partial name="_LanguageSwitcher" />
-                    <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" target="_blank" title="@L["Admin_BackToMarketplace"]">
-                        <i class="bi bi-box-arrow-up-right"></i>
+                    <a asp-area="" asp-controller="Home" asp-action="Index" class="admin-topbar-btn" target="_blank" title="@L["Admin_BackToMarketplace"]">
+                        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
                         <span>@L["Admin_BackToMarketplace"]</span>
                     </a>
-                    <div class="d-flex align-items-center gap-2 border-start ps-3">
-                        <span class="badge bg-danger">ADMIN</span>
-                        <span class="small fw-semibold text-dark">@User.Identity?.Name</span>
+                    <div class="admin-user-pill">
+                        <span class="admin-role-badge">ADMIN</span>
+                        <span class="admin-user-name">@User.Identity?.Name</span>
                         <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="m-0 p-0">
-                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-2 text-decoration-none" title="@L["Nav_Logout"]">
-                                <i class="bi bi-box-arrow-right"></i>
+                            <button type="submit" class="admin-logout-btn" title="@L["Nav_Logout"]" aria-label="@L["Nav_Logout"]">
+                                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
                             </button>
                         </form>
                     </div>
@@ -141,11 +148,21 @@
             const currentPath = window.location.pathname.toLowerCase();
             document.querySelectorAll('.admin-nav-item').forEach(link => {
                 const href = link.getAttribute('href')?.toLowerCase();
-                if (href && currentPath.startsWith(href) && href !== '/admin') {
-                    link.classList.add('active');
-                } else if (href === '/admin' && (currentPath === '/admin' || currentPath === '/admin/dashboard')) {
+                if (!href) return;
+                if (href === '/admin') {
+                    if (currentPath === '/admin' || currentPath === '/admin/' || currentPath.startsWith('/admin/dashboard')) {
+                        link.classList.add('active');
+                    }
+                } else if (currentPath === href || currentPath.startsWith(href + '/')) {
                     link.classList.add('active');
                 }
+            });
+
+            document.addEventListener('click', (e) => {
+                const row = e.target.closest('tr.admin-clickable-row[data-href]');
+                if (!row) return;
+                if (e.target.closest('a, button, input, select, textarea, form, label')) return;
+                window.location.href = row.dataset.href;
             });
         });
     </script>

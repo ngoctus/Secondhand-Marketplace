@@ -63,7 +63,6 @@
                         {
                             <th>@L["AdminMod_ColAiAnalysis"]</th>
                         }
-                        <th class="text-end pe-3">@L["Common_Actions"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -71,8 +70,10 @@
                 {
                     var lane = ReviewDisplay.DescribeLane(item.AnalysisStatus, item.Level, item.RiskLevel, item.Recommendation, item.ModelVersion);
                     var rec = ReviewDisplay.DescribeRecommendation(item.Recommendation);
-                    <tr>
+                    var detailUrl = Url.Action("Details", new { id = item.MaSanPham });
+                    <tr class="admin-clickable-row" data-href="@detailUrl">
                         <td class="ps-3">
+                            <a href="@detailUrl" class="d-inline-block">
                             @if (!string.IsNullOrWhiteSpace(item.AnhDaiDien))
                             {
                                 <img src="@item.AnhDaiDien" alt="@item.Ten" style="width:56px;height:56px;object-fit:cover" class="rounded-3 border" loading="lazy" data-fallback />
@@ -83,9 +84,10 @@
                                     <i class="bi bi-image"></i>
                                 </div>
                             }
+                            </a>
                         </td>
                         <td>
-                            <a asp-action="Details" asp-route-id="@item.MaSanPham" class="fw-semibold text-dark text-decoration-none">@item.Ten</a>
+                            <a asp-action="Details" asp-route-id="@item.MaSanPham" class="fw-semibold text-dark text-decoration-none admin-row-title">@item.Ten</a>
                             @if (!string.IsNullOrWhiteSpace(item.TenDanhMuc))
                             {
                                 <div class="small text-muted">@HienThi.TenDanhMuc(item.TenDanhMuc)</div>
@@ -107,17 +109,12 @@
                                 }
                             </td>
                         }
-                        <td class="text-end pe-3">
-                            <a class="btn btn-sm btn-outline-primary rounded-pill px-3 text-nowrap" asp-action="Details" asp-route-id="@item.MaSanPham">
-                                @(pending ? L["AdminMod_BtnReview"].Value : L["AdminMod_BtnViewRemove"].Value)
-                            </a>
-                        </td>
                     </tr>
                 }
                 @if (Model.Items.Count == 0)
                 {
                     <tr>
-                        <td colspan="@(pending ? 7 : 6)" class="text-center text-muted py-5">
+                        <td colspan="@(pending ? 6 : 5)" class="text-center text-muted py-5">
                             <i class="bi bi-inbox fs-4 d-block mb-2"></i>
                             @(pending ? L["AdminMod_EmptyPending"].Value : L["AdminMod_EmptyActive"].Value)
                         </td>

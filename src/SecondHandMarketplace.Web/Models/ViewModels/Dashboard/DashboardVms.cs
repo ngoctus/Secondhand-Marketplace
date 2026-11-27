@@ -31,11 +31,20 @@ public sealed class SellerDashboardVm
     public List<TopProductVm> SanPhamBanChay { get; set; } = new();
 }
 
+public sealed class CategoryCountVm
+{
+    public string Name { get; set; } = "";
+    public int Count { get; set; }
+}
+
 public sealed class AdminDashboardVm
 {
     public int TongNguoiDung { get; set; }
+    public int NguoiDungBiKhoa { get; set; }
     public int TongCuaHang { get; set; }
     public int TongSanPham { get; set; }
+    public int SanPhamDangBan { get; set; }
+    public int SanPhamDaBan { get; set; }
     public int SanPhamChoDuyet { get; set; }
     public int TongDonHang { get; set; }
     public int DonHoanTat { get; set; }
@@ -49,7 +58,10 @@ public sealed class AdminDashboardVm
     public TopProductVm? SanPhamBanChayNhat { get; set; }
     public List<TopProductVm> SanPhamBanChay { get; set; } = new();
     public int? BaoCaoChuaXuLy { get; set; }      // null = chưa có bảng báo cáo (D chưa làm)
+    public int TranhChapDangMo { get; set; }
+    public int KhieuNaiChoXuLy { get; set; }
     public int PhienDangMo { get; set; }
     public Dictionary<string, int> DonTheoTrangThai { get; set; } = new();
+    public List<CategoryCountVm> TopDanhMuc { get; set; } = new();
     public List<Orders.OrderRowVm> DonMoiNhat { get; set; } = new();
 }
