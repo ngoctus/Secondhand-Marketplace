@@ -1,12 +1,12 @@
 (() => {
     'use strict';
 
-    const script = document.querySelector('script[data-ai-mota-chat-url]');
+    const script = document.querySelector('script[data-ai-mota-url], script[data-ai-mota-chat-url]');
     const motaBox = document.getElementById('aiGoiYMota');
     const giaBox = document.getElementById('aiGoiYGia');
     if (!script || (!motaBox && !giaBox)) return;
 
-    const chatUrl = script.dataset.aiMotaChatUrl;
+    const draftUrl = script.dataset.aiMotaUrl || script.dataset.aiMotaChatUrl || '';
     const priceUrl = script.dataset.aiGiaUrl || '';
     const statusUrl = script.dataset.aiMotaStatusUrl;
     const lang = script.dataset.lang === 'en' ? 'en' : 'vi';
@@ -100,7 +100,7 @@
     // ------------------------------------------------------------------ 1. AI Gợi ý mô tả (VI | EN)
 
     let btnMota = null;
-    if (motaBox && textarea && chatUrl) {
+    if (motaBox && textarea && draftUrl) {
         btnMota = motaBox.querySelector('[data-ai-mota-goi]');
         const trangThai = motaBox.querySelector('[data-ai-mota-trang-thai]');
         const xemTruoc = motaBox.querySelector('[data-ai-mota-xem-truoc]');
@@ -118,55 +118,15 @@
             return thieu;
         };
 
-        const soanCauHoi = () => {
-            const nameText = inputTen.value.trim().slice(0, 150);
-            const condText = tenCua(selTinhTrang);
-            const rawNotes = textarea.value.trim();
-
-            if (isEn) {
-                const gia = inputGia && inputGia.value ? `\n- Planned price: ${inputGia.value} VND` : '';
-                const base = rawNotes
-                    ? 'Polish the seller\'s rough notes into a natural, clear secondhand product description using draft_product_description (pass the notes in current_description/details):'
-                        + `\n- Name: ${nameText}`
-                        + `\n- Condition: ${condText}`
-                        + gia
-                        + '\n- Seller notes: '
-                    : 'Create a natural, concise secondhand listing description template using draft_product_description based ONLY on the facts below:'
-                        + `\n- Name: ${nameText}`
-                        + `\n- Condition: ${condText}`
-                        + gia;
-                const tail = rawNotes
-                    ? '\nWrite 2-4 natural, friendly sentences in English. Keep 100% of the facts from the seller notes without inventing specs or guarantees. Do NOT mention the category name mechanically. Only add a short note if helpful for missing essentials (accessories if any, flaws if any, shipping/meetup). Reply with the description text only.'
-                    : '\nWrite 3-4 concise sentences in English with short [...] placeholders for usage time, included accessories (if any), flaws/scratches (if any), and shipping/meetup options. Do NOT mention the category name mechanically and do not invent facts. Reply with the description text only.';
-
-                if (!rawNotes) return base + tail;
-                const maxNotes = Math.max(80, 960 - base.length - tail.length);
-                return base + rawNotes.slice(0, maxNotes) + tail;
-            }
-
-            const gia = inputGia && inputGia.value ? `\n- Giá dự kiến: ${inputGia.value} đồng` : '';
-            const base = rawNotes
-                ? 'Trau chuốt ghi chú của người bán thành đoạn mô tả rao bán đồ cũ tự nhiên, gọn gàng bằng công cụ draft_product_description (truyền ghi chú vào current_description/details):'
-                    + `\n- Tên: ${nameText}`
-                    + `\n- Tình trạng: ${condText}`
-                    + gia
-                    + '\n- Ghi chú người bán: '
-                : 'Tạo khung mô tả rao bán đồ cũ tự nhiên, gọn gàng bằng công cụ draft_product_description chỉ dựa trên thông tin sau:'
-                    + `\n- Tên: ${nameText}`
-                    + `\n- Tình trạng: ${condText}`
-                    + gia;
-            const tail = rawNotes
-                ? '\nViết 2-4 câu tiếng Việt tự nhiên như người bán thật, giữ đúng 100% thông tin từ ghi chú, không bịa thông số hay cam kết. KHÔNG viết câu cứng nhắc kiểu "thuộc danh mục...". Chỉ nhắc nhẹ cuối đoạn nếu còn thiếu ý cần thiết (phụ kiện nếu có, lỗi/trầy xước nếu có, cách giao nhận). Chỉ trả về nội dung mô tả.'
-                : '\nViết 3-4 câu tiếng Việt tự nhiên có chỗ trống [...] gọn cho thời gian dùng, phụ kiện đi kèm (nếu có), lỗi/trầy xước (nếu có) và cách giao nhận. KHÔNG viết câu kiểu "thuộc danh mục...", không bịa thông tin. Chỉ trả về nội dung mô tả.';
-
-            if (!rawNotes) return base + tail;
-            const maxNotes = Math.max(80, 960 - base.length - tail.length);
-            return base + rawNotes.slice(0, maxNotes) + tail;
-        };
-
         const hienLoiMota = (msg) => {
             if (trangThai) trangThai.textContent = msg;
             if (xemTruoc) xemTruoc.hidden = true;
+        };
+
+        const parsePrice = () => {
+            if (!inputGia || !inputGia.value) return null;
+            const n = Number(inputGia.value);
+            return Number.isFinite(n) && n >= 1000 ? n : null;
         };
 
         const goiAiMota = async () => {
@@ -183,11 +143,22 @@
             if (trangThai) trangThai.textContent = T.drafting;
 
             try {
-                const resp = await fetch(chatUrl, {
+                const payload = {
+                    name: inputTen.value.trim().slice(0, 200),
+                    categoryId: idCua(selDanhMuc),
+                    conditionId: idCua(selTinhTrang),
+                    categoryName: tenCua(selDanhMuc) || null,
+                    conditionName: tenCua(selTinhTrang) || null,
+                    price: parsePrice(),
+                    currentDescription: textarea.value.trim().slice(0, 1500) || null,
+                    language: lang
+                };
+
+                const resp = await fetch(draftUrl, {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrfToken },
-                    body: JSON.stringify({ message: soanCauHoi(), language: lang })
+                    body: JSON.stringify(payload)
                 });
                 const ketQua = await resp.json().catch(() => null);
 
@@ -204,7 +175,7 @@
                     return;
                 }
 
-                const traLoi = ketQua && ketQua.data ? (ketQua.data.reply || '').trim() : '';
+                const traLoi = ketQua && ketQua.data ? (ketQua.data.draft || ketQua.data.reply || '').trim() : '';
                 if (!traLoi) {
                     hienLoiMota(T.emptyReply);
                     return;
@@ -435,7 +406,10 @@
     fetch(statusUrl, { credentials: 'same-origin', headers: { 'RequestVerificationToken': csrfToken } })
         .then((r) => (r.ok ? r.json() : null))
         .then((k) => {
-            if (k && k.data && k.data.enabled) revealButtons();
+            const sellerEnabled = k && k.data
+                ? (typeof k.data.sellerAssistantEnabled === 'boolean' ? k.data.sellerAssistantEnabled : k.data.enabled)
+                : false;
+            if (sellerEnabled) revealButtons();
             else hideAllBoxes();
         })
         .catch(() => hideAllBoxes());

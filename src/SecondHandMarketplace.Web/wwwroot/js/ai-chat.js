@@ -262,7 +262,10 @@
             const response = await fetch(STATUS_URL, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
             if (!response.ok) return;
             const body = await readJson(response);
-            if (body && body.data && body.data.enabled === false) root.hidden = true;
+            const chatEnabled = body && body.data
+                ? (typeof body.data.chatEnabled === 'boolean' ? body.data.chatEnabled : body.data.enabled)
+                : true;
+            if (chatEnabled === false) root.hidden = true;
         } catch {
             // Bỏ qua: không kiểm tra được trạng thái thì vẫn hiển thị.
         }

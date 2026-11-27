@@ -5,6 +5,13 @@ public interface IAiChatService
     /// <summary>Chatbox đang bật hay tắt theo cấu hình Admin (đọc từ database ở mỗi lần gọi).</summary>
     Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>Trạng thái bật/tắt riêng của Chatbox và Trợ lý bán hàng (Viết mô tả + Tham khảo giá).</summary>
+    async Task<AiFeatureStatus> GetFeatureStatusAsync(CancellationToken cancellationToken = default)
+    {
+        var enabled = await IsEnabledAsync(cancellationToken);
+        return new AiFeatureStatus(enabled, enabled);
+    }
+
     /// <summary>
     /// Xử lý một tin nhắn của người dùng (mỗi lượt độc lập, không lưu lịch sử hội thoại).
     /// Không ném exception cho các lỗi nghiệp vụ/nhà cung cấp: trả về <see cref="AiChatResult"/> với thông báo an toàn.
@@ -20,7 +27,13 @@ public interface IAiChatService
         AskAsync(userId, role, message, language: null, cancellationToken);
 
     /// <summary>
-    /// Gợi ý khoảng giá bán dựa trên dữ liệu sản phẩm thật trên sàn kết hợp nhận xét AI (C-03).
+    /// Soạn mới hoặc trau chuốt mô tả sản phẩm cho người bán (POST /api/ai/draft-description).
+    /// Dùng chung khóa API nhóm 1 (Ai:ApiKey + FallbackApiKey) và cấu hình Trợ lý bán hàng.
+    /// </summary>
+    Task<AiChatResult> DraftDescriptionAsync(string userId, string role, AiDescriptionDraftInput input, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gợi ý khoảng giá bán dựa trên dữ liệu sản phẩm thật trên sàn kết hợp nhận xét AI (POST /api/ai/suggest-price).
     /// </summary>
     Task<AiPriceSuggestionResult> SuggestPriceAsync(string userId, string role, AiPriceSuggestInput input, CancellationToken cancellationToken = default);
 }

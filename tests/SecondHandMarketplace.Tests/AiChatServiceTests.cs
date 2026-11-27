@@ -440,7 +440,89 @@ public class AiChatServiceTests
         Assert.Contains("no comparable listings", res.Data.Explanation, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task DraftDescriptionAsync_WithSellerNotes_CallsLlmDirectlyInSingleRoundUsingPrimaryKey()
+    {
+        var handler = new QueueHttpHandler(_ => OpenAiOk("Tai nghe Sony WH-1000XM4 dùng 6 tháng, ngoại hình đẹp, pin còn tốt, kèm hộp và dây sạc."));
+        var svc = CreateService(new() { ["Ai:ApiKey"] = "AIza-primary" }, handler);
+
+        var res = await svc.DraftDescriptionAsync("10", AppRoles.User, new AiDescriptionDraftInput(
+            Name: "Tai nghe Sony WH-1000XM4",
+            CategoryId: 1,
+            ConditionId: 1,
+            Price: 3_500_000m,
+            CurrentDescription: "dung 6 thang, dep, pin tot, co hop day sac",
+            Language: "vi"));
+
+        Assert.True(res.IsSuccess);
+        Assert.Contains("Sony WH-1000XM4", res.Reply);
+        Assert.Single(handler.Requests);
+        Assert.Equal("Bearer AIza-primary", handler.Requests[0].Auth);
+        Assert.DoesNotContain("\"tools\"", handler.Requests[0].Body);
+    }
+
+    [Fact]
+    public async Task FeatureToggles_ChatDisabledButSellerAssistantEnabled_AllowsDraftAndPriceIndependently()
+    {
+        var handler = new QueueHttpHandler(
+            _ => OpenAiOk("Mô tả ngắn gọn cho iPhone 13."),
+            _ => OpenAiOk("""{"recommended_price_vnd": 9500000, "explanation": "Ước lượng tham khảo chung."}"""));
+
+        var settings = new StubAiSettingsService(new AiSettings(
+            Enabled: false,
+            Model: "gemini-3.5-flash-lite",
+            SystemPrompt: "Prompt",
+            UpdatedAtUtc: DateTime.UtcNow,
+            IsPersisted: true,
+            SellerAssistantEnabled: true,
+            ModerationEnabled: true,
+            ModerationModel: "gemini-3.5-flash-lite",
+            ModerationMaxImages: 2,
+            HasExtendedSchema: true));
+
+        var svc = CreateService(new() { ["Ai:ApiKey"] = "AIza-primary" }, handler, settings: settings);
+
+        var status = await svc.GetFeatureStatusAsync();
+        Assert.False(status.ChatEnabled);
+        Assert.True(status.SellerAssistantEnabled);
+
+        var chatRes = await svc.AskAsync("10", AppRoles.User, "Tìm iPhone", "vi");
+        Assert.Equal(AiChatStatus.Disabled, chatRes.Status);
+
+        var draftRes = await svc.DraftDescriptionAsync("10", AppRoles.User, new AiDescriptionDraftInput("iPhone 13 128GB", 1, 1, Language: "vi"));
+        Assert.True(draftRes.IsSuccess);
+
+        var priceRes = await svc.SuggestPriceAsync("10", AppRoles.User, new AiPriceSuggestInput("iPhone 13 128GB", 1, 1, Language: "vi"));
+        Assert.True(priceRes.IsSuccess);
+    }
+
+    [Fact]
+    public async Task DraftDescriptionAsync_ProhibitedKeyword_BlocksBeforeCallingLlm()
+    {
+        var handler = new QueueHttpHandler(_ => OpenAiOk("Should not run"));
+        var scanner = new StubKeywordScanner(new KeywordMatch(1, "ma túy", "HANG_CAM", ModerationPolicy.KeywordHigh, "Ten", 0));
+        var svc = CreateService(new() { ["Ai:ApiKey"] = "AIza-primary" }, handler, keywordScanner: scanner);
+
+        var res = await svc.DraftDescriptionAsync("10", AppRoles.User, new AiDescriptionDraftInput(
+            Name: "Ma túy đá",
+            CategoryId: 1,
+            ConditionId: 1,
+            Language: "vi"));
+
+        Assert.False(res.IsSuccess);
+        Assert.Equal(AiChatStatus.InvalidInput, res.Status);
+        Assert.Empty(handler.Requests);
+    }
+
     // ------------------------------------------------------------------ Stubs
+
+    private sealed class StubAiSettingsService(AiSettings current) : IAiSettingsService
+    {
+        public IReadOnlyList<string> AllowedModels => AiOptions.DefaultAllowedModels;
+        public Task<AiSettings> GetAsync(CancellationToken cancellationToken = default) => Task.FromResult(current);
+        public Task<(bool Success, string? Error)> SaveAsync(AiSettingsUpdate update, int? adminUserId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<(bool, string?)>((true, null));
+    }
 
     private sealed class StubKeywordScanner(params KeywordMatch[] matches) : IKeywordScanner
     {

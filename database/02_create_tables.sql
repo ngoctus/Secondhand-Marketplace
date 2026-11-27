@@ -466,12 +466,16 @@ GO
 IF OBJECT_ID(N'dbo.CauHinhAI', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.CauHinhAI (
-        MaCauHinhAI     int            NOT NULL,
-        DangBat         bit            NOT NULL CONSTRAINT DF_CauHinhAI_DangBat      DEFAULT (1),
-        TenModel        varchar(100)   NOT NULL,
-        SystemPrompt    nvarchar(4000) NOT NULL,
-        MaNguoiCapNhat  int            NULL,
-        NgayCapNhat     datetime2(3)   NOT NULL CONSTRAINT DF_CauHinhAI_NgayCapNhat  DEFAULT (SYSUTCDATETIME())
+        MaCauHinhAI          int            NOT NULL,
+        DangBat              bit            NOT NULL CONSTRAINT DF_CauHinhAI_DangBat              DEFAULT (1),
+        TroLyBanHangDangBat  bit            NOT NULL CONSTRAINT DF_CauHinhAI_TroLyBanHangDangBat  DEFAULT (1),
+        TenModel             varchar(100)   NOT NULL,
+        SystemPrompt         nvarchar(4000) NOT NULL,
+        KiemDuyetDangBat     bit            NOT NULL CONSTRAINT DF_CauHinhAI_KiemDuyetDangBat     DEFAULT (1),
+        KiemDuyetTenModel    varchar(100)   NOT NULL CONSTRAINT DF_CauHinhAI_KiemDuyetTenModel    DEFAULT ('gemini-3.5-flash-lite'),
+        KiemDuyetSoAnhToiDa  int            NOT NULL CONSTRAINT DF_CauHinhAI_KiemDuyetSoAnhToiDa  DEFAULT (2),
+        MaNguoiCapNhat       int            NULL,
+        NgayCapNhat          datetime2(3)   NOT NULL CONSTRAINT DF_CauHinhAI_NgayCapNhat          DEFAULT (SYSUTCDATETIME())
     );
 END;
 GO

@@ -1,6 +1,7 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Ai.AiSettingsVm
 @{
     ViewData["Title"] = L["AdminAi_Title"].Value;
+    var moderationReady = Model.HasDedicatedModerationApiKey || Model.HasChatApiKey;
 }
 <div class="container py-4" style="max-width:860px">
     <div class="mb-4">
@@ -15,14 +16,48 @@
         </div>
     }
 
-    <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
-        <form asp-action="Save" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <form asp-action="Save" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-4 border-0 shadow-sm mb-4"></div>
 
-            <div class="form-check form-switch mb-4">
-                <input class="form-check-input" type="checkbox" role="switch" asp-for="Enabled" />
-                <label class="form-check-label fw-semibold" asp-for="Enabled">@L["AdminAi_EnabledLabel"]</label>
-                <div class="form-text">@L["AdminAi_EnabledHint"]</div>
+        @* 1. AI Hỗ trợ người mua & người bán *@
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-3 mb-3 border-bottom">
+                <div>
+                    <h3 class="h5 fw-bold mb-1">
+                        <i class="bi bi-chat-dots me-2 text-primary"></i>@L["AdminAi_AssistantSectionTitle"]
+                    </h3>
+                    <p class="text-muted small mb-0">@L["AdminAi_AssistantSectionDesc"]</p>
+                </div>
+                @if (Model.HasChatApiKey)
+                {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle fw-medium">@L["AdminAi_StatusConnected"]</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-medium">@L["AdminAi_StatusNotConnected"]</span>
+                }
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="p-3 rounded-3 border h-100">
+                        <div class="form-check form-switch mb-1">
+                            <input class="form-check-input" type="checkbox" role="switch" asp-for="Enabled" />
+                            <label class="form-check-label fw-semibold" asp-for="Enabled">@L["AdminAi_EnabledLabel"]</label>
+                        </div>
+                        <div class="form-text mt-1">@L["AdminAi_EnabledHint"]</div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="p-3 rounded-3 border h-100">
+                        <div class="form-check form-switch mb-1">
+                            <input class="form-check-input" type="checkbox" role="switch" asp-for="SellerAssistantEnabled" />
+                            <label class="form-check-label fw-semibold" asp-for="SellerAssistantEnabled">@L["AdminAi_SellerEnabledLabel"]</label>
+                        </div>
+                        <div class="form-text mt-1">@L["AdminAi_SellerEnabledHint"]</div>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-3">
@@ -36,24 +71,78 @@
                 <span asp-validation-for="ModelName" class="text-danger small"></span>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-0">
                 <label asp-for="SystemPrompt" class="form-label fw-semibold">@L["AdminAi_PromptLabel"]</label>
-                <textarea asp-for="SystemPrompt" class="form-control font-monospace small" rows="10" maxlength="4000"></textarea>
+                <textarea asp-for="SystemPrompt" class="form-control small" rows="8" maxlength="4000"></textarea>
                 <div class="form-text">@L["AdminAi_PromptHint"]</div>
                 <span asp-validation-for="SystemPrompt" class="text-danger small"></span>
             </div>
+        </div>
 
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top">
-                <button type="submit" class="btn btn-primary px-4 fw-semibold">
-                    <i class="bi bi-check-lg me-1"></i>@L["AdminAi_SaveBtn"]
-                </button>
-                @if (Model.UpdatedAtUtc is { } updated)
+        @* 2. AI Kiểm duyệt sản phẩm *@
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-3 mb-3 border-bottom">
+                <div>
+                    <h3 class="h5 fw-bold mb-1">
+                        <i class="bi bi-shield-check me-2 text-success"></i>@L["AdminAi_ModerationSectionTitle"]
+                    </h3>
+                    <p class="text-muted small mb-0">@L["AdminAi_ModerationSectionDesc"]</p>
+                </div>
+                @if (moderationReady)
                 {
-                    <span class="text-muted small">@L["AdminAi_LastUpdated", HienThi.NgayGio(updated)]</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle fw-medium">@L["AdminAi_StatusConnected"]</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-medium">@L["AdminAi_StatusNotConnected"]</span>
                 }
             </div>
-        </form>
-    </div>
+
+            <div class="p-3 rounded-3 border mb-4">
+                <div class="form-check form-switch mb-1">
+                    <input class="form-check-input" type="checkbox" role="switch" asp-for="ModerationEnabled" />
+                    <label class="form-check-label fw-semibold" asp-for="ModerationEnabled">@L["AdminAi_ModerationEnabledLabel"]</label>
+                </div>
+                <div class="form-text mt-1">@L["AdminAi_ModerationEnabledHint"]</div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-7">
+                    <label asp-for="ModerationModelName" class="form-label fw-semibold">@L["AdminAi_ModerationModelLabel"]</label>
+                    <select asp-for="ModerationModelName" class="form-select">
+                        @foreach (var name in Model.AllowedModels)
+                        {
+                            <option value="@name" selected="@(name == Model.ModerationModelName)">@name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="ModerationModelName" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-5">
+                    <label asp-for="ModerationMaxImages" class="form-label fw-semibold">@L["AdminAi_ModerationMaxImagesLabel"]</label>
+                    <select asp-for="ModerationMaxImages" class="form-select">
+                        <option value="0" selected="@(Model.ModerationMaxImages == 0)">@L["AdminAi_ModerationImages0"]</option>
+                        <option value="1" selected="@(Model.ModerationMaxImages == 1)">1</option>
+                        <option value="2" selected="@(Model.ModerationMaxImages == 2)">2</option>
+                        <option value="3" selected="@(Model.ModerationMaxImages == 3)">3</option>
+                        <option value="4" selected="@(Model.ModerationMaxImages == 4)">4</option>
+                    </select>
+                    <div class="form-text">@L["AdminAi_ModerationMaxImagesHint"]</div>
+                    <span asp-validation-for="ModerationMaxImages" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                <i class="bi bi-check-lg me-1"></i>@L["AdminAi_SaveBtn"]
+            </button>
+            @if (Model.UpdatedAtUtc is { } updated)
+            {
+                <span class="text-muted small">@L["AdminAi_LastUpdated", HienThi.NgayGio(updated)]</span>
+            }
+        </div>
+    </form>
 
     <p class="text-muted small mt-3 mb-0">
         <i class="bi bi-shield-lock me-1"></i>@L["AdminAi_ApiKeyNote"]

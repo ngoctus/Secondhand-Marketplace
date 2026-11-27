@@ -180,4 +180,56 @@ public class AiModerationAnalyzerTests
         var bad = AiModerationAnalyzer.ParseProviderResponse("not json", "gemini-3.1-flash-lite");
         Assert.False(bad.Succeeded);
     }
+
+    [Fact]
+    public async Task Analyzer_ReadsAdminDbSettings_ForModelAndEnabledToggleWhileKeepingModerationKey()
+    {
+        var handler = new QueueHttpHandler(
+            _ => JsonOk("""{"muc_rui_ro":"LOW","de_xuat":"APPROVE","giai_thich":"Hợp lệ.","dau_hieu":[]}"""));
+
+        var cfg = BuildConfig(new()
+        {
+            ["Ai:ApiKey"] = "chat-key",
+            ["Ai:ModerationApiKey"] = "dedicated-mod-key",
+            ["Ai:ModerationEnabled"] = "true",
+            ["Ai:ModerationModel"] = "gemini-3.5-flash-lite"
+        });
+
+        var customModelSettings = new StubAiSettingsService(new AiSettings(
+            Enabled: false,
+            Model: "gemini-3.5-flash-lite",
+            SystemPrompt: "Prompt",
+            UpdatedAtUtc: DateTime.UtcNow,
+            IsPersisted: true,
+            SellerAssistantEnabled: false,
+            ModerationEnabled: true,
+            ModerationModel: "gemini-3.8-flash",
+            ModerationMaxImages: 1,
+            HasExtendedSchema: true));
+
+        var analyzer = new AiModerationAnalyzer(new HttpClient(handler), cfg, NullLogger<AiModerationAnalyzer>.Instance, customModelSettings);
+        var ok = await analyzer.AnalyzeAsync(SampleInput());
+
+        Assert.True(ok.Succeeded);
+        Assert.Equal("gemini-3.8-flash", ok.ModelName);
+        Assert.Single(handler.Requests);
+        Assert.Equal("Bearer dedicated-mod-key", handler.Requests[0].Auth);
+        Assert.Contains("\"model\":\"gemini-3.8-flash\"", handler.Requests[0].Body);
+
+        var disabledSettings = new StubAiSettingsService(customModelSettings.Current with { ModerationEnabled = false });
+        var disabledAnalyzer = new AiModerationAnalyzer(new HttpClient(handler), cfg, NullLogger<AiModerationAnalyzer>.Instance, disabledSettings);
+        var skipped = await disabledAnalyzer.AnalyzeAsync(SampleInput());
+
+        Assert.False(skipped.Succeeded);
+        Assert.Single(handler.Requests); // Không gọi thêm HTTP khi Admin tắt AI kiểm duyệt
+    }
+
+    private sealed class StubAiSettingsService(AiSettings current) : IAiSettingsService
+    {
+        public AiSettings Current => current;
+        public IReadOnlyList<string> AllowedModels => AiOptions.DefaultAllowedModels;
+        public Task<AiSettings> GetAsync(CancellationToken cancellationToken = default) => Task.FromResult(current);
+        public Task<(bool Success, string? Error)> SaveAsync(AiSettingsUpdate update, int? adminUserId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<(bool, string?)>((true, null));
+    }
 }

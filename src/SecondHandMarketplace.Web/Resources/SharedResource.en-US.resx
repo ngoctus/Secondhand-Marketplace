@@ -1120,17 +1120,31 @@
   <data name="AdminVio_SourceAdminReject" xml:space="preserve"><value>Admin Rejected</value></data>
   <data name="AdminVio_Empty" xml:space="preserve"><value>No violations recorded.</value></data>
   <data name="AdminVio_TotalCount" xml:space="preserve"><value>Total {0} violations</value></data>
-  <data name="AdminAi_Title" xml:space="preserve"><value>AI Assistant Settings</value></data>
-  <data name="AdminAi_Subtitle" xml:space="preserve"><value>Changes are saved to the database and take effect immediately for subsequent user messages.</value></data>
-  <data name="AdminAi_NotPersistedWarn" xml:space="preserve"><value>The database does not have AI configuration yet (table CauHinhAI). Showing default values; saving requires the table to exist.</value></data>
-  <data name="AdminAi_EnabledLabel" xml:space="preserve"><value>Enable AI Assistant</value></data>
-  <data name="AdminAi_EnabledHint" xml:space="preserve"><value>When disabled, the chat button is hidden and the server rejects all chat requests.</value></data>
+  <data name="AdminAi_Title" xml:space="preserve"><value>AI Settings</value></data>
+  <data name="AdminAi_Subtitle" xml:space="preserve"><value>Manage shopping assistant and listing moderation features. Changes take effect immediately.</value></data>
+  <data name="AdminAi_NotPersistedWarn" xml:space="preserve"><value>No saved AI settings found yet; showing default values.</value></data>
+  <data name="AdminAi_StatusConnected" xml:space="preserve"><value>Connected</value></data>
+  <data name="AdminAi_StatusNotConnected" xml:space="preserve"><value>Not connected</value></data>
+  <data name="AdminAi_AssistantSectionTitle" xml:space="preserve"><value>Buyer &amp; Seller Assistant</value></data>
+  <data name="AdminAi_AssistantSectionDesc" xml:space="preserve"><value>Helps buyers search via chat and helps sellers estimate prices and draft descriptions.</value></data>
+  <data name="AdminAi_EnabledLabel" xml:space="preserve"><value>Enable AI Chatbox</value></data>
+  <data name="AdminAi_EnabledHint" xml:space="preserve"><value>When off, the chat assistant widget is hidden from the site.</value></data>
+  <data name="AdminAi_SellerEnabledLabel" xml:space="preserve"><value>Enable Seller Assistant</value></data>
+  <data name="AdminAi_SellerEnabledHint" xml:space="preserve"><value>Provides price suggestions and description drafts when creating or editing listings.</value></data>
   <data name="AdminAi_ModelLabel" xml:space="preserve"><value>AI Model</value></data>
-  <data name="AdminAi_PromptLabel" xml:space="preserve"><value>System Prompt</value></data>
-  <data name="AdminAi_PromptHint" xml:space="preserve"><value>Up to 4,000 characters. Core safety rules (grounded real data only, no placing orders/listings, no internal leaks) are automatically appended by the server.</value></data>
+  <data name="AdminAi_PromptLabel" xml:space="preserve"><value>Chatbox Instructions</value></data>
+  <data name="AdminAi_PromptHint" xml:space="preserve"><value>Up to 4,000 characters. Core safety rules remain enforced automatically.</value></data>
+  <data name="AdminAi_ModerationSectionTitle" xml:space="preserve"><value>Listing Moderation AI</value></data>
+  <data name="AdminAi_ModerationSectionDesc" xml:space="preserve"><value>Automatically reviews listing text, unusual pricing, and images on new submissions.</value></data>
+  <data name="AdminAi_ModerationEnabledLabel" xml:space="preserve"><value>Enable AI Moderation</value></data>
+  <data name="AdminAi_ModerationEnabledHint" xml:space="preserve"><value>When off, basic keyword filtering still runs and listings go to manual review.</value></data>
+  <data name="AdminAi_ModerationModelLabel" xml:space="preserve"><value>Moderation Model</value></data>
+  <data name="AdminAi_ModerationMaxImagesLabel" xml:space="preserve"><value>Max images to review</value></data>
+  <data name="AdminAi_ModerationImages0" xml:space="preserve"><value>Do not check images</value></data>
+  <data name="AdminAi_ModerationMaxImagesHint" xml:space="preserve"><value>Number of product photos checked alongside the listing details.</value></data>
   <data name="AdminAi_SaveBtn" xml:space="preserve"><value>Save Settings</value></data>
   <data name="AdminAi_LastUpdated" xml:space="preserve"><value>Last updated: {0}</value></data>
-  <data name="AdminAi_ApiKeyNote" xml:space="preserve"><value>API keys are managed via server User Secrets / environment variables, not in this form.</value></data>
+  <data name="AdminAi_ApiKeyNote" xml:space="preserve"><value>AI service credentials are secured separately on the server.</value></data>
   <data name="AdminRev_Title" xml:space="preserve"><value>Low-Rated Shop Review</value></data>
   <data name="AdminRev_Heading" xml:space="preserve"><value>Review Low-Rated Shops</value></data>
   <data name="AdminRev_Criteria" xml:space="preserve"><value>Alert criteria: average rating below 3.0 stars with at least 5 reviews. Currently {0} shops require review.</value></data>

@@ -9,10 +9,12 @@ using SecondHandMarketplace.Web.Services.Ai;
 namespace SecondHandMarketplace.Web.Controllers.Api;
 
 /// <summary>
-/// API cho Chatbox AI &amp; AI tham khảo giá (C-03):
-///   POST /api/ai/chat           { "message": "...", "language": "vi|en" }  ->  { success, message, data: { reply } }
-///   POST /api/ai/suggest-price  { "name": "...", "categoryId": ... }       ->  { success, message, data: { minPriceVnd, maxPriceVnd, medianPriceVnd, recommendedPriceVnd, ... } }
-///   GET  /api/ai/status                                                    ->  { success, message, data: { enabled } }
+/// 3 Endpoint AI tương tác với trình duyệt (cùng dùng Khóa API nhóm 1: Ai:ApiKey + FallbackApiKey):
+///   1. POST /api/ai/chat               { "message": "...", "language": "vi|en" }     ->  { success, message, data: { reply } }
+///   2. POST /api/ai/suggest-price      { "name": "...", "categoryId": ... }          ->  { success, message, data: { minPriceVnd, maxPriceVnd, ... } }
+///   3. POST /api/ai/draft-description  { "name": "...", "conditionId": ..., ... }    ->  { success, message, data: { draft, reply } }
+///   +  GET  /api/ai/status                                                           ->  { success, message, data: { enabled, chatEnabled, sellerAssistantEnabled } }
+/// (AI Kiểm duyệt sản phẩm chạy nội bộ trên server qua AiModerationAnalyzer bằng Khóa API nhóm 2: Ai:ModerationApiKey.)
 /// Xác thực: JWT hoặc Cookie (xem AiChatAuthorizeAttribute; Cookie cần thêm Antiforgery token).
 /// Giới hạn theo tài khoản (AiRequestThrottle); mọi thông báo lỗi tự động khớp ngôn ngữ VI | EN.
 /// </summary>
@@ -71,6 +73,54 @@ public class AiChatController : ControllerBase
         }
     }
 
+    [HttpPost("draft-description")]
+    [RequestSizeLimit(16 * 1024)]
+    public async Task<IActionResult> DraftDescription([FromBody] AiDescriptionDraftRequest? request, CancellationToken cancellationToken)
+    {
+        Response.Headers.CacheControl = "no-store";
+        var lang = AiLanguage.Normalize(request?.Language);
+
+        if (request is null || string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(KetQua.ThatBai(AiLanguage.Choose(lang,
+                "Vui lòng nhập tên sản phẩm trước khi nhờ AI viết mô tả.",
+                "Please enter a product name before requesting an AI description.")));
+
+        var (userId, role) = ReadIdentity();
+        if (role.Length == 0 || string.IsNullOrWhiteSpace(userId))
+            return StatusCode(StatusCodes.Status403Forbidden, KetQua.ThatBai(AiLanguage.Choose(lang,
+                "Bạn không có quyền sử dụng trợ lý AI.",
+                "You do not have permission to use the AI assistant.")));
+
+        try
+        {
+            var gate = await _throttle.AcquireAsync(userId, role, cancellationToken);
+            if (!gate.Acquired) return TooManyRequests(gate, lang);
+
+            using var lease = gate.Lease;
+            var input = new AiDescriptionDraftInput(
+                request.Name,
+                request.CategoryId,
+                request.ConditionId,
+                request.CategoryName,
+                request.ConditionName,
+                request.Price,
+                request.CurrentDescription,
+                lang);
+            var result = await _ai.DraftDescriptionAsync(userId, role, input, cancellationToken);
+            return ToDraftActionResult(result, lang);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return StatusCode(StatusCodes.Status499ClientClosedRequest);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi không mong đợi khi xử lý /api/ai/draft-description.");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                KetQua.ThatBai(GenericError(lang)));
+        }
+    }
+
     [HttpPost("suggest-price")]
     [RequestSizeLimit(16 * 1024)]
     public async Task<IActionResult> SuggestPrice([FromBody] AiPriceSuggestRequest? request, CancellationToken cancellationToken)
@@ -118,7 +168,7 @@ public class AiChatController : ControllerBase
         }
     }
 
-    /// <summary>Widget gọi để biết có nên hiển thị Chatbox/các nút trợ lý AI hay không (Admin có thể tắt).</summary>
+    /// <summary>Widget &amp; form đăng tin gọi để biết Chatbox hoặc Trợ lý bán hàng đang bật hay tắt.</summary>
     [HttpGet("status")]
     public async Task<IActionResult> Status(CancellationToken cancellationToken)
     {
@@ -126,8 +176,13 @@ public class AiChatController : ControllerBase
         var lang = AiLanguage.Normalize(null);
         try
         {
-            var enabled = await _ai.IsEnabledAsync(cancellationToken);
-            return Ok(KetQua.ThanhCong("OK", new { enabled }));
+            var status = await _ai.GetFeatureStatusAsync(cancellationToken);
+            return Ok(KetQua.ThanhCong("OK", new
+            {
+                enabled = status.ChatEnabled,
+                chatEnabled = status.ChatEnabled,
+                sellerAssistantEnabled = status.SellerAssistantEnabled
+            }));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -184,6 +239,24 @@ public class AiChatController : ControllerBase
         return result.Status switch
         {
             AiChatStatus.Success => Ok(KetQua.ThanhCong("OK", new { reply = result.Reply })),
+            AiChatStatus.InvalidInput => BadRequest(KetQua.ThatBai(message)),
+            AiChatStatus.Forbidden => StatusCode(StatusCodes.Status403Forbidden, KetQua.ThatBai(message)),
+            AiChatStatus.Disabled => StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new KetQua(false, message, new { disabled = true })),
+            AiChatStatus.NotConfigured => StatusCode(StatusCodes.Status503ServiceUnavailable, KetQua.ThatBai(message)),
+            AiChatStatus.Timeout => StatusCode(StatusCodes.Status504GatewayTimeout, KetQua.ThatBai(message)),
+            AiChatStatus.ProviderError or AiChatStatus.InvalidResponse =>
+                StatusCode(StatusCodes.Status502BadGateway, KetQua.ThatBai(message)),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, KetQua.ThatBai(message))
+        };
+    }
+
+    private IActionResult ToDraftActionResult(AiChatResult result, string lang)
+    {
+        var message = result.Error ?? GenericError(lang);
+        return result.Status switch
+        {
+            AiChatStatus.Success => Ok(KetQua.ThanhCong("OK", new { draft = result.Reply, reply = result.Reply })),
             AiChatStatus.InvalidInput => BadRequest(KetQua.ThatBai(message)),
             AiChatStatus.Forbidden => StatusCode(StatusCodes.Status403Forbidden, KetQua.ThatBai(message)),
             AiChatStatus.Disabled => StatusCode(StatusCodes.Status503ServiceUnavailable,

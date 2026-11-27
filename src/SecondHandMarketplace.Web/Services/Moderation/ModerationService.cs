@@ -22,7 +22,8 @@ public sealed class ModerationService(
     ILogger<ModerationService> logger,
     IAiModerationAnalyzer? aiAnalyzer = null,
     IWebHostEnvironment? webHostEnvironment = null,
-    IConfiguration? configuration = null) : IModerationService
+    IConfiguration? configuration = null,
+    IAiSettingsService? aiSettings = null) : IModerationService
 {
     private const long MaxImageBytesForAi = 2 * 1024 * 1024; // 2 MB mỗi ảnh đại diện gửi lên LLM
 
@@ -100,9 +101,12 @@ public sealed class ModerationService(
     {
         try
         {
-            var maxImages = configuration is null
-                ? 2
-                : AiOptions.FromConfiguration(configuration).ModerationMaxImages;
+            var dbSettings = aiSettings is null ? null : await aiSettings.GetAsync(ct);
+            var maxImages = dbSettings is { IsPersisted: true, HasExtendedSchema: true }
+                ? dbSettings.ModerationMaxImages
+                : (configuration is null
+                    ? 2
+                    : AiOptions.FromConfiguration(configuration).ModerationMaxImages);
             var images = await LoadProductImagesForAiAsync(turn.ProductId, maxImages, ct);
 
             var input = new AiModerationInput(

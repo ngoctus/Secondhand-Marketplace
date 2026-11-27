@@ -66,23 +66,34 @@ public sealed class AiModerationAnalyzer : IAiModerationAnalyzer
 
     private readonly HttpClient _http;
     private readonly AiOptions _options;
+    private readonly IAiSettingsService? _settings;
     private readonly ILogger<AiModerationAnalyzer> _logger;
 
     public AiModerationAnalyzer(
         HttpClient httpClient,
         IConfiguration configuration,
-        ILogger<AiModerationAnalyzer> logger)
+        ILogger<AiModerationAnalyzer> logger,
+        IAiSettingsService? settings = null)
     {
         _http = httpClient;
         _options = AiOptions.FromConfiguration(configuration);
+        _settings = settings;
         _logger = logger;
     }
 
     public async Task<AiModerationResult> AnalyzeAsync(AiModerationInput input, CancellationToken cancellationToken = default)
     {
-        var model = _options.ModerationModel;
-        if (!_options.ModerationEnabled)
-            return AiModerationResult.Fail("AI kiểm duyệt đang tắt qua cấu hình Ai:ModerationEnabled.", model);
+        var dbSettings = _settings is null ? null : await _settings.GetAsync(cancellationToken);
+        var moderationEnabled = dbSettings is { IsPersisted: true, HasExtendedSchema: true }
+            ? dbSettings.ModerationEnabled
+            : _options.ModerationEnabled;
+        var model = dbSettings is { IsPersisted: true, HasExtendedSchema: true }
+            && !string.IsNullOrWhiteSpace(dbSettings.ModerationModel)
+            ? dbSettings.ModerationModel!
+            : _options.ModerationModel;
+
+        if (!moderationEnabled)
+            return AiModerationResult.Fail("AI kiểm duyệt đang tắt qua cấu hình hệ thống.", model);
 
         var apiKeys = _options.GetModerationApiKeys();
         if (apiKeys.Count == 0)

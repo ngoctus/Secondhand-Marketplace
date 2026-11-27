@@ -1121,17 +1121,31 @@
   <data name="AdminVio_SourceAdminReject" xml:space="preserve"><value>Admin từ chối</value></data>
   <data name="AdminVio_Empty" xml:space="preserve"><value>Chưa có vi phạm nào.</value></data>
   <data name="AdminVio_TotalCount" xml:space="preserve"><value>Tổng {0} vi phạm</value></data>
-  <data name="AdminAi_Title" xml:space="preserve"><value>Cấu hình chatbox AI</value></data>
-  <data name="AdminAi_Subtitle" xml:space="preserve"><value>Thay đổi được lưu vào database và áp dụng ngay cho các tin nhắn tiếp theo của người dùng.</value></data>
-  <data name="AdminAi_NotPersistedWarn" xml:space="preserve"><value>Database chưa có cấu hình AI (bảng CauHinhAI). Đang hiển thị giá trị mặc định; bạn chỉ lưu được sau khi bảng này được tạo.</value></data>
-  <data name="AdminAi_EnabledLabel" xml:space="preserve"><value>Bật Chatbox AI</value></data>
-  <data name="AdminAi_EnabledHint" xml:space="preserve"><value>Khi tắt, nút chat ẩn đi và máy chủ từ chối mọi yêu cầu chat.</value></data>
+  <data name="AdminAi_Title" xml:space="preserve"><value>Cấu hình AI</value></data>
+  <data name="AdminAi_Subtitle" xml:space="preserve"><value>Quản lý trợ lý mua bán và hỗ trợ kiểm duyệt tin đăng. Thay đổi có hiệu lực ngay sau khi lưu.</value></data>
+  <data name="AdminAi_NotPersistedWarn" xml:space="preserve"><value>Chưa có cấu hình AI lưu trong hệ thống, đang hiển thị giá trị mặc định.</value></data>
+  <data name="AdminAi_StatusConnected" xml:space="preserve"><value>Đã kết nối</value></data>
+  <data name="AdminAi_StatusNotConnected" xml:space="preserve"><value>Chưa kết nối</value></data>
+  <data name="AdminAi_AssistantSectionTitle" xml:space="preserve"><value>Trợ lý người mua &amp; người bán</value></data>
+  <data name="AdminAi_AssistantSectionDesc" xml:space="preserve"><value>Hỗ trợ tìm kiếm sản phẩm qua khung chat, tham khảo giá bán và soạn mô tả tin đăng.</value></data>
+  <data name="AdminAi_EnabledLabel" xml:space="preserve"><value>Bật Chatbox tư vấn</value></data>
+  <data name="AdminAi_EnabledHint" xml:space="preserve"><value>Khi tắt, khung chat trợ lý sẽ ẩn khỏi trang web.</value></data>
+  <data name="AdminAi_SellerEnabledLabel" xml:space="preserve"><value>Bật trợ lý đăng bán</value></data>
+  <data name="AdminAi_SellerEnabledHint" xml:space="preserve"><value>Hỗ trợ người bán tham khảo giá và gợi ý mô tả khi đăng hoặc sửa sản phẩm.</value></data>
   <data name="AdminAi_ModelLabel" xml:space="preserve"><value>Model AI</value></data>
-  <data name="AdminAi_PromptLabel" xml:space="preserve"><value>System Prompt</value></data>
-  <data name="AdminAi_PromptHint" xml:space="preserve"><value>Tối đa 4.000 ký tự. Hệ thống luôn tự nối thêm các quy tắc an toàn cố định (chỉ dùng dữ liệu thật, không tự đặt hàng/đăng bán, không tiết lộ thông tin nội bộ) nên không cần lặp lại ở đây.</value></data>
+  <data name="AdminAi_PromptLabel" xml:space="preserve"><value>Hướng dẫn phản hồi cho Chatbox</value></data>
+  <data name="AdminAi_PromptHint" xml:space="preserve"><value>Tối đa 4.000 ký tự. Các quy tắc an toàn cơ bản được hệ thống giữ cố định.</value></data>
+  <data name="AdminAi_ModerationSectionTitle" xml:space="preserve"><value>Hỗ trợ kiểm duyệt tin đăng</value></data>
+  <data name="AdminAi_ModerationSectionDesc" xml:space="preserve"><value>Tự động phân tích nội dung, mức giá bất thường và hình ảnh khi có tin đăng mới.</value></data>
+  <data name="AdminAi_ModerationEnabledLabel" xml:space="preserve"><value>Bật AI hỗ trợ kiểm duyệt</value></data>
+  <data name="AdminAi_ModerationEnabledHint" xml:space="preserve"><value>Khi tắt, hệ thống vẫn lọc các từ khóa cấm cơ bản và chuyển quản trị viên duyệt thủ công.</value></data>
+  <data name="AdminAi_ModerationModelLabel" xml:space="preserve"><value>Model kiểm duyệt</value></data>
+  <data name="AdminAi_ModerationMaxImagesLabel" xml:space="preserve"><value>Số ảnh kiểm duyệt tối đa</value></data>
+  <data name="AdminAi_ModerationImages0" xml:space="preserve"><value>Không kiểm tra ảnh</value></data>
+  <data name="AdminAi_ModerationMaxImagesHint" xml:space="preserve"><value>Số ảnh sản phẩm đầu tiên được gửi đi đối chiếu với mô tả.</value></data>
   <data name="AdminAi_SaveBtn" xml:space="preserve"><value>Lưu cấu hình</value></data>
   <data name="AdminAi_LastUpdated" xml:space="preserve"><value>Cập nhật lần cuối: {0}</value></data>
-  <data name="AdminAi_ApiKeyNote" xml:space="preserve"><value>Khóa API không được cấu hình tại đây mà nằm trong User Secrets / biến môi trường của máy chủ.</value></data>
+  <data name="AdminAi_ApiKeyNote" xml:space="preserve"><value>Thông tin kết nối dịch vụ AI được bảo mật riêng trên máy chủ.</value></data>
   <data name="AdminRev_Title" xml:space="preserve"><value>Rà soát đánh giá shop</value></data>
   <data name="AdminRev_Heading" xml:space="preserve"><value>Rà soát shop bị đánh giá thấp</value></data>
   <data name="AdminRev_Criteria" xml:space="preserve"><value>Tiêu chí cảnh báo: điểm trung bình dưới 3.0 sao và có ít nhất 5 đánh giá. Hiện có {0} shop cần rà soát.</value></data>

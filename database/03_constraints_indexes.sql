@@ -362,13 +362,17 @@ ALTER TABLE dbo.TinNhan ADD CONSTRAINT FK_TinNhan_NguoiDung FOREIGN KEY (MaNguoi
 GO
 ALTER TABLE dbo.TinNhan ADD CONSTRAINT CK_TinNhan_NoiDung CHECK (LEN(LTRIM(RTRIM(NoiDung))) > 0);
 GO
-ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT CK_CauHinhAI_MotDong       CHECK (MaCauHinhAI = 1);
+ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT CK_CauHinhAI_MotDong             CHECK (MaCauHinhAI = 1);
 GO
-ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT CK_CauHinhAI_TenModel      CHECK (LEN(LTRIM(RTRIM(TenModel))) > 0);
+ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT CK_CauHinhAI_TenModel            CHECK (LEN(LTRIM(RTRIM(TenModel))) > 0);
 GO
-ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT CK_CauHinhAI_SystemPrompt  CHECK (LEN(LTRIM(RTRIM(SystemPrompt))) > 0);
+ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT CK_CauHinhAI_SystemPrompt        CHECK (LEN(LTRIM(RTRIM(SystemPrompt))) > 0);
 GO
-ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT FK_CauHinhAI_NguoiDung     FOREIGN KEY (MaNguoiCapNhat) REFERENCES dbo.NguoiDung (MaNguoiDung);
+ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT CK_CauHinhAI_KiemDuyetTenModel   CHECK (LEN(LTRIM(RTRIM(KiemDuyetTenModel))) > 0);
+GO
+ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT CK_CauHinhAI_KiemDuyetSoAnhToiDa CHECK (KiemDuyetSoAnhToiDa BETWEEN 0 AND 4);
+GO
+ALTER TABLE dbo.CauHinhAI ADD CONSTRAINT FK_CauHinhAI_NguoiDung           FOREIGN KEY (MaNguoiCapNhat) REFERENCES dbo.NguoiDung (MaNguoiDung);
 GO
 ALTER TABLE dbo.PhuongXa ADD CONSTRAINT FK_PhuongXa_TinhThanh FOREIGN KEY (MaTinhThanh) REFERENCES dbo.TinhThanh (MaTinhThanh);
 GO

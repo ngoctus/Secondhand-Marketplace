@@ -1,6 +1,6 @@
 namespace SecondHandMarketplace.Web.Services.Ai;
 
-/// <summary>Đọc/ghi cấu hình Chatbox AI (bật/tắt, model, System Prompt) trong database.</summary>
+/// <summary>Đọc/ghi cấu hình hệ thống AI (Hỗ trợ người mua &amp; người bán + AI Kiểm duyệt) trong database.</summary>
 public interface IAiSettingsService
 {
     /// <summary>Danh sách model Admin được phép chọn.</summary>
@@ -12,7 +12,23 @@ public interface IAiSettingsService
     /// </summary>
     Task<AiSettings> GetAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>Kiểm tra và lưu cấu hình. Trả (false, lỗi) khi dữ liệu không hợp lệ hoặc database chưa có bảng cấu hình.</summary>
-    Task<(bool Success, string? Error)> SaveAsync(bool enabled, string model, string systemPrompt,
-        int? adminUserId, CancellationToken cancellationToken = default);
+    /// <summary>Kiểm tra và lưu cấu hình đầy đủ cho cả 2 cụm AI (Hỗ trợ người mua/bán &amp; Kiểm duyệt).</summary>
+    Task<(bool Success, string? Error)> SaveAsync(AiSettingsUpdate update, int? adminUserId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Quá tải tương thích ngược: chỉ cập nhật cụm Chatbox, giữ nguyên cấu hình kiểm duyệt hiện có.</summary>
+    async Task<(bool Success, string? Error)> SaveAsync(bool enabled, string model, string systemPrompt,
+        int? adminUserId, CancellationToken cancellationToken = default)
+    {
+        var current = await GetAsync(cancellationToken);
+        var update = new AiSettingsUpdate(
+            Enabled: enabled,
+            SellerAssistantEnabled: current.SellerAssistantEnabled,
+            Model: model,
+            SystemPrompt: systemPrompt,
+            ModerationEnabled: current.ModerationEnabled,
+            ModerationModel: current.EffectiveModerationModel,
+            ModerationMaxImages: current.ModerationMaxImages);
+        return await SaveAsync(update, adminUserId, cancellationToken);
+    }
 }
