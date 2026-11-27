@@ -142,11 +142,38 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
             .Take(6)
             .ToList();
 
+        var nguoiDungBiKhoa = await db.NguoiDungs.AsNoTracking()
+            .CountAsync(u => u.TrangThai != "ACTIVE", ct);
+
+        var spTheoTrangThai = await db.SanPhams.AsNoTracking()
+            .Where(s => !s.DaXoa)
+            .GroupBy(s => s.TrangThai)
+            .Select(g => new { g.Key, N = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.N, ct);
+
+        var tranhChapDangMo = await db.TranhChaps.AsNoTracking()
+            .CountAsync(t => t.TrangThai == "OPEN" || t.TrangThai == "IN_REVIEW", ct);
+
+        var khieuNaiChoXuLy = await db.KhieuNaiTaiKhoans.AsNoTracking()
+            .CountAsync(k => k.TrangThai == "PENDING", ct);
+
+        var topDanhMuc = await (from sp in db.SanPhams.AsNoTracking()
+                                join dm in db.DanhMucs.AsNoTracking() on sp.MaDanhMuc equals dm.MaDanhMuc
+                                where !sp.DaXoa
+                                group sp by dm.Ten into g
+                                orderby g.Count() descending
+                                select new CategoryCountVm { Name = g.Key, Count = g.Count() })
+            .Take(6)
+            .ToListAsync(ct);
+
         return new AdminDashboardVm
         {
             TongNguoiDung = tk.TongNguoiDung,
+            NguoiDungBiKhoa = nguoiDungBiKhoa,
             TongCuaHang = tk.TongCuaHang,
             TongSanPham = tk.TongSanPham,
+            SanPhamDangBan = spTheoTrangThai.GetValueOrDefault("ACTIVE"),
+            SanPhamDaBan = spTheoTrangThai.GetValueOrDefault("SOLD"),
             SanPhamChoDuyet = tk.SanPhamChoDuyet,
             TongDonHang = tk.TongDonHang,
             DonHoanTat = tk.DonHoanTat,
@@ -160,8 +187,11 @@ public sealed class DashboardService(AppDbContext db, IConfiguration config, ILo
             SanPhamBanChayNhat = topSanPham.FirstOrDefault(),
             SanPhamBanChay = topSanPham,
             BaoCaoChuaXuLy = await DemBaoCaoAsync(ct),
+            TranhChapDangMo = tranhChapDangMo,
+            KhieuNaiChoXuLy = khieuNaiChoXuLy,
             PhienDangMo = await db.PhienDauGias.AsNoTracking().CountAsync(p => p.TrangThai == "SCHEDULED" || p.TrangThai == "RUNNING", ct),
             DonTheoTrangThai = theoTrangThai,
+            TopDanhMuc = topDanhMuc,
             DonMoiNhat = moiNhat
         };
     }

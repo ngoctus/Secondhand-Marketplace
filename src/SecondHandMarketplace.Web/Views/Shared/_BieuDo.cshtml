@@ -17,8 +17,8 @@
         const ctx = document.getElementById('revenueChart');
         const chart = new Chart(ctx, {
             data: { labels: [], datasets: [
-                { type: 'bar', label: '@L["E_ChartRevenue"]', data: [], backgroundColor: '#9fc079', borderRadius: 4, yAxisID: 'y' },
-                { type: 'line', label: '@L["E_ChartOrders"]', data: [], borderColor: '#285b43', backgroundColor: '#285b43', tension: .3, yAxisID: 'y1' }
+                { type: 'bar', label: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["E_ChartRevenue"].Value)), data: [], backgroundColor: 'rgba(104, 112, 90, 0.78)', hoverBackgroundColor: '#68705A', borderRadius: 6, yAxisID: 'y' },
+                { type: 'line', label: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["E_ChartOrders"].Value)), data: [], borderColor: '#B28A4A', backgroundColor: '#B28A4A', borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 5, tension: .32, yAxisID: 'y1' }
             ]},
             options: {
                 responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },

@@ -2,91 +2,257 @@
 @{
     ViewData["Title"] = L["E_AdminDashTitle"];
     var tt = new[] { "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "COMPLETED", "CANCELLED" };
+    var completionRate = Model.TongDonHang > 0 ? Math.Round(Model.DonHoanTat * 100.0 / Model.TongDonHang, 1) : 0;
+    var activeRate = Model.TongSanPham > 0 ? Math.Round(Model.SanPhamDangBan * 100.0 / Model.TongSanPham, 1) : 0;
+    var totalAlerts = Model.SanPhamChoDuyet + (Model.BaoCaoChuaXuLy ?? 0) + Model.TranhChapDangMo + Model.KhieuNaiChoXuLy;
+
+    var statusLabelsJson = System.Text.Json.JsonSerializer.Serialize(tt.Select(s => HienThi.TrangThaiDon(s).ToString()).ToArray());
+    var statusCountsJson = System.Text.Json.JsonSerializer.Serialize(tt.Select(s => Model.DonTheoTrangThai.GetValueOrDefault(s)).ToArray());
+    var catLabelsJson = System.Text.Json.JsonSerializer.Serialize(Model.TopDanhMuc.Select(c => HienThi.TenDanhMuc(c.Name).ToString()).ToArray());
+    var catCountsJson = System.Text.Json.JsonSerializer.Serialize(Model.TopDanhMuc.Select(c => c.Count).ToArray());
 }
-<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-2">
+
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3">
     <div>
-        <h2>@L["E_AdminDashTitle"]</h2>
+        <h2 class="mb-1">@L["E_AdminDashTitle"]</h2>
         <p class="muted mb-0">@L["E_AdminDashSubtitle"]</p>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-sm btn-outline-success" asp-action="ExportCsv" title="@L["E_DashboardExportHint"]"><i class="bi bi-download me-1" aria-hidden="true"></i>@L["E_ExportCsv"]</a>
-        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalThemDoanhThu">
-            <i class="bi bi-plus-circle me-1"></i>@L["E_AdminAddRevenue"]
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <a class="btn-rm-outline btn-sm text-decoration-none" asp-action="ExportCsv" title="@L["E_DashboardExportHint"]">
+            <i class="bi bi-download" aria-hidden="true"></i>
+            <span>@L["E_ExportCsv"]</span>
+        </a>
+        <button type="button" class="btn-rm-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalThemDoanhThu">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            <span>@L["E_AdminAddRevenue"]</span>
         </button>
-        <a class="btn btn-sm btn-outline-primary" asp-controller="Users" asp-action="Index">@L["E_AdminUsers"]</a>
-        <a class="btn btn-sm btn-outline-primary" asp-controller="Sellers" asp-action="Index">@L["E_AdminShops"]</a>
-        <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE">@L["E_AdminProducts"]</a>
-        <a class="btn btn-sm btn-outline-primary" asp-controller="Orders" asp-action="Index">@L["E_AdminOrders"]</a>
     </div>
 </div>
 
-<div class="kpi-grid">
-    <a class="kpi highlight" asp-controller="Orders" asp-action="Index" asp-route-status="COMPLETED" title="Xem toàn bộ đơn hàng hoàn tất">
-        <span>@L["E_DashRevenueCompleted"]</span>
-        <b>@HienThi.Tien(Model.DoanhThu)</b>
-        <small>@L["E_DashTotalProfit", HienThi.Tien(Model.TongLoiNhuan)]</small>
-    </a>
-    <a class="kpi highlight" asp-controller="Orders" asp-action="Index" asp-route-status="COMPLETED" title="Doanh thu đơn hoàn tất trong tháng @Model.ThangHienTai">
-        <span>@L["E_DashMonthlyRevenue", Model.ThangHienTai]</span>
-        <b>@HienThi.Tien(Model.DoanhThuThang)</b>
-        <small>@L["E_DashOrdersThisMonth", Model.DonHoanTatThang]</small>
-    </a>
-    <a class="kpi highlight" href="#bang-ban-chay" title="Lợi nhuận sàn tháng @Model.ThangHienTai (chiết khấu @Model.TyLeLoiNhuan%)">
-        <span>@L["E_DashMonthlyProfit", Model.ThangHienTai]</span>
-        <b>@HienThi.Tien(Model.LoiNhuanThang)</b>
-        <small>@L["E_DashPlatformFee", Model.TyLeLoiNhuan]</small>
-    </a>
-    <a class="kpi highlight" href="#bang-ban-chay" title="@(Model.SanPhamBanChayNhat?.Name ?? "Chưa có sản phẩm bán chạy")">
-        <span>@L["E_DashTopProduct"]</span>
-        <b class="kpi-text-val">@(Model.SanPhamBanChayNhat?.Name ?? (string)L["E_DashNoTopProduct"])</b>
-        <small>@(Model.SanPhamBanChayNhat != null ? L["E_DashTopProductSales", Model.SanPhamBanChayNhat.QuantitySold, HienThi.Tien(Model.SanPhamBanChayNhat.Revenue)] : L["E_DashNoData"])</small>
-    </a>
-    <a class="kpi" asp-controller="Users" asp-action="Index" title="Quản lý người dùng (Thêm / Sửa / Xóa)">
-        <span>@L["E_AdminUsers"]</span>
-        <b>@Model.TongNguoiDung</b>
-        <small>@L["E_DashManageRecords"]</small>
-    </a>
-    <a class="kpi" asp-controller="Sellers" asp-action="Index" title="Quản lý cửa hàng (Thêm / Sửa / Xóa)">
-        <span>@L["E_AdminShops"]</span>
-        <b>@Model.TongCuaHang</b>
-        <small>@L["E_DashManageRecords"]</small>
-    </a>
-    <a class="kpi" asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE" title="Quản lý sản phẩm (Thêm / Sửa / Xóa)">
-        <span>@L["E_AdminProducts"]</span>
-        <b>@Model.TongSanPham</b>
-        <small>@L["E_DashManageRecords"]</small>
-    </a>
-    <a class="kpi" asp-controller="Orders" asp-action="Index" title="Quản lý tổng đơn hàng (Thêm / Sửa / Xóa)">
-        <span>@L["E_DashTotalOrders"]</span>
-        <b>@Model.TongDonHang</b>
-        <small>@L["E_DashCompletedCount", Model.DonHoanTat]</small>
-    </a>
-    <a class="kpi warn" asp-controller="Products" asp-action="Index" asp-route-tab="PENDING_REVIEW" title="Duyệt hoặc từ chối sản phẩm chờ duyệt">
-        <span>@L["E_DashPendingProducts"]</span>
-        <b>@Model.SanPhamChoDuyet</b>
-        <small>@L["E_DashReviewNow"]</small>
-    </a>
-    <a class="kpi warn" asp-controller="Reports" asp-action="Index" title="Xử lý báo cáo vi phạm">
-        <span>@L["E_DashPendingReports"]</span>
-        <b>@(Model.BaoCaoChuaXuLy?.ToString() ?? "—")</b>
-        <small>@L["E_DashCheckResolve"]</small>
-    </a>
-</div>
+<!-- Dải "Cần xử lý ngay" giúp Admin thấy việc gấp ngay khi mở Dashboard -->
+<section class="admin-urgent-strip" aria-label="@(HienThi.LaTiengAnh ? "Action needed" : "Cần xử lý ngay")">
+    <div class="admin-urgent-head">
+        <span class="admin-urgent-badge @(totalAlerts > 0 ? "has-alerts" : "")">
+            <i class="bi @(totalAlerts > 0 ? "bi-bell-fill" : "bi-check-circle-fill")" aria-hidden="true"></i>
+            @(HienThi.LaTiengAnh ? "Action Queue" : "Cần xử lý ngay"): <strong>@totalAlerts</strong>
+        </span>
+        <span class="text-muted small">@(HienThi.LaTiengAnh ? "Click any item to jump directly to its moderation queue" : "Nhấn vào từng mục để xử lý ngay")</span>
+    </div>
+    <div class="admin-urgent-grid">
+        <a class="admin-urgent-item @(Model.SanPhamChoDuyet > 0 ? "is-warn" : "")" asp-controller="Products" asp-action="Index" asp-route-tab="PENDING_REVIEW">
+            <div class="admin-urgent-icon"><i class="bi bi-check2-circle"></i></div>
+            <div>
+                <div class="admin-urgent-val">@Model.SanPhamChoDuyet</div>
+                <div class="admin-urgent-lbl">@L["E_DashPendingProducts"]</div>
+            </div>
+        </a>
+        <a class="admin-urgent-item @((Model.BaoCaoChuaXuLy ?? 0) > 0 ? "is-danger" : "")" asp-controller="Reports" asp-action="Index">
+            <div class="admin-urgent-icon"><i class="bi bi-flag"></i></div>
+            <div>
+                <div class="admin-urgent-val">@(Model.BaoCaoChuaXuLy?.ToString() ?? "0")</div>
+                <div class="admin-urgent-lbl">@L["E_DashPendingReports"]</div>
+            </div>
+        </a>
+        <a class="admin-urgent-item @(Model.TranhChapDangMo > 0 ? "is-danger" : "")" asp-controller="Disputes" asp-action="Index">
+            <div class="admin-urgent-icon"><i class="bi bi-exclamation-octagon"></i></div>
+            <div>
+                <div class="admin-urgent-val">@Model.TranhChapDangMo</div>
+                <div class="admin-urgent-lbl">@L["Admin_Disputes"]</div>
+            </div>
+        </a>
+        <a class="admin-urgent-item @(Model.KhieuNaiChoXuLy > 0 ? "is-warn" : "")" asp-controller="AccountAppeals" asp-action="Index">
+            <div class="admin-urgent-icon"><i class="bi bi-person-lock"></i></div>
+            <div>
+                <div class="admin-urgent-val">@Model.KhieuNaiChoXuLy</div>
+                <div class="admin-urgent-lbl">@L["Admin_AccountAppeals"]</div>
+            </div>
+        </a>
+        <a class="admin-urgent-item" asp-controller="Auctions" asp-action="Index">
+            <div class="admin-urgent-icon"><i class="bi bi-hammer"></i></div>
+            <div>
+                <div class="admin-urgent-val">@Model.PhienDangMo</div>
+                <div class="admin-urgent-lbl">@(HienThi.LaTiengAnh ? "Active Auctions" : "Đấu giá đang mở")</div>
+            </div>
+        </a>
+    </div>
+</section>
 
-<div class="row g-3">
+<!-- Lưới KPI 4 cột rõ ràng, không bị cắt chữ -->
+<section class="admin-kpi-grid" aria-label="@(HienThi.LaTiengAnh ? "Key metrics" : "Chỉ số chính")">
+    <a class="admin-kpi-card is-primary" asp-controller="Orders" asp-action="Index" asp-route-status="COMPLETED">
+        <div class="admin-kpi-top">
+            <span class="admin-kpi-label">@L["E_DashRevenueCompleted"]</span>
+            <span class="admin-kpi-icon"><i class="bi bi-cash-stack"></i></span>
+        </div>
+        <div class="admin-kpi-value">@HienThi.Tien(Model.DoanhThu)</div>
+        <div class="admin-kpi-sub">@L["E_DashTotalProfit", HienThi.Tien(Model.TongLoiNhuan)]</div>
+    </a>
+
+    <a class="admin-kpi-card is-primary" asp-controller="Orders" asp-action="Index" asp-route-status="COMPLETED">
+        <div class="admin-kpi-top">
+            <span class="admin-kpi-label">@L["E_DashMonthlyRevenue", Model.ThangHienTai]</span>
+            <span class="admin-kpi-icon"><i class="bi bi-calendar-check"></i></span>
+        </div>
+        <div class="admin-kpi-value">@HienThi.Tien(Model.DoanhThuThang)</div>
+        <div class="admin-kpi-sub">@L["E_DashOrdersThisMonth", Model.DonHoanTatThang]</div>
+    </a>
+
+    <a class="admin-kpi-card is-primary" href="#bang-ban-chay">
+        <div class="admin-kpi-top">
+            <span class="admin-kpi-label">@L["E_DashMonthlyProfit", Model.ThangHienTai]</span>
+            <span class="admin-kpi-icon"><i class="bi bi-graph-up-arrow"></i></span>
+        </div>
+        <div class="admin-kpi-value">@HienThi.Tien(Model.LoiNhuanThang)</div>
+        <div class="admin-kpi-sub">@L["E_DashPlatformFee", Model.TyLeLoiNhuan]</div>
+    </a>
+
+    <a class="admin-kpi-card" asp-controller="Orders" asp-action="Index">
+        <div class="admin-kpi-top">
+            <span class="admin-kpi-label">@L["E_DashTotalOrders"]</span>
+            <span class="admin-kpi-icon"><i class="bi bi-box-seam"></i></span>
+        </div>
+        <div class="admin-kpi-value">@Model.TongDonHang</div>
+        <div class="admin-kpi-sub">@L["E_DashCompletedCount", Model.DonHoanTat] (@completionRate%)</div>
+    </a>
+
+    <a class="admin-kpi-card" asp-controller="Users" asp-action="Index">
+        <div class="admin-kpi-top">
+            <span class="admin-kpi-label">@L["E_AdminUsers"]</span>
+            <span class="admin-kpi-icon"><i class="bi bi-people"></i></span>
+        </div>
+        <div class="admin-kpi-value">@Model.TongNguoiDung</div>
+        <div class="admin-kpi-sub">@(Model.NguoiDungBiKhoa > 0 ? $"{Model.NguoiDungBiKhoa} " + (HienThi.LaTiengAnh ? "locked" : "đang khóa") : L["E_DashManageRecords"].Value)</div>
+    </a>
+
+    <a class="admin-kpi-card" asp-controller="Sellers" asp-action="Index">
+        <div class="admin-kpi-top">
+            <span class="admin-kpi-label">@L["E_AdminShops"]</span>
+            <span class="admin-kpi-icon"><i class="bi bi-shop"></i></span>
+        </div>
+        <div class="admin-kpi-value">@Model.TongCuaHang</div>
+        <div class="admin-kpi-sub">@L["E_DashManageRecords"]</div>
+    </a>
+
+    <a class="admin-kpi-card" asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE">
+        <div class="admin-kpi-top">
+            <span class="admin-kpi-label">@L["E_AdminProducts"]</span>
+            <span class="admin-kpi-icon"><i class="bi bi-tag"></i></span>
+        </div>
+        <div class="admin-kpi-value">@Model.TongSanPham</div>
+        <div class="admin-kpi-sub">@Model.SanPhamDangBan @(HienThi.LaTiengAnh ? "active" : "đang bán") · @Model.SanPhamDaBan @(HienThi.LaTiengAnh ? "sold" : "đã bán")</div>
+    </a>
+
+    <a class="admin-kpi-card" href="#bang-ban-chay">
+        <div class="admin-kpi-top">
+            <span class="admin-kpi-label">@L["E_DashTopProduct"]</span>
+            <span class="admin-kpi-icon"><i class="bi bi-trophy"></i></span>
+        </div>
+        <div class="admin-kpi-value admin-kpi-text">@(Model.SanPhamBanChayNhat?.Name ?? (string)L["E_DashNoTopProduct"])</div>
+        <div class="admin-kpi-sub">@(Model.SanPhamBanChayNhat != null ? L["E_DashTopProductSales", Model.SanPhamBanChayNhat.QuantitySold, HienThi.Tien(Model.SanPhamBanChayNhat.Revenue)] : L["E_DashNoData"])</div>
+    </a>
+</section>
+
+<!-- Hàng sơ đồ 1: Biểu đồ doanh thu & Biểu đồ tròn trạng thái đơn -->
+<div class="row g-3 mt-1">
     <div class="col-lg-8"><partial name="_BieuDo" /></div>
     <div class="col-lg-4">
-        <div class="panel">
-            <h3>@L["E_DashOrdersByStatus"]</h3>
-            @foreach (var s in tt)
+        <div class="panel h-100 d-flex flex-column">
+            <div class="panel-head">
+                <h3>@L["E_DashOrdersByStatus"]</h3>
+                <a asp-controller="Orders" asp-action="Index">@L["E_DashViewAll"]</a>
+            </div>
+            <div class="admin-donut-wrap">
+                <canvas id="orderStatusDonut"></canvas>
+            </div>
+            <div class="admin-status-list mt-3">
+                @foreach (var s in tt)
+                {
+                    var n = Model.DonTheoTrangThai.GetValueOrDefault(s);
+                    var pct = Model.TongDonHang > 0 ? Math.Round(n * 100.0 / Model.TongDonHang, 0) : 0;
+                    <a class="admin-status-row" asp-controller="Orders" asp-action="Index" asp-route-status="@s">
+                        <span class="@HienThi.LopTrangThai(s)">@HienThi.TrangThaiDon(s)</span>
+                        <span class="admin-status-nums"><b>@n</b> <small class="text-muted">(@pct%)</small></span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hàng sơ đồ 2: Top Danh mục & Sơ đồ luồng vận hành sàn -->
+<div class="row g-3 mt-1">
+    <div class="col-lg-6">
+        <div class="panel h-100">
+            <div class="panel-head">
+                <h3>@(HienThi.LaTiengAnh ? "Products by Category" : "Phân bổ sản phẩm theo danh mục")</h3>
+                <a asp-controller="Categories" asp-action="Index">@L["Admin_Categories"]</a>
+            </div>
+            @if (Model.TopDanhMuc.Count == 0)
             {
-                var n = Model.DonTheoTrangThai.GetValueOrDefault(s);
-                <a class="bar-row text-decoration-none text-reset" asp-controller="Orders" asp-action="Index" asp-route-status="@s">
-                    <span class="@HienThi.LopTrangThai(s)">@HienThi.TrangThaiDon(s)</span>
-                    <div class="bar"><i style="width:@(Model.TongDonHang == 0 ? 0 : n * 100 / Model.TongDonHang)%"></i></div>
-                    <b>@n</b>
-                </a>
+                <div class="empty">@L["E_DashNoData"]</div>
             }
+            else
+            {
+                <div class="admin-cat-chart-box">
+                    <canvas id="categoryBarChart"></canvas>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="panel h-100">
+            <div class="panel-head">
+                <h3>@(HienThi.LaTiengAnh ? "Marketplace Operations Flow" : "Sơ đồ luồng vận hành sàn")</h3>
+                <span class="badge bg-success-subtle text-success border">@(HienThi.LaTiengAnh ? "Live Snapshot" : "Trạng thái thực tế")</span>
+            </div>
+            <div class="admin-flow-diagram">
+                <div class="admin-flow-row">
+                    <a class="admin-flow-node" asp-controller="Products" asp-action="Index">
+                        <span class="admin-flow-step">1</span>
+                        <div class="admin-flow-title">@(HienThi.LaTiengAnh ? "Listings" : "Tin đăng")</div>
+                        <div class="admin-flow-num">@Model.TongSanPham</div>
+                    </a>
+                    <i class="bi bi-arrow-right admin-flow-arrow" aria-hidden="true"></i>
+                    <a class="admin-flow-node @(Model.SanPhamChoDuyet > 0 ? "is-warn" : "")" asp-controller="Products" asp-action="Index" asp-route-tab="PENDING_REVIEW">
+                        <span class="admin-flow-step">2</span>
+                        <div class="admin-flow-title">@(HienThi.LaTiengAnh ? "Pending" : "Chờ duyệt")</div>
+                        <div class="admin-flow-num">@Model.SanPhamChoDuyet</div>
+                    </a>
+                    <i class="bi bi-arrow-right admin-flow-arrow" aria-hidden="true"></i>
+                    <a class="admin-flow-node is-good" asp-controller="Products" asp-action="Index" asp-route-tab="ACTIVE">
+                        <span class="admin-flow-step">3</span>
+                        <div class="admin-flow-title">@(HienThi.LaTiengAnh ? "Active" : "Đang bán")</div>
+                        <div class="admin-flow-num">@Model.SanPhamDangBan</div>
+                    </a>
+                    <i class="bi bi-arrow-right admin-flow-arrow" aria-hidden="true"></i>
+                    <a class="admin-flow-node is-good" asp-controller="Orders" asp-action="Index" asp-route-status="COMPLETED">
+                        <span class="admin-flow-step">4</span>
+                        <div class="admin-flow-title">@(HienThi.LaTiengAnh ? "Completed" : "Hoàn tất")</div>
+                        <div class="admin-flow-num">@Model.DonHoanTat</div>
+                    </a>
+                </div>
+
+                <div class="admin-health-bars mt-4">
+                    <div class="admin-health-item">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>@(HienThi.LaTiengAnh ? "Active Listing Rate" : "Tỷ lệ sản phẩm đang hiển thị")</span>
+                            <b>@activeRate%</b>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" style="width: @activeRate%; background-color: var(--color-primary);"></div>
+                        </div>
+                    </div>
+                    <div class="admin-health-item">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>@(HienThi.LaTiengAnh ? "Order Completion Rate" : "Tỷ lệ đơn hàng hoàn tất")</span>
+                            <b>@completionRate%</b>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" style="width: @completionRate%; background-color: var(--color-success);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -103,7 +269,7 @@
     else
     {
         <div class="table-responsive">
-            <table class="table align-middle">
+            <table class="table table-hover align-middle">
                 <thead>
                     <tr>
                         <th>@L["E_DashRank"]</th>
@@ -112,7 +278,6 @@
                         <th class="text-center">@L["E_DashQuantitySold"]</th>
                         <th class="text-end">@L["E_DashRevenue"]</th>
                         <th class="text-end">@L["E_DashPlatformProfit", Model.TyLeLoiNhuan]</th>
-                        <th class="text-end">@L["E_DashAction"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -120,10 +285,11 @@
                 {
                     var p = Model.SanPhamBanChay[i];
                     var loiNhuanSp = Math.Round(p.Revenue * (Model.TyLeLoiNhuan / 100m), 0);
-                    <tr>
+                    var productUrl = Url.Action("Details", "Products", new { id = p.ProductId });
+                    <tr class="admin-clickable-row" data-href="@productUrl">
                         <td><span class="badge @(i == 0 ? "bg-success" : "bg-secondary")">#@(i + 1)</span></td>
                         <td>
-                            <a asp-controller="Products" asp-action="Details" asp-route-id="@p.ProductId"><strong>@p.Name</strong></a>
+                            <a asp-controller="Products" asp-action="Details" asp-route-id="@p.ProductId" class="text-decoration-none text-dark admin-row-title"><strong>@p.Name</strong></a>
                             @if (i == 0)
                             {
                                 <span class="badge bg-warning text-dark ms-1">@L["E_DashBestSeller"]</span>
@@ -133,9 +299,6 @@
                         <td class="text-center"><b>@p.QuantitySold</b></td>
                         <td class="text-end"><b>@HienThi.Tien(p.Revenue)</b></td>
                         <td class="text-end text-success"><b>@HienThi.Tien(loiNhuanSp)</b></td>
-                        <td class="text-end">
-                            <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Details" asp-route-id="@p.ProductId">Xem</a>
-                        </td>
                     </tr>
                 }
                 </tbody>
@@ -155,7 +318,7 @@
         </div>
     </div>
     <div class="table-responsive">
-        <table class="table align-middle">
+        <table class="table table-hover align-middle">
             <thead>
                 <tr>
                     <th>@L["E_AuctionSessionCode"]</th>
@@ -172,8 +335,9 @@
             @foreach (var o in Model.DonMoiNhat)
             {
                 var loiNhuanDon = o.Status == "COMPLETED" ? Math.Round(o.Total * (Model.TyLeLoiNhuan / 100m), 0) : 0m;
-                <tr>
-                    <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id"><b>@o.MaDon</b></a></td>
+                var orderUrl = Url.Action("Details", "Orders", new { id = o.Id });
+                <tr class="admin-clickable-row" data-href="@orderUrl">
+                    <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id" class="text-decoration-none admin-row-title"><b>@o.MaDon</b></a></td>
                     <td>@o.FirstItem</td>
                     <td>@o.BuyerName</td>
                     <td>@o.ShopName</td>
@@ -182,7 +346,6 @@
                     <td><span class="@HienThi.LopTrangThai(o.Status)">@HienThi.TrangThaiDon(o.Status)</span></td>
                     <td class="text-end">
                         <div class="d-inline-flex gap-1">
-                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">@L["E_DashDetails"]</a>
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                     onclick="openEditOrderModal(@o.Id, '@Html.Raw((o.MaDon ?? "").Replace("'", "\\'"))', '@Html.Raw((o.FirstItem ?? "").Replace("'", "\\'"))', @o.Total.ToString(System.Globalization.CultureInfo.InvariantCulture), '@o.Status')">
                                 @L["E_DashEdit"]
@@ -310,5 +473,61 @@
             document.getElementById('editOrderStatus').value = status;
             new bootstrap.Modal(document.getElementById('modalSuaDoanhThu')).show();
         }
+
+        window.addEventListener('load', () => {
+            if (typeof Chart === 'undefined') return;
+
+            const donutEl = document.getElementById('orderStatusDonut');
+            if (donutEl) {
+                new Chart(donutEl, {
+                    type: 'doughnut',
+                    data: {
+                        labels: @Html.Raw(statusLabelsJson),
+                        datasets: [{
+                            data: @Html.Raw(statusCountsJson),
+                            backgroundColor: ['#D4A359', '#6C8EAD', '#7BA098', '#8EB897', '#3F6B4F', '#C46A60'],
+                            borderWidth: 2,
+                            borderColor: '#FFFFFF'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '64%',
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            const catEl = document.getElementById('categoryBarChart');
+            if (catEl) {
+                new Chart(catEl, {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(catLabelsJson),
+                        datasets: [{
+                            label: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(HienThi.LaTiengAnh ? "Products" : "Số sản phẩm")),
+                            data: @Html.Raw(catCountsJson),
+                            backgroundColor: 'rgba(104, 112, 90, 0.82)',
+                            hoverBackgroundColor: '#535B47',
+                            borderRadius: 6,
+                            barThickness: 18
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { beginAtZero: true, ticks: { precision: 0 } },
+                            y: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        });
     </script>
 }
