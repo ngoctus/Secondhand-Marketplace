@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Account;
@@ -15,7 +15,7 @@ public sealed class RegistrationOtpService(
     IEmailSender emailSender,
     IDataProtectionProvider protectionProvider,
     IAuthService authService,
-    IMemoryCache cache,
+    IDistributedCache cache,
     ILogger<RegistrationOtpService> logger) : IRegistrationOtpService
 {
     private readonly IDataProtector _protector = protectionProvider.CreateProtector("ReMarket.RegistrationOtp.v1");
@@ -48,7 +48,8 @@ public sealed class RegistrationOtpService(
         }
 
         var cacheKey = $"reg_otp_cooldown_{normalizedEmail}";
-        if (cache.TryGetValue(cacheKey, out string? cachedToken) && !string.IsNullOrWhiteSpace(cachedToken))
+        var cachedToken = await cache.GetStringAsync(cacheKey, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(cachedToken))
         {
             logger.LogInformation("[OTP-REGISTER] Đang có mã OTP còn hiệu lực cho {Email}, sử dụng lại token hiện tại tránh gửi trùng.", normalizedEmail);
             return (true, null, cachedToken);
@@ -99,8 +100,10 @@ public sealed class RegistrationOtpService(
         }
 
         // Do not report an active OTP challenge unless the email was accepted for sending.
-        cache.Set(cacheKey, token, TimeSpan.FromSeconds(60));
-        cache.Remove($"reg_otp_attempts_{normalizedEmail}");
+        await cache.SetStringAsync(cacheKey, token, CacheOptions(TimeSpan.FromSeconds(60)), cancellationToken);
+        await cache.SetStringAsync($"reg_otp_latest_{normalizedEmail}", token, CacheOptions(TimeSpan.FromMinutes(10)), cancellationToken);
+        await cache.SetStringAsync($"reg_otp_current_code_{normalizedEmail}", code, CacheOptions(TimeSpan.FromMinutes(10)), cancellationToken);
+        await cache.RemoveAsync($"reg_otp_attempts_{normalizedEmail}", cancellationToken);
         return (true, null, token);
     }
 
@@ -128,8 +131,21 @@ public sealed class RegistrationOtpService(
             return (false, "Mã OTP đã hết hiệu lực (quá 10 phút). Vui lòng thực hiện đăng ký lại từ đầu.", null, null);
         }
 
+        var currentCodeKey = $"reg_otp_current_code_{payload.Email}";
+        var currentCode = await cache.GetStringAsync(currentCodeKey, cancellationToken);
+        if (currentCode is null)
+        {
+            return (false, "Phiên OTP đã hết hiệu lực. Vui lòng đăng ký lại để nhận mã mới.", null, null);
+        }
+        if (!string.Equals(payload.Code, currentCode, StringComparison.Ordinal))
+        {
+            var latestToken = await cache.GetStringAsync($"reg_otp_latest_{payload.Email}", cancellationToken);
+            return (false, "Mã OTP cũ đã được thay thế. Hãy dùng mã mới nhất trong email.", null, latestToken);
+        }
+
         var attemptsKey = $"reg_otp_attempts_{payload.Email}";
-        var failedAttempts = cache.Get<int?>(attemptsKey) ?? payload.FailedAttempts;
+        var failedAttempts = int.TryParse(await cache.GetStringAsync(attemptsKey, cancellationToken), out var cachedAttempts)
+            ? cachedAttempts : payload.FailedAttempts;
         if (failedAttempts >= 5)
         {
             return (false, "Bạn đã nhập sai OTP quá 5 lần. Vui lòng thực hiện đăng ký lại từ đầu.", null, null);
@@ -141,7 +157,7 @@ public sealed class RegistrationOtpService(
         if (expected.Length != actual.Length || !CryptographicOperations.FixedTimeEquals(expected, actual))
         {
             failedAttempts++;
-            cache.Set(attemptsKey, failedAttempts, TimeSpan.FromMinutes(15));
+            await cache.SetStringAsync(attemptsKey, failedAttempts.ToString(), CacheOptions(TimeSpan.FromMinutes(15)), cancellationToken);
             payload.FailedAttempts = failedAttempts;
             var updatedToken = _protector.Protect(JsonSerializer.Serialize(payload));
             var remaining = Math.Max(0, 5 - failedAttempts);
@@ -160,9 +176,11 @@ public sealed class RegistrationOtpService(
             return (false, regResult.Error ?? "Không thể hoàn tất đăng ký tài khoản.", null, null);
         }
 
-        cache.Remove(attemptsKey);
-        cache.Remove($"reg_otp_cooldown_{payload.Email}");
-        cache.Remove($"reg_otp_resend_{payload.Email}");
+        await cache.RemoveAsync(attemptsKey, cancellationToken);
+        await cache.RemoveAsync($"reg_otp_cooldown_{payload.Email}", cancellationToken);
+        await cache.RemoveAsync($"reg_otp_latest_{payload.Email}", cancellationToken);
+        await cache.RemoveAsync(currentCodeKey, cancellationToken);
+        await cache.RemoveAsync($"reg_otp_resend_{payload.Email}", cancellationToken);
         logger.LogInformation("Người dùng {Email} đã xác thực OTP thành công và tạo tài khoản #{UserId}", payload.Email, regResult.User.MaNguoiDung);
         return (true, null, regResult.User, null);
     }
@@ -191,15 +209,28 @@ public sealed class RegistrationOtpService(
             return (false, "Phiên đăng ký đã hết hạn. Vui lòng thực hiện đăng ký lại từ đầu.", null);
         }
 
+        var currentCodeKey = $"reg_otp_current_code_{payload.Email}";
+        var currentCode = await cache.GetStringAsync(currentCodeKey, cancellationToken);
+        if (currentCode is null)
+        {
+            return (false, "Phiên OTP đã hết hiệu lực. Vui lòng đăng ký lại để nhận mã mới.", null);
+        }
+        if (!string.Equals(payload.Code, currentCode, StringComparison.Ordinal))
+        {
+            var latestToken = await cache.GetStringAsync($"reg_otp_latest_{payload.Email}", cancellationToken);
+            return (false, "Mã OTP này đã được thay thế. Hãy làm mới trang để dùng mã mới nhất.", latestToken);
+        }
+
         var attemptsKey = $"reg_otp_attempts_{payload.Email}";
-        var failedAttempts = cache.Get<int?>(attemptsKey) ?? payload.FailedAttempts;
+        var failedAttempts = int.TryParse(await cache.GetStringAsync(attemptsKey, cancellationToken), out var cachedAttempts)
+            ? cachedAttempts : payload.FailedAttempts;
         if (failedAttempts >= 5)
         {
             return (false, "Bạn đã nhập sai OTP quá 5 lần. Vui lòng thực hiện đăng ký lại từ đầu.", null);
         }
 
         var resendCooldownKey = $"reg_otp_resend_{payload.Email}";
-        if (cache.TryGetValue(resendCooldownKey, out _))
+        if (await cache.GetStringAsync(resendCooldownKey, cancellationToken) is not null)
         {
             return (false, "Vui lòng đợi 60 giây trước khi yêu cầu gửi lại mã OTP.", token);
         }
@@ -234,9 +265,14 @@ public sealed class RegistrationOtpService(
             return (false, "Chưa gửi được email xác nhận mới. Vui lòng thử lại sau.", token);
         }
 
-        cache.Set(resendCooldownKey, true, TimeSpan.FromSeconds(60));
+        await cache.SetStringAsync(resendCooldownKey, "1", CacheOptions(TimeSpan.FromSeconds(60)), cancellationToken);
         var newToken = _protector.Protect(JsonSerializer.Serialize(payload));
-        cache.Set($"reg_otp_cooldown_{payload.Email}", newToken, TimeSpan.FromSeconds(60));
+        await cache.SetStringAsync($"reg_otp_cooldown_{payload.Email}", newToken, CacheOptions(TimeSpan.FromSeconds(60)), cancellationToken);
+        await cache.SetStringAsync($"reg_otp_latest_{payload.Email}", newToken, CacheOptions(TimeSpan.FromMinutes(10)), cancellationToken);
+        await cache.SetStringAsync(currentCodeKey, newCode, CacheOptions(TimeSpan.FromMinutes(10)), cancellationToken);
         return (true, null, newToken);
     }
+
+    private static DistributedCacheEntryOptions CacheOptions(TimeSpan lifetime) =>
+        new() { AbsoluteExpirationRelativeToNow = lifetime };
 }

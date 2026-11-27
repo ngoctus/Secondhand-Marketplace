@@ -1297,21 +1297,22 @@ Các điểm dưới đây đã được kiểm tra trực tiếp trong source; 
 
 | # | Điểm lệch | Bằng chứng trong source | Ảnh hưởng |
 |---|---|---|---|
+| Ghi chú cập nhật 2026-11-28 | Các dòng 5, 6, 13 và 15 dưới đây là phát hiện lịch sử, không còn đúng với source hiện tại. Người bán đã có UI tạo/sửa/gửi duyệt; gửi duyệt gọi phân tích kiểm duyệt; upload dùng `IUploadStorage`; banner, favorite và review đã có service triển khai. | `Areas/User/Controllers/ProductsController.cs`, `Services/Moderation/ModerationService.cs`, `Services/Storage/UploadStorage.cs`, `Services/Banners/BannerService.cs`, `Services/Favorites/FavoriteService.cs`, `Services/Reviews/ReviewService.cs` | Không dùng các dòng lịch sử này làm danh sách thiếu sót hiện tại; xác minh lại code và trạng thái database trước khi triển khai. |
 | 1 | `run-db.bat` không chạy SQL 15–20 | Danh sách vòng lặp dừng ở `14_donhang_admin.sql` | DB mới thiếu cột `QuyetDinhTuDong`, bảng `LichSuViPham`, `CauHinhAI`, trigger C2; app có thể lỗi khi dùng các chức năng này. |
 | 2 | `database/README.md` nói 10–13 còn trống | `12` và `13` đã có bảng/SP; `10` và `11` vẫn rỗng | Tài liệu cũ không còn đúng một phần. |
 | 3 | `docs/jwt-api.md` nói endpoint phải chọn JWT scheme | Không controller nào dùng `[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]` | API bảo vệ thật sự chỉ có AI chat qua attribute riêng; các API mới nếu chỉ dùng `[Authorize]` sẽ bị redirect Cookie. |
 | 4 | Widget AI có file nhưng không hiển thị | `_Layout.cshtml` không có `_AiChatWidget`, không nạp `ai-chat.js`/`ai-chat.css` | Người dùng không thấy chatbox dù backend sẵn sàng. |
-| 5 | `PhanTichSanPhamAsync` không có caller production | Chỉ thấy trong interface, implementation, test và docs | Sản phẩm mới gửi duyệt ở `QUEUED`; Admin không duyệt được do trigger chặn. |
-| 6 | Không có UI người bán đăng/gửi duyệt sản phẩm | `Areas/User/Controllers/ProductsController.cs` chỉ `return View()` với TODO | `sp_GuiDuyetSanPham` không có caller C#; luồng kiểm duyệt thực tế phải dựa vào seed hoặc thao tác SQL thủ công. |
+| 5 | (Đã khắc phục; phát hiện lịch sử) Caller kiểm duyệt sản phẩm | `Areas/User/Controllers/ProductsController.cs` gọi `PhanTichSanPhamAsync` sau `GuiDuyetAsync` | Phát hiện cũ; còn cần chạy xác minh luồng trên database staging trước khi mở dịch vụ. |
+| 6 | (Đã khắc phục; phát hiện lịch sử) UI người bán đăng/gửi duyệt sản phẩm | `Areas/User/Controllers/ProductsController.cs` có Create/Edit/GuiDuyet/An/Delete; view form và danh sách tương ứng | Phát hiện cũ; database thực tế vẫn cần có migration/procedure phù hợp. |
 | 7 | `ShopController` nằm sai thư mục | File ở `Areas/Admin/Controllers/ShopController.cs` nhưng namespace `Areas.User.Controllers`, kế thừa `UserBaseController`, route `/User/Shop` | Dễ nhầm khi tìm controller; chức năng vẫn chạy theo area User. |
 | 8 | Chuông thông báo của Admin trỏ về User | `_ChuongThongBao.cshtml` luôn dùng `asp-area="User"` | Admin bấm chuông sẽ sang giao diện User. |
 | 9 | `_Pagination` và `PaginationVm` có vẻ orphan | Không tìm thấy view/controller dùng `_Pagination`; các trang dùng `_Pager`/`PagedResult` | Có hai cơ chế phân trang song song; dễ sửa nhầm file. |
 | 10 | Nạp jQuery Validation hai lần | `_Layout` đã nạp validation; `_ValidationScriptsPartial` nạp lại | Không gây lỗi chức năng nhưng dư thừa request/khởi tạo. |
 | 11 | `AppEnums` không được dùng và không khớp DB | Enum dùng tên PascalCase/khác giá trị như `PENDING_REVIEW`, `PRODUCT` | Không nên dùng enum để so sánh trạng thái DB. |
 | 12 | Menu admin thiếu một số trang | `_Layout` không có link tới `ForbiddenKeywords`, `Violations`, `Notifications` | Phải vào URL trực tiếp; không phải chức năng chưa có. |
-| 13 | `Storage:RootPath` chưa được dùng | Không có `IFormFile`, upload service/controller | Chưa thể upload ảnh sản phẩm qua UI. |
+| 13 | (Đã khắc phục; phát hiện lịch sử) Upload sản phẩm | Controller gọi `IUploadStorage`; cấu hình local/S3 và middleware lưu trữ nằm trong `Services/Storage` | Phát hiện cũ; S3 thật chưa được kết nối/kiểm chứng (xem checklist production). |
 | 14 | Public product detail có dữ liệu demo hardcode | `Controllers/ProductsController.cs` fallback khi lỗi DB | Khi DB lỗi, người dùng vẫn thấy một sản phẩm mẫu; dễ gây hiểu nhầm. |
-| 15 | `Banner`, `Favorite`, `Review` chỉ là placeholder | Service rỗng; view placeholder; SQL 10/11 rỗng | Chưa có chức năng thật. |
+| 15 | (Đã khắc phục; phát hiện lịch sử) Service Banner/Favorite/Review | `BannerService`, `FavoriteService`, `ReviewService` có triển khai và được đăng ký DI | Phát hiện cũ; cần xác minh migration/schema khi kết nối database staging. |
 | 16 | Chưa có thanh toán trực tuyến | Chỉ có entity `ThanhToan`, cột phương thức/trạng thái | Đơn hàng mới ở mức ghi nhận phương thức. |
 | 17 | Comment auction ghi 30 giây, code mặc định 60 | `AuctionBackgroundService` comment và `config.GetValue(..., 60)` | Chỉ là lệch tài liệu, không phải lỗi logic. |
 | 18 | `appsettings.json` chứa JWT key placeholder | `Jwt:Key = "CHANGE_THIS..."` | Không phải secret thật; khi triển khai phải thay bằng User Secrets/biến môi trường. |

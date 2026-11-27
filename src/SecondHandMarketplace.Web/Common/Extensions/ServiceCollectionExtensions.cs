@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Services.Auctions;
 using SecondHandMarketplace.Web.Services.OrderManagement;
@@ -30,8 +31,40 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration config)
     {
+        var databaseServer = config["Database:Server"];
+        var hasStructuredSettings = !string.IsNullOrWhiteSpace(databaseServer)
+            || !string.IsNullOrWhiteSpace(config["Database:User"])
+            || !string.IsNullOrWhiteSpace(config["Database:Password"]);
+        var connectionString = config.GetConnectionString("DefaultConnection");
+
+        if (hasStructuredSettings)
+        {
+            var databaseUser = config["Database:User"];
+            var databasePassword = config["Database:Password"];
+            if (string.IsNullOrWhiteSpace(databaseServer)
+                || string.IsNullOrWhiteSpace(databaseUser)
+                || string.IsNullOrWhiteSpace(databasePassword))
+            {
+                throw new InvalidOperationException("Database:Server, Database:User, and Database:Password must all be configured together.");
+            }
+
+            connectionString = new SqlConnectionStringBuilder
+            {
+                DataSource = databaseServer,
+                InitialCatalog = config["Database:Name"] ?? "SecondHandMarketplace",
+                UserID = databaseUser,
+                Password = databasePassword,
+                Encrypt = true,
+                TrustServerCertificate = config.GetValue("Database:TrustServerCertificate", false),
+                MultipleActiveResultSets = true
+            }.ConnectionString;
+        }
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("A SQL Server connection string or complete Database configuration is required.");
+
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+            options.UseSqlServer(connectionString));
         return services;
     }
 

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models;
 using SecondHandMarketplace.Web.Models.ViewModels.Auctions;
@@ -12,6 +12,7 @@ using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Products;
 using SecondHandMarketplace.Web.Services.Reviews;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace SecondHandMarketplace.Web.Controllers
 {
@@ -21,8 +22,9 @@ namespace SecondHandMarketplace.Web.Controllers
         IBannerService banners,
         IReviewService reviews,
         IAuctionService auctions,
-        IMemoryCache cache,
-        SecondHandMarketplace.Web.Data.AppDbContext db) : Controller
+        IDistributedCache cache,
+        SecondHandMarketplace.Web.Data.AppDbContext db,
+        ILogger<HomeController> logger) : Controller
     {
         public const string CatalogCacheKey = HomeCacheHelper.CatalogCacheKey;
         private static readonly TimeSpan CacheTrangChu = HomeCacheHelper.CacheTrangChu;
@@ -37,17 +39,54 @@ namespace SecondHandMarketplace.Web.Controllers
             // Trang chủ hiển thị giống nhau cho mọi khách nên dùng chung một bản cache 5 phút.
             // Cố ý không truyền HttpContext.RequestAborted: nếu người dùng đóng tab giữa chừng,
             // truy vấn bị hủy và kết quả dở dang sẽ bị cache lại cho các request sau.
-            if (!cache.TryGetValue(CatalogCacheKey, out HomeIndexVm? duLieu) || duLieu is null)
+            HomeIndexVm? duLieu = null;
+            var cachedJson = await LayCacheAnToanAsync(CatalogCacheKey);
+            if (!string.IsNullOrWhiteSpace(cachedJson))
+            {
+                try { duLieu = JsonSerializer.Deserialize<HomeIndexVm>(cachedJson); }
+                catch (JsonException) { await XoaCacheAnToanAsync(CatalogCacheKey); }
+            }
+
+            if (duLieu is null)
             {
                 duLieu = await NapTrangChuAsync();
 
                 // Chỉ cache khi lấy được sản phẩm: DB đang lỗi thì lần tải lại phải được thử thật,
                 // không bị khóa một trang trống suốt 5 phút.
                 if (duLieu.SanPhamNoiBat.Count > 0)
-                    cache.Set(CatalogCacheKey, duLieu, CacheTrangChu);
+                    await GhiCacheAnToanAsync(CatalogCacheKey, JsonSerializer.Serialize(duLieu),
+                        new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = CacheTrangChu });
             }
 
             return View(duLieu);
+        }
+
+        private async Task<string?> LayCacheAnToanAsync(string key)
+        {
+            try { return await cache.GetStringAsync(key); }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogWarning(exception, "Không đọc được cache trang chủ; sẽ truy vấn dữ liệu nguồn.");
+                return null;
+            }
+        }
+
+        private async Task GhiCacheAnToanAsync(string key, string value, DistributedCacheEntryOptions options)
+        {
+            try { await cache.SetStringAsync(key, value, options); }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogWarning(exception, "Không ghi được cache trang chủ; request hiện tại vẫn tiếp tục.");
+            }
+        }
+
+        private async Task XoaCacheAnToanAsync(string key)
+        {
+            try { await cache.RemoveAsync(key); }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogWarning(exception, "Không xóa được cache trang chủ lỗi định dạng.");
+            }
         }
 
         private async Task<HomeIndexVm> NapTrangChuAsync()
@@ -238,11 +277,23 @@ namespace SecondHandMarketplace.Web.Controllers
         }
 
         [HttpGet("/dieu-khoan")]
-        [HttpGet("/chinh-sach-bao-mat")]
+        [HttpGet("/terms")]
         public IActionResult Terms()
         {
             return View();
         }
+
+        [HttpGet("/chinh-sach-mua-hang")]
+        [HttpGet("/buying-policy")]
+        public IActionResult BuyingPolicy() => View();
+
+        [HttpGet("/chinh-sach-nguoi-ban")]
+        [HttpGet("/seller-policy")]
+        public IActionResult SellerPolicy() => View();
+
+        [HttpGet("/chinh-sach-bao-mat")]
+        [HttpGet("/privacy-policy")]
+        public IActionResult Privacy() => View();
 
         // Lỗi hệ thống bất ngờ (UseExceptionHandler)
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

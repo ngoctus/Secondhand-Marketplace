@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -16,12 +17,15 @@ public class OrderService : IOrderService
     private readonly AppDbContext _db;
     private readonly ICartService _cartService;
     private readonly INotificationService? _notifications;
+    private readonly IDistributedCache? _distributedCache;
 
-    public OrderService(AppDbContext db, ICartService cartService, INotificationService? notifications = null)
+    public OrderService(AppDbContext db, ICartService cartService, INotificationService? notifications = null,
+        IDistributedCache? distributedCache = null)
     {
         _db = db;
         _cartService = cartService;
         _notifications = notifications;
+        _distributedCache = distributedCache;
     }
 
     public async Task<CheckoutViewModel> ChuanBiCheckoutTuGioAsync(int maNguoiDung)
@@ -340,12 +344,14 @@ public class OrderService : IOrderService
                 };
             }
 
-            return new DatHangResultViewModel
+            var result = new DatHangResultViewModel
             {
                 ThanhCong = true,
                 ThongBao = "Đặt hàng thành công!",
                 DanhSachMaDon = danhSachMaDon
             };
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
+            return result;
         }
         catch (Exception ex)
         {
@@ -392,12 +398,14 @@ public class OrderService : IOrderService
                 var maDonHangMoi = (int)outParam.Value;
                 var don = await _db.DonHangs.FindAsync(maDonHangMoi);
 
-                return new DatHangResultViewModel
+                var result = new DatHangResultViewModel
                 {
                     ThanhCong = true,
                     ThongBao = "Đặt mua sản phẩm thành công!",
                     DanhSachMaDon = don != null ? new List<string> { don.MaDon } : new()
                 };
+                await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
+                return result;
             }
             else
             {
@@ -491,6 +499,8 @@ public class OrderService : IOrderService
                 });
 
                 await _db.SaveChangesAsync();
+
+                await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
 
                 return new DatHangResultViewModel
                 {
@@ -652,11 +662,11 @@ public class OrderService : IOrderService
                 donHang.ThoiGianHuy = DateTime.UtcNow;
                 if (donHang.TrangThaiThanhToan == "PAID")
                 {
-                    donHang.TrangThaiThanhToan = "REFUNDED";
+                    donHang.TrangThaiThanhToan = "REFUND_DUE";
                     var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
                     if (tt != null)
                     {
-                        tt.TrangThaiThanhToan = "REFUNDED";
+                        tt.TrangThaiThanhToan = "REFUND_DUE";
                     }
                 }
 
@@ -675,6 +685,7 @@ public class OrderService : IOrderService
                 await _db.SaveChangesAsync();
             }
 
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
             return (true, "Hủy đơn hàng thành công.");
         }
         catch (Exception ex)
@@ -969,6 +980,52 @@ public class OrderService : IOrderService
 
         await _db.SaveChangesAsync();
         return (true, "Đã xác nhận nhận tiền thành công!");
+    }
+
+    public async Task<(bool ThanhCong, string? ThongBao)> XacNhanHoanTienShopAsync(
+        int chuShopId, int maDonHang, string? maGiaoDichHoan)
+    {
+        var don = await _db.DonHangs
+            .Include(d => d.CuaHang)
+            .FirstOrDefaultAsync(d => d.MaDonHang == maDonHang && d.CuaHang.MaNguoiDung == chuShopId);
+        if (don is null) return (false, "Đơn hàng không tồn tại hoặc không thuộc cửa hàng của bạn.");
+        if (don.TrangThai != "CANCELLED" || don.TrangThaiThanhToan != "REFUND_DUE")
+            return (false, "Đơn hàng này không có khoản hoàn tiền đang chờ xác nhận.");
+
+        var now = DateTime.UtcNow;
+        var thanhToan = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == maDonHang);
+        don.TrangThaiThanhToan = "REFUNDED";
+        don.NgayCapNhat = now;
+        if (thanhToan is not null) thanhToan.TrangThaiThanhToan = "REFUNDED";
+
+        var reference = string.IsNullOrWhiteSpace(maGiaoDichHoan)
+            ? "Shop xác nhận đã hoàn tiền thủ công."
+            : $"Shop xác nhận đã hoàn tiền thủ công. Mã giao dịch/ghi chú: {maGiaoDichHoan.Trim()}";
+        _db.LichSuTrangThaiDonHangs.Add(new LichSuTrangThaiDonHang
+        {
+            MaDonHang = maDonHang,
+            TrangThaiCu = don.TrangThai,
+            TrangThaiMoi = don.TrangThai,
+            LoaiNguoiThucHien = "SELLER",
+            NguoiThucHienId = chuShopId,
+            LyDo = reference,
+            ThoiGian = now
+        });
+        await _db.SaveChangesAsync();
+        if (_notifications is not null)
+        {
+            try
+            {
+                await _notifications.CreateAsync(
+                    don.MaNguoiDung,
+                    NotificationTypes.Order,
+                    "Shop đã xác nhận hoàn tiền",
+                    $"Shop đã xác nhận hoàn tiền thủ công cho đơn #{don.MaDon}.",
+                    don.MaDonHang);
+            }
+            catch { /* Notification is best effort after the refund record is saved. */ }
+        }
+        return (true, "Đã ghi nhận shop hoàn tiền cho người mua.");
     }
 
     public async Task<(bool ThanhCong, string? ThongBao)> MoPhongThanhToanDemoAsync(int maNguoiDung, int maDonHang)

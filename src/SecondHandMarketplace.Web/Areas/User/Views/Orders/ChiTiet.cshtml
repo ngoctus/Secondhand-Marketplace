@@ -8,13 +8,13 @@
         : null;
     var huongDanTrangThai = Model.TrangThai switch
     {
-        "PENDING" => "Shop đang xem đơn. Bạn có thể hủy nếu chưa còn nhu cầu và thao tác hủy vẫn khả dụng.",
-        "CONFIRMED" => "Shop đã xác nhận và đang chuẩn bị giao hàng hoặc thống nhất lịch hẹn.",
-        "SHIPPING" => "Đơn đang được giao hoặc hai bên đang thực hiện lịch hẹn nhận hàng.",
-        "DELIVERED" => "Kiểm tra sản phẩm trước khi xác nhận đã nhận. Chỉ xác nhận khi hàng đã ở với bạn.",
-        "COMPLETED" => "Giao dịch đã hoàn tất. Bạn có thể đánh giá shop để chia sẻ trải nghiệm.",
-        "CANCELLED" => "Đơn hàng đã bị hủy. Xem lý do bên dưới hoặc trong lịch sử trạng thái.",
-        _ => "Theo dõi lịch sử bên dưới để xem các lần cập nhật của đơn hàng."
+        "PENDING" => HienThi.Chon("Shop đang xem đơn. Bạn có thể hủy nếu không còn nhu cầu và thao tác hủy vẫn khả dụng.", "The shop is reviewing your order. You can cancel while cancellation is available."),
+        "CONFIRMED" => HienThi.Chon("Shop đã xác nhận và đang chuẩn bị giao hàng hoặc thống nhất lịch hẹn.", "The shop confirmed your order and is preparing delivery or arranging a meetup."),
+        "SHIPPING" => HienThi.Chon("Đơn đang được giao hoặc hai bên đang thực hiện lịch hẹn nhận hàng.", "Your order is being delivered or the scheduled meetup is underway."),
+        "DELIVERED" => HienThi.Chon("Kiểm tra sản phẩm trước khi xác nhận đã nhận. Chỉ xác nhận khi bạn đã thực sự nhận hàng.", "Inspect the item before confirming receipt. Confirm only after you have received it."),
+        "COMPLETED" => HienThi.Chon("Giao dịch đã hoàn tất. Bạn có thể đánh giá shop để chia sẻ trải nghiệm.", "The order is complete. You can leave a review for the shop."),
+        "CANCELLED" => HienThi.Chon("Đơn hàng đã bị hủy. Xem lý do bên dưới hoặc trong lịch sử trạng thái.", "The order was canceled. See the reason below or in the status history."),
+        _ => HienThi.Chon("Theo dõi lịch sử bên dưới để xem các lần cập nhật của đơn hàng.", "Check the timeline below for order updates.")
     };
 }
 <div class="container my-4" style="max-width: 950px;">
@@ -23,7 +23,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
             <h2 class="h3 fw-bold text-dark mb-1">
-                <i class="bi bi-receipt text-success"></i> @string.Format(L["OrderDetail_Title"].Value, "") <span class="font-monospace text-success">#@Model.MaDon</span>
+                <i class="bi bi-receipt text-success"></i> @string.Format(L["OrderDetail_Title"].Value, Model.MaDon)
             </h2>
             <div class="text-muted small">@L["OrderDetail_ShopLabel"] <strong class="text-dark">@Model.TenShop</strong>
                 <a asp-area="User" asp-controller="Reports" asp-action="Tao" asp-route-loai="SHOP" asp-route-id="@Model.MaCuaHang" asp-route-ten="@Model.TenShop"
@@ -176,7 +176,7 @@
                 }
                 else
                 {
-                    <span class="badge bg-danger-subtle text-danger rounded-pill ms-2" style="font-size: 11px;" title="Đánh giá bị ẩn bởi quản trị viên">@L["OrderDetail_ReviewHidden"]</span>
+                    <span class="badge bg-danger-subtle text-danger rounded-pill ms-2" style="font-size: 11px;" title="@HienThi.Chon("Đánh giá bị ẩn bởi quản trị viên", "This review was hidden by an administrator.")">@L["OrderDetail_ReviewHidden"]</span>
                 }
             </div>
             @if (!string.IsNullOrWhiteSpace(danhGiaHienTai.NoiDung))
@@ -207,7 +207,11 @@
                 <div class="small mb-2">
                     <span class="text-muted">@L["OrderDetail_PaymentMethodLabel"]</span>
                     <strong class="text-dark">
-                        @(Model.PhuongThucThanhToan == "COD" ? "Thanh toán khi nhận hàng (COD)" : Model.PhuongThucThanhToan == "BANK_TRANSFER" ? "Chuyển khoản VietQR" : "Trực tuyến")
+                        @(Model.PhuongThucThanhToan == "COD"
+                            ? HienThi.Chon("Thanh toán khi nhận hàng (COD)", "Cash on Delivery (COD)")
+                            : Model.PhuongThucThanhToan == "BANK_TRANSFER"
+                                ? HienThi.Chon("Chuyển khoản VietQR", "VietQR Bank Transfer")
+                                : HienThi.Chon("Trực tuyến", "Online"))
                     </strong>
                 </div>
                 <div class="small mb-2">
@@ -216,6 +220,10 @@
                         @HienThi.TrangThaiThanhToan(Model.TrangThaiThanhToan)
                     </span>
                 </div>
+                @if (Model.TrangThaiThanhToan == "REFUND_DUE")
+                {
+                    <div class="alert alert-warning small mt-2 mb-0">@L["Buyer_RefundPendingNote"]</div>
+                }
                 @if (Model.PhuongThucThanhToan == "BANK_TRANSFER" && Model.TrangThaiThanhToan != "PAID" && Model.TrangThai != "CANCELLED")
                 {
                     <div class="mt-3 pt-2 border-top">
@@ -359,7 +367,7 @@
                             <div class="d-inline-flex gap-2 justify-content-center" id="starRatingContainer">
                                 @for (int i = 1; i <= 5; i++)
                                 {
-                                    <button type="button" class="btn p-1 border-0 star-btn" data-value="@i" title="@i sao" style="font-size: 2rem; color: #ffc107;">
+                                    <button type="button" class="btn p-1 border-0 star-btn" data-value="@i" title="@(HienThi.Chon($"{i} sao", $"{i} stars"))" style="font-size: 2rem; color: #ffc107;">
                                         <i class="bi bi-star-fill"></i>
                                     </button>
                                 }
@@ -403,16 +411,16 @@
             var input = document.getElementById('inputSoSao');
             var text = document.getElementById('starRatingText');
             var labels = {
-                1: '1 sao - Rất không hài lòng',
-                2: '2 sao - Không hài lòng',
-                3: '3 sao - Bình thường',
-                4: '4 sao - Hài lòng',
-                5: '5 sao - Rất hài lòng'
+                1: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(HienThi.Chon("1 sao - Rất không hài lòng", "1 star - Very dissatisfied"))),
+                2: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(HienThi.Chon("2 sao - Không hài lòng", "2 stars - Dissatisfied"))),
+                3: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(HienThi.Chon("3 sao - Bình thường", "3 stars - Neutral"))),
+                4: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(HienThi.Chon("4 sao - Hài lòng", "4 stars - Satisfied"))),
+                5: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(HienThi.Chon("5 sao - Rất hài lòng", "5 stars - Very satisfied")))
             };
 
             function setStars(val) {
                 if (input) input.value = val;
-                if (text) text.textContent = labels[val] || (val + ' sao');
+                if (text) text.textContent = labels[val] || (val + (@(HienThi.LaTiengAnh ? "true" : "false") ? ' stars' : ' sao'));
                 buttons.forEach(function(btn) {
                     var v = parseInt(btn.getAttribute('data-value'), 10);
                     var icon = btn.querySelector('i');

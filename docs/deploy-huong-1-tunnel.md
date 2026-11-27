@@ -11,21 +11,25 @@ Tài liệu này hướng dẫn chi tiết cách chạy hệ thống **Secondhan
 - Thay vào đó, API Key được đặt trong file **`.env`** (đã được cấu hình trong `.gitignore`).
 - Khi khởi động, file `docker-compose.yml` sẽ đọc biến `AI_API_KEY` từ `.env` và truyền vào container dưới dạng biến môi trường `Ai__ApiKey`. Ứng dụng ASP.NET Core sẽ tự động ánh xạ biến này vào `Ai:ApiKey`.
 
-### Cấu hình đã cập nhật trong file `.env`:
-File `.env` tại thư mục gốc của bạn đã được điền đầy đủ thông tin:
+### Cấu hình trong file `.env`:
+Tạo `.env` riêng trên máy triển khai dựa trên `.env.example`; không chép khóa hoặc mật khẩu vào tài liệu hay mã nguồn:
 ```env
 DB_SERVER=host.docker.internal
 DB_NAME=SecondHandMarketplace
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-JWT_KEY=SecondhandMarketplace_SecretKey_LocalDev_2026_AtLeast32Bytes
-AI_API_KEY=your_gemini_api_key_here
+DB_USER=<sql-login>
+DB_PASSWORD=<local-secret>
+DB_TRUST_CERT=True
+JWT_KEY=<random-secret-at-least-32-bytes>
+AI_API_KEY=<provider-api-key>
 ```
-*(Key Gemini này được lấy từ cấu hình User Secrets đã dùng trước đó của bạn).*
+
+Các giá trị bí mật từng xuất hiện trong phiên bản cũ của tài liệu phải được coi là đã lộ: thu hồi/thay JWT key và API key tại nơi cấp, đồng thời đổi mật khẩu DB nếu các giá trị đó còn hiệu lực. Không tái sử dụng chúng.
 
 ---
 
-## 2. Quy trình triển khai và mở link
+## 2. Quy trình demo tạm thời qua tunnel
+
+Chỉ dùng tunnel cho demo với dữ liệu thử nghiệm và tài khoản riêng. Link tunnel công khai có thể được truy cập bởi người khác; không dùng cấu hình này cho cửa hàng thật hoặc dữ liệu khách hàng. Compose bind ứng dụng vào loopback; tunnel phải chạy trên cùng máy chủ.
 
 ### Bước 1: Khởi động Docker Desktop & Web Container
 1. Mở ứng dụng **Docker Desktop** trên máy tính (đợi vài giây cho Docker Engine chuyển sang màu xanh).

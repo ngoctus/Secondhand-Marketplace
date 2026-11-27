@@ -2,12 +2,15 @@ using System.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels;
 using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Services.Reviews;
+using SecondHandMarketplace.Web.Services.Storage;
 
 namespace SecondHandMarketplace.Web.Services.Products;
 
@@ -18,12 +21,19 @@ public class ProductService : IProductService
     private readonly AppDbContext _db;
     private readonly IReviewService _danhGia;
     private readonly IWebHostEnvironment? _environment;
+    private readonly IConfiguration? _configuration;
+    private readonly IUploadStorage? _uploadStorage;
+    private readonly IDistributedCache? _distributedCache;
 
-    public ProductService(AppDbContext db, IReviewService danhGia, IWebHostEnvironment? environment = null)
+    public ProductService(AppDbContext db, IReviewService danhGia, IWebHostEnvironment? environment = null,
+        IConfiguration? configuration = null, IUploadStorage? uploadStorage = null, IDistributedCache? distributedCache = null)
     {
         _db = db;
         _danhGia = danhGia;
         _environment = environment;
+        _configuration = configuration;
+        _uploadStorage = uploadStorage;
+        _distributedCache = distributedCache;
     }
 
     public async Task<PagedResult<ProductCardVm>> SearchAsync(ProductSearchVm f)
@@ -57,8 +67,18 @@ public class ProductService : IProductService
         var items = await ProductCardMapper.TaoDanhSachAsync(duLieuTho, _danhGia);
         if (_environment is not null)
         {
-            foreach (var item in items)
-                item.ImageUrl = ThumbnailIfPresent(item.ImageUrl);
+            if (_uploadStorage?.UsesObjectStorage == true)
+            {
+                // S3 thumbnail checks are network calls. Bound parallelism so a page of 100
+                // products does not wait for 100 sequential HEAD requests or flood the bucket.
+                await Parallel.ForEachAsync(items, new ParallelOptions { MaxDegreeOfParallelism = 8 },
+                    async (item, _) => item.ImageUrl = await ThumbnailIfPresentAsync(item.ImageUrl));
+            }
+            else
+            {
+                foreach (var item in items)
+                    item.ImageUrl = await ThumbnailIfPresentAsync(item.ImageUrl);
+            }
         }
 
         return new PagedResult<ProductCardVm>
@@ -237,30 +257,39 @@ public class ProductService : IProductService
     };
 
     // Thẻ sản phẩm dùng bản thumbnail 640px nếu controller upload đã tạo ra, nếu không thì dùng ảnh gốc.
-    private string? ThumbnailIfPresent(string? imageUrl)
+    private async Task<string?> ThumbnailIfPresentAsync(string? imageUrl)
     {
-        if (string.IsNullOrWhiteSpace(imageUrl) || _environment?.WebRootPath is null) return imageUrl;
+        if (string.IsNullOrWhiteSpace(imageUrl) || _environment is null) return imageUrl;
         var cleanUrl = imageUrl.Split('?', '#')[0];
         if (!cleanUrl.StartsWith("/uploads/products/", StringComparison.OrdinalIgnoreCase)) return imageUrl;
-        var relative = cleanUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-        var directory = Path.GetDirectoryName(relative) ?? string.Empty;
-        var thumbName = Path.GetFileNameWithoutExtension(relative) + "-thumb.webp";
-        var thumbPath = Path.Combine(_environment.WebRootPath, directory, thumbName);
-        return System.IO.File.Exists(thumbPath)
-            ? "/" + Path.Combine(directory, thumbName).Replace(Path.DirectorySeparatorChar, '/')
-            : imageUrl;
+        var thumbUrl = Path.ChangeExtension(cleanUrl, null) + "-thumb.webp";
+        if (_uploadStorage?.UsesObjectStorage == true)
+            return await _uploadStorage.ExistsAsync(thumbUrl, isPrivate: false) ? thumbUrl : imageUrl;
+        var uploadsRoot = UploadStoragePaths.PublicRoot(_environment, _configuration ?? new ConfigurationBuilder().Build());
+        var thumbPath = UploadStoragePaths.ResolveLocalUpload(thumbUrl, uploadsRoot, "products");
+        return thumbPath is not null && System.IO.File.Exists(thumbPath) ? thumbUrl : imageUrl;
     }
 
     // Xóa file ảnh + thumbnail trên đĩa sau khi bản ghi đã bị xóa (best effort).
     // Chỉ đụng tới thư mục upload của người dùng, ảnh seed nằm ngoài nên không bị xóa nhầm.
-    private void XoaFileAnh(string? duongDan)
+    private async Task XoaFileAnhAsync(string? duongDan, CancellationToken cancellationToken)
     {
-        if (_environment?.WebRootPath is null || string.IsNullOrWhiteSpace(duongDan)) return;
-
-        var goc = Path.GetFullPath(Path.Combine(_environment.WebRootPath, "uploads", "products"));
-        var tuongDoi = duongDan.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-        var duongDanDia = Path.GetFullPath(Path.Combine(_environment.WebRootPath, tuongDoi));
-        if (!duongDanDia.StartsWith(goc + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return;
+        if (string.IsNullOrWhiteSpace(duongDan)) return;
+        if (_uploadStorage is not null)
+        {
+            try
+            {
+                await _uploadStorage.DeleteAsync(duongDan, isPrivate: false, cancellationToken);
+                var extension = Path.GetExtension(duongDan);
+                await _uploadStorage.DeleteAsync(duongDan[..^extension.Length] + "-thumb.webp", isPrivate: false, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException) { }
+            return;
+        }
+        if (_environment is null) return;
+        var uploadsRoot = UploadStoragePaths.PublicRoot(_environment, _configuration ?? new ConfigurationBuilder().Build());
+        var duongDanDia = UploadStoragePaths.ResolveLocalUpload(duongDan, uploadsRoot, "products");
+        if (duongDanDia is null) return;
 
         var thumbPath = Path.Combine(Path.GetDirectoryName(duongDanDia)!,
             Path.GetFileNameWithoutExtension(duongDanDia) + "-thumb.webp");
@@ -518,6 +547,7 @@ public class ProductService : IProductService
         {
             return (false, SqlLoi.ThongBao(ex));
         }
+        await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache, cancellationToken);
         return (true, null);
     }
 
@@ -542,6 +572,7 @@ public class ProductService : IProductService
             // sp kiểm tra tính hợp lệ của bước chuyển (50011): chỉ ACTIVE mới ẩn được.
             return (false, SqlLoi.ThongBao(ex));
         }
+        await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache, cancellationToken);
         return (true, null);
     }
 
@@ -570,6 +601,7 @@ public class ProductService : IProductService
             _db.GioHangs.RemoveRange(cartItems);
 
             await _db.SaveChangesAsync(cancellationToken);
+            await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache, cancellationToken);
             return (true, null);
         }
 
@@ -583,6 +615,7 @@ public class ProductService : IProductService
         {
             return (false, SqlLoi.ThongBao(ex));
         }
+        await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache, cancellationToken);
         return (true, null);
     }
 
@@ -682,7 +715,7 @@ public class ProductService : IProductService
         var duongDanAnh = anh.DuongDan;
         _db.AnhSanPhams.Remove(anh);
         await _db.SaveChangesAsync(cancellationToken);
-        XoaFileAnh(duongDanAnh);
+        await XoaFileAnhAsync(duongDanAnh, cancellationToken);
 
         int? maAnhChinhMoi = null;
         if (wasMain)

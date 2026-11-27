@@ -12,11 +12,22 @@ if /I not "%DB_MODE%"=="dev" if /I not "%DB_MODE%"=="test" if /I not "%DB_MODE%"
     echo DB_MODE must be dev, test, or deploy.
     exit /b 2
 )
+if not defined DB_TRUST_CERT (
+    if /I "%DB_MODE%"=="deploy" (set "DB_TRUST_CERT=False") else set "DB_TRUST_CERT=True"
+)
+if /I "%DB_TRUST_CERT%"=="TRUE" (
+    set "SQL_TLS_ARGS=-N -C"
+) else if /I "%DB_TRUST_CERT%"=="FALSE" (
+    set "SQL_TLS_ARGS=-N"
+) else (
+    echo DB_TRUST_CERT must be True or False.
+    exit /b 2
+)
 
 echo Running SecondHandMarketplace scripts on %SQL_SERVER% ...
 
 rem Chi bootstrap tren database moi. Khong dung bo script nay de cap nhat DB dang co du lieu.
-sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -d master -Q "IF DB_ID(N'SecondHandMarketplace') IS NOT NULL THROW 51093, N'Database already exists. Use reset-db.bat only for dev/test, or apply reviewed migrations for an existing database.', 1;"
+sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% %SQL_TLS_ARGS% -b -d master -Q "IF DB_ID(N'SecondHandMarketplace') IS NOT NULL THROW 51093, N'Database already exists. Use reset-db.bat only for dev/test, or apply reviewed migrations for an existing database.', 1;"
 if errorlevel 1 (
     echo ERROR: run-db.bat is for a fresh database only. Existing production data was not changed.
     exit /b 1
@@ -37,7 +48,7 @@ for %%F in (
     12_seed_core.sql
 ) do (
     echo Running %%F...
-    sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "%%F"
+    sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% %SQL_TLS_ARGS% -b -f 65001 -i "%%F"
     if errorlevel 1 (
         echo ERROR: %%F failed.
         pause
@@ -49,7 +60,7 @@ rem Production chi nhan schema + seed core; demo data chi danh cho DEV/TEST.
 if /I "%DB_MODE%"=="deploy" goto done
 
 echo Running 13_seed_demo.sql (chi DEV/TEST)...
-sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -C -b -f 65001 -i "13_seed_demo.sql"
+sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% %SQL_TLS_ARGS% -b -f 65001 -i "13_seed_demo.sql"
 if errorlevel 1 (
     echo ERROR: 13_seed_demo.sql failed. Reset database dev/test truoc khi thu lai.
     pause

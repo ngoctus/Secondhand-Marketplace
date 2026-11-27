@@ -4,7 +4,7 @@ namespace SecondHandMarketplace.Web.Models.Entities;
 /// Bảng DonHang (mỗi đơn thuộc đúng một cửa hàng).
 /// TrangThai: PENDING, CONFIRMED, SHIPPING, DELIVERED, COMPLETED, CANCELLED.
 /// PhuongThucThanhToan: COD, BANK_TRANSFER, ONLINE.
-/// TrangThaiThanhToan: UNPAID, PENDING, PAID, REFUNDED, FAILED.
+/// TrangThaiThanhToan: UNPAID, PENDING, PAID, REFUND_DUE, REFUNDED, FAILED.
 /// HinhThucNhan: GIAO_HANG (Giao hàng tận nơi), GAP_TRUC_TIEP (Gặp mặt trực tiếp).
 /// NguoiHuy: BUYER, SELLER, ADMIN, SYSTEM.
 /// </summary>

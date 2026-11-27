@@ -35,6 +35,21 @@
     <div class="col-lg-4">
         <div class="panel">
             <h3>@L["SellerOrder_ProcessHeading"]</h3>
+            @if (Model.PaymentStatus == "REFUND_DUE")
+            {
+                <div class="alert alert-warning">
+                    <strong>@L["SellerOrder_RefundPendingTitle"]</strong>
+                    <div class="small mt-1">@L["SellerOrder_RefundPendingNote"]</div>
+                </div>
+                <form asp-action="XacNhanHoanTien" method="post" class="mb-3"
+                      onsubmit="return confirm('@L["SellerOrder_RefundConfirmPrompt"].Value');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <label for="maGiaoDichHoan" class="form-label small">@L["SellerOrder_RefundReferenceLabel"]</label>
+                    <input id="maGiaoDichHoan" name="maGiaoDichHoan" class="form-control mb-2" maxlength="100" />
+                    <button type="submit" class="btn btn-success w-100">@L["SellerOrder_ConfirmRefundBtn"]</button>
+                </form>
+            }
             @if (Model.Status == "CANCELLED")
             {
                 <div class="note">@string.Format(L["SellerOrder_CancelledNote"].Value, HienThi.NguoiThucHien(Model.CancelledBy ?? ""), Model.CancelReason)</div>

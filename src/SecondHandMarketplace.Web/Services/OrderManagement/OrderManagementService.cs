@@ -1,6 +1,7 @@
 using Microsoft.Data.SqlClient;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 
 using SecondHandMarketplace.Web.Common;
 
@@ -20,7 +21,7 @@ namespace SecondHandMarketplace.Web.Services.OrderManagement;
 
 
 
-public sealed class OrderManagementService(AppDbContext db, IAuditLogService audit) : IOrderManagementService
+public sealed class OrderManagementService(AppDbContext db, IAuditLogService audit, IDistributedCache? distributedCache = null) : IOrderManagementService
 
 {
 
@@ -180,6 +181,9 @@ public sealed class OrderManagementService(AppDbContext db, IAuditLogService aud
 
 
 
+        if (newStatus == "CANCELLED")
+            await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, ct);
+
         await audit.LogAsync(userId, "SELLER_UPDATE_ORDER", "DonHang", orderId, "SUCCESS", reason?.Trim(), newStatus);
 
         return (true, null);
@@ -278,6 +282,8 @@ public sealed class OrderManagementService(AppDbContext db, IAuditLogService aud
 
                 }, ct);
 
+            if (newStatus == "CANCELLED")
+                await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, ct);
             return (true, null);   // thủ tục đã tự ghi nhật ký
 
         }

@@ -8,6 +8,10 @@
 @inject IAuctionService Auctions
 @{
     ViewData["Title"] = Model.Name;
+    ViewData["MetaDescription"] = string.IsNullOrWhiteSpace(Model.Description)
+        ? HienThi.Chon($"Xem {Model.Name}, tình trạng và thông tin người bán trên Re:Market.", $"View {Model.Name}, its condition, and seller details on Re:Market.")
+        : Model.Description.Length > 155 ? Model.Description[..155] : Model.Description;
+    ViewData["OgType"] = "product";
 
     var danhMuc = string.IsNullOrWhiteSpace(Model.CategoryName) ? (string)L["Detail_Uncategorized"] : HienThi.TenDanhMuc(Model.CategoryName);
     var urlDanhMuc = Model.CategoryId is int maDanhMuc

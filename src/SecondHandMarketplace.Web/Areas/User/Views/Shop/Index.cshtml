@@ -1,18 +1,18 @@
 @model SecondHandMarketplace.Web.Models.ViewModels.Shop.ShopVm
 @{
-    ViewData["Title"] = "Cửa hàng của tôi";
+    ViewData["Title"] = HienThi.Chon("Cửa hàng của tôi", "My Shop");
     var thieuDiaChi = Model.MaCuaHang.HasValue && (Model.MaTinhThanh is null || Model.MaPhuongXa is null || string.IsNullOrWhiteSpace(Model.DiaChiChiTiet));
 }
 <div class="container py-4" style="max-width:760px">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
-            <h2 class="mb-1">Cửa hàng của tôi</h2>
-            <p class="text-muted mb-0">Mỗi tài khoản USER được tạo tối đa một cửa hàng.</p>
+            <h2 class="mb-1">@HienThi.Chon("Cửa hàng của tôi", "My Shop")</h2>
+            <p class="text-muted mb-0">@HienThi.Chon("Mỗi tài khoản người dùng được tạo tối đa một cửa hàng.", "Each user account can create one shop.")</p>
         </div>
         @if (Model.MaCuaHang.HasValue)
         {
             <a asp-area="User" asp-controller="Reviews" asp-action="Shop" class="btn btn-outline-success btn-sm rounded-pill px-3">
-                <i class="bi bi-star me-1"></i> Xem đánh giá cửa hàng
+                <i class="bi bi-star me-1"></i> @HienThi.Chon("Xem đánh giá cửa hàng", "View shop reviews")
             </a>
         }
     </div>
@@ -20,40 +20,40 @@
 {
     <div class="alert alert-warning d-flex align-items-center gap-3">
         <i class="bi bi-exclamation-triangle-fill fs-4 text-warning flex-shrink-0"></i>
-        <div>Cửa hàng của bạn chưa có địa chỉ. Vui lòng chọn tỉnh/thành, phường/xã và nhập địa chỉ chi tiết rồi bấm lưu.</div>
+        <div>@HienThi.Chon("Cửa hàng của bạn chưa có địa chỉ. Hãy chọn tỉnh/thành, phường/xã, nhập địa chỉ chi tiết rồi lưu.", "Your shop has no address. Select a province and ward, enter a street address, then save.")</div>
     </div>
 }
 <form asp-action="Index" method="post" class="card card-body gap-3"><div asp-validation-summary="ModelOnly" class="text-danger"></div>
-<div><label asp-for="TenShop" class="form-label"></label><input asp-for="TenShop" class="form-control"/><span asp-validation-for="TenShop" class="text-danger"></span></div>
-<div><label asp-for="SoDienThoaiLienHe" class="form-label"></label><input asp-for="SoDienThoaiLienHe" class="form-control"/><span asp-validation-for="SoDienThoaiLienHe" class="text-danger"></span></div>
-<div><label asp-for="MoTa" class="form-label"></label><textarea asp-for="MoTa" class="form-control" rows="3"></textarea><span asp-validation-for="MoTa" class="text-danger"></span></div>
-<div><label asp-for="Logo" class="form-label"></label><input asp-for="Logo" class="form-control" placeholder="/uploads/shop-logo.png"/><span asp-validation-for="Logo" class="text-danger"></span></div>
+<div><label asp-for="TenShop" class="form-label">@HienThi.Chon("Tên cửa hàng", "Shop name")</label><input asp-for="TenShop" class="form-control"/><span asp-validation-for="TenShop" class="text-danger"></span></div>
+<div><label asp-for="SoDienThoaiLienHe" class="form-label">@HienThi.Chon("Số điện thoại liên hệ", "Contact phone")</label><input asp-for="SoDienThoaiLienHe" class="form-control"/><span asp-validation-for="SoDienThoaiLienHe" class="text-danger"></span></div>
+<div><label asp-for="MoTa" class="form-label">@HienThi.Chon("Mô tả cửa hàng", "Shop description")</label><textarea asp-for="MoTa" class="form-control" rows="3"></textarea><span asp-validation-for="MoTa" class="text-danger"></span></div>
+<div><label asp-for="Logo" class="form-label">@HienThi.Chon("Đường dẫn logo", "Logo URL")</label><input asp-for="Logo" class="form-control" placeholder="/uploads/shop-logo.png"/><span asp-validation-for="Logo" class="text-danger"></span></div>
 
 <fieldset class="border rounded p-3">
-    <legend class="fs-6 fw-semibold px-2 w-auto">Địa chỉ cửa hàng</legend>
+    <legend class="fs-6 fw-semibold px-2 w-auto">@HienThi.Chon("Địa chỉ cửa hàng", "Shop address")</legend>
     <partial name="_ChonKhuVuc" model="new SecondHandMarketplace.Web.Models.ViewModels.Areas.ChonKhuVucVm {
         TenFieldTinh = nameof(Model.MaTinhThanh), TenFieldXa = nameof(Model.MaPhuongXa),
         MaTinh = Model.MaTinhThanh, MaXa = Model.MaPhuongXa,
         TinhThanhs = Model.TinhThanhs, PhuongXas = Model.PhuongXas, ChoPhepTatCa = false }" />
-    <div class="mt-3"><label asp-for="DiaChiChiTiet" class="form-label"></label><input asp-for="DiaChiChiTiet" class="form-control" maxlength="300"/><span asp-validation-for="DiaChiChiTiet" class="text-danger"></span></div>
-    <div class="mt-3"><label asp-for="KhuVucHienThi" class="form-label"></label><input asp-for="KhuVucHienThi" class="form-control" maxlength="100" placeholder="Ví dụ: Gần chợ Bến Thành"/><span asp-validation-for="KhuVucHienThi" class="text-danger"></span></div>
+    <div class="mt-3"><label asp-for="DiaChiChiTiet" class="form-label">@HienThi.Chon("Địa chỉ chi tiết", "Street address")</label><input asp-for="DiaChiChiTiet" class="form-control" maxlength="300"/><span asp-validation-for="DiaChiChiTiet" class="text-danger"></span></div>
+    <div class="mt-3"><label asp-for="KhuVucHienThi" class="form-label">@HienThi.Chon("Tên khu vực quen thuộc (không bắt buộc)", "Neighborhood label (optional)")</label><input asp-for="KhuVucHienThi" class="form-control" maxlength="100" placeholder="@(HienThi.Chon("Ví dụ: Gần chợ Bến Thành", "e.g. Near Ben Thanh Market"))"/><span asp-validation-for="KhuVucHienThi" class="text-danger"></span></div>
 </fieldset>
 
 <fieldset class="border rounded p-3">
-    <legend class="fs-6 fw-semibold px-2 w-auto">Thông tin nhận chuyển khoản</legend>
-    <p class="small text-muted mb-3">Không bắt buộc. Nếu nhập, vui lòng điền đủ ngân hàng, số tài khoản và tên chủ tài khoản. Chưa nhập thì người mua sẽ không thấy mã QR thanh toán của shop.</p>
-    <div class="mb-3"><label asp-for="MaNganHang" class="form-label"></label>
+    <legend class="fs-6 fw-semibold px-2 w-auto">@HienThi.Chon("Thông tin nhận chuyển khoản", "Bank transfer details")</legend>
+    <p class="small text-muted mb-3">@HienThi.Chon("Không bắt buộc. Nếu nhập, hãy điền đủ ngân hàng, số tài khoản và tên chủ tài khoản. Người mua chỉ thấy QR khi thông tin này đã đầy đủ.", "Optional. If provided, enter the bank, account number, and account holder. Buyers see a payment QR only when all details are complete.")</p>
+    <div class="mb-3"><label asp-for="MaNganHang" class="form-label">@HienThi.Chon("Ngân hàng", "Bank")</label>
         <select asp-for="MaNganHang" class="form-select">
-            <option value="">-- Chưa chọn ngân hàng --</option>
+            <option value="">@HienThi.Chon("-- Chưa chọn ngân hàng --", "-- Select a bank --")</option>
             @foreach (var b in Model.NganHangs)
             {
                 <option value="@b.Bin" selected="@(Model.MaNganHang == b.Bin)">@b.TenHienThi</option>
             }
         </select><span asp-validation-for="MaNganHang" class="text-danger"></span></div>
-    <div class="mb-3"><label asp-for="SoTaiKhoan" class="form-label"></label><input asp-for="SoTaiKhoan" class="form-control" inputmode="numeric" maxlength="30"/><span asp-validation-for="SoTaiKhoan" class="text-danger"></span></div>
-    <div><label asp-for="TenChuTaiKhoan" class="form-label"></label><input asp-for="TenChuTaiKhoan" class="form-control" maxlength="100" placeholder="NGUYEN VAN A"/><span asp-validation-for="TenChuTaiKhoan" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="SoTaiKhoan" class="form-label">@HienThi.Chon("Số tài khoản", "Account number")</label><input asp-for="SoTaiKhoan" class="form-control" inputmode="numeric" maxlength="30"/><span asp-validation-for="SoTaiKhoan" class="text-danger"></span></div>
+    <div><label asp-for="TenChuTaiKhoan" class="form-label">@HienThi.Chon("Tên chủ tài khoản", "Account holder")</label><input asp-for="TenChuTaiKhoan" class="form-control" maxlength="100" placeholder="NGUYEN VAN A"/><span asp-validation-for="TenChuTaiKhoan" class="text-danger"></span></div>
 </fieldset>
 
-@if(Model.MaCuaHang.HasValue){<p>Trạng thái: <strong class="@(Model.TrangThai == "ACTIVE" ? "text-success" : "text-danger")">@(Model.TrangThai == "ACTIVE" ? "Đang hoạt động" : Model.TrangThai == "LOCKED" ? "Đang bị khóa" : Model.TrangThai)</strong></p>}
-<button class="btn btn-primary" type="submit">@(Model.MaCuaHang.HasValue ? "Cập nhật cửa hàng" : "Tạo cửa hàng")</button></form></div>
+@if(Model.MaCuaHang.HasValue){<p>@HienThi.Chon("Trạng thái:", "Status:") <strong class="@(Model.TrangThai == "ACTIVE" ? "text-success" : "text-danger")">@(Model.TrangThai == "ACTIVE" ? HienThi.Chon("Đang hoạt động", "Active") : Model.TrangThai == "LOCKED" ? HienThi.Chon("Đang bị khóa", "Locked") : Model.TrangThai)</strong></p>}
+<button class="btn btn-primary" type="submit">@(Model.MaCuaHang.HasValue ? HienThi.Chon("Cập nhật cửa hàng", "Update shop") : HienThi.Chon("Tạo cửa hàng", "Create shop"))</button></form></div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/khu-vuc.js" asp-append-version="true"></script> }

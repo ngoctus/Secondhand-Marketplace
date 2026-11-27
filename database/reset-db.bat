@@ -9,6 +9,15 @@ if not defined DB_MODE (
     echo ERROR: Set DB_MODE=dev or DB_MODE=test before resetting. This script must never run against deploy.
     exit /b 2
 )
+if not defined DB_TRUST_CERT set "DB_TRUST_CERT=True"
+if /I "%DB_TRUST_CERT%"=="TRUE" (
+    set "SQL_TLS_ARGS=-N -C"
+) else if /I "%DB_TRUST_CERT%"=="FALSE" (
+    set "SQL_TLS_ARGS=-N"
+) else (
+    echo DB_TRUST_CERT must be True or False.
+    exit /b 2
+)
 if /I not "%DB_MODE%"=="dev" if /I not "%DB_MODE%"=="test" (
     echo ERROR: reset-db.bat is restricted to dev and test databases.
     exit /b 2
@@ -22,7 +31,7 @@ if /I not "%confirm%"=="YES" (
     exit /b 0
 )
 
-sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% -b -Q "USE master; IF DB_ID('SecondHandMarketplace') IS NOT NULL BEGIN ALTER DATABASE SecondHandMarketplace SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE SecondHandMarketplace; END"
+sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% %SQL_TLS_ARGS% -b -Q "USE master; IF DB_ID('SecondHandMarketplace') IS NOT NULL BEGIN ALTER DATABASE SecondHandMarketplace SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE SecondHandMarketplace; END"
 if errorlevel 1 (
     echo ERROR: Cannot drop database.
     pause

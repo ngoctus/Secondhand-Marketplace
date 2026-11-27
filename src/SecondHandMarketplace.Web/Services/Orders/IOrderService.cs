@@ -22,6 +22,7 @@ public interface IOrderService
     /// Tuân thủ quy định Task D5.
     /// </summary>
     Task<(bool ThanhCong, string? ThongBao)> XacNhanDaNhanTienShopAsync(int chuShopId, int maDonHang);
+    Task<(bool ThanhCong, string? ThongBao)> XacNhanHoanTienShopAsync(int chuShopId, int maDonHang, string? maGiaoDichHoan);
 
     /// <summary>
     /// Task E-01 (Demo): Mô phỏng thanh toán chuyển khoản VietQR thành công ngay trên màn hình người mua (chỉ dùng trong Development).

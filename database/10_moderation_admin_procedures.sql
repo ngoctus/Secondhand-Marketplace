@@ -178,7 +178,7 @@ BEGIN
             ThoiGianBatDauGiao = CASE WHEN @TrangThaiMoi = 'SHIPPING'  THEN @Now ELSE ThoiGianBatDauGiao END,
             ThoiGianDaGiao     = CASE WHEN @TrangThaiMoi = 'DELIVERED' THEN @Now ELSE ThoiGianDaGiao END,
             ThoiGianHoanTat    = CASE WHEN @TrangThaiMoi = 'COMPLETED' THEN @Now ELSE ThoiGianHoanTat END,
-            TrangThaiThanhToan = CASE WHEN @TrangThaiMoi = 'CANCELLED' AND TrangThaiThanhToan = 'PAID' THEN 'REFUNDED'
+            TrangThaiThanhToan = CASE WHEN @TrangThaiMoi = 'CANCELLED' AND TrangThaiThanhToan = 'PAID' THEN 'REFUND_DUE'
                                       WHEN @TrangThaiMoi = 'COMPLETED' AND PhuongThucThanhToan = 'COD' AND TrangThaiThanhToan = 'UNPAID' THEN 'PAID'
                                       ELSE TrangThaiThanhToan END
         WHERE MaDonHang = @MaDonHang;
@@ -215,10 +215,10 @@ BEGIN
         END
 
         -- Fix #8: Đồng bộ bảng ThanhToan khi Admin hoàn tiền hoặc hoàn tất đơn
-        IF @TrangThaiMoi = 'CANCELLED' AND EXISTS (SELECT 1 FROM DonHang WHERE MaDonHang = @MaDonHang AND TrangThaiThanhToan = 'REFUNDED')
+        IF @TrangThaiMoi = 'CANCELLED' AND EXISTS (SELECT 1 FROM DonHang WHERE MaDonHang = @MaDonHang AND TrangThaiThanhToan = 'REFUND_DUE')
         BEGIN
             UPDATE ThanhToan
-            SET TrangThaiThanhToan = 'REFUNDED'
+            SET TrangThaiThanhToan = 'REFUND_DUE'
             WHERE MaDonHang = @MaDonHang;
         END
         ELSE IF @TrangThaiMoi = 'COMPLETED' AND EXISTS (SELECT 1 FROM DonHang WHERE MaDonHang = @MaDonHang AND TrangThaiThanhToan = 'PAID')

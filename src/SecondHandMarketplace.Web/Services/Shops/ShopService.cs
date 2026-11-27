@@ -1,7 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -11,7 +11,7 @@ using SecondHandMarketplace.Web.Services.AuditLogs;
 
 namespace SecondHandMarketplace.Web.Services.Shops;
 
-public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMemoryCache? cache = null) : IShopService
+public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IDistributedCache? distributedCache = null) : IShopService
 {
     public Task<CuaHang?> GetByOwnerAsync(int userId, CancellationToken cancellationToken = default) =>
         db.CuaHangs.AsNoTracking().SingleOrDefaultAsync(x => x.MaNguoiDung == userId, cancellationToken);
@@ -63,7 +63,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
                         ApplyExtras(createdShop, input, addressDetail, areaLabel, bank);
                         await db.SaveChangesAsync(cancellationToken);
                         await tx.CommitAsync(cancellationToken);
-                        HomeCacheHelper.XoaCacheTrangChu(cache);
+                        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
                         return (true, (string?)null);
                     }
                     catch (SqlException ex) when (ex.Number is 50001 or 50002)
@@ -94,7 +94,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
                 ApplyExtras(newShop, input, addressDetail, areaLabel, bank);
                 db.CuaHangs.Add(newShop);
                 await db.SaveChangesAsync(cancellationToken);
-                HomeCacheHelper.XoaCacheTrangChu(cache);
+                await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
                 return (true, null);
             }
         }
@@ -109,7 +109,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
         try { await db.SaveChangesAsync(cancellationToken); }
         catch (DbUpdateException) { return (false, "Thông tin cửa hàng không hợp lệ."); }
         await auditLog.LogAsync(userId, "UPDATE_SHOP", "CuaHang", shop.MaCuaHang);
-        HomeCacheHelper.XoaCacheTrangChu(cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
         return (true, null);
     }
 
@@ -205,7 +205,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
         shop.NgayCapNhat = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await auditLog.LogAsync(actorId, "LOCK_SHOP", "CuaHang", shopId, "SUCCESS", reason);
-        HomeCacheHelper.XoaCacheTrangChu(cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
         return (true, null);
     }
 
@@ -221,7 +221,7 @@ public sealed class ShopService(AppDbContext db, IAuditLogService auditLog, IMem
         shop.NgayCapNhat = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await auditLog.LogAsync(actorId, "UNLOCK_SHOP", "CuaHang", shopId);
-        HomeCacheHelper.XoaCacheTrangChu(cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
         return (true, null);
     }
 

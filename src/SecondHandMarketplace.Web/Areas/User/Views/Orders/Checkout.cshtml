@@ -66,7 +66,7 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-person"></i></span>
-                            <input asp-for="TenNguoiNhan" class="form-control rounded-end-3 border-start-0" placeholder="Ví dụ: Nguyễn Văn An" required maxlength="100" />
+                            <input asp-for="TenNguoiNhan" class="form-control rounded-end-3 border-start-0" placeholder="@L["Checkout_FullNamePlaceholder"]" required maxlength="100" />
                         </div>
                         <span asp-validation-for="TenNguoiNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
@@ -77,7 +77,7 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-telephone"></i></span>
-                            <input asp-for="SoDienThoaiNhan" class="form-control rounded-end-3 border-start-0" placeholder="Ví dụ: 0912345678" required maxlength="15" />
+                            <input asp-for="SoDienThoaiNhan" class="form-control rounded-end-3 border-start-0" placeholder="@L["Checkout_PhonePlaceholder"]" required maxlength="15" />
                         </div>
                         <span asp-validation-for="SoDienThoaiNhan" class="text-danger small mt-1 d-block"></span>
                     </div>
@@ -263,6 +263,13 @@
                     </div>
 
                     <!-- Nút đặt hàng -->
+                    <p class="small text-muted mt-3 mb-2">
+                        @HienThi.Chon("Khi đặt hàng, bạn xác nhận đã đọc ", "By placing an order, you confirm that you have read the ")
+                        <a asp-area="" asp-controller="Home" asp-action="Terms">@L["Footer_Terms"]</a>,
+                        <a asp-area="" asp-controller="Home" asp-action="BuyingPolicy">@HienThi.Chon("Chính sách mua hàng", "Buying policy")</a>
+                        @HienThi.Chon("và ", "and ")
+                        <a asp-area="" asp-controller="Home" asp-action="Privacy">@L["Footer_Privacy"]</a>.
+                    </p>
                     <button type="submit" class="btn btn-rm-primary w-100 py-3 fw-bold rounded-pill text-white shadow-sm" id="btnSubmitOrder">
                         <i class="bi bi-bag-check-fill me-2 fs-5"></i>@L["Checkout_ConfirmBtn"]
                     </button>

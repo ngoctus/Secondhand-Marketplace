@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Models.Entities;
@@ -9,12 +9,12 @@ namespace SecondHandMarketplace.Web.Services.Banners;
 public class BannerService : IBannerService
 {
     private readonly AppDbContext _db;
-    private readonly IMemoryCache? _cache;
+    private readonly IDistributedCache? _distributedCache;
 
-    public BannerService(AppDbContext db, IMemoryCache? cache = null)
+    public BannerService(AppDbContext db, IDistributedCache? distributedCache = null)
     {
         _db = db;
-        _cache = cache;
+        _distributedCache = distributedCache;
     }
 
     public async Task<IReadOnlyList<Banner>> LayBannerHienThiAsync(CancellationToken cancellationToken = default)
@@ -84,7 +84,7 @@ public class BannerService : IBannerService
         }
 
         // Slider banner nằm ngay đầu trang chủ nên phải thấy thay đổi tức thì khi demo.
-        HomeCacheHelper.XoaCacheTrangChu(_cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache, cancellationToken);
         return (true, null, banner.MaBanner);
     }
 
@@ -94,7 +94,7 @@ public class BannerService : IBannerService
         if (banner is null) return (false, "Không tìm thấy banner.");
         _db.Banners.Remove(banner);
         await _db.SaveChangesAsync(cancellationToken);
-        HomeCacheHelper.XoaCacheTrangChu(_cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache, cancellationToken);
         return (true, "Đã xóa banner.");
     }
 }

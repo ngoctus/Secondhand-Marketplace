@@ -10,6 +10,7 @@
         <meta name="rm-csrf" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
     }
     <meta name="description" content="@L["Admin_MetaDescription"]" />
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
     
     <!-- Google Fonts -->
@@ -23,6 +24,7 @@
     @* B-05: toàn bộ <style> của khung Admin đã dời vào wwwroot/css/site.css (mục 13) để dùng token màu của sàn. *@
 </head>
 <body class="rm-body">
+    <a class="rm-skip-link" href="#admin-main-content">@HienThi.Chon("Bỏ qua điều hướng", "Skip to main content")</a>
     <div class="admin-layout-wrapper">
         <!-- Sidebar Navigation -->
         <aside class="admin-sidebar">
@@ -115,7 +117,7 @@
             </header>
 
             <!-- Body Content -->
-            <main class="admin-main">
+            <main class="admin-main" id="admin-main-content" tabindex="-1">
                 <partial name="_ThongBao" />
                 @RenderBody()
             </main>

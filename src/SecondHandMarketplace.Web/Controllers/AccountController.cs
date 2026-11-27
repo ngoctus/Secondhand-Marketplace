@@ -15,6 +15,7 @@ using SecondHandMarketplace.Web.Models.Entities;
 using SecondHandMarketplace.Web.Models.ViewModels.Account;
 using SecondHandMarketplace.Web.Services.Accounts;
 using SecondHandMarketplace.Web.Services.Auth;
+using SecondHandMarketplace.Web.Services.Storage;
 
 namespace SecondHandMarketplace.Web.Controllers;
 
@@ -26,7 +27,8 @@ public sealed class AccountController(
     IConfiguration configuration,
     IWebHostEnvironment environment,
     IAccountAppealUserService accountAppealUserService,
-    IDataProtectionProvider dataProtectionProvider) : Controller
+    IDataProtectionProvider dataProtectionProvider,
+    IUploadStorage uploadStorage) : Controller
 {
     private readonly IDataProtector _appealProtector = dataProtectionProvider.CreateProtector("AccountLockedAppeal");
 
@@ -111,6 +113,7 @@ public sealed class AccountController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("register")]
     public async Task<IActionResult> VerifyRegistration(RegisterVerifyVm model, CancellationToken cancellationToken)
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
@@ -741,7 +744,7 @@ public sealed class AccountController(
         }
 
         string? bangChungAnh = null;
-        string? savedFullPath = null;
+        string? savedUploadPath = null;
 
         if (form.FileDinhKem != null && form.FileDinhKem.Length > 0)
         {
@@ -752,10 +755,10 @@ public sealed class AccountController(
                 return RedirectToAction(nameof(Locked), new { token = form.Token });
             }
 
-            var webRoot = environment?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var (relPath, fullPath) = await UploadAnhAnToan.LuuAnhAsync(form.FileDinhKem, webRoot, "appeals", ext!, cancellationToken);
-            bangChungAnh = relPath;
-            savedFullPath = fullPath;
+            bangChungAnh = $"/uploads/appeals/{Guid.NewGuid():N}{ext}";
+            await using var stream = form.FileDinhKem.OpenReadStream();
+            await uploadStorage.SaveAsync(stream, bangChungAnh, isPrivate: true, UploadContentType(ext!), cancellationToken);
+            savedUploadPath = bangChungAnh;
         }
 
         try
@@ -769,7 +772,8 @@ public sealed class AccountController(
 
             if (!result.Success)
             {
-                UploadAnhAnToan.XoaAnh(savedFullPath);
+                if (savedUploadPath is not null)
+                    await uploadStorage.DeleteAsync(savedUploadPath, isPrivate: true, cancellationToken);
                 TempData["Loi"] = result.Error ?? "Không thể gửi yêu cầu khiếu nại.";
                 return RedirectToAction(nameof(Locked), new { token = form.Token });
             }
@@ -779,10 +783,19 @@ public sealed class AccountController(
         }
         catch
         {
-            UploadAnhAnToan.XoaAnh(savedFullPath);
+            if (savedUploadPath is not null)
+                await uploadStorage.DeleteAsync(savedUploadPath, isPrivate: true, cancellationToken);
             throw;
         }
     }
+
+    private static string UploadContentType(string extension) => extension.ToLowerInvariant() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".webp" => "image/webp",
+        _ => "application/octet-stream"
+    };
 
     [Authorize]
     [HttpGet]
@@ -920,17 +933,13 @@ public sealed class AccountController(
 
         if (!ModelState.IsValid) return View(model);
 
-        var (otpOk, otpError) = await passwordResetService.ConsumeVerifiedTokenAsync(user.Email, model.VerifiedToken, cancellationToken);
-        if (!otpOk)
-        {
-            TempData["Loi"] = otpError ?? "Phiên xác thực OTP đã hết hạn hoặc không hợp lệ. Vui lòng xác thực lại mã OTP.";
-            return RedirectToAction(nameof(ChangePassword));
-        }
-
-        var result = await authService.ChangePasswordAsync(userId, model.CurrentPassword, model.NewPassword, cancellationToken);
+        var result = await passwordResetService.ChangePasswordWithTokenAsync(
+            userId, model.CurrentPassword, model.NewPassword, model.VerifiedToken, cancellationToken);
         if (!result.Success)
         {
-            TempData["Loi"] = (result.Error ?? "Không thể đổi mật khẩu.") + " Vui lòng gửi mã OTP mới để thử lại.";
+            if (string.Equals(result.Error, "Mật khẩu hiện tại không chính xác.", StringComparison.Ordinal))
+                TempData["ChangePwdVerifiedToken"] = model.VerifiedToken;
+            TempData["Loi"] = result.Error ?? "Không thể đổi mật khẩu.";
             return RedirectToAction(nameof(ChangePassword));
         }
 

@@ -1,0 +1,57 @@
+@using SecondHandMarketplace.Web.Common
+@{
+    ViewData["Title"] = HienThi.Chon("Chính sách bảo mật - Re:Market", "Privacy Policy - Re:Market");
+    ViewData["MetaDescription"] = HienThi.Chon("Tìm hiểu dữ liệu Re:Market thu thập, cách sử dụng/chia sẻ, thời gian lưu trữ và quyền của bạn.", "Learn what data Re:Market collects, how it is used and shared, how long it is retained, and what choices you have.");
+}
+<div class="container py-5 policy-page" style="max-width: 960px;">
+    <nav aria-label="@HienThi.Chon("Điều hướng trang", "Page navigation")" class="mb-4"><ol class="breadcrumb"><li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li><li class="breadcrumb-item active" aria-current="page">@L["Footer_Privacy"]</li></ol></nav>
+    <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+        <h1 class="h2 fw-bold">@HienThi.Chon("Chính sách bảo mật và dữ liệu cá nhân", "Privacy and Personal Data Policy")</h1>
+        <p class="text-muted">@HienThi.Chon("Cập nhật lần cuối: 28/11/2026. Chính sách này mô tả dữ liệu được xử lý khi bạn dùng website Re:Market. Hãy đọc cùng Điều khoản sử dụng.", "Last updated: November 28, 2026. This policy describes data processed when you use Re:Market. Read it together with the Terms of Service.")</p>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("1. Đơn vị phụ trách và liên hệ", "1. Who is responsible and how to contact us")</h2>
+            <p>@HienThi.Chon("Re:Market là tên nền tảng. Đơn vị vận hành chịu trách nhiệm xác định mục đích và cách xử lý dữ liệu. Liên hệ về quyền riêng tư qua ", "Re:Market is the platform name. The operating entity determines the purposes and means of processing. For privacy requests, contact ")<a href="mailto:hotro@remarket.vn">hotro@remarket.vn</a>. @HienThi.Chon("Trước khi website được công bố, đơn vị vận hành phải thay/xác nhận email, tên pháp lý và địa chỉ nhận yêu cầu nếu thông tin hiển thị hiện tại không còn chính xác.", "Before launch, the operator must confirm or replace this email and publish its verified legal name and request address if the current public details are inaccurate.")</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("2. Dữ liệu có thể được xử lý", "2. Data we may process")</h2>
+            <ul>
+                <li>@HienThi.Chon("Thông tin tài khoản và liên hệ: họ tên, email, số điện thoại, thông tin đăng nhập đã băm và tùy chọn hồ sơ.", "Account and contact details: name, email, phone number, hashed login credentials, and profile preferences.")</li>
+                <li>@HienThi.Chon("Thông tin giao dịch: sản phẩm, giá, đơn hàng, địa chỉ/số điện thoại giao nhận, phương thức/trạng thái thanh toán, trạng thái vận chuyển và trao đổi liên quan.", "Transaction details: listings, prices, orders, delivery address/phone, payment method/status, shipping status, and related communications.")</li>
+                <li>@HienThi.Chon("Nội dung người dùng gửi: ảnh và mô tả sản phẩm, tin nhắn, đánh giá, báo cáo, tranh chấp và bằng chứng bạn tải lên.", "User-submitted content: product photos and descriptions, messages, reviews, reports, disputes, and evidence you upload.")</li>
+                <li>@HienThi.Chon("Dữ liệu kỹ thuật và bảo mật cần thiết để vận hành dịch vụ, chống lạm dụng, ghi nhận lỗi và bảo vệ tài khoản; cookie cần thiết cho đăng nhập, an toàn yêu cầu và lựa chọn ngôn ngữ.", "Technical and security data needed to operate the service, prevent abuse, diagnose errors, and protect accounts; essential cookies for sign-in, request security, and language preference.")</li>
+            </ul>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("3. Mục đích sử dụng", "3. How we use data")</h2>
+            <p>@HienThi.Chon("Dữ liệu được dùng để tạo và bảo vệ tài khoản; hiển thị tin đăng; kết nối người mua/người bán; xử lý đơn, tin nhắn, thanh toán thủ công và giao nhận; hỗ trợ khiếu nại/tranh chấp; kiểm duyệt nội dung; ngăn gian lận/lạm dụng; vận hành, bảo trì và cải thiện dịch vụ; thực hiện nghĩa vụ hợp pháp.", "Data is used to create and secure accounts; display listings; connect buyers and sellers; handle orders, messages, manual payment and delivery workflows; support complaints/disputes; moderate content; prevent fraud/abuse; operate, maintain, and improve the service; and meet legal obligations.")</p>
+            <p>@HienThi.Chon("Khi kiểm duyệt AI được bật, nội dung tin đăng và một số ảnh sản phẩm có thể được gửi tới dịch vụ AI do đơn vị vận hành cấu hình để hỗ trợ phát hiện nội dung rủi ro. Kết quả có thể được con người xem xét; không gửi thông tin ngân hàng đăng nhập hoặc mã OTP cho dịch vụ này.", "When AI moderation is enabled, listing text and selected product images may be sent to the AI service configured by the operator to help detect risky content. Results may be reviewed by people; banking credentials and OTPs are not sent for this purpose.")</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("4. Khi nào dữ liệu được chia sẻ", "4. When data is shared")</h2>
+            <ul>
+                <li>@HienThi.Chon("Với người mua/người bán còn lại trong đơn, chỉ ở mức cần để liên hệ, thanh toán trực tiếp và giao/nhận hàng (ví dụ tên, điện thoại, địa chỉ giao hàng và chi tiết đơn).", "With the other buyer/seller in an order, to the extent needed for contact, direct payment, and delivery or pickup (such as name, phone, delivery address, and order details).")</li>
+                <li>@HienThi.Chon("Với nhà cung cấp dịch vụ được cấu hình như lưu trữ, gửi email, hạ tầng và kiểm duyệt AI để họ thực hiện dịch vụ theo chỉ dẫn. Tùy cấu hình, dữ liệu có thể được xử lý ngoài Việt Nam; đơn vị vận hành cần đánh giá nhà cung cấp và yêu cầu chuyển dữ liệu áp dụng.", "With configured providers for storage, email, infrastructure, and AI moderation so they can perform services under instructions. Depending on configuration, data may be processed outside Vietnam; the operator must assess providers and applicable transfer requirements.")</li>
+                <li>@HienThi.Chon("Khi cần để bảo vệ người dùng/nền tảng, xử lý sự cố, giải quyết tranh chấp hoặc đáp ứng yêu cầu hợp pháp của cơ quan có thẩm quyền.", "When necessary to protect users/the platform, handle incidents, resolve disputes, or respond to lawful requests from competent authorities.")</li>
+            </ul>
+            <p>@HienThi.Chon("Re:Market không bán thông tin cá nhân cho bên thứ ba để họ tự quảng cáo. Nếu thay đổi mục đích/chia sẻ cần thông báo hoặc xin lựa chọn của bạn theo quy định, nền tảng sẽ cập nhật chính sách và thực hiện bước phù hợp trước khi xử lý.", "Re:Market does not sell personal data to third parties for their own advertising. If a change requires notice or your choice under applicable rules, the platform will update this policy and take the appropriate step before processing.")</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("5. Lưu trữ và bảo vệ", "5. Retention and security")</h2>
+            <p>@HienThi.Chon("Dữ liệu được lưu trong thời gian cần cho tài khoản, giao dịch, hỗ trợ, bảo mật và nghĩa vụ lưu trữ hợp pháp; thời hạn cụ thể tùy loại dữ liệu và cấu hình vận hành. Khi không còn cần thiết, dữ liệu sẽ được xóa hoặc ẩn danh nếu có thể và không bị yêu cầu tiếp tục lưu. Mật khẩu được lưu dưới dạng băm; quyền truy cập và dữ liệu bằng chứng riêng tư được giới hạn theo chức năng.", "Data is retained as needed for accounts, transactions, support, security, and lawful recordkeeping; exact periods depend on data type and operational configuration. When no longer needed, data is deleted or anonymized where possible and where retention is not required. Passwords are stored as hashes; access to private evidence is restricted by role.")</p>
+            <p>@HienThi.Chon("Không có biện pháp truyền/lưu trữ nào bảo đảm an toàn tuyệt đối. Nếu phát hiện sự cố ảnh hưởng dữ liệu, đơn vị vận hành sẽ xử lý, đánh giá và thông báo theo yêu cầu pháp luật áp dụng.", "No transmission or storage method is perfectly secure. If a data incident is identified, the operator will respond, assess, and notify as required by applicable law.")</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("6. Lựa chọn và quyền của bạn", "6. Your choices and rights")</h2>
+            <p>@HienThi.Chon("Bạn có thể xem/chỉnh sửa một số thông tin trong hồ sơ và gửi yêu cầu truy cập, sửa, xóa, hạn chế hoặc phản đối việc xử lý, rút lại sự đồng ý (nếu xử lý dựa trên sự đồng ý), hoặc yêu cầu khác theo quy định áp dụng bằng cách liên hệ email ở trên. Chúng tôi có thể cần xác minh danh tính và giải thích trường hợp phải tiếp tục lưu dữ liệu để hoàn tất giao dịch hoặc đáp ứng nghĩa vụ pháp lý.", "You can view or update some profile data and request access, correction, deletion, restriction or objection to processing, withdrawal of consent (where processing relies on consent), or other applicable rights using the email above. We may need to verify your identity and explain when data must be retained to complete a transaction or meet legal obligations.")</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("7. Cập nhật chính sách", "7. Policy updates")</h2>
+            <p>@HienThi.Chon("Khi chính sách thay đổi, phiên bản và ngày cập nhật mới sẽ được đăng tại trang này. Nếu thay đổi quan trọng cần thông báo hoặc lựa chọn riêng, chúng tôi sẽ thực hiện theo quy định áp dụng.", "When this policy changes, the new version and update date will be posted here. If a material change requires notice or a separate choice, we will follow applicable rules.")</p>
+        </section>
+        <section>
+            <h2 class="h4">@HienThi.Chon("8. Cơ sở tham khảo", "8. Legal references")</h2>
+            <p>@HienThi.Chon("Chính sách được soạn để phản ánh hoạt động của Re:Market và cần được đơn vị vận hành rà soát pháp lý trước khi công bố. Các văn bản chính thức có thể xem tại ", "This policy is drafted to describe Re:Market's operations and should be reviewed by the operator's legal adviser before publication. Official texts include Vietnam's ")<a href="https://vanban.chinhphu.vn/?docid=214590&amp;pageid=27160" target="_blank" rel="noopener noreferrer">@HienThi.Chon("Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15", "Personal Data Protection Law No. 91/2025/QH15")</a> @HienThi.Chon("và ", "and ")<a href="https://vanban.chinhphu.vn/?clas-=&amp;docid=216503&amp;pageid=27160" target="_blank" rel="noopener noreferrer">@HienThi.Chon("Luật Thương mại điện tử số 122/2025/QH15", "E-Commerce Law No. 122/2025/QH15")</a>.
+                @HienThi.Chon("Văn bản pháp luật và yêu cầu áp dụng có thể thay đổi; liên kết này không phải tư vấn pháp lý.", "Applicable laws and requirements may change; these links are not legal advice.")</p>
+        </section>
+    </article>
+</div>

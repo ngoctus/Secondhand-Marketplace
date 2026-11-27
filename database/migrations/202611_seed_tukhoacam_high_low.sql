@@ -7,9 +7,6 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 GO
 
-USE SecondHandMarketplace;
-GO
-
 BEGIN TRANSACTION;
 
 DECLARE @SeedTuKhoa TABLE (

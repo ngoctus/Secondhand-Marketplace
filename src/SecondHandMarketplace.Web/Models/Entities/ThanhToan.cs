@@ -1,6 +1,6 @@
 namespace SecondHandMarketplace.Web.Models.Entities;
 
-/// <summary>Bảng ThanhToan. TrangThaiThanhToan: PENDING, SUCCESS, FAILED, REFUNDED.</summary>
+/// <summary>Bảng ThanhToan. TrangThaiThanhToan: PENDING, SUCCESS, FAILED, REFUND_DUE, REFUNDED.</summary>
 public class ThanhToan
 {
     public int MaThanhToan { get; set; }

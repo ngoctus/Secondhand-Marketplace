@@ -133,13 +133,13 @@
     </aside>
 
     <!-- CỘT KẾT QUẢ SẢN PHẨM -->
-    <main>
+    <section aria-label="@L["Search_Results"]">
         @* B-04: toàn bộ khối này là một partial, và cũng là thứ fetch trả về khi lọc/sắp xếp/đánh trang.
            Server render một lần cho request thường nên link chia sẻ vẫn y nguyên. *@
         <div id="ketQuaTimKiem" data-muc-tieu="@Url.Action("Index")">
             <partial name="_SearchResults" model="Model" />
         </div>
-    </main>
+    </section>
 </div>
 
 @section Scripts {

@@ -1,21 +1,33 @@
 using System.Globalization;
 using System.Security.Claims;
 using System.Text;
+using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 using System.Threading.RateLimiting;
 using SecondHandMarketplace.Web.Hubs;
 using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Security;
+using SecondHandMarketplace.Web.Services.BackgroundJobs;
+using SecondHandMarketplace.Web.Services.Health;
+using SecondHandMarketplace.Web.Services.Storage;
 
 namespace SecondHandMarketplace.Web;
 
@@ -24,6 +36,11 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        // Avoid a Windows Event Log provider failure taking down startup when the app
+        // logs a recoverable database/configuration error under a non-admin account.
+        builder.Logging.ClearProviders();
+        builder.Logging.AddConsole();
+        builder.Logging.AddDebug();
         builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
         builder.Services.AddControllersWithViews()
             .AddViewLocalization()
@@ -48,8 +65,45 @@ public class Program
                 new QueryStringRequestCultureProvider()
             };
         });
-        builder.Services.AddMemoryCache();
-        builder.Services.AddDataProtection();
+        var storageProvider = builder.Configuration["Storage:Provider"];
+        if (!string.IsNullOrWhiteSpace(storageProvider)
+            && !storageProvider.Equals("Local", StringComparison.OrdinalIgnoreCase)
+            && !storageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Storage:Provider must be Local or S3.");
+        var redisConnectionString = builder.Configuration["Cache:Redis:ConnectionString"];
+        IConnectionMultiplexer? redisConnection = null;
+        if (!string.IsNullOrWhiteSpace(redisConnectionString))
+        {
+            redisConnection = ConnectionMultiplexer.Connect(redisConnectionString);
+            builder.Services.AddSingleton(redisConnection);
+            builder.Services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+                options.InstanceName = "remarket:";
+            });
+        }
+        else
+        {
+            builder.Services.AddDistributedMemoryCache();
+        }
+        var dataProtectionPath = builder.Configuration["DataProtection:KeysPath"];
+        var dataProtection = builder.Services.AddDataProtection().SetApplicationName("SecondHandMarketplace");
+        if (redisConnection is not null)
+        {
+            dataProtection.PersistKeysToStackExchangeRedis(redisConnection, "remarket:data-protection-keys");
+        }
+        else if (!string.IsNullOrWhiteSpace(dataProtectionPath))
+        {
+            Directory.CreateDirectory(dataProtectionPath);
+            dataProtection.PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath));
+        }
+        builder.Services.AddSingleton<IBackgroundJobLease>(services =>
+            new RedisBackgroundJobLease(redisConnection, services.GetRequiredService<ILogger<RedisBackgroundJobLease>>()));
+        builder.Services.AddHealthChecks().AddCheck<SqlServerHealthCheck>("sql", tags: ["ready"]);
+        if (!string.IsNullOrWhiteSpace(redisConnectionString))
+            builder.Services.AddHealthChecks().AddCheck<RedisHealthCheck>("redis", tags: ["ready"]);
+        if (string.Equals(storageProvider, "S3", StringComparison.OrdinalIgnoreCase))
+            builder.Services.AddHealthChecks().AddCheck<S3StorageHealthCheck>("object-storage", tags: ["ready"]);
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -93,6 +147,32 @@ public class Program
         builder.Services.AddSignalR();
         builder.Services.AddDatabase(builder.Configuration);
         builder.Services.AddAppServices();
+        if (string.Equals(storageProvider, "S3", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(builder.Configuration["Storage:S3:Bucket"]))
+                throw new InvalidOperationException("Storage:S3:Bucket is required when Storage:Provider is S3.");
+
+            builder.Services.AddSingleton<IAmazonS3>(_ =>
+            {
+                var regionName = builder.Configuration["Storage:S3:Region"] ?? "ap-southeast-1";
+                var s3Config = new AmazonS3Config
+                {
+                    RegionEndpoint = RegionEndpoint.GetBySystemName(regionName),
+                    ForcePathStyle = builder.Configuration.GetValue("Storage:S3:ForcePathStyle", true)
+                };
+                var endpoint = builder.Configuration["Storage:S3:Endpoint"];
+                if (!string.IsNullOrWhiteSpace(endpoint)) s3Config.ServiceURL = endpoint;
+
+                var accessKey = builder.Configuration["Storage:S3:AccessKeyId"];
+                var secretKey = builder.Configuration["Storage:S3:SecretAccessKey"];
+                if (string.IsNullOrWhiteSpace(accessKey) != string.IsNullOrWhiteSpace(secretKey))
+                    throw new InvalidOperationException("S3 AccessKeyId and SecretAccessKey must be configured together.");
+                if (!string.IsNullOrWhiteSpace(accessKey))
+                    return new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey), s3Config);
+                return new AmazonS3Client(s3Config);
+            });
+        }
+        builder.Services.AddSingleton<IUploadStorage, UploadStorage>();
         builder.Services.AddSingleton<IMatKhauService, MatKhauService>();
         builder.Services.AddSingleton<JwtTokenService>();
 
@@ -170,6 +250,9 @@ public class Program
             options.Cookie.Name = "SecondHand.Auth";
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+                ? CookieSecurePolicy.SameAsRequest
+                : CookieSecurePolicy.Always;
             options.ExpireTimeSpan = TimeSpan.FromDays(7);
             options.SlidingExpiration = true;
             options.Events.OnRedirectToLogin = context =>
@@ -279,7 +362,6 @@ public class Program
         }
 
         var app = builder.Build();
-        EnsureAccountAppealSchema(app);
         var forwardedHeaders = new ForwardedHeadersOptions
         {
             ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
@@ -287,7 +369,20 @@ public class Program
         };
         forwardedHeaders.KnownProxies.Add(System.Net.IPAddress.Loopback);
         forwardedHeaders.KnownProxies.Add(System.Net.IPAddress.IPv6Loopback);
+        foreach (var proxy in builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [])
+        {
+            if (System.Net.IPAddress.TryParse(proxy, out var address))
+                forwardedHeaders.KnownProxies.Add(address);
+        }
         app.UseForwardedHeaders(forwardedHeaders);
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            context.Response.Headers["X-Frame-Options"] = "DENY";
+            context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+            context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+            await next();
+        });
         if (jwtKeyIsPlaceholder)
             app.Logger.LogWarning("Đang dùng Jwt:Key mặc định. Chỉ chấp nhận khi phát triển local.");
         if (!app.Environment.IsDevelopment())
@@ -309,10 +404,37 @@ public class Program
         app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api") && !context.Request.Path.StartsWithSegments("/swagger"),
             branch => branch.UseStatusCodePagesWithReExecute("/Home/TrangLoi", "?ma={0}"));
         app.UseHttpsRedirection();
+        var publicUploadsRoot = UploadStoragePaths.PublicRoot(app.Environment, app.Configuration);
+        var privateUploadsRoot = UploadStoragePaths.PrivateRoot(app.Environment, app.Configuration);
+        UploadStoragePaths.EnsurePrivateRootIsNotPublic(publicUploadsRoot, privateUploadsRoot);
+        Directory.CreateDirectory(publicUploadsRoot);
+        Directory.CreateDirectory(privateUploadsRoot);
+        app.Use(async (context, next) =>
+        {
+            var requestPath = context.Request.Path.Value ?? string.Empty;
+            if (requestPath.StartsWith("/uploads/appeals/", StringComparison.OrdinalIgnoreCase)
+                || requestPath.StartsWith("/uploads/disputes/", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                return;
+            }
+            await next();
+        });
+        app.UseMiddleware<PublicObjectStorageMiddleware>();
         app.UseStaticFiles();   // Phục vụ file trong wwwroot (ảnh seed, css, js...)
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(publicUploadsRoot),
+            RequestPath = "/uploads",
+            OnPrepareResponse = context =>
+                context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable"
+        });
         app.UseRequestLocalization();
         app.UseRouting();
-        app.UseRateLimiter();
+        if (redisConnection is not null)
+            app.UseMiddleware<DistributedRateLimitMiddleware>();
+        else
+            app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapStaticAssets();
@@ -320,10 +442,31 @@ public class Program
         app.MapHub<AuctionHub>("/hubs/auction");
         app.MapHub<NotificationHub>("/hubs/notification");
         app.MapHub<ChatHub>("/hubs/chat");
+        app.MapHealthChecks("/health/live", new HealthCheckOptions
+        {
+            Predicate = _ => false,
+            ResponseWriter = WriteHealthResponseAsync
+        });
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("ready"),
+            ResponseWriter = WriteHealthResponseAsync
+        });
         app.MapControllerRoute(name: "areas", pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}").WithStaticAssets();
         app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}").WithStaticAssets();
         app.Run();
     }
+
+    private static Task WriteHealthResponseAsync(HttpContext context, HealthReport report) =>
+        context.Response.WriteAsJsonAsync(new
+        {
+            status = report.Status.ToString().ToLowerInvariant(),
+            checks = report.Entries.Select(entry => new
+            {
+                name = entry.Key,
+                status = entry.Value.Status.ToString().ToLowerInvariant()
+            })
+        });
 
     private static async Task<bool> IsUserActiveAsync(HttpContext httpContext, ClaimsPrincipal? principal)
     {
@@ -347,95 +490,4 @@ public class Program
         return true;
     }
 
-    /// <summary>
-    /// Tự động đồng bộ schema KN-01 (MocTinhViPham, SoLanBiKhoa, KhieuNaiTaiKhoan, CauHinhKhieuNaiTaiKhoan)
-    /// cho các máy thành viên đang chạy DB cũ chưa chạy file migration thủ công.
-    /// </summary>
-    private static void EnsureAccountAppealSchema(WebApplication app)
-    {
-        try
-        {
-            using var scope = app.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            if (!db.Database.IsRelational()) return;
-
-            const string sql = """
-                IF OBJECT_ID(N'dbo.NguoiDung', N'U') IS NOT NULL
-                BEGIN
-                    IF COL_LENGTH(N'dbo.NguoiDung', N'MocTinhViPham') IS NULL
-                        EXEC(N'ALTER TABLE dbo.NguoiDung ADD MocTinhViPham datetime2(3) NULL;');
-
-                    IF COL_LENGTH(N'dbo.NguoiDung', N'SoLanBiKhoa') IS NULL
-                    BEGIN
-                        EXEC(N'ALTER TABLE dbo.NguoiDung ADD SoLanBiKhoa int NOT NULL CONSTRAINT DF_NguoiDung_SoLanBiKhoa DEFAULT (0);');
-                        EXEC(N'UPDATE dbo.NguoiDung SET SoLanBiKhoa = 1 WHERE TrangThai = ''LOCKED'' AND SoLanBiKhoa = 0;');
-                    END;
-                END;
-
-                IF OBJECT_ID(N'dbo.DanhGia', N'U') IS NOT NULL
-                BEGIN
-                    IF COL_LENGTH(N'dbo.DanhGia', N'PhanHoiShop') IS NULL
-                        EXEC(N'ALTER TABLE dbo.DanhGia ADD PhanHoiShop nvarchar(1000) NULL;');
-
-                    IF COL_LENGTH(N'dbo.DanhGia', N'NgayPhanHoi') IS NULL
-                        EXEC(N'ALTER TABLE dbo.DanhGia ADD NgayPhanHoi datetime2(3) NULL;');
-                END;
-
-                IF OBJECT_ID(N'dbo.TranhChap', N'U') IS NOT NULL
-                BEGIN
-                    IF COL_LENGTH(N'dbo.TranhChap', N'AnhPhanHoi') IS NULL
-                        EXEC(N'ALTER TABLE dbo.TranhChap ADD AnhPhanHoi nvarchar(500) NULL;');
-                END;
-
-                IF OBJECT_ID(N'dbo.KhieuNaiTaiKhoan', N'U') IS NULL AND OBJECT_ID(N'dbo.NguoiDung', N'U') IS NOT NULL
-                BEGIN
-                    CREATE TABLE dbo.KhieuNaiTaiKhoan (
-                        MaKhieuNai          int            IDENTITY(1,1) NOT NULL,
-                        MaNguoiDung         int            NOT NULL,
-                        LoaiYeuCau          varchar(20)    NOT NULL,
-                        LanKhoaThu          int            NOT NULL,
-                        LyDoKhoaLucGui      nvarchar(500)  NOT NULL,
-                        NoiDung             nvarchar(2000) NOT NULL,
-                        BangChungAnh        varchar(500)   NULL,
-                        YeuCauPhi           bit            NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_YeuCauPhi DEFAULT (0),
-                        SoTienPhi           decimal(18,2)  NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_SoTienPhi DEFAULT (0),
-                        MaGiaoDichThamChieu varchar(40)    NULL,
-                        TrangThai           varchar(20)    NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_TrangThai DEFAULT ('PENDING'),
-                        GhiChuAdmin         nvarchar(1000) NULL,
-                        NguoiXuLyId         int            NULL,
-                        NgayTao             datetime2(3)   NOT NULL CONSTRAINT DF_KhieuNaiTaiKhoan_NgayTao   DEFAULT (SYSUTCDATETIME()),
-                        NgayXuLy            datetime2(3)   NULL,
-                        CONSTRAINT PK_KhieuNaiTaiKhoan PRIMARY KEY CLUSTERED (MaKhieuNai),
-                        CONSTRAINT FK_KhieuNaiTaiKhoan_NguoiDung FOREIGN KEY (MaNguoiDung) REFERENCES dbo.NguoiDung (MaNguoiDung),
-                        CONSTRAINT FK_KhieuNaiTaiKhoan_NguoiXuLy FOREIGN KEY (NguoiXuLyId) REFERENCES dbo.NguoiDung (MaNguoiDung)
-                    );
-                END;
-
-                IF OBJECT_ID(N'dbo.CauHinhKhieuNaiTaiKhoan', N'U') IS NULL AND OBJECT_ID(N'dbo.NguoiDung', N'U') IS NOT NULL
-                BEGIN
-                    CREATE TABLE dbo.CauHinhKhieuNaiTaiKhoan (
-                        Id                int           NOT NULL,
-                        SoLanGuiMoiChuKy  int           NOT NULL CONSTRAINT DF_CauHinhKhieuNai_SoLanGui    DEFAULT (2),
-                        CooldownPhut      int           NOT NULL CONSTRAINT DF_CauHinhKhieuNai_Cooldown    DEFAULT (4320),
-                        PhiMoKhoaLan2     decimal(18,2) NOT NULL CONSTRAINT DF_CauHinhKhieuNai_Phi         DEFAULT (200000),
-                        TenNganHang       nvarchar(100) NOT NULL,
-                        MaNganHang        varchar(20)   NOT NULL,
-                        SoTaiKhoan        varchar(30)   NOT NULL,
-                        ChuTaiKhoan       nvarchar(100) NOT NULL,
-                        NgayCapNhat       datetime2(3)  NOT NULL CONSTRAINT DF_CauHinhKhieuNai_NgayCapNhat DEFAULT (SYSUTCDATETIME()),
-                        NguoiCapNhatId    int           NULL,
-                        CONSTRAINT PK_CauHinhKhieuNaiTaiKhoan PRIMARY KEY CLUSTERED (Id)
-                    );
-                    INSERT INTO dbo.CauHinhKhieuNaiTaiKhoan (Id, SoLanGuiMoiChuKy, CooldownPhut, PhiMoKhoaLan2, TenNganHang, MaNganHang, SoTaiKhoan, ChuTaiKhoan)
-                    VALUES (1, 2, 4320, 200000, N'MB Bank', 'MB', '090123456789', N'RE MARKET PLATFORM');
-                END;
-                """;
-
-            db.Database.ExecuteSqlRaw(sql);
-        }
-        catch (Exception ex)
-        {
-            app.Logger.LogWarning(ex, "Không thể tự động kiểm tra/đồng bộ schema Khiếu nại tài khoản khi khởi động.");
-        }
-    }
 }
