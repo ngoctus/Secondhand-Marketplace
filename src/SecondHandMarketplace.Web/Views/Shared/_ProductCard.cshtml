@@ -36,6 +36,29 @@
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
         </button>
+
+        @if (Model.ConHang && !(User.Identity?.IsAuthenticated == true && User.IsInRole("ADMIN")))
+        {
+            <!-- Nút thêm nhanh vào giỏ khi hover trên PC -->
+            <div class="rm-card-hover-cta">
+                <form asp-area="User" asp-controller="Cart" asp-action="Them" method="post"
+                      class="rm-add-to-cart-form m-0"
+                      data-product-name="@Model.Name"
+                      data-product-price="@(Model.Price.ToString("N0") + "đ")"
+                      data-product-image="@(Model.ImageUrl ?? "")">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        @Html.AntiForgeryToken()
+                    }
+                    <input type="hidden" name="maSanPham" value="@Model.Id" />
+                    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                    <button type="submit" class="rm-card-cart-btn">
+                        <i class="bi bi-cart-plus" aria-hidden="true"></i>
+                        <span>@L["Card_AddToCart"]</span>
+                    </button>
+                </form>
+            </div>
+        }
     </div>
 
     <div class="rm-card-body">

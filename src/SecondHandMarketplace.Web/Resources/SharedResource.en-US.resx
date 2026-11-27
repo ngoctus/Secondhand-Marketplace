@@ -66,7 +66,7 @@
   <data name="Nav_ChangePassword" xml:space="preserve"><value>Change Password</value></data>
   <data name="Nav_MyOrders" xml:space="preserve"><value>My Purchases</value></data>
   <data name="Nav_MyReviews" xml:space="preserve"><value>My Reviews</value></data>
-  <data name="Nav_SellerOrders" xml:space="preserve"><value>Shop Orders</value></data>
+  <data name="Nav_SellerOrders" xml:space="preserve"><value>Sales Orders</value></data>
   <data name="Nav_ShopReviews" xml:space="preserve"><value>Shop Reviews</value></data>
   <data name="Nav_RevenueStats" xml:space="preserve"><value>Revenue Analytics</value></data>
   <data name="Nav_MyShop" xml:space="preserve"><value>My Shop</value></data>
@@ -459,8 +459,28 @@
   <data name="Seller_ConfirmHide" xml:space="preserve"><value>Hide this product from the shop page?</value></data>
   <data name="Seller_EditShort" xml:space="preserve"><value>Edit</value></data>
   <data name="Seller_Hide" xml:space="preserve"><value>Hide</value></data>
+  <data name="Seller_Unhide" xml:space="preserve"><value>Unhide</value></data>
+  <data name="Seller_ConfirmUnhide" xml:space="preserve"><value>Show this product for sale again right away?</value></data>
   <data name="Seller_ViewListing" xml:space="preserve"><value>View listing page</value></data>
+  <data name="Seller_ViewShort" xml:space="preserve"><value>View</value></data>
   <data name="Seller_ConfirmDelete" xml:space="preserve"><value>Delete this product permanently? This action cannot be undone.</value></data>
+  <data name="Seller_FilterSearchPlaceholder" xml:space="preserve"><value>Search here</value></data>
+  <data name="Seller_FilterCategory" xml:space="preserve"><value>Category</value></data>
+  <data name="Seller_FilterCreatedDate" xml:space="preserve"><value>Created date</value></data>
+  <data name="Seller_FilterStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="Seller_FilterReset" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="Seller_PerPageLabel" xml:space="preserve"><value>Show:</value></data>
+  <data name="Seller_PerPageOption" xml:space="preserve"><value>{0}/Page</value></data>
+  <data name="Seller_SortLabel" xml:space="preserve"><value>Sort by:</value></data>
+  <data name="Seller_SortUpdatedDesc" xml:space="preserve"><value>Updated - newest</value></data>
+  <data name="Seller_SortUpdatedAsc" xml:space="preserve"><value>Updated - oldest</value></data>
+  <data name="Seller_SortPriceAsc" xml:space="preserve"><value>Price - low to high</value></data>
+  <data name="Seller_SortPriceDesc" xml:space="preserve"><value>Price - high to low</value></data>
+  <data name="Seller_FilterCount" xml:space="preserve"><value>{0} products</value></data>
+  <data name="Seller_FilterEmptyTitle" xml:space="preserve"><value>No matching products found</value></data>
+  <data name="Seller_FilterEmptyDesc" xml:space="preserve"><value>Try adjusting your keyword, category, created date, or status filter.</value></data>
+  <data name="Seller_ReasonMore" xml:space="preserve"><value>Read more</value></data>
+  <data name="Seller_ReasonLess" xml:space="preserve"><value>Collapse</value></data>
   <!-- B-04: Seller channel - create/edit product form -->
   <data name="Form_CreateTitle" xml:space="preserve"><value>List an item</value></data>
   <data name="Form_EditTitle" xml:space="preserve"><value>Edit product</value></data>
@@ -506,6 +526,8 @@
   <data name="Form_ApproveNote" xml:space="preserve"><value>Save a draft while you are not done; moderation only runs when you tap "Save and submit for review".</value></data>
   <!-- B-04: Favorites page -->
   <data name="Fav_Title" xml:space="preserve"><value>Favorite products</value></data>
+  <data name="Fav_TotalCount" xml:space="preserve"><value>{0} saved items</value></data>
+  <data name="Card_AddToCart" xml:space="preserve"><value>Add to cart</value></data>
   <data name="Fav_Continue" xml:space="preserve"><value>Keep exploring</value></data>
   <data name="Fav_EmptyTitle" xml:space="preserve"><value>You have not saved any products</value></data>
   <data name="Fav_EmptyDesc" xml:space="preserve"><value>Save the items you like to come back and check their status, price and shop info any time.</value></data>

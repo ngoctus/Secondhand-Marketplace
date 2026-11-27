@@ -20,7 +20,12 @@
 
     <div class="col-md-6">
         <label asp-for="Gia" class="form-label">@L["Form_Price"] <span class="text-danger">*</span></label>
-        <input asp-for="Gia" type="number" min="1000" step="1000" class="form-control" placeholder="@L["Form_PricePlaceholder"]" />
+        @{
+            var giaNguyen = Model.Gia.HasValue
+                ? Math.Round(Model.Gia.Value, 0, MidpointRounding.AwayFromZero).ToString("0", System.Globalization.CultureInfo.InvariantCulture)
+                : string.Empty;
+        }
+        <input asp-for="Gia" value="@giaNguyen" type="number" min="1" step="1" inputmode="numeric" class="form-control" placeholder="@L["Form_PricePlaceholder"]" />
         <span asp-validation-for="Gia" class="text-danger small"></span>
 
         @* C-03: AI tham khảo khoảng giá bán từ dữ liệu thật trên sàn, có nút điền thẳng vào ô Giá. *@

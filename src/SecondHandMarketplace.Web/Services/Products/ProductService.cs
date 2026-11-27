@@ -14,6 +14,8 @@ namespace SecondHandMarketplace.Web.Services.Products;
 public class ProductService : IProductService
 {
     private const int SoAnhToiDa = 10;
+    private const string LyDoTuAn = "Người bán tự ẩn";
+    private const string LyDoAnDoLoiDuyet = "Tự động ẩn do gửi duyệt thất bại";
 
     private readonly AppDbContext _db;
     private readonly IReviewService _danhGia;
@@ -289,21 +291,63 @@ public class ProductService : IProductService
     private async Task<CuaHang?> TimShopCuaToiAsync(int maNguoiDung, CancellationToken ct)
         => await _db.CuaHangs.AsNoTracking().FirstOrDefaultAsync(c => c.MaNguoiDung == maNguoiDung, ct);
 
-    public async Task<PagedResult<MyProductVm>> GetMyAsync(int maNguoiDung, int page = 1, CancellationToken cancellationToken = default)
+    public Task<PagedResult<MyProductVm>> GetMyAsync(int maNguoiDung, int page = 1, CancellationToken cancellationToken = default)
+        => GetMyFilteredAsync(maNguoiDung, new SellerProductFilterVm { Page = page, PageSize = 12 }, cancellationToken)
+            .ContinueWith(t => t.Result.Result, cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default);
+
+    public async Task<(PagedResult<MyProductVm> Result, int TotalAll)> GetMyFilteredAsync(
+        int maNguoiDung, SellerProductFilterVm filter, CancellationToken cancellationToken = default)
     {
         var shop = await TimShopCuaToiAsync(maNguoiDung, cancellationToken);
-        if (shop is null) return new PagedResult<MyProductVm>();
+        if (shop is null) return (new PagedResult<MyProductVm>(), 0);
 
-        page = Math.Clamp(page, 1, 10000);
-        const int pageSize = 12;
+        var page = Math.Clamp(filter.Page, 1, 10000);
+        var pageSize = SellerProductFilterVm.CacMucHienThi.Contains(filter.PageSize)
+            ? filter.PageSize
+            : Math.Clamp(filter.PageSize, 1, 100);
 
-        var query = _db.SanPhams
+        var baseQuery = _db.SanPhams
             .AsNoTracking()
             .Where(p => p.MaCuaHang == shop.MaCuaHang && !p.DaXoa);
 
+        var totalAll = await baseQuery.CountAsync(cancellationToken);
+        var query = baseQuery;
+
+        if (!string.IsNullOrWhiteSpace(filter.Keyword))
+        {
+            var raw = filter.Keyword.Trim();
+            var norm = TextHelper.ChuanHoa(raw);
+            query = query.Where(p => p.Ten.Contains(raw) || p.ChuoiTimKiem.Contains(norm));
+        }
+
+        if (filter.CategoryId is int maDanhMuc)
+            query = query.Where(p => p.MaDanhMuc == maDanhMuc);
+
+        if (!string.IsNullOrWhiteSpace(filter.Status))
+        {
+            var st = filter.Status.Trim().ToUpperInvariant();
+            query = query.Where(p => p.TrangThai == st);
+        }
+
+        if (filter.CreatedDate is DateOnly ngay)
+        {
+            // NgayTao lưu UTC; chuyển ranh giới ngày theo giờ Việt Nam (UTC+7) khớp HienThi.NgayGio.
+            var tuUtc = new DateTime(ngay.Year, ngay.Month, ngay.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-7);
+            var denUtc = tuUtc.AddDays(1);
+            query = query.Where(p => p.NgayTao >= tuUtc && p.NgayTao < denUtc);
+        }
+
         var total = await query.CountAsync(cancellationToken);
-        var items = await query
-            .OrderByDescending(p => p.NgayCapNhat).ThenByDescending(p => p.MaSanPham)
+
+        IQueryable<SanPham> ordered = (filter.Sort ?? "updated_desc").Trim().ToLowerInvariant() switch
+        {
+            "updated_asc" => query.OrderBy(p => p.NgayCapNhat).ThenBy(p => p.MaSanPham),
+            "price_asc" => query.OrderBy(p => p.Gia == null ? 1 : 0).ThenBy(p => p.Gia).ThenByDescending(p => p.MaSanPham),
+            "price_desc" => query.OrderBy(p => p.Gia == null ? 1 : 0).ThenByDescending(p => p.Gia).ThenByDescending(p => p.MaSanPham),
+            _ => query.OrderByDescending(p => p.NgayCapNhat).ThenByDescending(p => p.MaSanPham)
+        };
+
+        var items = await ordered
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(p => new MyProductVm
             {
@@ -311,6 +355,8 @@ public class ProductService : IProductService
                 Ten = p.Ten,
                 Gia = p.Gia,
                 TrangThai = p.TrangThai,
+                MaDanhMuc = p.MaDanhMuc,
+                TenDanhMuc = p.DanhMuc != null ? p.DanhMuc.Ten : null,
                 NgayTao = p.NgayTao,
                 NgayCapNhat = p.NgayCapNhat,
                 AnhDaiDien = p.Anh.Where(a => a.LaAnhChinh).Select(a => a.DuongDan).FirstOrDefault()
@@ -325,31 +371,74 @@ public class ProductService : IProductService
             })
             .ToListAsync(cancellationToken);
 
-        return new PagedResult<MyProductVm> { Items = items, Page = page, PageSize = pageSize, TotalItems = total };
+        var hiddenIds = items.Where(x => x.TrangThai == "HIDDEN" && x.SoLuongAnh > 0).Select(x => x.Id).ToList();
+        if (hiddenIds.Count > 0)
+        {
+            var lichSuAn = await _db.LichSuTrangThaiSanPhams.AsNoTracking()
+                .Where(h => hiddenIds.Contains(h.MaSanPham))
+                .OrderByDescending(h => h.ThoiGian).ThenByDescending(h => h.MaLichSuTrangThaiSanPham)
+                .ToListAsync(cancellationToken);
+
+            var ganNhatTheoSp = lichSuAn
+                .GroupBy(h => h.MaSanPham)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            foreach (var item in items.Where(x => x.TrangThai == "HIDDEN" && x.SoLuongAnh > 0))
+            {
+                if (ganNhatTheoSp.TryGetValue(item.Id, out var ls))
+                    item.CoTheMoAnNgay = LaAnKhongQuaChinhSua(item.NgayCapNhat, ls);
+            }
+        }
+
+        return (new PagedResult<MyProductVm> { Items = items, Page = page, PageSize = pageSize, TotalItems = total }, totalAll);
     }
+
+    private static bool LaAnKhongQuaChinhSua(DateTime ngayCapNhat, LichSuTrangThaiSanPham? lichSuGanNhat) =>
+        lichSuGanNhat is not null
+        && lichSuGanNhat.TrangThaiCu == "ACTIVE"
+        && lichSuGanNhat.TrangThaiMoi == "HIDDEN"
+        && !string.Equals(lichSuGanNhat.LyDo, LyDoAnDoLoiDuyet, StringComparison.Ordinal)
+        && ngayCapNhat <= lichSuGanNhat.ThoiGian.AddSeconds(2);
 
     public async Task<ProductFormVm?> GetFormAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
     {
         var shop = await TimShopCuaToiAsync(maNguoiDung, cancellationToken);
         if (shop is null) return null;
 
-        return await _db.SanPhams
+        var raw = await _db.SanPhams
             .AsNoTracking()
             .Where(p => p.MaSanPham == maSanPham && p.MaCuaHang == shop.MaCuaHang && !p.DaXoa)
-            .Select(p => new ProductFormVm
+            .Select(p => new
             {
-                Id = p.MaSanPham,
-                Ten = p.Ten,
-                MoTa = p.MoTa,
-                Gia = p.Gia,
-                MaDanhMuc = p.MaDanhMuc,
-                MaTinhTrang = p.MaTinhTrang,
-                TrangThai = p.TrangThai,
-                AnhHienTai = p.Anh.OrderBy(a => a.ThuTu)
-                    .Select(a => new ProductImageVm { MaAnh = a.MaAnhSP, DuongDan = a.DuongDan, LaAnhChinh = a.LaAnhChinh })
-                    .ToList()
+                p.NgayCapNhat,
+                Form = new ProductFormVm
+                {
+                    Id = p.MaSanPham,
+                    Ten = p.Ten,
+                    MoTa = p.MoTa,
+                    Gia = p.Gia,
+                    MaDanhMuc = p.MaDanhMuc,
+                    MaTinhTrang = p.MaTinhTrang,
+                    TrangThai = p.TrangThai,
+                    AnhHienTai = p.Anh.OrderBy(a => a.ThuTu)
+                        .Select(a => new ProductImageVm { MaAnh = a.MaAnhSP, DuongDan = a.DuongDan, LaAnhChinh = a.LaAnhChinh })
+                        .ToList()
+                }
             })
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (raw is null) return null;
+
+        if (raw.Form.TrangThai == "HIDDEN" && raw.Form.AnhHienTai.Count > 0)
+        {
+            var ls = await _db.LichSuTrangThaiSanPhams.AsNoTracking()
+                .Where(h => h.MaSanPham == maSanPham)
+                .OrderByDescending(h => h.ThoiGian).ThenByDescending(h => h.MaLichSuTrangThaiSanPham)
+                .FirstOrDefaultAsync(cancellationToken);
+            raw.Form.CoTheMoAnNgay = LaAnKhongQuaChinhSua(raw.NgayCapNhat, ls);
+        }
+
+        return raw.Form;
     }
 
     public async Task<(bool Success, string? Error, int Id)> CreateAsync(
@@ -424,7 +513,8 @@ public class ProductService : IProductService
         sp.ChuoiTimKiem = LamChuoiTimKiem(form.Ten);
         sp.MoTa = string.IsNullOrWhiteSpace(form.MoTa) ? null : form.MoTa.Trim();
         sp.Gia = form.Gia;
-        sp.NgayCapNhat = DateTime.UtcNow;
+        // Nếu đang ẩn mà có chỉnh sửa nội dung thì đẩy mốc cập nhật vượt quá ngưỡng so sánh lúc ẩn để bắt buộc duyệt lại.
+        sp.NgayCapNhat = sp.TrangThai == "HIDDEN" ? DateTime.UtcNow.AddSeconds(3) : DateTime.UtcNow;
 
         // Đếm theo số ảnh để giới hạn 10, nhưng thứ tự mới phải nối sau ThuTu lớn nhất:
         // xóa một ảnh ở giữa để lại khoảng trống (2,3,4) nên Count+1 sẽ trùng unique key.
@@ -463,12 +553,42 @@ public class ProductService : IProductService
         return (true, null);
     }
 
-    public async Task<(bool Success, string? Error)> HideAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
+    public Task<(bool Success, string? Error)> HideAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
+        => HideInternalAsync(maNguoiDung, maSanPham, LyDoTuAn, cancellationToken);
+
+    public Task<(bool Success, string? Error)> HideDueToFailedReviewAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
+        => HideInternalAsync(maNguoiDung, maSanPham, LyDoAnDoLoiDuyet, cancellationToken);
+
+    private async Task<(bool Success, string? Error)> HideInternalAsync(
+        int maNguoiDung, int maSanPham, string lyDo, CancellationToken cancellationToken)
     {
         var (loi, shop) = await KiemTraTruDangBanAsync(maNguoiDung, cancellationToken);
         if (loi is not null) return (false, loi);
 
         var cuaHangId = shop!.MaCuaHang;
+        if (!_db.Database.IsRelational())
+        {
+            var sp = await _db.SanPhams.FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && x.MaCuaHang == cuaHangId && !x.DaXoa, cancellationToken);
+            if (sp is null) return (false, "Không tìm thấy sản phẩm hoặc sản phẩm không thuộc cửa hàng của bạn.");
+            if (sp.TrangThai != "ACTIVE") return (false, "Không thể chuyển trạng thái sản phẩm này.");
+
+            var now = DateTime.UtcNow;
+            sp.TrangThai = "HIDDEN";
+            sp.NgayCapNhat = now;
+            _db.LichSuTrangThaiSanPhams.Add(new LichSuTrangThaiSanPham
+            {
+                MaSanPham = maSanPham,
+                TrangThaiCu = "ACTIVE",
+                TrangThaiMoi = "HIDDEN",
+                LoaiNguoiThucHien = "SELLER",
+                NguoiThucHienId = maNguoiDung,
+                LyDo = lyDo,
+                ThoiGian = now
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+            return (true, null);
+        }
+
         var thuocSo = await _db.SanPhams.AsNoTracking()
             .AnyAsync(x => x.MaSanPham == maSanPham && x.MaCuaHang == cuaHangId && !x.DaXoa, cancellationToken);
         if (!thuocSo) return (false, "Không tìm thấy sản phẩm hoặc sản phẩm không thuộc cửa hàng của bạn.");
@@ -476,12 +596,65 @@ public class ProductService : IProductService
         try
         {
             await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"EXEC dbo.sp_ChuyenTrangThaiSanPham @MaSanPham={maSanPham}, @TrangThaiMoi='HIDDEN', @LoaiNguoiThucHien='SELLER', @NguoiThucHienId={maNguoiDung}",
+                $@"EXEC dbo.sp_ChuyenTrangThaiSanPham @MaSanPham={maSanPham}, @TrangThaiMoi='HIDDEN', @LoaiNguoiThucHien='SELLER', @NguoiThucHienId={maNguoiDung}, @LyDo={lyDo}",
                 cancellationToken);
         }
         catch (Exception ex)
         {
             // sp kiểm tra tính hợp lệ của bước chuyển (50011): chỉ ACTIVE mới ẩn được.
+            return (false, SqlLoi.ThongBao(ex));
+        }
+        return (true, null);
+    }
+
+    public async Task<(bool Success, string? Error)> UnhideAsync(int maNguoiDung, int maSanPham, CancellationToken cancellationToken = default)
+    {
+        var (loi, shop) = await KiemTraTruDangBanAsync(maNguoiDung, cancellationToken);
+        if (loi is not null) return (false, loi);
+
+        var cuaHangId = shop!.MaCuaHang;
+        var sp = await _db.SanPhams
+            .Include(x => x.Anh)
+            .FirstOrDefaultAsync(x => x.MaSanPham == maSanPham && x.MaCuaHang == cuaHangId && !x.DaXoa, cancellationToken);
+        if (sp is null) return (false, "Không tìm thấy sản phẩm hoặc sản phẩm không thuộc cửa hàng của bạn.");
+        if (sp.TrangThai != "HIDDEN") return (false, "Chỉ sản phẩm đang ẩn mới có thể mở ẩn trực tiếp.");
+        if (sp.Anh.Count == 0) return (false, "Sản phẩm cần có ít nhất 1 ảnh trước khi mở bán lại.");
+
+        var lsGanNhat = await _db.LichSuTrangThaiSanPhams.AsNoTracking()
+            .Where(h => h.MaSanPham == maSanPham)
+            .OrderByDescending(h => h.ThoiGian).ThenByDescending(h => h.MaLichSuTrangThaiSanPham)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (!LaAnKhongQuaChinhSua(sp.NgayCapNhat, lsGanNhat))
+            return (false, "Sản phẩm đã được chỉnh sửa sau khi ẩn hoặc chưa từng được duyệt bán. Vui lòng bấm Gửi duyệt.");
+
+        if (!_db.Database.IsRelational())
+        {
+            var now = DateTime.UtcNow;
+            sp.TrangThai = "ACTIVE";
+            sp.NgayCapNhat = now;
+            _db.LichSuTrangThaiSanPhams.Add(new LichSuTrangThaiSanPham
+            {
+                MaSanPham = maSanPham,
+                TrangThaiCu = "HIDDEN",
+                TrangThaiMoi = "ACTIVE",
+                LoaiNguoiThucHien = "SELLER",
+                NguoiThucHienId = maNguoiDung,
+                LyDo = "Mở ẩn sản phẩm chưa chỉnh sửa",
+                ThoiGian = now
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+            return (true, null);
+        }
+
+        try
+        {
+            await _db.Database.ExecuteSqlInterpolatedAsync(
+                $@"EXEC dbo.sp_ChuyenTrangThaiSanPham @MaSanPham={maSanPham}, @TrangThaiMoi='ACTIVE', @LoaiNguoiThucHien='SELLER', @NguoiThucHienId={maNguoiDung}, @LyDo=N'Mở ẩn sản phẩm chưa chỉnh sửa'",
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
             return (false, SqlLoi.ThongBao(ex));
         }
         return (true, null);
@@ -599,9 +772,20 @@ public class ProductService : IProductService
         if (anh.LaAnhChinh) return (true, null);
 
         // Index UNIQUE filtered (MaSanPham WHERE LaAnhChinh=1): phải bỏ ảnh chính cũ TRƯỚC khi bật ảnh mới.
-        await _db.AnhSanPhams
-            .Where(a => a.MaSanPham == maSanPham && a.LaAnhChinh)
-            .ExecuteUpdateAsync(s => s.SetProperty(x => x.LaAnhChinh, false), cancellationToken);
+        if (_db.Database.IsRelational())
+        {
+            await _db.AnhSanPhams
+                .Where(a => a.MaSanPham == maSanPham && a.LaAnhChinh)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.LaAnhChinh, false), cancellationToken);
+        }
+        else
+        {
+            var anhChinhCu = await _db.AnhSanPhams
+                .Where(a => a.MaSanPham == maSanPham && a.LaAnhChinh)
+                .ToListAsync(cancellationToken);
+            foreach (var cu in anhChinhCu) cu.LaAnhChinh = false;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
         anh.LaAnhChinh = true;
         await _db.SaveChangesAsync(cancellationToken);
         return (true, null);
@@ -619,6 +803,13 @@ public class ProductService : IProductService
         if (anh is null) return (false, "Không tìm thấy ảnh.", null);
         var loiTrangThai = LoiTrangThaiKhongChoSuaAnh(anh.SanPham.TrangThai);
         if (loiTrangThai is not null) return (false, loiTrangThai, null);
+
+        if (anh.SanPham.TrangThai == "ACTIVE")
+        {
+            var soAnh = await _db.AnhSanPhams.CountAsync(a => a.MaSanPham == maSanPham, cancellationToken);
+            if (soAnh <= 1)
+                return (false, "Sản phẩm đang bán cần giữ ít nhất 1 ảnh. Hãy ẩn sản phẩm trước nếu muốn xóa ảnh cuối cùng.", null);
+        }
 
         var wasMain = anh.LaAnhChinh;
         var duongDanAnh = anh.DuongDan;
@@ -648,7 +839,6 @@ public class ProductService : IProductService
         "PENDING_REVIEW" => "Sản phẩm đang chờ duyệt, không thể chỉnh sửa ảnh.",
         "RESERVED" or "SOLD" => "Sản phẩm đã có đơn đặt/đã bán, không thể chỉnh sửa ảnh.",
         "REMOVED" => "Sản phẩm đã bị gỡ, không thể chỉnh sửa ảnh.",
-        "ACTIVE" => "Sản phẩm đang bán, hãy ẩn sản phẩm trước khi chỉnh sửa ảnh.",
         _ => null
     };
 
