@@ -361,17 +361,11 @@ WHERE n.ThuTu <= m.MaxImages
   );
 
 -- 4. Đồng bộ ảnh đại diện trong ChiTietDonHang theo đúng ảnh chính (1.jpg / 1.png) của sản phẩm
-IF OBJECT_ID(N'dbo.trg_ChiTietDonHang_KiemTra', N'TR') IS NOT NULL
-    DISABLE TRIGGER dbo.trg_ChiTietDonHang_KiemTra ON dbo.ChiTietDonHang;
-
 UPDATE ct
 SET ct.AnhDaiDien = m.BaseDir + N'/1' + m.Ext
 FROM ChiTietDonHang ct
 JOIN #ProductImageMap m ON m.MaSanPham = ct.MaSanPham
 WHERE ct.AnhDaiDien IS NULL OR ct.AnhDaiDien <> m.BaseDir + N'/1' + m.Ext;
-
-IF OBJECT_ID(N'dbo.trg_ChiTietDonHang_KiemTra', N'TR') IS NOT NULL
-    ENABLE TRIGGER dbo.trg_ChiTietDonHang_KiemTra ON dbo.ChiTietDonHang;
 
 COMMIT TRANSACTION;
 GO
