@@ -25,7 +25,10 @@ WORKDIR /app
 COPY --from=build /app/out ./
 
 # Ensure wwwroot/uploads directory exists
-RUN mkdir -p /app/wwwroot/uploads
+RUN mkdir -p /app/wwwroot/uploads/products /app/App_Data/private-uploads/disputes /app/App_Data/private-uploads/appeals /app/data-protection-keys \
+    && chown -R $APP_UID:$APP_UID /app/wwwroot/uploads /app/App_Data/private-uploads /app/data-protection-keys
+
+USER $APP_UID
 
 # ASP.NET Core in .NET 8/9/10 listens on port 8080 by default
 EXPOSE 8080

@@ -1,5 +1,9 @@
+@using SecondHandMarketplace.Web.Common
 @{
     ViewData["Title"] = HienThi.Chon("Điều khoản sử dụng & Chính sách bảo mật - Re:Market", "Terms of Service & Privacy Policy - Re:Market");
+    ViewData["MetaDescription"] = HienThi.Chon(
+        "Điều khoản sử dụng Re:Market, vai trò của nền tảng, quy tắc tài khoản, nội dung, chính sách bảo mật và giao dịch.",
+        "Read Re:Market's terms for platform use, account responsibilities, listings, payments, privacy, and disputes.");
     var autoScroll = ViewBag.AutoScrollTarget as string;
 }
 
@@ -60,6 +64,18 @@
                 <h3>@HienThi.Chon("Cần hướng dẫn thực hành?", "Need Practical Guides?")</h3>
                 <p>@HienThi.Chon("Xem quy trình giao dịch an toàn, trạng thái đơn hàng và giải đáp chi tiết tại Trung tâm hỗ trợ.", "Read step-by-step safe trading guides, order statuses, and FAQs in the Help Center.")</p>
                 <div class="rm-doc-side-links">
+                    <a asp-area="" asp-controller="Home" asp-action="BuyingPolicy">
+                        <span>@HienThi.Chon("Chính sách mua hàng", "Buying policy")</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a asp-area="" asp-controller="Home" asp-action="SellerPolicy">
+                        <span>@HienThi.Chon("Chính sách người bán", "Seller policy")</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a asp-area="" asp-controller="Home" asp-action="Privacy">
+                        <span>@L["Footer_Privacy"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
                     <a asp-controller="Help" asp-action="Index">
                         <span>@L["Footer_HelpCenter"]</span>
                         <i class="bi bi-arrow-right"></i>

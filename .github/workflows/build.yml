@@ -1,0 +1,21 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  web-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore src/SecondHandMarketplace.Web/SecondHandMarketplace.Web.csproj
+      - name: Build
+        run: dotnet build src/SecondHandMarketplace.Web/SecondHandMarketplace.Web.csproj --configuration Release --no-restore

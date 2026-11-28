@@ -6,9 +6,6 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
-USE SecondHandMarketplace;
-GO
-
 IF COL_LENGTH(N'dbo.DanhGia', N'PhanHoiShop') IS NULL
 BEGIN
     ALTER TABLE dbo.DanhGia ADD PhanHoiShop nvarchar(1000) NULL;

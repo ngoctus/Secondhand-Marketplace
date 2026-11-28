@@ -324,6 +324,13 @@
                     </div>
 
                     <!-- Nút đặt hàng -->
+                    <p class="small text-muted mt-3 mb-2">
+                        @HienThi.Chon("Khi đặt hàng, bạn xác nhận đã đọc ", "By placing an order, you confirm that you have read the ")
+                        <a asp-area="" asp-controller="Home" asp-action="Terms">@L["Footer_Terms"]</a>,
+                        <a asp-area="" asp-controller="Home" asp-action="BuyingPolicy">@HienThi.Chon("Chính sách mua hàng", "Buying policy")</a>
+                        @HienThi.Chon("và ", "and ")
+                        <a asp-area="" asp-controller="Home" asp-action="Privacy">@L["Footer_Privacy"]</a>.
+                    </p>
                     <button type="submit" class="btn btn-rm-primary w-100 py-3 fw-bold rounded-pill text-white shadow-sm" id="btnSubmitOrder">
                         <i class="bi bi-bag-check-fill me-2 fs-5"></i>@L["Checkout_ConfirmBtn"]
                     </button>

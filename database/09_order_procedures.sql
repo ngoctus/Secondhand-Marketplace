@@ -424,7 +424,7 @@ BEGIN
             TrangThaiThanhToan = CASE WHEN @TrangThaiMoi = 'COMPLETED' AND PhuongThucThanhToan = 'COD' AND TrangThaiThanhToan = 'UNPAID'
                                       THEN 'PAID'
                                       WHEN @TrangThaiMoi = 'CANCELLED' AND TrangThaiThanhToan = 'PAID'
-                                      THEN 'REFUNDED'
+                                      THEN 'REFUND_DUE'
                                       ELSE TrangThaiThanhToan END
         WHERE MaDonHang = @MaDonHang;
 
@@ -458,10 +458,10 @@ BEGIN
                 ThoiGianThanhToan = ISNULL(ThoiGianThanhToan, @Now)
             WHERE MaDonHang = @MaDonHang;
         END
-        ELSE IF @TrangThaiMoi = 'CANCELLED' AND EXISTS (SELECT 1 FROM DonHang WHERE MaDonHang = @MaDonHang AND TrangThaiThanhToan = 'REFUNDED')
+        ELSE IF @TrangThaiMoi = 'CANCELLED' AND EXISTS (SELECT 1 FROM DonHang WHERE MaDonHang = @MaDonHang AND TrangThaiThanhToan = 'REFUND_DUE')
         BEGIN
             UPDATE ThanhToan
-            SET TrangThaiThanhToan = 'REFUNDED'
+            SET TrangThaiThanhToan = 'REFUND_DUE'
             WHERE MaDonHang = @MaDonHang;
         END;
 

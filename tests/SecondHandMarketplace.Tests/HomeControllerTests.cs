@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging.Abstractions;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Controllers;
 using SecondHandMarketplace.Web.Data;
@@ -39,7 +39,7 @@ public class HomeControllerTests
 
     private static HomeController NewController(AppDbContext db)
     {
-        var cache = new MemoryCache(new MemoryCacheOptions());
+        var cache = new TestDistributedCache();
         var reviews = new ReviewService(db);
         return new HomeController(
             new ProductService(db, reviews),
@@ -48,7 +48,8 @@ public class HomeControllerTests
             reviews,
             new AuctionService(db, new NoopAuctionRealtime()),
             cache,
-            db);
+            db,
+            NullLogger<HomeController>.Instance);
     }
 
     private static async Task<HomeIndexVm> TrangChuAsync(HomeController controller) =>

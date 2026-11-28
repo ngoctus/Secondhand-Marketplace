@@ -399,7 +399,7 @@ public class DisputeService : IDisputeService
         if (phanQuyet == "REFUND_BUYER")
         {
             tc.TrangThai = "RESOLVED";
-            tc.PhanQuyet = "Chấp thuận khiếu nại: Hoàn tiền cho người mua và hủy đơn.";
+            tc.PhanQuyet = "Chấp thuận khiếu nại: Yêu cầu shop hoàn tiền cho người mua và hủy đơn.";
             var lyDoAdmin = string.IsNullOrWhiteSpace(ghiChu) ? tc.PhanQuyet : $"{tc.PhanQuyet} Ghi chú: {ghiChu.Trim()}";
             if (lyDoAdmin.Length > 500)
             {
@@ -416,7 +416,7 @@ public class DisputeService : IDisputeService
             else
             {
                 tc.DonHang.TrangThai = "CANCELLED";
-                tc.DonHang.TrangThaiThanhToan = "REFUNDED";
+                tc.DonHang.TrangThaiThanhToan = "REFUND_DUE";
                 tc.DonHang.NgayCapNhat = now;
                 tc.DonHang.NguoiHuy = "ADMIN";
                 tc.DonHang.LyDoHuy = lyDoAdmin;
@@ -425,7 +425,7 @@ public class DisputeService : IDisputeService
                 var tt = await _db.ThanhToans.FirstOrDefaultAsync(t => t.MaDonHang == tc.MaDonHang);
                 if (tt != null)
                 {
-                    tt.TrangThaiThanhToan = "REFUNDED";
+                    tt.TrangThaiThanhToan = "REFUND_DUE";
                 }
 
                 // Hoàn lại sản phẩm về ACTIVE bất kể đang RESERVED hay đã SOLD (khi đơn COMPLETED bị refund)

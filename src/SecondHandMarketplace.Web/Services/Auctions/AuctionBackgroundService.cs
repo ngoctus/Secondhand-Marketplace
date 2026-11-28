@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SecondHandMarketplace.Web.Data;
+using SecondHandMarketplace.Web.Services.BackgroundJobs;
 using SecondHandMarketplace.Web.Services.Realtime;
 
 namespace SecondHandMarketplace.Web.Services.Auctions;
@@ -9,7 +10,8 @@ namespace SecondHandMarketplace.Web.Services.Auctions;
 /// Chạy nền: chuyển phiên SCHEDULED -> RUNNING khi tới giờ, và chốt các phiên hết giờ
 /// (sp_KetThucPhienDauGia: chọn người thắng, tạo đơn, gửi thông báo). Chu kỳ chỉnh bằng Auction:SweepSeconds (mặc định 30 giây).
 /// </summary>
-public sealed class AuctionBackgroundService(IServiceScopeFactory scopes, IConfiguration config, ILogger<AuctionBackgroundService> log)
+public sealed class AuctionBackgroundService(IServiceScopeFactory scopes, IConfiguration config,
+    IBackgroundJobLease jobLease, ILogger<AuctionBackgroundService> log)
     : BackgroundService
 {
     private const int ToiDaLanThu = 3;
@@ -20,15 +22,42 @@ public sealed class AuctionBackgroundService(IServiceScopeFactory scopes, IConfi
         try
         {
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);   // chờ app khởi động xong
-            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(giay));
-            do
+            var soLanQuetLoi = 0;
+            while (!stoppingToken.IsCancellationRequested)
             {
-                try { await XuLyAsync(stoppingToken); }
+                TimeSpan thoiGianCho;
+                try
+                {
+                    await using var lease = await jobLease.TryAcquireAsync("auction-settlement", stoppingToken);
+                    if (lease is null)
+                    {
+                        thoiGianCho = TimeSpan.FromSeconds(giay);
+                        await Task.Delay(thoiGianCho, stoppingToken);
+                        continue;
+                    }
+
+                    using var jobToken = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, lease.LeaseLost);
+                    await XuLyAsync(jobToken.Token);
+                    soLanQuetLoi = 0;
+                    thoiGianCho = TimeSpan.FromSeconds(giay);
+                }
+                catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+                {
+                    soLanQuetLoi = Math.Min(soLanQuetLoi + 1, 10);
+                    var soGiayCho = Math.Min(300, giay * Math.Pow(2, Math.Min(soLanQuetLoi - 1, 5)));
+                    thoiGianCho = TimeSpan.FromSeconds(soGiayCho);
+                    log.LogWarning("Dừng lượt quét đấu giá vì mất distributed lease; sẽ thử lại sau {DelaySeconds} giây.", soGiayCho);
+                }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    log.LogError(ex, "Lỗi khi quét phiên đấu giá.");
+                    soLanQuetLoi = Math.Min(soLanQuetLoi + 1, 10);
+                    var soGiayCho = Math.Min(300, giay * Math.Pow(2, Math.Min(soLanQuetLoi - 1, 5)));
+                    thoiGianCho = TimeSpan.FromSeconds(soGiayCho);
+                    log.LogError(ex, "Lỗi khi quét phiên đấu giá; sẽ thử lại sau {DelaySeconds} giây.", soGiayCho);
                 }
-            } while (await timer.WaitForNextTickAsync(stoppingToken));
+
+                await Task.Delay(thoiGianCho, stoppingToken);
+            }
         }
         catch (OperationCanceledException) { /* tắt ứng dụng */ }
     }

@@ -24,7 +24,7 @@ Dự án đã có sẵn bộ file phục vụ Docker:
 1. **`Dockerfile`**: Sử dụng kỹ thuật **Multi-stage build**:
    - *Stage 1 (Build)*: Dùng image `mcr.microsoft.com/dotnet/sdk:10.0` để restore NuGet và compile mã nguồn ra thư mục `/app/out`.
    - *Stage 2 (Runtime)*: Dùng image nhẹ `mcr.microsoft.com/dotnet/aspnet:10.0` để chạy ứng dụng, mở cổng `8080`.
-2. **`docker-compose.yml`**: Định nghĩa container `secondhand_web`, ánh xạ cổng `8080:8080`, gắn biến môi trường và tạo 2 volume lưu trữ ảnh upload (`product_uploads`, `dispute_uploads`).
+2. **`docker-compose.yml`**: Định nghĩa container web, bind cổng vào loopback, gắn biến môi trường và tạo các volume ảnh sản phẩm (`product_uploads`), bằng chứng tranh chấp (`dispute_uploads`), bằng chứng khiếu nại (`appeal_uploads`) và khóa cookie (`data_protection_keys`). Local dùng các volume này; production có thể đặt `STORAGE_PROVIDER=S3` để dùng object storage dùng chung. Xem runbook trước khi bật S3 vì ảnh cũ cần được copy đúng prefix public/private.
 3. **`.dockerignore`**: Bỏ qua các file/thư mục không cần thiết (`bin/`, `obj/`, `.git/`) giúp quá trình build image diễn ra nhanh nhất.
 4. **`.env`**: Nơi lưu trữ tài khoản database, mật khẩu và khóa bí mật JWT cho Docker.
 
@@ -54,11 +54,12 @@ Tạo file `.env` tại thư mục gốc của dự án (cùng cấp với `dock
 # Kết nối ngược về máy tính host thông qua domain nội bộ của Docker
 DB_SERVER=host.docker.internal
 DB_NAME=SecondHandMarketplace
-DB_USER=NgocTus
-DB_PASSWORD=OwO@123
+DB_USER=<sql-server-login>
+DB_PASSWORD=<unique-local-password>
+DB_TRUST_CERT=True
 
 # Khóa bí mật JWT (bắt buộc dài tối thiểu 32 ký tự)
-JWT_KEY=SecondhandMarketplace_SecretKey_LocalDev_2026_AtLeast32Bytes
+JWT_KEY=<random-secret-at-least-32-bytes>
 
 # API key AI (không bắt buộc, để trống nếu chưa dùng)
 AI_API_KEY=
@@ -68,11 +69,11 @@ AI_API_KEY=
 
 ---
 
-### Bước 3: Cấu hình `docker-compose.yml` cho máy Local
+### Bước 3: Kiểm tra cấu hình local
 
-Trong file `docker-compose.yml`:
-* **Bỏ qua chứng chỉ SSL tự ký local:** Cấu hình `TrustServerCertificate=${DB_TRUST_CERT:-True}` để tránh lỗi chứng chỉ khi kết nối tới SQL Server ở máy dev.
-* **Mở port:** Cấu hình `ports: - "8080:8080"` để hỗ trợ cả IPv4 và IPv6.
+Compose đã đọc cấu hình SQL từ các biến `DB_SERVER`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` và `DB_TRUST_CERT`; ứng dụng tạo chuỗi kết nối bằng builder để xử lý đúng mật khẩu có dấu phân cách. Khi `.env` có ký tự `$` hoặc `#` trong mật khẩu, hãy đặt giá trị trong nháy đơn theo cú pháp Compose.
+
+`DB_TRUST_CERT=True` chỉ dành cho SQL Server local có chứng chỉ tự ký. Production phải dùng chứng chỉ TLS hợp lệ và giữ `DB_TRUST_CERT=False`. Cổng web chỉ bind vào loopback (`127.0.0.1:8080`); nếu chia sẻ ra Internet, đặt reverse proxy HTTPS tin cậy phía trước thay vì mở trực tiếp cổng HTTP.
 
 ---
 

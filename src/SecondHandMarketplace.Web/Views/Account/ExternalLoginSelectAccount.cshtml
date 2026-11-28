@@ -99,17 +99,17 @@
                 </div>
             </div>
 
-            <!-- Hướng dẫn tích hợp OAuth thật -->
+            <!-- Thông báo chế độ demo dành cho môi trường phát triển -->
             <div class="alert alert-light border small text-muted mb-3 d-flex gap-2 align-items-start">
                 <i class="bi bi-info-circle-fill text-primary mt-1"></i>
                 <div>
                     @if (HienThi.LaTiengAnh)
                     {
-                        <span><strong>Connection Mode:</strong> Running device account selector simulation. To connect directly to real Google OAuth (`accounts.google.com`), configure <code>ClientId</code> &amp; <code>ClientSecret</code> under <code>Authentication:Google</code> in <code>appsettings.json</code>.</span>
+                        <span><strong>Development demo:</strong> This screen simulates choosing a Google account. It does not contact Google and must not be used with real account credentials.</span>
                     }
                     else
                     {
-                        <span><strong>Chế độ kết nối:</strong> Đang chạy mô phỏng chọn tài khoản thiết bị. Để liên kết trực tiếp tới cửa sổ cấp quyền OAuth thật của Google (`accounts.google.com`), hãy điền <code>ClientId</code> &amp; <code>ClientSecret</code> tại <code>Authentication:Google</code> trong file <code>appsettings.json</code>.</span>
+                        <span><strong>Bản mô phỏng phát triển:</strong> Màn hình này chỉ mô phỏng chọn tài khoản Google, không kết nối tới Google và không được dùng thông tin đăng nhập thật.</span>
                     }
                 </div>
             </div>

@@ -1,7 +1,7 @@
 @model OrderDetailVm
 
 <div class="panel">
-    <div class="panel-head"><h3>Sản phẩm trong đơn</h3><span class="muted">@Model.Items.Count sản phẩm</span></div>
+    <div class="panel-head"><h3>@HienThi.Chon("Sản phẩm trong đơn", "Products in this order")</h3><span class="muted">@string.Format(HienThi.Chon("{0} sản phẩm", "{0} items"), Model.Items.Count)</span></div>
     <table class="table align-middle">
         <tbody>
         @foreach (var it in Model.Items)
@@ -17,51 +17,51 @@
         </tbody>
     </table>
     <div class="order-sum">
-        <div><span>Tiền hàng</span><span>@HienThi.Tien(Model.ItemsTotal)</span></div>
-        <div><span>Phí vận chuyển</span><span>@HienThi.Tien(Model.ShippingFee)</span></div>
-        <div class="total"><span>Tổng thanh toán</span><span>@HienThi.Tien(Model.Total)</span></div>
+        <div><span>@HienThi.Chon("Tiền hàng", "Items subtotal")</span><span>@HienThi.Tien(Model.ItemsTotal)</span></div>
+        <div><span>@HienThi.Chon("Phí vận chuyển", "Shipping fee")</span><span>@HienThi.Tien(Model.ShippingFee)</span></div>
+        <div class="total"><span>@HienThi.Chon("Tổng thanh toán", "Order total")</span><span>@HienThi.Tien(Model.Total)</span></div>
     </div>
 </div>
 
 <div class="panel">
-    <h3>Hình thức giao nhận và thanh toán</h3>
+    <h3>@HienThi.Chon("Hình thức giao nhận và thanh toán", "Fulfillment and payment")</h3>
     <div class="row g-3">
         <div class="col-md-6">
-            <div class="muted">HÌNH THỨC NHẬN</div>
+            <div class="muted">@HienThi.Chon("HÌNH THỨC NHẬN", "FULFILLMENT")</div>
             <div class="fw-bold mb-2 text-primary">@HienThi.TenHinhThucNhan(Model.HinhThucNhan)</div>
-            <div class="muted">@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? "NGƯỜI HẸN & ĐIỂM HẸN GIAO DỊCH" : "NGƯỜI NHẬN & ĐỊA CHỈ GIAO HÀNG")</div>
+            <div class="muted">@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? HienThi.Chon("NGƯỜI HẸN & ĐIỂM HẸN GIAO DỊCH", "MEETUP CONTACT & LOCATION") : HienThi.Chon("NGƯỜI NHẬN & ĐỊA CHỈ GIAO HÀNG", "RECIPIENT & DELIVERY ADDRESS"))</div>
             <b>@Model.RecipientName</b> · @Model.RecipientPhone<br />@Model.RecipientAddress
             @if (Model.BuyerId > 0)
             {
                 <div class="mt-1">
                     <a asp-area="User" asp-controller="Reports" asp-action="Tao" asp-route-loai="USER" asp-route-id="@Model.BuyerId" asp-route-ten="@Model.BuyerName"
-                       class="text-danger small text-decoration-none" title="Báo cáo người mua vi phạm">
-                        🚩 Báo cáo người mua
+                       class="text-danger small text-decoration-none" title="@HienThi.Chon("Báo cáo người mua vi phạm", "Report buyer")">
+                        🚩 @HienThi.Chon("Báo cáo người mua", "Report buyer")
                     </a>
                 </div>
             }
         </div>
         <div class="col-md-6">
-            <div class="muted">THANH TOÁN</div>
+            <div class="muted">@HienThi.Chon("THANH TOÁN", "PAYMENT")</div>
             @HienThi.PhuongThucThanhToan(Model.PaymentMethod) ·
             <span class="@(Model.PaymentStatus == "PAID" ? "st st-completed" : "st st-pending")">@HienThi.TrangThaiThanhToan(Model.PaymentStatus)</span>
             @foreach (var p in Model.Payments)
             {
-                <div class="small text-muted">@HienThi.TrangThaiThanhToan(p.Status) · @HienThi.Tien(p.Amount)@(p.TransactionCode is null ? "" : " · Mã GD " + p.TransactionCode)@(p.PaidAt is null ? "" : " · " + HienThi.NgayGio(p.PaidAt))</div>
+                <div class="small text-muted">@HienThi.TrangThaiThanhToan(p.Status) · @HienThi.Tien(p.Amount)@(p.TransactionCode is null ? "" : " · " + HienThi.Chon("Mã GD ", "Transaction ref. ") + p.TransactionCode)@(p.PaidAt is null ? "" : " · " + HienThi.NgayGio(p.PaidAt))</div>
             }
         </div>
     </div>
 </div>
 
 <div class="panel">
-    <h3>Lịch sử trạng thái</h3>
+    <h3>@HienThi.Chon("Lịch sử trạng thái", "Status history")</h3>
     <ol class="timeline">
         @foreach (var h in Model.History.AsEnumerable().Reverse())
         {
             <li>
                 <span class="@HienThi.LopTrangThai(h.To)">@HienThi.TrangThaiDon(h.To, Model.HinhThucNhan)</span>
                 <div class="small text-muted">@HienThi.NgayGio(h.At) · @h.Actor</div>
-                @if (!string.IsNullOrWhiteSpace(h.Reason)) { <div class="small">Lý do: @h.Reason</div> }
+                @if (!string.IsNullOrWhiteSpace(h.Reason)) { <div class="small">@HienThi.Chon("Lý do:", "Reason:") @h.Reason</div> }
             </li>
         }
     </ol>

@@ -5,6 +5,7 @@
 @inject IAntiforgery Antiforgery
 @inject ICategoryService CategoryService
 @inject ICartService CartService
+@inject IConfiguration Configuration
 @{
     IReadOnlyList<SecondHandMarketplace.Web.Models.Entities.DanhMuc> menuDanhMuc = [];
     try
@@ -33,6 +34,20 @@
     var currentArea = Context.Request.RouteValues["area"]?.ToString() ?? string.Empty;
     var currentController = Context.Request.RouteValues["controller"]?.ToString() ?? string.Empty;
     var currentAction = Context.Request.RouteValues["action"]?.ToString() ?? string.Empty;
+    var configuredTitle = ViewData["Title"]?.ToString() ?? "Re:Market";
+    const string brandSuffix = " - Re:Market";
+    var seoTitle = configuredTitle.EndsWith(brandSuffix, StringComparison.OrdinalIgnoreCase)
+        ? configuredTitle[..^brandSuffix.Length]
+        : configuredTitle;
+    var seoDescription = ViewData["MetaDescription"]?.ToString() ?? L["Layout_MetaDescription"].Value;
+    var publicSiteUrl = Configuration["Site:PublicBaseUrl"]?.TrimEnd('/');
+    var isPrivatePage = Context.Response.StatusCode >= 400
+        || currentArea.Equals("Admin", StringComparison.OrdinalIgnoreCase)
+        || currentArea.Equals("User", StringComparison.OrdinalIgnoreCase)
+        || currentController.Equals("Account", StringComparison.OrdinalIgnoreCase);
+    var canonicalUrl = Uri.TryCreate(publicSiteUrl, UriKind.Absolute, out var publicSiteUri)
+        ? $"{publicSiteUri.GetLeftPart(UriPartial.Authority)}{Context.Request.Path}"
+        : null;
     var isSellerChannelPage = currentArea.Equals("User", StringComparison.OrdinalIgnoreCase) &&
                               (currentController.Equals("Products", StringComparison.OrdinalIgnoreCase) ||
                                currentController.Equals("SellerOrders", StringComparison.OrdinalIgnoreCase) ||
@@ -46,8 +61,21 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="@L["Layout_MetaDescription"]" />
-    <title>@ViewData["Title"] - Re:Market</title>
+    <meta name="description" content="@seoDescription" />
+    <meta name="robots" content="@(isPrivatePage ? "noindex, nofollow" : "index, follow")" />
+    @if (canonicalUrl is not null)
+    {
+        <link rel="canonical" href="@canonicalUrl" />
+        <meta property="og:url" content="@canonicalUrl" />
+    }
+    <meta property="og:type" content="@(ViewData["OgType"]?.ToString() ?? "website")" />
+    <meta property="og:site_name" content="Re:Market" />
+    <meta property="og:title" content="@seoTitle - Re:Market" />
+    <meta property="og:description" content="@seoDescription" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="@seoTitle - Re:Market" />
+    <meta name="twitter:description" content="@seoDescription" />
+    <title>@seoTitle - Re:Market</title>
     <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
     @if (User.Identity?.IsAuthenticated == true)
     {
@@ -66,6 +94,7 @@
     <script src="~/js/animations.js" asp-append-version="true"></script>
 </head>
 <body class="rm-body">
+    <a class="rm-skip-link" href="#main-content">@HienThi.Chon("Bỏ qua điều hướng", "Skip to main content")</a>
     <!-- Header Navbar tối giản: Brand · Danh mục · Đấu giá · Tìm kiếm rộng · Avatar Mega-Menu · Giỏ hàng · Chuông · Đăng bán -->
     <header class="rm-header">
         <div class="rm-header-inner">
@@ -422,7 +451,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="rm-main-content" role="main">
+    <main class="rm-main-content" id="main-content" tabindex="-1">
         @if (isSellerChannelPage)
         {
             <nav class="d-flex flex-wrap align-items-center gap-2 mb-3 pb-2 border-bottom" aria-label="@L["Layout_SellerChannelNavAria"]">
@@ -527,7 +556,9 @@
                     <h4 class="rm-footer-heading">@L["Footer_Policy"]</h4>
                     <ul class="rm-footer-links">
                         <li><a asp-area="" asp-controller="Home" asp-action="Terms">@L["Footer_Terms"]</a></li>
-                        <li><a href="/chinh-sach-bao-mat#bao-mat">@L["Footer_Privacy"]</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="BuyingPolicy">@HienThi.Chon("Chính sách mua hàng", "Buying policy")</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="SellerPolicy">@HienThi.Chon("Chính sách người bán", "Seller policy")</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Privacy">@L["Footer_Privacy"]</a></li>
                         <li><a asp-controller="Help" asp-action="Index" asp-fragment="su-co">@L["Layout_IncidentRules"]</a></li>
                     </ul>
                 </div>

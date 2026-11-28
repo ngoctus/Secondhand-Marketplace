@@ -91,6 +91,7 @@ public static class HienThi
         "UNPAID" => Chon("Chưa thanh toán", "Unpaid"),
         "PENDING" => Chon("Đang xử lý", "Processing"),
         "PAID" => Chon("Đã thanh toán", "Paid"),
+        "REFUND_DUE" => Chon("Chờ hoàn tiền", "Refund due"),
         "REFUNDED" => Chon("Đã hoàn tiền", "Refunded"),
         "FAILED" => Chon("Thất bại", "Failed"),
         "SUCCESS" => Chon("Thành công", "Success"),

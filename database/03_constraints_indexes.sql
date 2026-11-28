@@ -191,7 +191,7 @@ ALTER TABLE AnhSanPham ADD
 ALTER TABLE DonHang ADD
     CONSTRAINT CK_DonHang_SoTien        CHECK (TienHang >= 0 AND PhiVanChuyen >= 0 AND TongTien = TienHang + PhiVanChuyen),
     CONSTRAINT CK_DonHang_PhuongThucTT  CHECK (PhuongThucThanhToan IN ('COD','BANK_TRANSFER','ONLINE')),
-    CONSTRAINT CK_DonHang_TrangThaiTT   CHECK (TrangThaiThanhToan IN ('UNPAID','PENDING','PAID','REFUNDED','FAILED')),
+    CONSTRAINT CK_DonHang_TrangThaiTT   CHECK (TrangThaiThanhToan IN ('UNPAID','PENDING','PAID','REFUND_DUE','REFUNDED','FAILED')),
     CONSTRAINT CK_DonHang_TrangThai     CHECK (TrangThai IN ('PENDING','CONFIRMED','SHIPPING','DELIVERED','COMPLETED','CANCELLED')),
     CONSTRAINT CK_DonHang_SDT           CHECK (SoDienThoaiNhan NOT LIKE '%[^0-9]%' AND LEN(SoDienThoaiNhan) BETWEEN 9 AND 15),
     CONSTRAINT CK_DonHang_NguoiNhan     CHECK (LEN(LTRIM(RTRIM(TenNguoiNhan))) > 0),
@@ -211,7 +211,7 @@ ALTER TABLE LichSuTrangThaiDonHang ADD
 
 ALTER TABLE ThanhToan ADD
     CONSTRAINT CK_ThanhToan_PhuongThuc CHECK (PhuongThucThanhToan IN ('COD','BANK_TRANSFER','ONLINE')),
-    CONSTRAINT CK_ThanhToan_TrangThai  CHECK (TrangThaiThanhToan IN ('PENDING','SUCCESS','FAILED','REFUNDED')),
+    CONSTRAINT CK_ThanhToan_TrangThai  CHECK (TrangThaiThanhToan IN ('PENDING','SUCCESS','FAILED','REFUND_DUE','REFUNDED')),
     CONSTRAINT CK_ThanhToan_SoTien     CHECK (SoTien > 0);
 
 ALTER TABLE LichSuTrangThaiSanPham ADD

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Common.Constants;
@@ -7,11 +8,15 @@ using SecondHandMarketplace.Web.Common.Extensions;
 using SecondHandMarketplace.Web.Models.ViewModels.Shop;
 using SecondHandMarketplace.Web.Services.Areas;
 using SecondHandMarketplace.Web.Services.Shops;
+using SecondHandMarketplace.Web.Services.Storage;
 
 namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
 [Authorize(Roles = AppRoles.User)]
-public sealed class ShopController(IShopService shops, IKhuVucService khuVuc, IWebHostEnvironment env) : UserBaseController
+public sealed class ShopController(
+    IShopService shops,
+    IKhuVucService khuVuc,
+    IUploadStorage uploadStorage) : UserBaseController
 {
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -47,7 +52,7 @@ public sealed class ShopController(IShopService shops, IKhuVucService khuVuc, IW
     {
         if (User.LayNguoiDungId() is not int userId) return Challenge();
 
-        string? savedLogoFullPath = null;
+        string? savedLogoPath = null;
         if (logoFile is { Length: > 0 })
         {
             var (hopLe, loiAnh, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(logoFile, cancellationToken: cancellationToken);
@@ -57,16 +62,18 @@ public sealed class ShopController(IShopService shops, IKhuVucService khuVuc, IW
             }
             else
             {
-                var webRoot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                var (relPath, fullPath) = await UploadAnhAnToan.LuuAnhAsync(logoFile, webRoot, "shops", ext!, cancellationToken);
+                var relPath = $"/uploads/shops/{Guid.NewGuid():N}{ext}";
+                await using var stream = logoFile.OpenReadStream();
+                await uploadStorage.SaveAsync(stream, relPath, isPrivate: false, UploadContentType(ext!), cancellationToken);
                 model.Logo = relPath;
-                savedLogoFullPath = fullPath;
+                savedLogoPath = relPath;
             }
         }
 
         if (!ModelState.IsValid)
         {
-            UploadAnhAnToan.XoaAnh(savedLogoFullPath);
+            if (savedLogoPath is not null)
+                await uploadStorage.DeleteAsync(savedLogoPath, isPrivate: false, cancellationToken);
             return await HienLaiFormAsync(model, cancellationToken);
         }
 
@@ -76,15 +83,26 @@ public sealed class ShopController(IShopService shops, IKhuVucService khuVuc, IW
             model.MaNganHang, model.SoTaiKhoan, model.TenChuTaiKhoan), cancellationToken);
         if (!result.Success)
         {
-            UploadAnhAnToan.XoaAnh(savedLogoFullPath);
+            if (savedLogoPath is not null)
+                await uploadStorage.DeleteAsync(savedLogoPath, isPrivate: false, cancellationToken);
             ModelState.AddModelError(string.Empty, result.Error ?? "Không thể lưu cửa hàng.");
             return await HienLaiFormAsync(model, cancellationToken);
         }
 
-        HomeCacheHelper.XoaCacheTrangChu(HttpContext?.RequestServices.GetService<IMemoryCache>());
+        await HomeCacheHelper.XoaCacheTrangChuAsync(
+            HttpContext?.RequestServices.GetService<IDistributedCache>(),
+            cancellationToken);
         TempData["ThanhCong"] = "Đã lưu thông tin cửa hàng.";
         return RedirectToAction(nameof(Index));
     }
+
+    private static string UploadContentType(string extension) => extension.ToLowerInvariant() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".webp" => "image/webp",
+        _ => "application/octet-stream"
+    };
 
     private async Task<IActionResult> HienLaiFormAsync(ShopVm model, CancellationToken cancellationToken)
     {

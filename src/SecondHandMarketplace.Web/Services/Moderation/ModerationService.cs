@@ -10,6 +10,7 @@ using SecondHandMarketplace.Web.Services.Accounts;
 using SecondHandMarketplace.Web.Services.Ai;
 using SecondHandMarketplace.Web.Services.AuditLogs;
 using SecondHandMarketplace.Web.Services.Notifications;
+using SecondHandMarketplace.Web.Services.Storage;
 
 namespace SecondHandMarketplace.Web.Services.Moderation;
 
@@ -23,7 +24,8 @@ public sealed class ModerationService(
     IAiModerationAnalyzer? aiAnalyzer = null,
     IWebHostEnvironment? webHostEnvironment = null,
     IConfiguration? configuration = null,
-    IAiSettingsService? aiSettings = null) : IModerationService
+    IAiSettingsService? aiSettings = null,
+    IUploadStorage? uploadStorage = null) : IModerationService
 {
     private const long MaxImageBytesForAi = 2 * 1024 * 1024; // 2 MB mỗi ảnh đại diện gửi lên LLM
 
@@ -133,10 +135,10 @@ public sealed class ModerationService(
         }
     }
 
-    /// <summary>Đọc tối đa maxImages ảnh đại diện cục bộ trong wwwroot/uploads/ (ưu tiên thumbnail nhẹ, <= 2MB).</summary>
+    /// <summary>Đọc tối đa maxImages ảnh sản phẩm cục bộ (ưu tiên thumbnail nhẹ, <= 2MB).</summary>
     private async Task<IReadOnlyList<AiModerationImage>> LoadProductImagesForAiAsync(int productId, int maxImages, CancellationToken ct)
     {
-        if (maxImages <= 0 || webHostEnvironment is null || string.IsNullOrWhiteSpace(webHostEnvironment.WebRootPath))
+        if (maxImages <= 0 || webHostEnvironment is null)
             return Array.Empty<AiModerationImage>();
 
         var paths = await db.AnhSanPhams.AsNoTracking()
@@ -149,18 +151,35 @@ public sealed class ModerationService(
 
         if (paths.Count == 0) return Array.Empty<AiModerationImage>();
 
-        var uploadsRoot = Path.GetFullPath(Path.Combine(webHostEnvironment.WebRootPath, "uploads"));
+        var uploadsRoot = UploadStoragePaths.PublicRoot(webHostEnvironment, configuration ?? new ConfigurationBuilder().Build());
         var images = new List<AiModerationImage>(paths.Count);
 
         foreach (var rawPath in paths)
         {
-            if (string.IsNullOrWhiteSpace(rawPath) || !rawPath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+            if (uploadStorage is not null)
+            {
+                var extension = Path.GetExtension(rawPath);
+                var thumbUrl = rawPath[..^extension.Length] + "-thumb.webp";
+                byte[]? bytes = null;
+                var selectedPath = rawPath;
+                try
+                {
+                    bytes = await uploadStorage.ReadAsync(thumbUrl, isPrivate: false, ct);
+                    if (bytes is not null) selectedPath = thumbUrl;
+                    if (bytes is null) bytes = await uploadStorage.ReadAsync(rawPath, isPrivate: false, ct);
+                    if (bytes is null || bytes.Length == 0 || bytes.Length > MaxImageBytesForAi) continue;
+                    var storageMime = GetSupportedImageMime(selectedPath);
+                    if (storageMime is not null) images.Add(new AiModerationImage(storageMime, Convert.ToBase64String(bytes)));
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    logger.LogDebug(ex, "Không đọc được ảnh {Path} cho AI kiểm duyệt SP {ProductId}.", selectedPath, productId);
+                }
                 continue;
+            }
 
-            var relative = rawPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-            var fullPath = Path.GetFullPath(Path.Combine(webHostEnvironment.WebRootPath, relative));
-            if (!fullPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-                continue;
+            var fullPath = UploadStoragePaths.ResolveLocalUpload(rawPath, uploadsRoot, "products");
+            if (fullPath is null) continue;
 
             // Ưu tiên bản -thumb.webp (nhẹ token hơn nhiều) nếu tồn tại cùng thư mục
             var dir = Path.GetDirectoryName(fullPath);

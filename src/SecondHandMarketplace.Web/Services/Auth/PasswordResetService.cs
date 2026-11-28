@@ -109,6 +109,32 @@ public sealed class PasswordResetService(
         return (true, null);
     }
 
+    public async Task<(bool Success, string? Error)> ChangePasswordWithTokenAsync(
+        int userId, string currentPassword, string newPassword, string verifiedToken, CancellationToken cancellationToken = default)
+    {
+        var user = await db.NguoiDungs.SingleOrDefaultAsync(x => x.MaNguoiDung == userId, cancellationToken);
+        if (user is null) return (false, "Không tìm thấy tài khoản.");
+        if (!passwordService.KiemTra(currentPassword, user.MatKhauBam))
+            return (false, "Mật khẩu hiện tại không chính xác.");
+
+        var (ok, error, otp) = await ValidateVerifiedTokenAsync(user.Email, verifiedToken, cancellationToken);
+        if (!ok || otp is null) return (false, error);
+
+        var now = DateTime.UtcNow;
+        user.MatKhauBam = passwordService.Bam(newPassword);
+        user.NgayCapNhat = now;
+        otp.UsedAtUtc = now;
+        foreach (var other in await db.PasswordResetOtps
+                     .Where(x => x.Email == otp.Email && x.Id != otp.Id && x.UsedAtUtc == null)
+                     .ToListAsync(cancellationToken))
+        {
+            other.UsedAtUtc = now;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return (true, null);
+    }
+
     public async Task<(bool Success, string? Error)> ResetPasswordWithTokenAsync(string email, string verifiedToken, string newPassword, CancellationToken cancellationToken = default)
     {
         var (ok, error, otp) = await ValidateVerifiedTokenAsync(email, verifiedToken, cancellationToken);

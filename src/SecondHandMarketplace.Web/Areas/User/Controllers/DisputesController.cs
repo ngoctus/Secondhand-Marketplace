@@ -2,18 +2,19 @@ using Microsoft.AspNetCore.Mvc;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models.ViewModels.Disputes;
 using SecondHandMarketplace.Web.Services.Disputes;
+using SecondHandMarketplace.Web.Services.Storage;
 
 namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
 public class DisputesController : UserBaseController
 {
     private readonly IDisputeService _disputeService;
-    private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
+    private readonly IUploadStorage _uploadStorage;
 
-    public DisputesController(IDisputeService disputeService, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
+    public DisputesController(IDisputeService disputeService, IUploadStorage uploadStorage)
     {
         _disputeService = disputeService;
-        _env = env;
+        _uploadStorage = uploadStorage;
     }
 
     /// <summary>Danh sách các khiếu nại / tranh chấp liên quan đến người dùng (cả tư cách người mua lẫn chủ shop bán hàng).</summary>
@@ -54,7 +55,7 @@ public class DisputesController : UserBaseController
     /// <summary>Chủ shop gửi phản hồi đối với khiếu nại của người mua kèm ảnh chứng minh nếu có.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> PhanHoi(int id, string phanHoi, IFormFile? fileDinhKem)
+    public async Task<IActionResult> PhanHoi(int id, string phanHoi, IFormFile? fileDinhKem, CancellationToken cancellationToken = default)
     {
         var userId = User.LayNguoiDungId();
         if (userId == null) return Challenge();
@@ -64,17 +65,17 @@ public class DisputesController : UserBaseController
 
         if (fileDinhKem != null && fileDinhKem.Length > 0)
         {
-            var (hopLe, loi, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(fileDinhKem);
+            var (hopLe, loi, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(fileDinhKem, cancellationToken: cancellationToken);
             if (!hopLe)
             {
                 this.ThongBaoLoi(loi ?? "Tệp ảnh không hợp lệ.");
                 return RedirectToAction(nameof(ChiTiet), new { id });
             }
 
-            var webRoot = _env?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var (relPath, fullPath) = await UploadAnhAnToan.LuuAnhAsync(fileDinhKem, webRoot, "disputes", ext!);
-            anhPhanHoi = relPath;
-            createdFilePath = fullPath;
+            anhPhanHoi = $"/uploads/disputes/{Guid.NewGuid():N}{ext}";
+            await using var stream = fileDinhKem.OpenReadStream();
+            await _uploadStorage.SaveAsync(stream, anhPhanHoi, isPrivate: true, UploadContentType(ext!), cancellationToken);
+            createdFilePath = anhPhanHoi;
         }
 
         var (thanhCong, thongBao) = await _disputeService.NguoiBanPhanHoiAsync(userId.Value, id, phanHoi, anhPhanHoi);
@@ -84,7 +85,8 @@ public class DisputesController : UserBaseController
         }
         else
         {
-            UploadAnhAnToan.XoaAnh(createdFilePath);
+            if (createdFilePath is not null)
+                await _uploadStorage.DeleteAsync(createdFilePath, isPrivate: true, cancellationToken);
             this.ThongBaoLoi(thongBao ?? "Không thể gửi phản hồi.");
         }
 
@@ -115,7 +117,7 @@ public class DisputesController : UserBaseController
     /// <summary>Xử lý submit mở khiếu nại tranh chấp.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Tao(MoTranhChapViewModel vm)
+    public async Task<IActionResult> Tao(MoTranhChapViewModel vm, CancellationToken cancellationToken = default)
     {
         var userId = User.LayNguoiDungId();
         if (userId == null) return Challenge();
@@ -125,23 +127,24 @@ public class DisputesController : UserBaseController
         // Xử lý upload tệp ảnh bằng chứng nếu có
         if (vm.FileDinhKem != null && vm.FileDinhKem.Length > 0)
         {
-            var (hopLe, loi, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(vm.FileDinhKem);
+            var (hopLe, loi, ext) = await UploadAnhAnToan.KiemTraAnhHopLeAsync(vm.FileDinhKem, cancellationToken: cancellationToken);
             if (!hopLe)
             {
                 ModelState.AddModelError(nameof(vm.FileDinhKem), loi ?? "Tệp ảnh không hợp lệ.");
             }
             else
             {
-                var webRoot = _env?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                var (relPath, fullPath) = await UploadAnhAnToan.LuuAnhAsync(vm.FileDinhKem, webRoot, "disputes", ext!);
-                vm.BangChungAnh = relPath;
-                createdFilePath = fullPath;
+                vm.BangChungAnh = $"/uploads/disputes/{Guid.NewGuid():N}{ext}";
+                await using var stream = vm.FileDinhKem.OpenReadStream();
+                await _uploadStorage.SaveAsync(stream, vm.BangChungAnh, isPrivate: true, UploadContentType(ext!), cancellationToken);
+                createdFilePath = vm.BangChungAnh;
             }
         }
 
         if (!ModelState.IsValid)
         {
-            UploadAnhAnToan.XoaAnh(createdFilePath);
+            if (createdFilePath is not null)
+                await _uploadStorage.DeleteAsync(createdFilePath, isPrivate: true, cancellationToken);
             return View(vm);
         }
 
@@ -152,9 +155,18 @@ public class DisputesController : UserBaseController
             return RedirectToAction(nameof(Index));
         }
 
-        UploadAnhAnToan.XoaAnh(createdFilePath);
+        if (createdFilePath is not null)
+            await _uploadStorage.DeleteAsync(createdFilePath, isPrivate: true, cancellationToken);
 
         this.ThongBaoLoi(thongBao ?? "Không thể mở khiếu nại.");
         return View(vm);
     }
+
+    private static string UploadContentType(string extension) => extension.ToLowerInvariant() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".webp" => "image/webp",
+        _ => "application/octet-stream"
+    };
 }

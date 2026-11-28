@@ -1,0 +1,42 @@
+@using SecondHandMarketplace.Web.Common
+@{
+    ViewData["Title"] = HienThi.Chon("Chính sách người bán - Re:Market", "Seller Policy - Re:Market");
+    ViewData["MetaDescription"] = HienThi.Chon("Quy định đăng tin, giá, thanh toán, giao hàng, xử lý đơn và tranh chấp dành cho người bán Re:Market.", "Listing, pricing, payment, delivery, order, and dispute rules for Re:Market sellers.");
+}
+<div class="container py-5 policy-page" style="max-width: 960px;">
+    <nav aria-label="@HienThi.Chon("Điều hướng trang", "Page navigation")" class="mb-4"><ol class="breadcrumb"><li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li><li class="breadcrumb-item active" aria-current="page">@HienThi.Chon("Chính sách người bán", "Seller policy")</li></ol></nav>
+    <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+        <h1 class="h2 fw-bold">@HienThi.Chon("Chính sách người bán", "Seller Policy")</h1>
+        <p class="text-muted">@HienThi.Chon("Cập nhật lần cuối: 28/11/2026. Chính sách này áp dụng cho tài khoản đăng hoặc quản lý sản phẩm trên Re:Market.", "Last updated: November 28, 2026. This policy applies to accounts that list or manage products on Re:Market.")</p>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("1. Thông tin và quyền bán", "1. Seller and listing information")</h2>
+            <ul>
+                <li>@HienThi.Chon("Cung cấp thông tin tài khoản/cửa hàng chính xác, cập nhật và có thể liên hệ được; chỉ đăng sản phẩm bạn có quyền bán.", "Provide accurate, current, reachable account and shop information; list only items you are entitled to sell.")</li>
+                <li>@HienThi.Chon("Dùng ảnh thật và mô tả đúng tình trạng, tuổi đời, kích thước, phụ kiện, lỗi, nguồn gốc nếu biết và các hạn chế sử dụng. Không dùng ảnh hoặc nội dung gây hiểu nhầm.", "Use genuine photos and accurately describe condition, age, dimensions, accessories, defects, known origin, and limitations. Do not use misleading photos or claims.")</li>
+                <li>@HienThi.Chon("Đặt giá và phí giao hàng minh bạch; phản hồi câu hỏi hợp lý và thông báo kịp thời nếu sản phẩm không còn sẵn sàng.", "Set transparent prices and delivery charges, respond to reasonable questions, and promptly disclose when an item is no longer available.")</li>
+            </ul>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("2. Hàng hóa bị cấm và kiểm duyệt", "2. Prohibited goods and moderation")</h2>
+            <p>@HienThi.Chon("Không đăng hàng giả, hàng bị đánh cắp, vũ khí, chất nguy hiểm, hàng hóa bị pháp luật cấm hoặc mặt hàng/nội dung xâm phạm quyền của người khác. Không né tránh hệ thống kiểm duyệt. Re:Market có thể yêu cầu bổ sung thông tin, ẩn/gỡ tin hoặc áp dụng hạn chế tài khoản khi có căn cứ.", "Do not list counterfeit or stolen goods, weapons, hazardous substances, items prohibited by law, or goods/content that infringe others' rights. Do not evade moderation. Re:Market may request more information, hide/remove listings, or restrict accounts where justified.")</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("3. Xử lý đơn và thanh toán", "3. Orders and payment")</h2>
+            <p>@HienThi.Chon("Theo dõi đơn, xác nhận trạng thái chính xác và trao đổi trong kênh của đơn hàng. Với COD, thu tiền trực tiếp theo số tiền của đơn khi giao hàng. Với VietQR, nhập thông tin tài khoản nhận tiền chính xác, chỉ xác nhận đã nhận tiền sau khi kiểm tra tài khoản ngân hàng; không yêu cầu mật khẩu/OTP của người mua.", "Monitor orders, report status accurately, and communicate in the order channel. For COD, collect the order amount directly on delivery. For VietQR, provide accurate receiving-account details and confirm payment only after checking your bank account; never request a buyer's password or OTP.")</p>
+            <p>@HienThi.Chon("Nền tảng hiện không nhận giữ tiền, không xác minh chuyển khoản tự động và không có cổng thanh toán trực tuyến. Nếu cần hoàn tiền cho giao dịch chuyển khoản, người bán thực hiện chuyển khoản lại và cập nhật đơn thủ công.", "The platform does not currently hold funds, verify bank transfers automatically, or provide an online payment gateway. If a bank-transfer refund is due, the seller sends the money back and updates the order manually.")</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("4. Giao hàng, đổi trả và hậu mãi", "4. Delivery, returns, and after-sales")</h2>
+            <p>@HienThi.Chon("Người bán phối hợp với người mua để thống nhất phương thức, phí và thời gian giao/nhận; hiện trạng thái giao hàng được cập nhật thủ công và chưa có kết nối hãng vận chuyển. Trước khi chốt đơn, nói rõ điều kiện đổi trả hoặc bảo hành tự nguyện (nếu có). Không loại trừ quyền bắt buộc của người mua theo quy định pháp luật.", "Coordinate with buyers on delivery or pickup method, cost, and timing; shipping status is currently updated manually and no carrier is integrated. State any voluntary return or warranty terms before confirming the order. Do not waive buyers' mandatory statutory rights.")</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="h4">@HienThi.Chon("5. Khiếu nại và tranh chấp", "5. Complaints and disputes")</h2>
+            <p>@HienThi.Chon("Phản hồi khiếu nại kịp thời và cung cấp bằng chứng liên quan như ảnh lúc đóng gói, nội dung trao đổi, biên nhận giao hàng và chứng từ thanh toán. Không sửa/xóa nội dung nhằm che giấu thông tin của giao dịch đang được xem xét. Re:Market có thể yêu cầu hai bên bổ sung thông tin và ghi nhận kết quả xử lý.", "Respond to complaints promptly and provide relevant evidence such as packing photos, messages, delivery receipts, and payment records. Do not alter or remove information to conceal facts in an active review. Re:Market may ask both parties for more information and record the outcome.")</p>
+        </section>
+        <section>
+            <h2 class="h4">@HienThi.Chon("6. Thuế và nghĩa vụ của người bán", "6. Seller taxes and legal duties")</h2>
+            <p>@HienThi.Chon("Người bán tự chịu trách nhiệm về nghĩa vụ thuế, hóa đơn, nguồn gốc hàng hóa và các nghĩa vụ kinh doanh áp dụng cho mình. Hãy cung cấp thông tin chính xác theo yêu cầu hợp pháp của nền tảng hoặc cơ quan có thẩm quyền.", "Sellers are responsible for their applicable tax, invoicing, product-origin, and business obligations. Provide accurate information when lawfully requested by the platform or a competent authority.")</p>
+        </section>
+        <p class="small text-muted mt-4 mb-0">@HienThi.Chon("Xem thêm ", "See also ")<a asp-action="BuyingPolicy">@HienThi.Chon("Chính sách mua hàng", "Buying policy")</a>, <a asp-action="Terms">@L["Footer_Terms"]</a> @HienThi.Chon("và ", "and ")<a asp-action="Privacy">@L["Footer_Privacy"]</a>.</p>
+    </article>
+</div>

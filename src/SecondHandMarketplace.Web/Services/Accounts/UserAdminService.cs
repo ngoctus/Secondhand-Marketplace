@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using SecondHandMarketplace.Web.Data;
 using SecondHandMarketplace.Web.Services.AuditLogs;
 
 namespace SecondHandMarketplace.Web.Services.Accounts;
 
-public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog, IMemoryCache? cache = null) : IUserAdminService
+public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog, IDistributedCache? distributedCache = null) : IUserAdminService
 {
     public async Task<(bool Success, string? Error)> LockUserAsync(int? actorId, int userId, string? reason, CancellationToken cancellationToken = default)
     {
@@ -34,7 +34,7 @@ public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog,
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        HomeCacheHelper.XoaCacheTrangChu(cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
         await auditLog.LogAsync(actorId, "LOCK_USER", "NguoiDung", userId, "SUCCESS", reason);
         return (true, null);
     }
@@ -80,7 +80,7 @@ public sealed class UserAdminService(AppDbContext db, IAuditLogService auditLog,
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        HomeCacheHelper.XoaCacheTrangChu(cache);
+        await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
         await auditLog.LogAsync(actorId, "UNLOCK_USER", "NguoiDung", userId);
         return (true, null);
     }

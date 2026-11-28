@@ -1,5 +1,7 @@
 # Báo cáo đánh giá mức độ sẵn sàng Docker — Secondhand Marketplace
 
+> **Bản khảo sát lịch sử:** báo cáo này phản ánh trạng thái ngày 07/11/2026 và đã được thay thế một phần bởi `Dockerfile`, `docker-compose.yml`, `.dockerignore`, CI build, health endpoints và runbook hiện tại. Không dùng các kết luận “chưa có Dockerfile/Compose” bên dưới để hướng dẫn triển khai hiện nay; dùng `docs/deployment-runbook.md`.
+
 > **Thời điểm khảo sát:** 07/11/2026  
 > **Phạm vi:** chỉ đọc source code, file cấu hình, script SQL và tài liệu. Không tạo Dockerfile/compose/.dockerignore, không chạy `docker init`, không build image, không chạy container, không thay đổi database hay source code.  
 > **Kết luận nhanh:** Source code **có nền tảng kỹ thuật phù hợp để chạy trên Linux container**, nhưng project **chưa sẵn sàng để triển khai Docker ngay**. Có 3 vấn đề mức **Blocker** và nhiều vấn đề **High** về cấu hình, khởi tạo database, lưu trữ và bảo mật cần xử lý trước.
