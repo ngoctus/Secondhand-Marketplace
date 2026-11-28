@@ -67,6 +67,26 @@ if errorlevel 1 (
     exit /b 1
 )
 
+if exist "14_product_quantity.sql" (
+    echo Running 14_product_quantity.sql...
+    sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% %SQL_TLS_ARGS% -b -f 65001 -i "14_product_quantity.sql"
+    if errorlevel 1 (
+        echo ERROR: 14_product_quantity.sql failed.
+        pause
+        exit /b 1
+    )
+)
+
+if exist "fix_product_images.sql" (
+    echo Running fix_product_images.sql...
+    sqlcmd -S "%SQL_SERVER%" %SQL_AUTH% %SQL_TLS_ARGS% -b -f 65001 -i "fix_product_images.sql"
+    if errorlevel 1 (
+        echo ERROR: fix_product_images.sql failed.
+        pause
+        exit /b 1
+    )
+)
+
 :done
 echo All scripts completed.
 pause
