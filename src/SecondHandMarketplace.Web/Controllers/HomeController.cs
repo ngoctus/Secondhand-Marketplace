@@ -234,6 +234,8 @@ namespace SecondHandMarketplace.Web.Controllers
         [HttpGet("/huong-dan-giao-dich")]
         public IActionResult Faq()
         {
+            if (Request.Path.StartsWithSegments("/faq", StringComparison.OrdinalIgnoreCase))
+                ViewBag.AutoScrollTarget = "faq";
             return View();
         }
 
@@ -241,6 +243,8 @@ namespace SecondHandMarketplace.Web.Controllers
         [HttpGet("/chinh-sach-bao-mat")]
         public IActionResult Terms()
         {
+            if (Request.Path.StartsWithSegments("/chinh-sach-bao-mat", StringComparison.OrdinalIgnoreCase))
+                ViewBag.AutoScrollTarget = "bao-mat";
             return View();
         }
 

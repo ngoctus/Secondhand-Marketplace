@@ -1,123 +1,330 @@
 @{
-    ViewData["Title"] = HienThi.Chon("Câu hỏi thường gặp & Hướng dẫn - Re:Market", "FAQ & Safe Trading Guide - Re:Market");
+    ViewData["Title"] = HienThi.Chon("Câu hỏi thường gặp & Hướng dẫn giao dịch - Re:Market", "FAQ & Safe Trading Guide - Re:Market");
+    var autoScroll = ViewBag.AutoScrollTarget as string;
 }
 
-<div class="container py-5" style="max-width: 960px;">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb" style="font-size: 14px;">
-            <li class="breadcrumb-item"><a asp-area="" asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@HienThi.Chon("Hỗ trợ & FAQ", "Support & FAQ")</li>
-        </ol>
+<div class="rm-reading-progress" aria-hidden="true">
+    <div class="rm-reading-progress-bar" id="rmReadingProgressBar"></div>
+</div>
+
+<div class="rm-doc-page" data-rm-auto-scroll="@autoScroll">
+    <nav class="rm-breadcrumb" aria-label="Breadcrumb">
+        <a asp-area="" asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a>
+        <span class="sep">/</span>
+        <span>@HienThi.Chon("Hỗ trợ & Câu hỏi thường gặp", "Support & FAQ")</span>
     </nav>
 
-    <!-- Section: Hướng dẫn giao dịch -->
-    <section id="huong-dan-giao-dich" class="mb-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h1 class="h2 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">@L["Footer_SafeTrading"]</h1>
-            <p class="text-muted mb-4">@HienThi.Chon("Để đảm bảo quyền lợi tối đa cho cả người mua và người bán, Re:Market khuyến nghị quy trình mua bán chuẩn:", "To ensure the best experience for both buyers and sellers, Re:Market recommends the following standard trading workflow:")</p>
-
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="border rounded-3 p-3 h-100">
-                        <div class="badge bg-success mb-2">@HienThi.Chon("Bước 1", "Step 1")</div>
-                        <h6 class="fw-bold">@HienThi.Chon("Kiểm tra thông tin món đồ", "Inspect Item Details")</h6>
-                        <p class="small text-muted mb-0">@HienThi.Chon("Đọc kỹ mô tả, hình ảnh thật và độ mới của sản phẩm. Trao đổi với người bán qua tin nhắn nếu có thắc mắc.", "Review the description, real photos, and condition carefully. Chat with the seller if you have questions.")</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="border rounded-3 p-3 h-100">
-                        <div class="badge bg-success mb-2">@HienThi.Chon("Bước 2", "Step 2")</div>
-                        <h6 class="fw-bold">@HienThi.Chon("Đặt hàng & Khung giờ nhận", "Place Order & Delivery Window")</h6>
-                        <p class="small text-muted mb-0">@HienThi.Chon("Chọn địa chỉ và khung giờ nhận hàng phù hợp. Hệ thống hỗ trợ thanh toán linh hoạt qua chuyển khoản hoặc COD.", "Select your delivery address and preferred time window. Pay via Bank Transfer (VietQR) or Cash on Delivery (COD).")</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="border rounded-3 p-3 h-100">
-                        <div class="badge bg-success mb-2">@HienThi.Chon("Bước 3", "Step 3")</div>
-                        <h6 class="fw-bold">@HienThi.Chon("Đồng kiểm & Đánh giá", "Verify & Review")</h6>
-                        <p class="small text-muted mb-0">@HienThi.Chon("Khi nhận hàng, đồng kiểm ngoại quan. Sau khi hoàn tất đơn hàng, bạn có thể khiếu nại nếu sản phẩm không đúng mô tả.", "Inspect your item upon delivery. If the item does not match its description, you can file a dispute before completing the order.")</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section: FAQ -->
-    <section id="faq" class="mb-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h2 class="h3 fw-bold mb-4" style="color: var(--color-primary-dark, #1B4332);">@HienThi.Chon("Câu hỏi thường gặp (FAQ)", "Frequently Asked Questions (FAQ)")</h2>
-            <div class="accordion accordion-flush" id="faqAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingOne">
-                        <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                            @HienThi.Chon("1. Làm thế nào để đăng bán sản phẩm trên Re:Market?", "1. How do I list an item for sale on Re:Market?")
-                        </button>
-                    </h2>
-                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body text-secondary">
-                            @HienThi.Chon(
-                                "Bạn chỉ cần đăng nhập tài khoản, nhấn vào nút \"Đăng bán\" ở góc trên bên phải hoặc vào mục Cửa hàng của tôi. Điền tiêu đề, chọn danh mục, tải ảnh thật của món đồ và thiết lập giá bán. Tin đăng sẽ được kiểm duyệt trước khi hiển thị công khai.",
-                                "Simply sign in, click \"Sell Now\" in the top right corner or open My Shop. Enter the title, choose a category, upload real photos, and set your price. Your listing will be reviewed before appearing publicly.")
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingTwo">
-                        <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                            @HienThi.Chon("2. Thời gian kiểm duyệt tin đăng là bao lâu?", "2. How long does product moderation take?")
-                        </button>
-                    </h2>
-                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body text-secondary">
-                            @HienThi.Chon(
-                                "Re:Market ứng dụng hệ thống lọc từ khóa vi phạm kết hợp AI kiểm duyệt 2 tầng và đội ngũ quản trị viên. Hầu hết tin đăng hợp lệ sẽ được duyệt trong vòng vài phút đến tối đa 2 giờ làm việc.",
-                                "Re:Market uses automated keyword filtering combined with 2-tier hybrid AI moderation and admin review. Most valid listings are approved within minutes up to 2 business hours.")
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingThree">
-                        <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                            @HienThi.Chon("3. Nếu hàng nhận được không đúng mô tả thì phải làm sao?", "3. What should I do if the received item doesn't match the description?")
-                        </button>
-                    </h2>
-                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body text-secondary">
-                            @HienThi.Chon(
-                                "Bạn có quyền gửi yêu cầu Khiếu nại / Tranh chấp trong chi tiết đơn hàng kèm hình ảnh bằng chứng rõ ràng. Đội ngũ Re:Market sẽ trung gian giải quyết công bằng cho cả hai bên.",
-                                "You can submit a Dispute / Claim from the order details page along with clear photo evidence. The Re:Market admin team will review and mediate fairly.")
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section: Báo cáo vi phạm -->
-    <section id="bao-cao-vi-pham">
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
-                <h2 class="h3 fw-bold mb-0 text-danger"><i class="bi bi-flag-fill me-2"></i>@HienThi.Chon("Báo cáo vi phạm cộng đồng", "Report Community Violations")</h2>
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <a asp-area="User" asp-controller="Reports" asp-action="Index" class="btn btn-outline-danger btn-sm">@HienThi.Chon("Xem lịch sử báo cáo của bạn", "View your report history")</a>
-                }
-            </div>
-            <p class="text-muted">
+    <header class="rm-doc-hero">
+        <div class="rm-doc-hero-inner">
+            <span class="rm-doc-eyebrow">
+                <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+                @HienThi.Chon("RE:MARKET · HƯỚNG DẪN & GIẢI ĐÁP", "RE:MARKET · GUIDES & FAQ")
+            </span>
+            <h1>@Html.Raw(HienThi.Chon("Mọi điều bạn cần biết<br />để mua bán đồ cũ tự tin.", "Everything you need to know<br />to buy & sell secondhand safely."))</h1>
+            <p class="rm-doc-hero-lead">
                 @HienThi.Chon(
-                    "Nếu bạn phát hiện hàng giả, hàng cấm, nội dung lừa đảo hoặc hành vi quấy rối, vui lòng báo cáo ngay để ban quản trị kịp thời xử lý và khóa tài khoản vi phạm.",
-                    "If you spot counterfeit goods, prohibited items, scams, or harassment, please report them immediately so our moderation team can take action.")
+                    "Tổng hợp quy trình giao dịch an toàn từng bước, giải đáp nhanh các thắc mắc phổ biến nhất của người dùng Re:Market và hướng dẫn báo cáo tin đăng hoặc hành vi vi phạm cộng đồng.",
+                    "A complete walkthrough of safe secondhand trading, quick answers to the most common user questions, and clear instructions on reporting violating listings or behavior.")
             </p>
-            <div class="alert alert-warning border-0 rounded-3 d-flex align-items-center gap-3">
-                <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
-                <div>
-                    <strong>@HienThi.Chon("Cách gửi báo cáo:", "How to report:")</strong>
-                    @HienThi.Chon(
-                        "Trên từng trang chi tiết sản phẩm hoặc trang cửa hàng của người bán, nhấn vào nút \"Báo cáo tin đăng vi phạm\" để gửi khiếu nại kèm lý do cụ thể.",
-                        "On any product detail page or shop page, click the \"Report Violation\" link to submit a report with specific details.")
-                </div>
+            <div class="rm-doc-meta-row">
+                <span class="rm-doc-meta-pill"><i class="bi bi-check2-circle"></i> @HienThi.Chon("Cập nhật mới nhất 11/2026", "Updated Nov 2026")</span>
+                <span class="rm-doc-meta-pill"><i class="bi bi-search"></i> @HienThi.Chon("Hỗ trợ tìm kiếm nhanh FAQ", "Instant FAQ Search")</span>
+            </div>
+            <div class="rm-doc-quick-nav">
+                <a class="rm-doc-chip" href="#huong-dan-giao-dich"><i class="bi bi-shield-check"></i> @L["Footer_SafeTrading"]</a>
+                <a class="rm-doc-chip" href="#faq"><i class="bi bi-question-circle"></i> @L["Footer_Faq"]</a>
+                <a class="rm-doc-chip" href="#bao-cao-vi-pham"><i class="bi bi-flag"></i> @L["Footer_ReportViolation"]</a>
+                <a class="rm-doc-chip" asp-controller="Help" asp-action="Index"><i class="bi bi-compass"></i> @L["Footer_HelpCenter"]</a>
             </div>
         </div>
-    </section>
+    </header>
+
+    <div class="rm-doc-layout">
+        <aside class="rm-doc-sidebar" aria-label="FAQ Contents">
+            <nav class="rm-doc-toc">
+                <div class="rm-doc-toc-title">@HienThi.Chon("Mục lục", "Contents")</div>
+                <div class="rm-doc-toc-list">
+                    <a class="rm-doc-toc-link" href="#huong-dan-giao-dich"><span class="rm-doc-toc-num">01</span><span>@L["Footer_SafeTrading"]</span></a>
+                    <a class="rm-doc-toc-link" href="#faq"><span class="rm-doc-toc-num">02</span><span>@L["Footer_Faq"]</span></a>
+                    <a class="rm-doc-toc-link" href="#bao-cao-vi-pham"><span class="rm-doc-toc-num">03</span><span>@L["Footer_ReportViolation"]</span></a>
+                </div>
+            </nav>
+
+            <div class="rm-doc-side-card">
+                <h3>@HienThi.Chon("Khám phá thêm", "Explore More")</h3>
+                <p>@HienThi.Chon("Cần xem quy tắc xử lý sự cố chi tiết hoặc chính sách bảo mật dữ liệu?", "Looking for detailed incident rules or our privacy policy?")</p>
+                <div class="rm-doc-side-links">
+                    <a asp-controller="Help" asp-action="Index" asp-fragment="su-co">
+                        <span>@L["Layout_IncidentRules"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a asp-area="" asp-controller="Home" asp-action="Terms">
+                        <span>@L["Footer_Terms"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a href="/chinh-sach-bao-mat#bao-mat">
+                        <span>@L["Footer_Privacy"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <div class="rm-doc-main">
+            <!-- 01: HƯỚNG DẪN GIAO DỊCH AN TOÀN -->
+            <section class="rm-doc-card rm-doc-reveal" id="huong-dan-giao-dich">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">01</span>
+                    <div>
+                        <h2>@L["Footer_SafeTrading"]</h2>
+                        <p>@HienThi.Chon("Quy trình 4 bước giúp bạn mua được đồ cũ chất lượng với mức giá hợp lý mà vẫn kiểm soát rủi ro tối đa.", "A 4-step workflow to buy quality secondhand items at great prices while minimizing risk.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <div class="rm-doc-step-grid">
+                        <article class="rm-doc-step-card">
+                            <span class="rm-doc-step-num">@HienThi.Chon("Bước 1", "Step 1")</span>
+                            <h3>@HienThi.Chon("Đọc kỹ ảnh thật & mô tả lỗi", "Inspect Real Photos & Notes")</h3>
+                            <p>@HienThi.Chon("Phóng to từng ảnh thực tế, đọc kỹ tình trạng độ mới, phụ kiện đi kèm và xem điểm đánh giá cộng đồng của cửa hàng trước khi thêm vào giỏ.", "Zoom into every real photo, check condition notes and accessories, and review the shop's verified community rating before adding to cart.")</p>
+                        </article>
+                        <article class="rm-doc-step-card">
+                            <span class="rm-doc-step-num">@HienThi.Chon("Bước 2", "Step 2")</span>
+                            <h3>@HienThi.Chon("Nhắn tin xác nhận ngay trên sàn", "Verify via On-Platform Chat")</h3>
+                            <p>@HienThi.Chon("Dùng tính năng Tin nhắn trên Re:Market để hỏi rõ về hoạt động của sản phẩm hoặc hẹn khung giờ nhận hàng. Tránh chuyển sang kênh ngoài sàn thiếu bằng chứng.", "Use Re:Market Messages to verify item functionality or coordinate delivery times. Avoid moving conversations off-platform.")</p>
+                        </article>
+                        <article class="rm-doc-step-card">
+                            <span class="rm-doc-step-num">@HienThi.Chon("Bước 3", "Step 3")</span>
+                            <h3>@HienThi.Chon("Đặt đơn & thanh toán chuẩn xác", "Checkout & Pay Securely")</h3>
+                            <p>@HienThi.Chon("Chọn địa chỉ giao nhận đã lưu (mặc định hoặc dự phòng), ghi chú khung giờ thuận tiện và chỉ thanh toán COD hoặc chuyển đúng VietQR trên chi tiết đơn.", "Choose your saved default or backup address, note your preferred time window, and pay via COD or exact VietQR details on the order page.")</p>
+                        </article>
+                        <article class="rm-doc-step-card">
+                            <span class="rm-doc-step-num">@HienThi.Chon("Bước 4", "Step 4")</span>
+                            <h3>@HienThi.Chon("Đồng kiểm, quay video & đánh giá", "Inspect, Record & Review")</h3>
+                            <p>@HienThi.Chon("Quay video mở hộp hoặc kiểm tra kỹ lúc gặp mặt trực tiếp. Chỉ bấm xác nhận đã nhận hàng khi hài lòng, hoặc tạo tranh chấp ngay nếu có sai lệch.", "Record an unboxing video or test carefully at meetup. Confirm receipt only when satisfied, or open a dispute immediately if anything is wrong.")</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 02: FAQ TƯƠNG TÁC -->
+            <section class="rm-doc-card rm-doc-reveal" id="faq" data-rm-faq-root>
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">02</span>
+                    <div>
+                        <h2>@HienThi.Chon("Câu hỏi thường gặp (FAQ)", "Frequently Asked Questions (FAQ)")</h2>
+                        <p>@HienThi.Chon("Gõ từ khóa hoặc chọn chủ đề để lọc nhanh câu hỏi bạn quan tâm.", "Type a keyword or pick a category to find your answer right away.")</p>
+                    </div>
+                </div>
+
+                <div class="rm-faq-toolbar">
+                    <div class="rm-faq-search-row">
+                        <div class="rm-faq-search-wrap">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="search"
+                                   class="rm-faq-search-input"
+                                   data-rm-faq-search
+                                   placeholder="@HienThi.Chon("Tìm câu hỏi về đăng bán, duyệt tin, VietQR, khiếu nại, đấu giá...", "Search about selling, moderation, VietQR, disputes, auctions...")"
+                                   aria-label="@HienThi.Chon("Tìm câu hỏi thường gặp", "Search FAQs")" />
+                        </div>
+                        <button type="button"
+                                class="btn-rm-outline btn-sm"
+                                data-rm-faq-toggle-all
+                                data-label-expand="@HienThi.Chon("Mở tất cả", "Expand all")"
+                                data-label-collapse="@HienThi.Chon("Thu gọn tất cả", "Collapse all")">
+                            @HienThi.Chon("Mở tất cả", "Expand all")
+                        </button>
+                    </div>
+                    <div class="rm-faq-cats" role="tablist">
+                        <button type="button" class="rm-faq-cat-btn is-active" data-rm-faq-cat="all">@HienThi.Chon("Tất cả (8)", "All (8)")</button>
+                        <button type="button" class="rm-faq-cat-btn" data-rm-faq-cat="selling">@HienThi.Chon("Đăng bán & Duyệt tin", "Selling & Moderation")</button>
+                        <button type="button" class="rm-faq-cat-btn" data-rm-faq-cat="buying">@HienThi.Chon("Mua hàng & Giao nhận", "Buying & Delivery")</button>
+                        <button type="button" class="rm-faq-cat-btn" data-rm-faq-cat="dispute">@HienThi.Chon("Sự cố & Bảo mật", "Disputes & Security")</button>
+                    </div>
+                </div>
+
+                <div class="rm-faq-list">
+                    <details class="rm-faq-item" data-cat="selling" open>
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Đăng bán", "Selling")</span>
+                                <span>@HienThi.Chon("Làm thế nào để đăng bán sản phẩm trên Re:Market?", "How do I list an item for sale on Re:Market?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Đăng nhập tài khoản, nhấn nút “Đăng bán” ở góc trên bên phải hoặc mở Kênh người bán. Điền tên sản phẩm, chọn danh mục, tình trạng, tải ảnh chụp thực tế, chọn ảnh bìa và đặt giá (có thể nhờ AI tham khảo giá gợi ý), sau đó bấm Gửi duyệt.", "Sign in, click \"Sell Now\" in the top right or open Seller Channel. Add the title, category, condition, real photos, cover image, and price (optionally using AI price suggestion), then submit for approval.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="selling">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Kiểm duyệt", "Moderation")</span>
+                                <span>@HienThi.Chon("Thời gian kiểm duyệt tin đăng mất bao lâu?", "How long does product moderation take?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Re:Market kết hợp lọc từ khóa tự động, AI kiểm duyệt 2 tầng và đội ngũ quản trị viên. Phần lớn tin đăng đúng quy chuẩn (ảnh thật, không chèn SĐT/Zalo lách luật, đúng danh mục) được duyệt trong vài phút đến tối đa 2 giờ làm việc.", "Re:Market combines automated keyword filtering, 2-tier AI screening, and admin review. Most compliant listings are approved within minutes up to 2 business hours.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="selling">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Quản lý tin", "Listings")</span>
+                                <span>@HienThi.Chon("Sản phẩm đang bán có đổi được ảnh bìa nhanh không?", "Can I switch the cover photo of an active listing?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Có. Trong trang Chỉnh sửa sản phẩm, bạn có thể đổi ảnh bìa giữa các ảnh đã tải lên mà không cần ẩn tin. Nếu bạn chỉ tạm ẩn tin rồi mở bán lại mà không sửa nội dung, hệ thống cũng cho phép mở bán trực tiếp ngay lập tức.", "Yes. On the Edit Product page, you can switch the cover photo among existing uploaded images without hiding the listing. Hiding and later unhiding without edits also restores the listing immediately.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="buying">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Thanh toán", "Payment")</span>
+                                <span>@HienThi.Chon("Phí vận chuyển và phương thức thanh toán được tính thế nào?", "How are shipping fees and payment methods handled?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Bạn có thể chọn Giao hàng tận nơi hoặc Gặp mặt trực tiếp, và thanh toán bằng tiền mặt khi nhận (COD) hoặc chuyển khoản VietQR trực tiếp cho shop (khi shop đã khai báo tài khoản ngân hàng). Phí vận chuyển hiển thị rõ trước khi bạn bấm xác nhận đặt hàng.", "Choose between Home Delivery or In-Person Meetup, and pay via COD or direct VietQR bank transfer (when configured by the shop). All totals are shown clearly before you confirm.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="buying">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Địa chỉ", "Addresses")</span>
+                                <span>@HienThi.Chon("Làm sao thêm địa chỉ giao hàng dự phòng ngay lúc đặt hàng?", "How do I save a backup address during Checkout?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Tại màn hình Thanh toán, chọn “+ Thêm địa chỉ khác”, nhập thông tin người nhận cùng Tỉnh/Xã rồi bấm “Lưu thành địa chỉ dự phòng”. Địa chỉ mới sẽ được lưu vào sổ địa chỉ dự phòng mà không ghi đè địa chỉ chính (muốn đổi địa chỉ mặc định bạn tự chọn trong Hồ sơ cá nhân).", "On Checkout, select \"+ Add another address\", fill in the details, and click \"Save as backup address\". It saves strictly as a backup without overwriting your default address (which you manage in Profile).")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="buying">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Đấu giá", "Auctions")</span>
+                                <span>@HienThi.Chon("Cách tham gia đấu giá sản phẩm trên Re:Market?", "How do live auctions work on Re:Market?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Vào mục Đấu giá trên trang chủ hoặc thanh điều hướng, chọn phiên đang diễn ra và đặt mức giá cao hơn tối thiểu 1 bước giá so với giá hiện tại. Khi đồng hồ đếm ngược kết thúc, người giữ mức giá hợp lệ cao nhất sẽ thắng phiên và hoàn tất đơn hàng.", "Open Auctions from the homepage or navigation, pick an active session, and place a bid at least one increment above the current price. When the countdown ends, the highest valid bidder wins.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="dispute">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Tranh chấp", "Dispute")</span>
+                                <span>@HienThi.Chon("Hàng nhận được không đúng mô tả thì phải làm sao?", "What should I do if the received item doesn't match the description?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Giữ nguyên trạng thái đơn (không bấm Đã nhận được hàng), mở Chi tiết đơn hàng và gửi yêu cầu Khiếu nại / Tranh chấp kèm video mở gói và ảnh chụp rõ lỗi. Đội ngũ Re:Market sẽ làm việc với hai bên và đưa ra quyết định công bằng.", "Do not confirm receipt. Open Order Details and file a Dispute with your unboxing video and clear photos. Re:Market moderators will review both sides and mediate fairly.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="dispute">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Bảo mật", "Security")</span>
+                                <span>@HienThi.Chon("Ai có thể nhìn thấy số điện thoại và địa chỉ nhà của tôi?", "Who can see my phone number and home address?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Địa chỉ chi tiết và số điện thoại cá nhân của bạn không hiển thị công khai trên sàn. Thông tin giao nhận chỉ được chia sẻ cho đúng chủ cửa hàng khi bạn chủ động đặt đơn hàng từ cửa hàng đó.", "Your street address and personal phone number are never publicly displayed. Delivery information is shared only with the specific shop when you place an order with them.")</p>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="rm-faq-empty" data-rm-faq-empty hidden>
+                    @HienThi.Chon("Không tìm thấy câu hỏi phù hợp. Thử từ khóa khác hoặc bấm “Tất cả”.", "No matching FAQ found. Try another keyword or switch back to \"All\".")
+                </div>
+            </section>
+
+            <!-- 03: BÁO CÁO VI PHẠM CỘNG ĐỒNG -->
+            <section class="rm-doc-card rm-doc-reveal" id="bao-cao-vi-pham">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge is-danger">03</span>
+                    <div>
+                        <h2>@HienThi.Chon("Báo cáo vi phạm cộng đồng", "Report Community Violations")</h2>
+                        <p>@HienThi.Chon("Chung tay giữ môi trường mua bán đồ cũ sạch sẽ, loại bỏ hàng giả và các hành vi lừa đảo.", "Help keep our secondhand marketplace clean by flagging counterfeits and scams early.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <p>
+                        @HienThi.Chon(
+                            "Nếu bạn phát hiện sản phẩm, cửa hàng hoặc người dùng có dấu hiệu vi phạm quy định cộng đồng, hãy gửi báo cáo trực tiếp trên hệ thống. Mọi báo cáo đều được bảo mật danh tính người gửi và ghi nhận lịch sử xử lý rõ ràng.",
+                            "If you spot a listing, shop, or user violating our community rules, report it directly on the platform. Reporter identities remain confidential and every case is tracked transparently.")
+                    </p>
+
+                    <div class="rm-doc-feature-grid">
+                        <article class="rm-doc-feature-card">
+                            <span class="rm-doc-feature-icon"><i class="bi bi-bag-x"></i></span>
+                            <h3>@HienThi.Chon("Hàng giả, hàng cấm & ảnh giả mạo", "Counterfeits, Prohibited & Fake Photos")</h3>
+                            <p>@HienThi.Chon("Sản phẩm nhái thương hiệu, thuộc danh mục cấm lưu hành hoặc lấy ảnh mạng/ảnh quảng cáo không phải hàng thật.", "Counterfeit items, legally prohibited goods, or stock images misrepresented as real photos.")</p>
+                        </article>
+                        <article class="rm-doc-feature-card">
+                            <span class="rm-doc-feature-icon"><i class="bi bi-exclamation-octagon"></i></span>
+                            <h3>@HienThi.Chon("Dấu hiệu lừa đảo & kéo khách ngoài sàn", "Scams & Off-Platform Solicitation")</h3>
+                            <p>@HienThi.Chon("Giá rẻ bất thường kèm yêu cầu chuyển khoản đặt cọc qua Zalo/link lạ hoặc né tránh thanh toán trên đơn hàng.", "Suspiciously cheap offers demanding off-platform deposits via Zalo/external links.")</p>
+                        </article>
+                        <article class="rm-doc-feature-card">
+                            <span class="rm-doc-feature-icon"><i class="bi bi-chat-left-dots"></i></span>
+                            <h3>@HienThi.Chon("Quấy rối, xúc phạm & spam", "Harassment, Abuse & Spam")</h3>
+                            <p>@HienThi.Chon("Ngôn từ công kích, đe dọa, spam tin nhắn hoặc đánh giá ác ý sai sự thật nhằm phá hoại uy tín shop.", "Abusive language, threats, spam messages, or fabricated malicious reviews.")</p>
+                        </article>
+                        <article class="rm-doc-feature-card">
+                            <span class="rm-doc-feature-icon"><i class="bi bi-hammer"></i></span>
+                            <h3>@HienThi.Chon("Thao túng phiên đấu giá", "Auction Manipulation")</h3>
+                            <p>@HienThi.Chon("Nghi ngờ tài khoản phụ tự đẩy giá đấu giá hoặc đặt giá phá phiên không có thiện chí mua hàng.", "Suspected shill bidding or bad-faith bids disrupting active auctions.")</p>
+                        </article>
+                    </div>
+
+                    <div class="rm-doc-callout is-warn">
+                        <i class="bi bi-flag-fill"></i>
+                        <div>
+                            <strong>@HienThi.Chon("Cách gửi báo cáo trong 30 giây", "How to Report in 30 Seconds")</strong>
+                            @HienThi.Chon(
+                                "Mở trang Chi tiết sản phẩm hoặc trang Cửa hàng vi phạm → nhấn nút “Báo cáo vi phạm” → chọn đúng nhóm lý do và mô tả ngắn gọn dấu hiệu phát hiện. Bạn có thể theo dõi tiến độ xử lý cùng phản hồi của quản trị viên ngay tại trang Lịch sử báo cáo.",
+                                "Open the violating Product or Shop page → click \"Report Violation\" → choose the category and add brief details. Track moderator status and feedback anytime in your Report History.")
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <a asp-area="User" asp-controller="Reports" asp-action="Index" class="btn-rm-primary">
+                                <i class="bi bi-list-check me-1"></i> @HienThi.Chon("Xem lịch sử báo cáo của bạn", "View Your Report History")
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-area="" asp-controller="Account" asp-action="Login" class="btn-rm-primary">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> @HienThi.Chon("Đăng nhập để gửi & theo dõi báo cáo", "Sign In to Report & Track")
+                            </a>
+                        }
+                        <a asp-controller="Help" asp-action="Index" asp-fragment="su-co" class="btn-rm-outline">
+                            @L["Layout_IncidentRules"]
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/editorial-doc.js" asp-append-version="true"></script>
+}

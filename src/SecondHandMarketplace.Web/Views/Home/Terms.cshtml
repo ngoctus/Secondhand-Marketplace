@@ -1,71 +1,336 @@
 @{
     ViewData["Title"] = HienThi.Chon("Điều khoản sử dụng & Chính sách bảo mật - Re:Market", "Terms of Service & Privacy Policy - Re:Market");
+    var autoScroll = ViewBag.AutoScrollTarget as string;
 }
 
-<div class="container py-5" style="max-width: 960px;">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb" style="font-size: 14px;">
-            <li class="breadcrumb-item"><a asp-area="" asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@HienThi.Chon("Điều khoản & Chính sách", "Terms & Policies")</li>
-        </ol>
+<div class="rm-reading-progress" aria-hidden="true">
+    <div class="rm-reading-progress-bar" id="rmReadingProgressBar"></div>
+</div>
+
+<div class="rm-doc-page" data-rm-auto-scroll="@autoScroll">
+    <nav class="rm-breadcrumb" aria-label="Breadcrumb">
+        <a asp-area="" asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a>
+        <span class="sep">/</span>
+        <span>@HienThi.Chon("Điều khoản & Chính sách", "Terms & Policies")</span>
     </nav>
 
-    <!-- Section: Điều khoản -->
-    <section id="dieu-khoan" class="mb-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h1 class="h2 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">@L["Footer_Terms"]</h1>
-            <p class="text-muted">@HienThi.Chon("Cập nhật lần cuối: Tháng 11/2026. Bằng việc truy cập hoặc sử dụng Re:Market, bạn đồng ý tuân thủ các điều khoản sau:", "Last updated: November 2026. By accessing or using Re:Market, you agree to comply with the following terms:")</p>
-            <div class="d-flex flex-column gap-3 text-secondary">
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("1. Tài khoản người dùng", "1. User Accounts")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Người dùng chịu trách nhiệm bảo mật thông tin đăng nhập và mọi hoạt động diễn ra dưới tài khoản của mình. Không chia sẻ tài khoản cho người thứ ba sử dụng trái phép.", "Users are responsible for safeguarding their login credentials and all activities under their account. Do not share your account with unauthorized third parties.")</p>
-                </div>
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("2. Trách nhiệm người bán", "2. Seller Responsibilities")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Người bán phải cung cấp hình ảnh thật, mô tả trung thực về tình trạng sản phẩm (độ mới, lỗi nếu có) và chỉ đăng bán hàng hóa thuộc quyền sở hữu hợp pháp.", "Sellers must provide real photos, honest descriptions of item condition (wear, defects if any), and only list items they legally own.")</p>
-                </div>
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("3. Trách nhiệm người mua", "3. Buyer Responsibilities")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Người mua cam kết nhận hàng đúng hẹn theo thỏa thuận hoặc khung giờ đã chọn, kiểm tra sản phẩm cẩn thận khi giao nhận và thanh toán đầy đủ.", "Buyers agree to receive orders on time as scheduled, inspect items carefully upon delivery, and complete payment in full.")</p>
-                </div>
+    <header class="rm-doc-hero">
+        <div class="rm-doc-hero-inner">
+            <span class="rm-doc-eyebrow">
+                <i class="bi bi-file-earmark-check" aria-hidden="true"></i>
+                @HienThi.Chon("RE:MARKET · PHÁP LÝ & BẢO MẬT", "RE:MARKET · LEGAL & PRIVACY")
+            </span>
+            <h1>@Html.Raw(HienThi.Chon("Điều khoản sử dụng,<br />Chính sách bảo mật & Quy định cộng đồng.", "Terms of Service,<br />Privacy Policy & Community Rules."))</h1>
+            <p class="rm-doc-hero-lead">
+                @HienThi.Chon(
+                    "Văn bản này quy định đầy đủ quyền, nghĩa vụ của người mua, người bán và Re:Market; cách chúng tôi thu thập, bảo vệ dữ liệu cá nhân cũng như bộ chuẩn mực cộng đồng nhằm duy trì một sàn đồ cũ văn minh, minh bạch.",
+                    "This document details the rights and obligations of buyers, sellers, and Re:Market; how we collect and safeguard personal data; and the community standards keeping our secondhand marketplace transparent and trustworthy.")
+            </p>
+            <div class="rm-doc-meta-row">
+                <span class="rm-doc-meta-pill"><i class="bi bi-calendar3"></i> @HienThi.Chon("Hiệu lực từ: 01/11/2026", "Effective: Nov 1, 2026")</span>
+                <span class="rm-doc-meta-pill"><i class="bi bi-clock"></i> @HienThi.Chon("Thời gian đọc ~10 phút", "~10 min read")</span>
+                <span class="rm-doc-meta-pill"><i class="bi bi-patch-check"></i> @HienThi.Chon("Phiên bản 2.4", "Version 2.4")</span>
+            </div>
+            <div class="rm-doc-quick-nav" aria-label="Quick navigation">
+                <a class="rm-doc-chip" href="#dieu-khoan"><i class="bi bi-journal-text"></i> @L["Footer_Terms"]</a>
+                <a class="rm-doc-chip" href="#dang-ban"><i class="bi bi-shop"></i> @HienThi.Chon("Đăng bán & Đấu giá", "Selling & Auctions")</a>
+                <a class="rm-doc-chip" href="#mua-hang"><i class="bi bi-bag-check"></i> @HienThi.Chon("Mua hàng & Thanh toán", "Buying & Payments")</a>
+                <a class="rm-doc-chip" href="#bao-mat"><i class="bi bi-shield-lock"></i> @L["Footer_Privacy"]</a>
+                <a class="rm-doc-chip" href="#quy-dinh"><i class="bi bi-slash-circle"></i> @HienThi.Chon("Danh mục cấm", "Prohibited Items")</a>
+                <a class="rm-doc-chip" href="#che-tai"><i class="bi bi-hammer"></i> @HienThi.Chon("Khung chế tài", "Enforcement")</a>
             </div>
         </div>
-    </section>
+    </header>
 
-    <!-- Section: Chính sách bảo mật -->
-    <section id="bao-mat" class="mb-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h2 class="h3 fw-bold mb-3" style="color: var(--color-primary-dark, #1B4332);">@L["Footer_Privacy"]</h2>
-            <p class="text-muted">@HienThi.Chon("Re:Market cam kết bảo vệ sự riêng tư và thông tin cá nhân của bạn theo tiêu chuẩn an toàn cao nhất:", "Re:Market is committed to protecting your privacy and personal data under strict security standards:")</p>
-            <div class="d-flex flex-column gap-3 text-secondary">
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("1. Thu thập dữ liệu", "1. Data Collection")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Chúng tôi chỉ thu thập thông tin cần thiết phục vụ việc xác thực tài khoản, xử lý đơn hàng và giao nhận hàng (họ tên, số điện thoại, địa chỉ nhận hàng).", "We only collect information necessary for account verification, order processing, and delivery (full name, phone number, shipping address).")</p>
+    <div class="rm-doc-layout">
+        <aside class="rm-doc-sidebar" aria-label="Policy Table of Contents">
+            <nav class="rm-doc-toc">
+                <div class="rm-doc-toc-title">@HienThi.Chon("Mục lục văn bản", "Document Contents")</div>
+                <div class="rm-doc-toc-list">
+                    <a class="rm-doc-toc-link" href="#dieu-khoan"><span class="rm-doc-toc-num">01</span><span>@HienThi.Chon("Điều khoản chung & Tài khoản", "General Terms & Accounts")</span></a>
+                    <a class="rm-doc-toc-link" href="#dang-ban"><span class="rm-doc-toc-num">02</span><span>@HienThi.Chon("Đăng bán, Duyệt tin & Đấu giá", "Listings, Moderation & Auctions")</span></a>
+                    <a class="rm-doc-toc-link" href="#mua-hang"><span class="rm-doc-toc-num">03</span><span>@HienThi.Chon("Mua hàng, Thanh toán & Trách nhiệm", "Buying, Payments & Liability")</span></a>
+                    <a class="rm-doc-toc-link" href="#bao-mat"><span class="rm-doc-toc-num">04</span><span>@L["Footer_Privacy"]</span></a>
+                    <a class="rm-doc-toc-link" href="#quy-dinh"><span class="rm-doc-toc-num">05</span><span>@HienThi.Chon("Quy định cộng đồng & Hàng cấm", "Community & Prohibited Items")</span></a>
+                    <a class="rm-doc-toc-link" href="#che-tai"><span class="rm-doc-toc-num">06</span><span>@HienThi.Chon("Khung chế tài & Hiệu lực", "Enforcement & Amendments")</span></a>
                 </div>
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("2. Bảo vệ thông tin", "2. Data Protection")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Mật khẩu được mã hóa băm an toàn (BCrypt). Mọi liên lạc trao đổi nhạy cảm đều được bảo vệ trong hạ tầng máy chủ bảo mật.", "Passwords are securely hashed using BCrypt. Sensitive communications are protected within our secure server infrastructure.")</p>
-                </div>
-                <div>
-                    <h6 class="fw-bold text-dark">@HienThi.Chon("3. Quyền của người dùng", "3. User Rights")</h6>
-                    <p class="small mb-0">@HienThi.Chon("Bạn có toàn quyền truy cập, chỉnh sửa thông tin cá nhân hoặc yêu cầu xóa dữ liệu bất kỳ lúc nào tại mục Hồ sơ cá nhân.", "You have full rights to access, update your personal profile, or request data deletion at any time in My Profile.")</p>
+            </nav>
+
+            <div class="rm-doc-side-card">
+                <h3>@HienThi.Chon("Cần hướng dẫn thực hành?", "Need Practical Guides?")</h3>
+                <p>@HienThi.Chon("Xem quy trình giao dịch an toàn, trạng thái đơn hàng và giải đáp chi tiết tại Trung tâm hỗ trợ.", "Read step-by-step safe trading guides, order statuses, and FAQs in the Help Center.")</p>
+                <div class="rm-doc-side-links">
+                    <a asp-controller="Help" asp-action="Index">
+                        <span>@L["Footer_HelpCenter"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a asp-controller="Help" asp-action="Index" asp-fragment="su-co">
+                        <span>@L["Layout_IncidentRules"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a asp-area="User" asp-controller="Reports" asp-action="Index">
+                        <span>@L["Footer_ReportViolation"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
                 </div>
             </div>
-        </div>
-    </section>
+        </aside>
 
-    <!-- Section: Quy định cộng đồng -->
-    <section id="quy-dinh">
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h2 class="h3 fw-bold mb-3 text-danger"><i class="bi bi-shield-slash-fill me-2"></i>@HienThi.Chon("Quy định cộng đồng & Danh mục cấm", "Community Guidelines & Prohibited Items")</h2>
-            <p class="text-muted">@HienThi.Chon("Các hành vi và mặt hàng tuyệt đối bị nghiêm cấm trên nền tảng Re:Market:", "The following behaviors and items are strictly prohibited on Re:Market:")</p>
-            <ul class="text-secondary small d-flex flex-column gap-2 mb-0">
-                <li>@HienThi.Chon("Nghiêm cấm đăng bán hàng giả, hàng nhái, vũ khí, chất cháy nổ hoặc các mặt hàng bị pháp luật Việt Nam cấm lưu hành.", "Listing counterfeit goods, weapons, explosives, or items prohibited by law is strictly forbidden.")</li>
-                <li>@HienThi.Chon("Nghiêm cấm sử dụng ngôn từ tục tĩu, xúc phạm, phân biệt đối xử hoặc quấy rối người dùng khác trong tin nhắn và bình luận đánh giá.", "Profanity, insults, discrimination, or harassment in chat messages and reviews are strictly prohibited.")</li>
-                <li>@HienThi.Chon("Nghiêm cấm hành vi gian lận thanh toán, cố tình không giao hàng hoặc phá hoại uy tín của cửa hàng khác.", "Payment fraud, intentional non-delivery, or sabotaging other shops' reputation is prohibited.")</li>
-                <li>@HienThi.Chon("Tài khoản vi phạm nghiêm trọng sẽ bị hệ thống tự động khóa và chuyển hồ sơ xử lý theo quy định.", "Accounts with severe violations will be automatically locked and handled according to platform rules.")</li>
-            </ul>
+        <div class="rm-doc-main">
+            <!-- 01: ĐIỀU KHOẢN CHUNG & TÀI KHOẢN -->
+            <section class="rm-doc-card rm-doc-reveal" id="dieu-khoan">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">01</span>
+                    <div>
+                        <h2>@HienThi.Chon("Điều khoản sử dụng chung & Tài khoản", "General Terms of Service & User Accounts")</h2>
+                        <p>@HienThi.Chon("Áp dụng cho mọi cá nhân, cửa hàng truy cập, đăng ký tài khoản hoặc thực hiện giao dịch trên nền tảng Re:Market.", "Applies to all individuals and shops accessing, registering, or transacting on the Re:Market platform.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <p>
+                        @HienThi.Chon(
+                            "Bằng việc tạo tài khoản, đăng tin bán hàng, đặt mua sản phẩm hoặc tiếp tục sử dụng bất kỳ tính năng nào trên Re:Market, bạn xác nhận đã đọc, hiểu và đồng ý chịu sự ràng buộc bởi toàn bộ Điều khoản sử dụng này cùng các chính sách dẫn chiếu kèm theo.",
+                            "By creating an account, listing an item, placing an order, or using any feature on Re:Market, you confirm that you have read, understood, and agreed to be bound by these Terms of Service and all referenced policies.")
+                    </p>
+
+                    <div class="rm-doc-clauses">
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("1.1. Vai trò trung gian kết nối của Re:Market", "1.1. Re:Market's Role as an Intermediary Platform")</h3>
+                            <p>@HienThi.Chon("Re:Market cung cấp hạ tầng công nghệ kết nối người có nhu cầu thanh lý đồ cũ với người mua, tích hợp công cụ tìm kiếm theo khu vực, kiểm duyệt tin đăng, trò chuyện trực tiếp, đấu giá và ghi nhận trạng thái đơn hàng. Re:Market không phải là chủ sở hữu, nhà sản xuất hay đơn vị trực tiếp nắm giữ kho hàng của sản phẩm do người dùng đăng bán; hợp đồng mua bán được xác lập trực tiếp giữa Người mua và Người bán.", "Re:Market provides the technology platform connecting secondhand sellers and buyers with regional search, moderation, chat, live auctions, and order tracking. Re:Market does not own, manufacture, or warehouse user-listed goods; the sales contract is formed directly between Buyer and Seller.")</p>
+                        </article>
+
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("1.2. Điều kiện đăng ký & trách nhiệm bảo mật tài khoản", "1.2. Registration Eligibility & Account Responsibility")</h3>
+                            <p>@HienThi.Chon("Người dùng cam kết đủ năng lực hành vi dân sự theo quy định pháp luật và cung cấp thông tin chính xác (họ tên, email, số điện thoại, địa chỉ liên hệ). Bạn hoàn toàn chịu trách nhiệm giữ bí mật mật khẩu, mã OTP và chịu trách nhiệm đối với mọi hoạt động phát sinh dưới tài khoản của mình. Nghiêm cấm mua bán, cho thuê hoặc chia sẻ tài khoản cho bên thứ ba sử dụng trái phép.", "Users warrant that they have legal capacity to enter into transactions and agree to provide accurate contact information. You are solely responsible for safeguarding your password, OTPs, and all actions performed under your account. Selling, lending, or sharing accounts is prohibited.")</p>
+                        </article>
+
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("1.3. Quyền sở hữu trí tuệ & nội dung do người dùng tạo", "1.3. Intellectual Property & User-Generated Content")</h3>
+                            <p>@HienThi.Chon("Thương hiệu Re:Market, logo, giao diện thiết kế, mã nguồn và cơ sở dữ liệu thuộc quyền sở hữu của đơn vị vận hành. Khi đăng tải hình ảnh sản phẩm, mô tả cửa hàng hoặc đánh giá, bạn cam kết sở hữu quyền hợp pháp đối với nội dung đó và cấp cho Re:Market quyền hiển thị, lưu trữ và xử lý nội dung nhằm vận hành nền tảng và phòng chống gian lận.", "The Re:Market brand, logo, UI design, source code, and databases belong to the platform operator. By uploading product photos, shop descriptions, or reviews, you warrant lawful rights to such content and grant Re:Market a license to display, store, and process it to operate the marketplace and prevent fraud.")</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 02: ĐĂNG BÁN, KIỂM DUYỆT & ĐẤU GIÁ -->
+            <section class="rm-doc-card rm-doc-reveal" id="dang-ban">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">02</span>
+                    <div>
+                        <h2>@HienThi.Chon("Quy định Đăng bán, Kiểm duyệt & Đấu giá", "Listing, Moderation & Auction Rules")</h2>
+                        <p>@HienThi.Chon("Chuẩn mực minh bạch giúp tin đăng đồ cũ đáng tin cậy và phiên đấu giá vận hành công bằng.", "Transparency standards ensuring trustworthy secondhand listings and fair auctions.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <div class="rm-doc-clauses">
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("2.1. Nghĩa vụ trung thực của Người bán", "2.1. Seller Honesty Obligations")</h3>
+                            <p>@HienThi.Chon("Người bán chỉ được đăng bán tài sản thuộc quyền sở hữu hợp pháp của mình. Mọi tin đăng bắt buộc sử dụng ảnh chụp thực tế của món đồ, chọn đúng danh mục, khai báo đúng tình trạng độ mới (như mới, tốt, khá, đã dùng nhiều) và nêu rõ mọi khuyết điểm, vết trầy xước, sửa chữa hoặc phụ kiện thiếu hụt nếu có.", "Sellers may only list items they legally own. Every listing must use real photos of the actual item, accurate categorization, honest condition grading, and clear disclosure of defects, wear, repairs, or missing accessories.")</p>
+                        </article>
+
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("2.2. Cơ chế kiểm duyệt 2 tầng & quyền từ chối tin", "2.2. Two-Tier Moderation & Rejection Rights")</h3>
+                            <p>@HienThi.Chon("Tin đăng mới hoặc tin vừa chỉnh sửa nội dung quan trọng sẽ đi qua bộ lọc từ khóa kết hợp kiểm duyệt AI 2 tầng và đội ngũ quản trị viên. Re:Market có quyền từ chối, ẩn hoặc gỡ bỏ các tin dùng ảnh mạng/ảnh quảng cáo không đúng thực tế, ghi giá ảo gây hiểu nhầm, cố tình chèn số điện thoại/Zalo lách luật nhằm kéo giao dịch ra ngoài sàn, hoặc có dấu hiệu vi phạm pháp luật.", "New or edited listings undergo keyword filtering, 2-tier AI screening, and admin review. Re:Market reserves the right to reject, hide, or remove listings using stock photos, misleading prices, disguised phone/Zalo strings soliciting off-platform deals, or illegal content.")</p>
+                        </article>
+
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("2.3. Điều khoản dành cho phiên Đấu giá", "2.3. Auction Terms")</h3>
+                            <p>@HienThi.Chon("Người bán tạo phiên đấu giá cam kết giữ đúng món đồ đã niêm yết và bàn giao cho người thắng phiên hợp lệ theo đúng mức giá chốt. Người tham gia đặt giá cam kết chỉ trả giá trong khả năng thanh toán và không tự ý hủy kèo sau khi thắng. Mọi hành vi tự nâng giá ảo (shill bidding) hoặc thông đồng phá phiên đều bị xem là vi phạm nghiêm trọng.", "Sellers hosting auctions must preserve the listed item and fulfill it to the winning bidder at the final price. Bidders commit to honoring winning bids without backing out. Shill bidding or collusion to disrupt auctions is a severe violation.")</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 03: MUA HÀNG, THANH TOÁN & GIỚI HẠN TRÁCH NHIỆM -->
+            <section class="rm-doc-card rm-doc-reveal" id="mua-hang">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">03</span>
+                    <div>
+                        <h2>@HienThi.Chon("Quy tắc Mua hàng, Thanh toán & Giới hạn trách nhiệm", "Buying Rules, Payments & Limitation of Liability")</h2>
+                        <p>@HienThi.Chon("Làm rõ cơ chế giữ hàng độc bản, trách nhiệm đồng kiểm và phạm vi hỗ trợ của nền tảng.", "Clarifying 1-of-1 item reservation, inspection responsibilities, and platform liability scope.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <div class="rm-doc-clauses">
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("3.1. Nghĩa vụ của Người mua & Giao nhận hàng", "3.1. Buyer Obligations & Delivery")</h3>
+                            <p>@HienThi.Chon("Người mua cần kiểm tra kỹ thông tin sản phẩm, cung cấp chính xác tên người nhận, số điện thoại và địa chỉ giao hàng (hoặc địa điểm gặp mặt). Khi đơn đã chuyển trạng thái Giao hàng, người mua có trách nhiệm nghe máy, nhận hàng đúng hẹn, đồng kiểm ngoại quan và chỉ xác nhận “Đã nhận được hàng” khi đã hài lòng.", "Buyers must review listings carefully and provide accurate contact and shipping details. Upon delivery or meetup, buyers are responsible for being reachable, inspecting the item carefully, and confirming receipt only once satisfied.")</p>
+                        </article>
+
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("3.2. Thanh toán COD và Chuyển khoản trực tiếp VietQR", "3.2. COD & Direct VietQR Transfers")</h3>
+                            <p>@HienThi.Chon("Re:Market hỗ trợ hai phương thức: thanh toán tiền mặt khi nhận hàng (COD) và chuyển khoản VietQR trực tiếp tới tài khoản ngân hàng do cửa hàng đăng ký. Re:Market không cung cấp dịch vụ trung gian giữ tiền hộ; do đó người dùng phải đối chiếu đúng số tiền, số tài khoản và nội dung mã đơn trên trang Chi tiết đơn trước khi chuyển khoản.", "Re:Market supports Cash on Delivery (COD) and direct VietQR transfers to the shop's registered bank account. Re:Market does not act as a financial escrow service; users must verify the exact amount, bank account, and order memo shown on Order Details before transferring.")</p>
+                        </article>
+
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("3.3. Giới hạn trách nhiệm & Bất khả kháng", "3.3. Limitation of Liability & Force Majeure")</h3>
+                            <p>@HienThi.Chon("Re:Market nỗ lực duy trì hệ thống vận hành ổn định, an toàn và hỗ trợ phân xử tranh chấp dựa trên bằng chứng khách quan. Tuy nhiên, Re:Market không chịu trách nhiệm bồi thường đối với các thiệt hại phát sinh từ giao dịch tự phát ngoài nền tảng, việc người dùng tự ý chia sẻ mật khẩu/OTP, sự cố thiên tai, mất kết nối viễn thông hoặc lỗi từ đơn vị vận chuyển/ngân hàng bên thứ ba.", "Re:Market strives to keep the platform reliable and mediate disputes objectively, but is not liable for losses arising from off-platform transactions, user credential/OTP sharing, natural disasters, telecom outages, or third-party carrier/bank failures.")</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 04: CHÍNH SÁCH BẢO MẬT -->
+            <section class="rm-doc-card rm-doc-reveal" id="bao-mat">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge is-warm">04</span>
+                    <div>
+                        <h2>@L["Footer_Privacy"]</h2>
+                        <p>@HienThi.Chon("Minh bạch hoàn toàn về dữ liệu cá nhân chúng tôi thu thập, cách mã hóa bảo vệ và toàn quyền kiểm soát của bạn.", "Complete transparency on what personal data we collect, how we encrypt and protect it, and your full rights.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <p>
+                        @HienThi.Chon(
+                            "Sự riêng tư của bạn là nguyên tắc cốt lõi tại Re:Market. Chúng tôi chỉ thu thập lượng dữ liệu tối thiểu cần thiết để xác thực tài khoản, hoàn tất đơn hàng, hỗ trợ giao nhận và ngăn chặn gian lận — tuyệt đối KHÔNG bán hoặc cho thuê dữ liệu cá nhân của người dùng cho bất kỳ bên thứ ba nào.",
+                            "Your privacy is a core principle at Re:Market. We collect only the minimum data required to authenticate accounts, fulfill orders, support shipping, and prevent fraud — we NEVER sell or rent user personal data to third parties.")
+                    </p>
+
+                    <div class="rm-doc-table-wrap">
+                        <table class="rm-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>@HienThi.Chon("Nhóm dữ liệu", "Data Category")</th>
+                                    <th>@HienThi.Chon("Thông tin cụ thể", "Specific Fields")</th>
+                                    <th>@HienThi.Chon("Mục đích sử dụng", "Purpose of Processing")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Thông tin tài khoản", "Account Profile")</strong></td>
+                                    <td>@HienThi.Chon("Họ tên, email, số điện thoại, ảnh đại diện, mật khẩu (dạng băm).", "Full name, email, phone number, avatar, hashed password.")</td>
+                                    <td>@HienThi.Chon("Đăng ký, đăng nhập, khôi phục mật khẩu qua OTP và hiển thị danh tính giao dịch.", "Registration, sign-in, OTP password reset, and displaying verified identity.")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Địa chỉ & Cửa hàng", "Addresses & Shop Info")</strong></td>
+                                    <td>@HienThi.Chon("Địa chỉ mặc định, sổ địa chỉ dự phòng (Tỉnh/Xã/chi tiết), logo shop, tài khoản ngân hàng nhận tiền (chỉ dành cho shop).", "Default & backup addresses (Province/Ward/street), shop logo, payout bank info (sellers only).")</td>
+                                    <td>@HienThi.Chon("Lọc sản phẩm gần bạn, điền nhanh khi đặt hàng, giao nhận và tạo mã VietQR cho đơn mua.", "Local search filtering, quick checkout fill, fulfillment, and generating VietQR order codes.")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Giao dịch & Trao đổi", "Orders & Messages")</strong></td>
+                                    <td>@HienThi.Chon("Lịch sử đơn hàng, tin nhắn mua-bán, lượt đặt đấu giá, đánh giá, hồ sơ tranh chấp/báo cáo.", "Order history, buyer-seller chat logs, auction bids, reviews, dispute/report records.")</td>
+                                    <td>@HienThi.Chon("Vận hành đơn hàng, bảo vệ bằng chứng khi xảy ra sự cố và phòng chống lừa đảo.", "Order execution, objective evidence for dispute resolution, and fraud prevention.")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Dữ liệu kỹ thuật", "Technical & Security Logs")</strong></td>
+                                    <td>@HienThi.Chon("Cookie phiên đăng nhập, tùy chọn ngôn ngữ (VI/EN), khu vực đã chọn, nhật ký bảo mật.", "Session cookies, language preference (VI/EN), selected region, security audit logs.")</td>
+                                    <td>@HienThi.Chon("Duy trì phiên đăng nhập an toàn, chống tấn công tự động (rate-limit) và cải thiện hiệu năng.", "Secure session persistence, brute-force rate-limiting, and platform reliability.")</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="rm-doc-clauses">
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("4.1. Phạm vi chia sẻ dữ liệu có kiểm soát", "4.1. Controlled Data Sharing")</h3>
+                            <p>@HienThi.Chon("Thông tin liên hệ và địa chỉ giao hàng của Người mua chỉ được hiển thị cho đúng Chủ cửa hàng của đơn hàng tương ứng nhằm mục đích giao nhận và liên lạc xác nhận. Dữ liệu chỉ có thể được cung cấp cho cơ quan nhà nước có thẩm quyền khi có yêu cầu hợp pháp bằng văn bản.", "Buyer contact and delivery details are shared exclusively with the specific Seller of that order for fulfillment. Data is only disclosed to legal authorities upon valid formal request.")</p>
+                        </article>
+
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("4.2. Biện pháp kỹ thuật bảo vệ thông tin", "4.2. Technical Security Measures")</h3>
+                            <ul>
+                                <li>@HienThi.Chon("Mật khẩu được mã hóa băm một chiều bằng thuật toán BCrypt — ngay cả quản trị viên cũng không thể xem mật khẩu gốc của bạn.", "Passwords are one-way hashed using BCrypt — not even administrators can view your plaintext password.")</li>
+                                <li>@HienThi.Chon("Cookie xác thực được cấu hình cờ bảo mật HttpOnly và chống giả mạo yêu cầu liên trang (Antiforgery/CSRF) trên toàn bộ biểu mẫu ghi dữ liệu.", "Authentication cookies use HttpOnly flags and all mutating forms enforce Antiforgery (CSRF) tokens.")</li>
+                                <li>@HienThi.Chon("Giới hạn tần suất đăng nhập, yêu cầu OTP và truy cập API để ngăn chặn tấn công dò mật khẩu và thu thập dữ liệu trái phép.", "Rate-limiting protects sign-in, OTP requests, and API endpoints against brute-force and scraping.")</li>
+                                <li>@HienThi.Chon("Dữ liệu trao đổi với Trợ lý AI không được lưu làm lịch sử hội thoại vĩnh viễn và không dùng để công khai thông tin cá nhân của bạn.", "AI Assistant chats are not persisted as permanent conversation logs and never expose private account data.")</li>
+                            </ul>
+                        </article>
+
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("4.3. Quyền kiểm soát dữ liệu của người dùng", "4.3. Your Data Rights")</h3>
+                            <p>@HienThi.Chon("Bạn có toàn quyền truy cập, cập nhật họ tên, số điện thoại, ảnh đại diện, thêm hoặc xóa bất kỳ địa chỉ nào trong sổ địa chỉ bất cứ lúc nào tại trang", "You have full rights to access, update your name, phone, avatar, and add or delete saved addresses anytime in") <a asp-area="" asp-controller="Account" asp-action="Profile">@L["Nav_Profile"]</a>. @HienThi.Chon("Mọi thắc mắc hoặc yêu cầu về quyền riêng tư, vui lòng gửi về email hotro@remarket.vn để được xử lý trong tối đa 07 ngày làm việc.", "For privacy inquiries or deletion requests, email hotro@remarket.vn for assistance within 7 business days.")</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 05: QUY ĐỊNH CỘNG ĐỒNG & DANH MỤC CẤM -->
+            <section class="rm-doc-card rm-doc-reveal" id="quy-dinh">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge is-danger">05</span>
+                    <div>
+                        <h2>@HienThi.Chon("Quy định cộng đồng & Danh mục hàng hóa cấm", "Community Guidelines & Prohibited Items")</h2>
+                        <p>@HienThi.Chon("Những mặt hàng và hành vi tuyệt đối không được phép xuất hiện trên Re:Market nhằm bảo vệ an toàn chung.", "Items and behaviors strictly forbidden on Re:Market to protect community safety.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <div class="rm-doc-do-dont">
+                        <div class="rm-doc-dont-box">
+                            <h3><i class="bi bi-slash-circle-fill"></i> @HienThi.Chon("Mặt hàng tuyệt đối cấm đăng bán", "Strictly Prohibited Goods")</h3>
+                            <ul>
+                                <li>@HienThi.Chon("Hàng giả, hàng nhái thương hiệu, hàng không rõ nguồn gốc hợp pháp hoặc hàng trộm cắp.", "Counterfeit, replica, unverified-origin, or stolen property.")</li>
+                                <li>@HienThi.Chon("Vũ khí, công cụ hỗ trợ, pháo nổ, chất cháy nổ, hóa chất độc hại và chất kích thích/ma túy.", "Weapons, explosives, fireworks, hazardous chemicals, and illegal narcotics.")</li>
+                                <li>@HienThi.Chon("Thuốc kê đơn, thực phẩm chức năng hết hạn, mỹ phẩm chiết lẻ không rõ hạn dùng hoặc hàng gây hại sức khỏe.", "Prescription drugs, expired supplements, unsealed cosmetics without expiry, or unsafe goods.")</li>
+                                <li>@HienThi.Chon("Giấy tờ tùy thân (CCCD, hộ chiếu, bằng lái), tài khoản ngân hàng, SIM rác, phần mềm bẻ khóa và dữ liệu cá nhân.", "Government IDs, bank accounts, unregistered SIMs, pirated software, and personal data.")</li>
+                            </ul>
+                        </div>
+                        <div class="rm-doc-dont-box">
+                            <h3><i class="bi bi-person-x-fill"></i> @HienThi.Chon("Hành vi cộng đồng bị nghiêm cấm", "Strictly Prohibited Conduct")</h3>
+                            <ul>
+                                <li>@HienThi.Chon("Dụ dỗ đặt cọc ngoài hệ thống, lách bộ lọc bằng ký tự đặc biệt (vd: Z.a.l.o, số điện thoại ẩn) để lừa đảo.", "Soliciting off-platform deposits or obfuscating phone/Zalo details to bypass safety checks.")</li>
+                                <li>@HienThi.Chon("Dùng ngôn từ xúc phạm, kỳ thị, đe dọa hoặc quấy rối người mua/người bán trong tin nhắn và phần đánh giá.", "Harassment, hate speech, threats, or profanity in chat messages or shop reviews.")</li>
+                                <li>@HienThi.Chon("Tạo đơn ảo để tự đánh giá 5 sao, cố tình đặt hàng rồi bom hàng liên tục hoặc nâng giá đấu giá ảo.", "Fake orders for self-reviews, repeated malicious no-shows, or shill bidding in auctions.")</li>
+                                <li>@HienThi.Chon("Spam tin đăng trùng lặp, gắn sai danh mục hàng loạt hoặc phá hoại uy tín cửa hàng khác bằng thông tin bịa đặt.", "Duplicate spam listings, mass miscategorization, or defamatory false reports against other shops.")</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 06: KHUNG CHẾ TÀI & HIỆU LỰC -->
+            <section class="rm-doc-card rm-doc-reveal" id="che-tai">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">06</span>
+                    <div>
+                        <h2>@HienThi.Chon("Khung chế tài xử lý vi phạm & Hiệu lực sửa đổi", "Violation Enforcement Matrix & Amendments")</h2>
+                        <p>@HienThi.Chon("Mức xử lý tương xứng theo tính chất và số lần tái phạm, đi kèm cơ chế thông báo rõ lý do.", "Proportional actions based on severity and recurrence, always accompanied by clear written reasons.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <div class="rm-doc-table-wrap">
+                        <table class="rm-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>@HienThi.Chon("Mức độ", "Tier")</th>
+                                    <th>@HienThi.Chon("Hành vi điển hình", "Typical Violations")</th>
+                                    <th>@HienThi.Chon("Biện pháp áp dụng", "Enforcement Action")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Mức 1 · Nhẹ", "Tier 1 · Minor")</strong></td>
+                                    <td>@HienThi.Chon("Đăng sai danh mục, ảnh mờ/ảnh mạng, mô tả thiếu thông tin tình trạng.", "Wrong category, stock/blurry images, incomplete condition description.")</td>
+                                    <td>@HienThi.Chon("Từ chối duyệt tin kèm lý do chi tiết để người bán chỉnh sửa và gửi duyệt lại.", "Listing rejected with detailed reason so seller can fix and resubmit.")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Mức 2 · Trung bình", "Tier 2 · Moderate")</strong></td>
+                                    <td>@HienThi.Chon("Spam tin lặp, lách luật ghi thông tin liên hệ ngoài sàn, chậm giao/hủy đơn nhiều lần không lý do chính đáng.", "Duplicate spam, off-platform contact evasion, repeated unjustified cancellations.")</td>
+                                    <td>@HienThi.Chon("Gỡ tin vi phạm, gửi cảnh báo chính thức và hạn chế quyền đăng bán/đấu giá tạm thời.", "Listing removed, formal warning issued, temporary posting/auction restriction.")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Mức 3 · Nghiêm trọng", "Tier 3 · Severe")</strong></td>
+                                    <td>@HienThi.Chon("Bán hàng giả/hàng cấm, lừa đảo chiếm đoạt tiền cọc, đôn giá đấu giá ảo, quấy rối hoặc xúc phạm nặng.", "Counterfeits/prohibited goods, deposit scams, shill bidding, severe harassment.")</td>
+                                    <td>@HienThi.Chon("Khóa tài khoản ngay lập tức, hủy các tin/phiên đang hoạt động và lưu hồ sơ đối chiếu.", "Immediate account suspension, active listings/auctions terminated, incident logged.")</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="rm-doc-callout">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <div>
+                            <strong>@HienThi.Chon("Cập nhật & Hiệu lực điều khoản", "Policy Updates & Effective Date")</strong>
+                            @HienThi.Chon(
+                                "Re:Market có thể cập nhật Điều khoản sử dụng và Chính sách bảo mật định kỳ để phù hợp với tính năng mới hoặc quy định pháp luật hiện hành. Phiên bản mới nhất luôn được công bố công khai kèm ngày hiệu lực ngay tại đầu trang này.",
+                                "Re:Market may periodically update these Terms and Privacy Policy to reflect new features or legal requirements. The latest version is always published here with its effective date.")
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-    </section>
+    </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/editorial-doc.js" asp-append-version="true"></script>
+}

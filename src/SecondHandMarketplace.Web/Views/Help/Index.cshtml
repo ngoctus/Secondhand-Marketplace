@@ -2,97 +2,604 @@
     ViewData["Title"] = L["Footer_HelpCenter"].Value;
 }
 
-<nav class="rm-breadcrumb" aria-label="Breadcrumb">
-    <a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a>
-    <span class="sep">/</span>
-    <span>@L["Footer_HelpCenter"]</span>
-</nav>
-
-<header class="help-hero">
-    <span class="help-eyebrow">@HienThi.Chon("RE:MARKET · TRUNG TÂM HỖ TRỢ", "RE:MARKET · HELP CENTER")</span>
-    <h1>@Html.Raw(HienThi.Chon("Giao dịch rõ ràng,<br />mua bán an tâm hơn.", "Transparent trading,<br />peace of mind for every deal."))</h1>
-    <p>@HienThi.Chon("Tìm hiểu trạng thái đơn hàng, cách xử lý khi có vấn đề và cách bảo vệ tài khoản của bạn.", "Learn about order statuses, how to resolve issues, and how to keep your account secure.")</p>
-    <a class="btn-rm-primary" asp-area="User" asp-controller="Orders" asp-action="Index">@HienThi.Chon("Theo dõi đơn hàng", "Track My Orders")</a>
-</header>
-
-<div class="help-layout">
-    <aside class="help-index" aria-label="Help Table of Contents">
-        <strong>@HienThi.Chon("Nội dung", "Contents")</strong>
-        <a href="#giao-dich">@HienThi.Chon("Giao dịch an toàn", "Safe Trading")</a>
-        <a href="#trang-thai">@HienThi.Chon("Trạng thái đơn hàng", "Order Statuses")</a>
-        <a href="#su-co">@HienThi.Chon("Khi có sự cố", "When Issues Arise")</a>
-        <a href="#bao-mat">@HienThi.Chon("Bảo mật tài khoản", "Account Security")</a>
-        <a href="#faq">@L["Footer_Faq"]</a>
-    </aside>
-
-    <main class="help-content">
-        <section class="help-section" id="giao-dich">
-            <span class="help-number">01</span>
-            <div>
-                <h2>@HienThi.Chon("Giao dịch an toàn", "Safe Trading")</h2>
-                <p>@HienThi.Chon("Trao đổi trong trang đơn hàng và kiểm tra kỹ sản phẩm, người bán, số tiền trước khi thanh toán.", "Communicate on the platform and verify product details, seller reputation, and amount before paying.")</p>
-                <div class="help-callout"><i class="bi bi-info-circle"></i><span>@HienThi.Chon("Chuyển khoản VietQR hiện được trả trực tiếp tới tài khoản do shop cung cấp; Re:Market không giữ tiền và không tự xác minh giao dịch ngân hàng. Chỉ chuyển đúng số tiền, nội dung và tài khoản trên chi tiết đơn. Nếu thông tin không khớp, hãy dừng giao dịch và liên hệ shop.", "VietQR bank transfers are sent directly to the bank account provided by the shop; Re:Market does not hold escrow or auto-verify bank transactions. Only transfer the exact amount, memo, and account shown on the order details.")</span></div>
-                <ul>
-                    <li>@HienThi.Chon("Ưu tiên gặp tại nơi công cộng nếu chọn hình thức nhận trực tiếp.", "Prefer public locations when choosing in-person meetup.")</li>
-                    <li>@HienThi.Chon("Không gửi mật khẩu, mã OTP hoặc ảnh giấy tờ cho người bán.", "Never share your password, OTP code, or ID documents with sellers.")</li>
-                    <li>@HienThi.Chon("Chỉ xác nhận đã nhận hàng sau khi đã kiểm tra sản phẩm.", "Only confirm receipt after inspecting the item.")</li>
-                </ul>
-            </div>
-        </section>
-
-        <section class="help-section" id="trang-thai">
-            <span class="help-number">02</span>
-            <div>
-                <h2>@HienThi.Chon("Trạng thái đơn hàng", "Order Statuses")</h2>
-                <div class="help-status-list">
-                    <article><span class="help-status-dot pending"></span><div><strong>@HienThi.TrangThaiDon("PENDING")</strong><p>@HienThi.Chon("Shop đang xem đơn. Nếu không còn nhu cầu, bạn có thể hủy khi nút hủy vẫn khả dụng.", "The shop is reviewing your order. You may cancel while the cancel button is available.")</p></div></article>
-                    <article><span class="help-status-dot confirmed"></span><div><strong>@HienThi.TrangThaiDon("CONFIRMED")</strong><p>@HienThi.Chon("Shop đã nhận đơn và chuẩn bị giao hàng hoặc thống nhất điểm hẹn.", "The shop confirmed the order and is preparing shipment or meetup.")</p></div></article>
-                    <article><span class="help-status-dot shipping"></span><div><strong>@HienThi.TrangThaiDon("SHIPPING")</strong><p>@HienThi.Chon("Đơn đang trên đường giao hoặc hai bên đang thực hiện lịch hẹn.", "The order is on its way or scheduled for meetup.")</p></div></article>
-                    <article><span class="help-status-dot delivered"></span><div><strong>@HienThi.TrangThaiDon("DELIVERED")</strong><p>@HienThi.Chon("Kiểm tra hàng trước. Chỉ chọn “Đã nhận được hàng” khi bạn đã thực sự nhận và đồng ý hoàn tất.", "Inspect the item first. Only click \"Confirm Receipt\" once you have received and verified it.")</p></div></article>
-                    <article><span class="help-status-dot completed"></span><div><strong>@HienThi.TrangThaiDon("COMPLETED")</strong><p>@HienThi.Chon("Giao dịch đã kết thúc. Bạn có thể gửi đánh giá cho shop.", "Transaction completed. You can now leave a review for the shop.")</p></div></article>
-                    <article><span class="help-status-dot cancelled"></span><div><strong>@HienThi.TrangThaiDon("CANCELLED")</strong><p>@HienThi.Chon("Đơn đã dừng. Mở chi tiết đơn để xem lý do và người thực hiện hủy.", "Order stopped. Open order details to see the cancellation reason and actor.")</p></div></article>
-                </div>
-                <p class="help-muted">@HienThi.Chon("Thanh toán có trạng thái riêng với đơn hàng: COD được trả khi nhận hàng; chuyển khoản chỉ được đánh dấu đã thanh toán sau khi shop xác nhận thủ công.", "Payment has its own status: COD is paid upon delivery; bank transfer is marked paid after manual confirmation by the shop.")</p>
-            </div>
-        </section>
-
-        <section class="help-section" id="su-co">
-            <span class="help-number">03</span>
-            <div>
-                <h2>@HienThi.Chon("Khi có sự cố", "When Issues Arise")</h2>
-                <ol class="help-steps">
-                    <li>@HienThi.Chon("Mở", "Open") <a asp-area="User" asp-controller="Orders" asp-action="Index">@L["Nav_MyOrders"]</a> @HienThi.Chon("và vào đúng đơn để xem trạng thái, thông tin shop và lịch sử cập nhật.", "and select the order to check its status, shop info, and timeline.")</li>
-                    <li>@HienThi.Chon("Nếu hàng chưa nhận, sai mô tả hoặc giao dịch có vấn đề, dùng mục Khiếu nại / Tranh chấp trong chi tiết đơn kèm bằng chứng liên quan.", "If the item was not received or does not match the description, use the Dispute / Claim option in order details with supporting evidence.")</li>
-                    <li>@HienThi.Chon("Nếu phát hiện tài khoản hoặc nội dung vi phạm, gửi báo cáo qua", "If you find a violating account or listing, submit a report via") <a asp-area="User" asp-controller="Reports" asp-action="Tao">@HienThi.Chon("biểu mẫu báo cáo", "the report form")</a>.</li>
-                    <li>@HienThi.Chon("Giữ lại mã đơn, nội dung trao đổi và chứng từ thanh toán để đối chiếu.", "Keep your order ID, chat logs, and payment receipts for verification.")</li>
-                </ol>
-                <p class="help-muted">@HienThi.Chon("Đừng xác nhận hoàn tất hoặc chuyển thêm tiền để “mở khóa” đơn theo yêu cầu ngoài hệ thống.", "Never confirm order completion early or transfer extra money off-platform.")</p>
-            </div>
-        </section>
-
-        <section class="help-section" id="bao-mat">
-            <span class="help-number">04</span>
-            <div>
-                <h2>@HienThi.Chon("Bảo mật tài khoản", "Account Security")</h2>
-                <div class="help-security-grid">
-                    <article><i class="bi bi-key"></i><strong>@HienThi.Chon("Dùng mật khẩu riêng", "Use a Unique Password")</strong><p>@HienThi.Chon("Không dùng lại mật khẩu từ email, mạng xã hội hoặc dịch vụ khác.", "Do not reuse passwords from your email, social media, or other services.")</p></article>
-                    <article><i class="bi bi-shield-lock"></i><strong>@HienThi.Chon("Giữ kín mã OTP", "Keep OTP Codes Private")</strong><p>@HienThi.Chon("Mã đặt lại mật khẩu chỉ dùng một lần, có hiệu lực 10 phút. Không chia sẻ mã với bất kỳ ai.", "One-time codes expire in 10 minutes. Never share your OTP with anyone.")</p></article>
-                    <article><i class="bi bi-person-lock"></i><strong>@HienThi.Chon("Đăng xuất thiết bị lạ", "Sign Out on Shared Devices")</strong><p>@HienThi.Chon("Đăng xuất sau khi dùng máy công cộng. Nếu nghi ngờ lộ mật khẩu, đổi mật khẩu ngay và đăng nhập lại.", "Sign out after using public computers. Change your password immediately if you suspect a breach.")</p></article>
-                </div>
-                <p>@HienThi.Chon("Mật khẩu được lưu dưới dạng băm. Đăng nhập và yêu cầu đặt lại mật khẩu có giới hạn tần suất để giảm thử đoán tự động.", "Passwords are stored as secure cryptographic hashes. Sign-in and password reset endpoints are rate-limited against brute-force attacks.")</p>
-                <a class="btn-rm-outline" asp-controller="Account" asp-action="ChangePassword">@L["Nav_ChangePassword"]</a>
-            </div>
-        </section>
-
-        <section class="help-section" id="faq">
-            <span class="help-number">05</span>
-            <div>
-                <h2>@L["Footer_Faq"]</h2>
-                <details class="help-faq"><summary>@HienThi.Chon("Tôi chuyển khoản rồi nhưng đơn vẫn chưa được xác nhận?", "I transferred the money, why isn't my order confirmed yet?")</summary><p>@HienThi.Chon("Shop cần kiểm tra giao dịch trên tài khoản ngân hàng của họ và cập nhật thủ công. Nếu đã chuyển đúng thông tin mà trạng thái chưa đổi, liên hệ shop từ đơn hàng và giữ chứng từ giao dịch.", "The shop needs to verify the transfer in their bank account and confirm manually. You can click \"I have transferred\" on the order page to notify the seller immediately.")</p></details>
-                <details class="help-faq"><summary>@HienThi.Chon("Tôi có thể hủy đơn ở trạng thái nào?", "When can I cancel an order?")</summary><p>@HienThi.Chon("Khả năng hủy phụ thuộc trạng thái hiện tại và quy tắc đơn hàng. Nếu nút hủy còn xuất hiện trong chi tiết đơn, bạn có thể gửi yêu cầu kèm lý do.", "Cancellation availability depends on the current order status. While the order is Pending Confirmation, you can cancel it with a reason.")</p></details>
-                <details class="help-faq"><summary>@HienThi.Chon("Khi nào tôi được đánh giá shop?", "When can I review a shop?")</summary><p>@HienThi.Chon("Sau khi đơn hoàn tất. Mở chi tiết đơn để gửi đánh giá; mỗi đơn chỉ có một đánh giá.", "Once the order is Completed. Open the order details page to submit your rating and review (one review per completed order).")</p></details>
-                <details class="help-faq"><summary>@HienThi.Chon("Tôi quên mật khẩu thì làm gì?", "What if I forget my password?")</summary><p>@HienThi.Chon("Chọn “Quên mật khẩu?” ở trang đăng nhập, nhận mã OTP qua email và đặt mật khẩu mới trong thời hạn của mã.", "Click \"Forgot password?\" on the Sign In page to receive an OTP via email and set a new password.")</p></details>
-            </div>
-        </section>
-    </main>
+<div class="rm-reading-progress" aria-hidden="true">
+    <div class="rm-reading-progress-bar" id="rmReadingProgressBar"></div>
 </div>
+
+<div class="rm-doc-page">
+    <nav class="rm-breadcrumb" aria-label="Breadcrumb">
+        <a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a>
+        <span class="sep">/</span>
+        <span>@L["Footer_HelpCenter"]</span>
+    </nav>
+
+    <header class="rm-doc-hero">
+        <div class="rm-doc-hero-inner">
+            <span class="rm-doc-eyebrow">
+                <i class="bi bi-compass" aria-hidden="true"></i>
+                @HienThi.Chon("RE:MARKET · TRUNG TÂM HỖ TRỢ & HƯỚNG DẪN", "RE:MARKET · HELP CENTER & PLAYBOOK")
+            </span>
+            <h1>@Html.Raw(HienThi.Chon("Giao dịch đồ cũ rõ ràng,<br />an tâm trong từng bước.", "Secondhand trading made clear,<br />safe at every step."))</h1>
+            <p class="rm-doc-hero-lead">
+                @HienThi.Chon(
+                    "Cẩm nang chi tiết từ A đến Z dành cho người mua và người bán trên Re:Market: quy trình kiểm tra sản phẩm, vòng đời đơn hàng, cơ chế đấu giá, quy tắc xử lý sự cố minh bạch, bảo vệ tài khoản và bộ câu hỏi thường gặp.",
+                    "A complete A-to-Z playbook for Re:Market buyers and sellers: safe inspection workflows, order lifecycle, live auctions, transparent incident resolution, account security, and searchable FAQs.")
+            </p>
+            <div class="rm-doc-meta-row">
+                <span class="rm-doc-meta-pill"><i class="bi bi-calendar3"></i> @HienThi.Chon("Cập nhật: Tháng 11/2026", "Updated: November 2026")</span>
+                <span class="rm-doc-meta-pill"><i class="bi bi-clock"></i> @HienThi.Chon("Thời gian đọc ~8 phút", "~8 min read")</span>
+                <span class="rm-doc-meta-pill"><i class="bi bi-shield-check"></i> @HienThi.Chon("Áp dụng cho Người mua & Người bán", "Applies to Buyers & Sellers")</span>
+            </div>
+            <div class="rm-doc-hero-actions">
+                <a class="btn-rm-primary" asp-area="User" asp-controller="Orders" asp-action="Index">
+                    <i class="bi bi-bag-check me-1"></i> @HienThi.Chon("Theo dõi đơn hàng của tôi", "Track My Orders")
+                </a>
+                <a class="btn-rm-outline" asp-area="" asp-controller="Home" asp-action="Terms">
+                    <i class="bi bi-file-earmark-text me-1"></i> @HienThi.Chon("Xem Điều khoản & Chính sách", "View Terms & Privacy")
+                </a>
+            </div>
+            <div class="rm-doc-quick-nav" aria-label="Quick navigation">
+                <a class="rm-doc-chip" href="#giao-dich"><i class="bi bi-shield-check"></i> @HienThi.Chon("Giao dịch an toàn", "Safe Trading")</a>
+                <a class="rm-doc-chip" href="#trang-thai"><i class="bi bi-truck"></i> @HienThi.Chon("Trạng thái đơn hàng", "Order Statuses")</a>
+                <a class="rm-doc-chip" href="#dau-gia"><i class="bi bi-hammer"></i> @HienThi.Chon("Quy tắc đấu giá", "Auction Guide")</a>
+                <a class="rm-doc-chip" href="#su-co"><i class="bi bi-life-preserver"></i> @HienThi.Chon("Quy tắc xử lý sự cố", "Incident Rules")</a>
+                <a class="rm-doc-chip" href="#bao-mat"><i class="bi bi-lock"></i> @HienThi.Chon("Bảo mật tài khoản", "Account Security")</a>
+                <a class="rm-doc-chip" href="#faq"><i class="bi bi-question-circle"></i> @L["Footer_Faq"]</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="rm-doc-layout">
+        <aside class="rm-doc-sidebar" aria-label="Table of Contents">
+            <nav class="rm-doc-toc">
+                <div class="rm-doc-toc-title">@HienThi.Chon("Mục lục hướng dẫn", "Guide Contents")</div>
+                <div class="rm-doc-toc-list">
+                    <a class="rm-doc-toc-link" href="#giao-dich"><span class="rm-doc-toc-num">01</span><span>@HienThi.Chon("Hướng dẫn giao dịch an toàn", "Safe Trading Guide")</span></a>
+                    <a class="rm-doc-toc-link" href="#trang-thai"><span class="rm-doc-toc-num">02</span><span>@HienThi.Chon("Trạng thái đơn & Thanh toán", "Order Status & Payments")</span></a>
+                    <a class="rm-doc-toc-link" href="#dau-gia"><span class="rm-doc-toc-num">03</span><span>@HienThi.Chon("Hướng dẫn Đấu giá", "Auction Rules")</span></a>
+                    <a class="rm-doc-toc-link" href="#su-co"><span class="rm-doc-toc-num">04</span><span>@HienThi.Chon("Quy tắc xử lý sự cố", "Incident Resolution")</span></a>
+                    <a class="rm-doc-toc-link" href="#bao-mat"><span class="rm-doc-toc-num">05</span><span>@HienThi.Chon("Bảo mật tài khoản", "Account Security")</span></a>
+                    <a class="rm-doc-toc-link" href="#faq"><span class="rm-doc-toc-num">06</span><span>@L["Footer_Faq"]</span></a>
+                </div>
+            </nav>
+
+            <div class="rm-doc-side-card">
+                <h3>@HienThi.Chon("Lối tắt xử lý nhanh", "Quick Support Links")</h3>
+                <p>@HienThi.Chon("Chuẩn bị sẵn mã đơn hàng và ảnh chụp màn hình để đội ngũ Re:Market đối chiếu nhanh hơn.", "Keep your order code and screenshots ready for faster verification.")</p>
+                <div class="rm-doc-side-links">
+                    <a asp-area="User" asp-controller="Orders" asp-action="Index">
+                        <span>@L["Nav_MyOrders"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a asp-area="User" asp-controller="Disputes" asp-action="Index">
+                        <span>@L["Nav_Disputes"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a asp-area="User" asp-controller="Reports" asp-action="Index">
+                        <span>@L["Footer_ReportViolation"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a asp-area="" asp-controller="Home" asp-action="Terms">
+                        <span>@L["Footer_Terms"]</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <div class="rm-doc-main">
+            <!-- 01: GIAO DỊCH AN TOÀN -->
+            <section class="rm-doc-card rm-doc-reveal" id="giao-dich">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">01</span>
+                    <div>
+                        <h2>@HienThi.Chon("Hướng dẫn giao dịch an toàn", "Safe Trading Guide")</h2>
+                        <p>@HienThi.Chon("Quy trình 4 bước chuẩn giúp người mua kiểm soát rủi ro và người bán chốt đơn minh bạch trên thị trường đồ đã qua sử dụng.", "A 4-step trading standard that protects buyers from risk and helps sellers close transparent secondhand deals.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <p>
+                        @HienThi.Chon(
+                            "Khác với hàng mới nguyên seal, mỗi món đồ cũ trên Re:Market đều là một sản phẩm độc bản (số lượng duy nhất 1 chiếc) với mức độ hao mòn, phụ kiện đi kèm và lịch sử sử dụng riêng biệt. Vì vậy, việc đọc kỹ thông tin và trao đổi ngay trên nền tảng là chìa khóa để mọi giao dịch diễn ra suôn sẻ.",
+                            "Unlike factory-sealed retail products, every secondhand item on Re:Market is a unique 1-of-1 piece with its own wear, accessories, and history. Reviewing details carefully and keeping conversations on-platform is the foundation of a smooth transaction.")
+                    </p>
+
+                    <div class="rm-doc-step-grid">
+                        <article class="rm-doc-step-card">
+                            <span class="rm-doc-step-num">@HienThi.Chon("Bước 1", "Step 1")</span>
+                            <h3>@HienThi.Chon("Kiểm tra tin đăng & độ uy tín shop", "Inspect Listing & Shop Rating")</h3>
+                            <p>@HienThi.Chon("Xem kỹ tất cả ảnh chụp thực tế (không chỉ ảnh bìa), mô tả tình trạng trầy xước, phụ kiện kèm theo, điểm đánh giá trung bình và khu vực của shop trước khi đặt.", "Inspect every real photo (not just the cover), check scratches or defects, included accessories, shop rating, and seller location before ordering.")</p>
+                        </article>
+                        <article class="rm-doc-step-card">
+                            <span class="rm-doc-step-num">@HienThi.Chon("Bước 2", "Step 2")</span>
+                            <h3>@HienThi.Chon("Trao đổi trực tiếp trên Re:Market", "Chat Directly on Re:Market")</h3>
+                            <p>@HienThi.Chon("Dùng khung Tin nhắn tích hợp để hỏi thêm về ngày mua, tình trạng pin/máy, kích thước thực tế hoặc thỏa thuận điểm hẹn. Lịch sử chat trên sàn là căn cứ đối chiếu nếu có tranh chấp.", "Use built-in Messages to ask about purchase date, battery/hardware health, sizing, or meetup details. On-platform chat logs serve as evidence if a dispute occurs.")</p>
+                        </article>
+                        <article class="rm-doc-step-card">
+                            <span class="rm-doc-step-num">@HienThi.Chon("Bước 3", "Step 3")</span>
+                            <h3>@HienThi.Chon("Đặt đơn & thanh toán đúng thông tin", "Order & Pay Accurately")</h3>
+                            <p>@HienThi.Chon("Chọn đúng địa chỉ nhận hàng (mặc định hoặc địa chỉ dự phòng), hình thức Giao tận nơi hoặc Gặp mặt trực tiếp và phương thức thanh toán COD hoặc VietQR hiển thị trên chi tiết đơn.", "Select your saved or backup shipping address, choose Delivery or In-Person Meetup, and pay via COD or the exact VietQR details shown on your order page.")</p>
+                        </article>
+                        <article class="rm-doc-step-card">
+                            <span class="rm-doc-step-num">@HienThi.Chon("Bước 4", "Step 4")</span>
+                            <h3>@HienThi.Chon("Đồng kiểm & quay video mở hộp", "Inspect & Record Unboxing")</h3>
+                            <p>@HienThi.Chon("Quay video liền mạch quá trình mở gói hàng (hoặc test trực tiếp chức năng cơ bản khi gặp mặt). Chỉ bấm “Đã nhận được hàng” sau khi đã chắc chắn món đồ khớp mô tả.", "Record a continuous unboxing video (or test key functions in person). Only click \"Confirm Receipt\" once you verify the item matches its listing.")</p>
+                        </article>
+                    </div>
+
+                    <div class="rm-doc-callout is-warn">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div>
+                            <strong>@HienThi.Chon("Lưu ý quan trọng về chuyển khoản VietQR", "Important Notice on VietQR Bank Transfers")</strong>
+                            @HienThi.Chon(
+                                "Chuyển khoản VietQR hiện được thực hiện trực tiếp tới tài khoản ngân hàng do cửa hàng cấu hình; Re:Market không giữ tiền hộ (escrow) và không tự động xác minh biến động số dư ngân hàng. Hãy chỉ chuyển đúng số tiền, đúng số tài khoản và đúng nội dung mã đơn hiển thị trên trang Chi tiết đơn hàng. Nếu shop yêu cầu chuyển vào một tài khoản khác qua tin nhắn ngoài sàn hoặc đòi đặt cọc giữ chỗ trước khi tạo đơn, hãy dừng giao dịch ngay.",
+                                "VietQR bank transfers go directly to the shop's configured bank account; Re:Market does not hold escrow funds or auto-verify bank statements. Only transfer the exact amount, account number, and order memo shown on your Order Details page. Stop immediately if a seller asks for deposits to a different account off-platform.")
+                        </div>
+                    </div>
+
+                    <div class="rm-doc-do-dont">
+                        <div class="rm-doc-do-box">
+                            <h3><i class="bi bi-check-circle-fill"></i> @HienThi.Chon("Nên thực hiện để bảo vệ mình", "Recommended Best Practices")</h3>
+                            <ul>
+                                <li>@HienThi.Chon("Với hình thức gặp mặt trực tiếp, luôn chọn nơi công cộng đông người, đủ ánh sáng (quán cà phê, sảnh tòa nhà, trung tâm thương mại) vào ban ngày.", "For in-person meetups, choose well-lit public places (cafes, lobbies, shopping malls) during daytime.")</li>
+                                <li>@HienThi.Chon("Kiểm tra số serial, IMEI, màn hình, cổng sạc, khóa kéo hoặc đường may với đồ điện tử và thời trang trước khi hoàn tất giao nhận.", "Verify serial/IMEI, screen, charging ports, zippers, or stitching on electronics and apparel before completing.")</li>
+                                <li>@HienThi.Chon("Lưu giữ biên lai chuyển khoản, mã đơn hàng và ảnh chụp thực tế sản phẩm sau khi nhận trong ít nhất 7 ngày.", "Keep transfer receipts, order IDs, and arrival photos for at least 7 days.")</li>
+                                <li>@HienThi.Chon("Sử dụng đúng tính năng Trợ lý AI hoặc mục So sánh tin đăng cùng danh mục để ước lượng mặt bằng giá hợp lý.", "Use our AI Assistant or compare similar listings to sanity-check fair market prices.")</li>
+                            </ul>
+                        </div>
+                        <div class="rm-doc-dont-box">
+                            <h3><i class="bi bi-x-circle-fill"></i> @HienThi.Chon("Tuyệt đối tránh các rủi ro sau", "Strictly Avoid These Risks")</h3>
+                            <ul>
+                                <li>@HienThi.Chon("Không chuyển khoản đặt cọc ngoài đơn hàng, không giao dịch qua liên kết lạ gửi từ Zalo/Facebook/Telegram.", "Never send off-platform deposits or pay via external links sent over Zalo, Facebook, or Telegram.")</li>
+                                <li>@HienThi.Chon("Không bao giờ cung cấp mật khẩu tài khoản, mã OTP ngân hàng, OTP Re:Market hay ảnh CCCD/thẻ ngân hàng cho người bán.", "Never share account passwords, banking/Re:Market OTP codes, or ID card photos with sellers.")</li>
+                                <li>@HienThi.Chon("Không bấm “Đã nhận được hàng” trước khi thực sự cầm và kiểm tra sản phẩm trên tay, kể cả khi người bán hối thúc.", "Never click \"Confirm Receipt\" before physically holding and inspecting the item, even if urged by the seller.")</li>
+                                <li>@HienThi.Chon("Cảnh giác với tin đăng có giá rẻ bất thường (thấp hơn 50–70% giá thị trường) kèm ảnh mạng/ảnh quảng cáo và thúc giục chuyển tiền gấp.", "Be wary of unrealistically low prices (50–70% below market) using stock photos and pressuring urgent payment.")</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 02: TRẠNG THÁI ĐƠN HÀNG & THANH TOÁN -->
+            <section class="rm-doc-card rm-doc-reveal" id="trang-thai">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">02</span>
+                    <div>
+                        <h2>@HienThi.Chon("Vòng đời đơn hàng & Trạng thái thanh toán", "Order Lifecycle & Payment States")</h2>
+                        <p>@HienThi.Chon("Mỗi đơn hàng đi qua từng mốc trạng thái rõ ràng để cả người mua lẫn người bán đều biết chính xác bước tiếp theo cần làm.", "Every order moves through explicit checkpoints so both buyers and sellers always know the exact next step.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <p>
+                        @HienThi.Chon(
+                            "Ngay khi bạn bấm xác nhận đặt hàng, sản phẩm độc bản sẽ tự động chuyển sang trạng thái tạm giữ (RESERVED) để không ai khác có thể đặt trùng. Dưới đây là ý nghĩa và quyền thao tác ở từng trạng thái:",
+                            "The moment you confirm an order, the unique listing is automatically reserved so no one else can purchase it simultaneously. Here is what each status means:")
+                    </p>
+
+                    <div class="rm-doc-timeline">
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-warn"></span>
+                            <strong>@HienThi.TrangThaiDon("PENDING")</strong>
+                            <p>@HienThi.Chon("Đơn vừa được tạo và gửi tới cửa hàng. Người mua vẫn có thể chủ động hủy đơn (kèm lý do) nếu thay đổi kế hoạch; khi hủy, sản phẩm sẽ tự mở bán lại trên sàn.", "The order was just placed and sent to the shop. Buyers can still cancel with a reason; cancelled items automatically return to active stock.")</p>
+                        </article>
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-info"></span>
+                            <strong>@HienThi.TrangThaiDon("CONFIRMED")</strong>
+                            <p>@HienThi.Chon("Cửa hàng đã xác nhận nhận đơn, kiểm tra thanh toán (nếu chuyển khoản) và đang đóng gói hàng hoặc chốt lịch hẹn gặp trực tiếp với bạn.", "The shop has accepted the order, verified bank transfer (if applicable), and is packing or scheduling the meetup.")</p>
+                        </article>
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-info"></span>
+                            <strong>@HienThi.TrangThaiDon("SHIPPING")</strong>
+                            <p>@HienThi.Chon("Đơn đã được bàn giao cho đơn vị vận chuyển hoặc hai bên đang trên đường tới điểm hẹn giao nhận. Hãy giữ điện thoại liên lạc trong khung giờ đã ghi chú.", "The parcel is in transit or both parties are heading to the meetup point. Keep your phone reachable during your noted time window.")</p>
+                        </article>
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-warn"></span>
+                            <strong>@HienThi.TrangThaiDon("DELIVERED")</strong>
+                            <p>@HienThi.Chon("Cửa hàng đã đánh dấu giao hàng thành công. Đây là mốc quan trọng nhất: hãy kiểm tra sản phẩm thật kỹ trước khi bấm “Đã nhận được hàng”. Nếu hàng lỗi/sai mô tả, hãy mở Khiếu nại ngay tại bước này.", "The shop marked the item as delivered. Inspect everything carefully before clicking \"Confirm Receipt\". If the item is defective or misrepresented, open a Dispute at this stage.")</p>
+                        </article>
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-success"></span>
+                            <strong>@HienThi.TrangThaiDon("COMPLETED")</strong>
+                            <p>@HienThi.Chon("Người mua đã xác nhận nhận hàng hài lòng. Giao dịch khép lại, sản phẩm chuyển sang trạng thái Đã bán và bạn có thể gửi 01 đánh giá công khai cho cửa hàng.", "The buyer confirmed receipt. The listing is marked Sold and you can submit one verified public review for the shop.")</p>
+                        </article>
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-danger"></span>
+                            <strong>@HienThi.TrangThaiDon("CANCELLED")</strong>
+                            <p>@HienThi.Chon("Đơn đã dừng thực hiện bởi người mua, người bán hoặc quản trị viên. Mở chi tiết đơn để xem lý do hủy cụ thể và mốc thời gian cập nhật.", "The order was stopped by the buyer, seller, or an admin. Open order details to inspect the exact reason and timestamp.")</p>
+                        </article>
+                    </div>
+
+                    <div class="rm-doc-table-wrap">
+                        <table class="rm-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>@HienThi.Chon("Phương thức", "Payment Method")</th>
+                                    <th>@HienThi.Chon("Cách hoạt động", "How It Works")</th>
+                                    <th>@HienThi.Chon("Thời điểm ghi nhận đã thanh toán", "When Marked Paid")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("COD (Tiền mặt khi nhận)", "COD (Cash on Delivery)")</strong></td>
+                                    <td>@HienThi.Chon("Người mua thanh toán trực tiếp cho người giao hàng hoặc người bán sau khi kiểm tra món đồ.", "Buyer pays in cash upon delivery or meetup after inspecting the item.")</td>
+                                    <td>@HienThi.Chon("Khi người bán xác nhận đã thu tiền và giao hàng thành công.", "When the seller confirms cash received and delivery.")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Chuyển khoản VietQR", "VietQR Bank Transfer")</strong></td>
+                                    <td>@HienThi.Chon("Quét mã QR hoặc chuyển đúng STK, số tiền và nội dung mã đơn hiển thị trên đơn hàng.", "Scan the QR code or transfer using the exact account, amount, and order memo.")</td>
+                                    <td>@HienThi.Chon("Người mua bấm báo đã chuyển; cửa hàng kiểm tra sao kê và xác nhận thủ công trên hệ thống.", "Buyer notifies transfer; shop checks bank statement and confirms manually.")</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 03: HƯỚNG DẪN ĐẤU GIÁ -->
+            <section class="rm-doc-card rm-doc-reveal" id="dau-gia">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge is-warm">03</span>
+                    <div>
+                        <h2>@HienThi.Chon("Hướng dẫn tham gia Đấu giá đồ cũ", "Secondhand Auction Guide")</h2>
+                        <p>@HienThi.Chon("Săn các món đồ độc bản, sưu tầm hoặc công nghệ giá tốt với lịch sử trả giá công khai theo thời gian thực.", "Score unique, collectible, or tech finds through transparent real-time public bidding.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <div class="rm-doc-clauses">
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("1. Cách đặt giá hợp lệ & bước giá tối thiểu", "1. Valid Bids & Minimum Increment")</h3>
+                            <p>@HienThi.Chon("Mỗi phiên đấu giá đều công bố rõ Giá khởi điểm, Bước giá tối thiểu, thời điểm bắt đầu và thời điểm kết thúc. Giá đặt mới phải lớn hơn hoặc bằng Giá hiện tại cộng tối thiểu một Bước giá (hoặc bằng Giá khởi điểm nếu bạn là người đặt đầu tiên). Hệ thống tự động kiểm tra hợp lệ và ghi nhận theo dấu thời gian máy chủ.", "Every auction displays its Starting Price, Minimum Increment, start time, and end time. Each new bid must equal or exceed the Current Price plus one Minimum Increment (or the Starting Price for the first bid), validated strictly by server timestamp.")</p>
+                        </article>
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("2. Trách nhiệm khi đặt giá & nghĩa vụ sau khi thắng phiên", "2. Bidding Commitment & Winner Obligations")</h3>
+                            <p>@HienThi.Chon("Mỗi lượt đặt giá là một cam kết mua hàng nghiêm túc và không thể tự ý rút lại sau khi đã ghi nhận. Khi phiên kết thúc, người giữ mức giá cao nhất hợp lệ sẽ trở thành người thắng phiên và nhận thông báo để tiến hành xác nhận địa chỉ, thanh toán và hoàn tất đơn hàng theo mức giá trúng thầu.", "Every bid is a binding purchase commitment and cannot be retracted once accepted. When the timer ends, the highest valid bidder wins and receives a notification to confirm shipping and complete the order at the winning price.")</p>
+                        </article>
+                        <article class="rm-doc-clause">
+                            <h3>@HienThi.Chon("3. Chống gian lận đấu giá & xử lý hủy kèo", "3. Anti-Shill Bidding & Non-Completion Penalties")</h3>
+                            <p>@HienThi.Chon("Chủ cửa hàng tuyệt đối không được dùng tài khoản phụ để tự đẩy giá (shill bidding), đồng thời người mua không được cố tình đặt giá ảo phá phiên rồi bỏ cọc/không nhận hàng. Mọi hành vi thao túng phiên đấu giá khi bị phát hiện hoặc báo cáo đều bị hủy phiên và áp dụng chế tài khóa tài khoản.", "Sellers are strictly prohibited from using alternate accounts to inflate bids (shill bidding), and buyers must not place fake bids to disrupt auctions. Manipulative behavior results in auction cancellation and account suspension.")</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 04: QUY TẮC XỬ LÝ SỰ CỐ & TRANH CHẤP -->
+            <section class="rm-doc-card rm-doc-reveal" id="su-co">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge is-danger">04</span>
+                    <div>
+                        <h2>@HienThi.Chon("Quy tắc xử lý sự cố & Giải quyết tranh chấp", "Incident Resolution & Dispute Rules")</h2>
+                        <p>@HienThi.Chon("Quy trình chuẩn hóa, công bằng hai chiều khi đơn hàng phát sinh lỗi, giao sai sản phẩm, thất lạc hoặc nghi ngờ vi phạm.", "A fair, standardized two-way process whenever an order involves defects, wrong items, missing delivery, or suspected violations.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <p>
+                        @HienThi.Chon(
+                            "Re:Market đóng vai trò trung gian tiếp nhận, đối chiếu bằng chứng khách quan và ra quyết định xử lý đối với mọi tranh chấp phát sinh từ đơn hàng đặt trên sàn. Để quyền lợi được bảo vệ tối đa, vui lòng tuân thủ đúng trình tự 5 bước sau:",
+                            "Re:Market acts as an impartial mediator reviewing objective evidence for disputes arising from on-platform orders. Follow these 5 steps to protect your rights:")
+                    </p>
+
+                    <div class="rm-doc-timeline">
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot"></span>
+                            <strong>@HienThi.Chon("Bước 1 · Trao đổi thiện chí trong 24 giờ đầu", "Step 1 · Communicate Constructively Within 24 Hours")</strong>
+                            <p>@HienThi.Chon("Mở trang", "Open") <a asp-area="User" asp-controller="Orders" asp-action="Index">@L["Nav_MyOrders"]</a> @HienThi.Chon("và nhắn tin trực tiếp với cửa hàng qua khung Tin nhắn Re:Market để thông báo rõ tình trạng (thiếu phụ kiện, sai mẫu, trầy xước ngoài mô tả, chậm giao). Nhiều sự cố do nhầm lẫn đóng gói có thể được shop xử lý đổi/bù rất nhanh.", "and message the shop via Re:Market Chat explaining the issue (missing accessory, wrong model, undisclosed damage, delivery delay). Many packing mistakes are resolved quickly directly with the seller.")</p>
+                        </article>
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-warn"></span>
+                            <strong>@HienThi.Chon("Bước 2 · Tạo yêu cầu Tranh chấp trước khi xác nhận hoàn tất", "Step 2 · Open a Dispute Before Confirming Completion")</strong>
+                            <p>@HienThi.Chon("Nếu sau 24 giờ hai bên không tìm được phương án đồng thuận hoặc có dấu hiệu gian lận, hãy bấm nút “Khiếu nại / Tranh chấp” ngay trong trang Chi tiết đơn hàng. Trình bày ngắn gọn vấn đề, mong muốn giải quyết và đính kèm đầy đủ bằng chứng.", "If no agreement is reached within 24 hours or fraud is suspected, click \"Open Dispute\" on the Order Details page with a concise summary and supporting evidence.")</p>
+                        </article>
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-info"></span>
+                            <strong>@HienThi.Chon("Bước 3 · Cửa hàng phản hồi & cung cấp bằng chứng đối chứng", "Step 3 · Seller Response & Counter-Evidence")</strong>
+                            <p>@HienThi.Chon("Hệ thống thông báo ngay cho người bán. Trong vòng 48 giờ làm việc, cửa hàng có quyền gửi ảnh/video đóng gói trước khi gửi, vận đơn, biên lai hoặc giải trình để quản trị viên có góc nhìn toàn diện từ cả hai phía.", "The seller is notified immediately and has 48 business hours to submit pre-shipment packing proof, tracking receipts, or explanations so moderators have both perspectives.")</p>
+                        </article>
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-success"></span>
+                            <strong>@HienThi.Chon("Bước 4 · Quản trị viên thẩm định & ra phán quyết", "Step 4 · Admin Verification & Decision")</strong>
+                            <p>@HienThi.Chon("Đội ngũ kiểm duyệt đối chiếu mô tả gốc của tin đăng, lịch sử chat trên sàn, ảnh/video mở hộp và chứng từ chuyển khoản để đưa ra kết luận: chấp thuận hoàn trả/bồi hoàn, điều chỉnh trạng thái đơn hoặc từ chối khiếu nại nếu bằng chứng không hợp lệ.", "Moderators cross-check the original listing, on-platform chat logs, unboxing proof, and transfer receipts to decide: approve return/resolution, update order state, or dismiss unsupported claims.")</p>
+                        </article>
+                        <article class="rm-doc-timeline-item">
+                            <span class="rm-doc-timeline-dot is-danger"></span>
+                            <strong>@HienThi.Chon("Bước 5 · Chế tài & báo cáo vi phạm cộng đồng", "Step 5 · Enforcement & Violation Reporting")</strong>
+                            <p>@HienThi.Chon("Với các trường hợp cố tình lừa đảo, bán hàng giả hoặc quấy rối, ngoài việc xử lý đơn hàng, bạn có thể gửi thêm phản ánh tại mục", "For deliberate scams, counterfeits, or harassment, you can also submit a report via") <a asp-area="User" asp-controller="Reports" asp-action="Index">@L["Footer_ReportViolation"]</a> @HienThi.Chon("để hệ thống ghi nhận vi phạm và khóa tài khoản tái phạm.", "so our moderation team logs the violation and suspends repeat offenders.")</p>
+                        </article>
+                    </div>
+
+                    <div class="rm-doc-table-wrap">
+                        <table class="rm-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>@HienThi.Chon("Loại sự cố", "Incident Type")</th>
+                                    <th>@HienThi.Chon("Bằng chứng cần chuẩn bị", "Required Evidence")</th>
+                                    <th>@HienThi.Chon("Thời gian phản hồi dự kiến", "Expected SLA")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Hàng sai mô tả / Hư hỏng", "Item Not as Described / Damaged")</strong></td>
+                                    <td>@HienThi.Chon("Video mở gói liền mạch thấy rõ mã vận đơn, ảnh cận cảnh vết lỗi, ảnh chụp mô tả gốc.", "Continuous unboxing video showing shipping label, close-up defect photos, original listing screenshot.")</td>
+                                    <td>@HienThi.Chon("24 – 72 giờ làm việc", "24 – 72 business hours")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Chưa nhận hàng / Thất lạc", "Item Not Received / Lost")</strong></td>
+                                    <td>@HienThi.Chon("Mã đơn hàng, lịch sử chat thỏa thuận giao nhận, ảnh trạng thái vận đơn (nếu có).", "Order code, delivery chat history, carrier tracking screenshot (if applicable).")</td>
+                                    <td>@HienThi.Chon("24 – 48 giờ làm việc", "24 – 48 business hours")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Đã chuyển khoản nhưng shop chưa xác nhận", "Paid via VietQR, Unconfirmed")</strong></td>
+                                    <td>@HienThi.Chon("Biên lai chuyển khoản rõ ngày giờ, số tiền, số tài khoản nhận và nội dung mã đơn.", "Bank receipt showing timestamp, amount, recipient account, and order memo.")</td>
+                                    <td>@HienThi.Chon("Trong 24 giờ làm việc", "Within 24 business hours")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>@HienThi.Chon("Tin đăng giả mạo / Quấy rối", "Scam Listing / Harassment")</strong></td>
+                                    <td>@HienThi.Chon("Đường dẫn sản phẩm/shop, ảnh chụp đoạn chat hoặc nội dung vi phạm.", "Product/shop link and screenshots of violating content or messages.")</td>
+                                    <td>@HienThi.Chon("Trong 12 – 24 giờ", "Within 12 – 24 hours")</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="rm-doc-callout is-danger">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <div>
+                            <strong>@HienThi.Chon("Cảnh báo mạo danh hỗ trợ xử lý sự cố", "Warning Against Impersonated Support")</strong>
+                            @HienThi.Chon(
+                                "Nhân viên Re:Market KHÔNG BAO GIỜ yêu cầu bạn chuyển thêm tiền “phí mở khóa đơn”, “phí xác minh hoàn tiền” hoặc gửi mã OTP để xử lý tranh chấp. Mọi cập nhật tranh chấp chính thức chỉ diễn ra trực tiếp trong tài khoản của bạn trên website Re:Market.",
+                                "Re:Market staff will NEVER ask you to pay an \"unlock fee\", \"refund verification fee\", or share OTP codes to resolve a dispute. Official updates only appear inside your account on Re:Market.")
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 05: BẢO MẬT TÀI KHOẢN -->
+            <section class="rm-doc-card rm-doc-reveal" id="bao-mat">
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">05</span>
+                    <div>
+                        <h2>@HienThi.Chon("Bảo mật tài khoản & Chống chiếm đoạt", "Account Security & Protection")</h2>
+                        <p>@HienThi.Chon("Các lớp bảo vệ kỹ thuật đang vận hành trên Re:Market cùng thói quen an toàn bạn nên duy trì mỗi ngày.", "Built-in technical safeguards on Re:Market alongside daily habits to keep your account locked down.")</p>
+                    </div>
+                </div>
+                <div class="rm-doc-prose">
+                    <div class="rm-doc-feature-grid">
+                        <article class="rm-doc-feature-card">
+                            <span class="rm-doc-feature-icon"><i class="bi bi-key"></i></span>
+                            <h3>@HienThi.Chon("Mật khẩu độc lập & đủ mạnh", "Strong, Unique Password")</h3>
+                            <p>@HienThi.Chon("Sử dụng mật khẩu tối thiểu 8 ký tự gồm chữ hoa, chữ thường, số và ký tự đặc biệt. Không dùng trùng mật khẩu với email, ngân hàng hay mạng xã hội khác.", "Use at least 8 characters combining upper/lowercase letters, digits, and symbols. Never reuse passwords from email, banking, or social media.")</p>
+                        </article>
+                        <article class="rm-doc-feature-card">
+                            <span class="rm-doc-feature-icon"><i class="bi bi-shield-lock"></i></span>
+                            <h3>@HienThi.Chon("Bảo vệ mã OTP hiệu lực 10 phút", "Protect 10-Minute OTP Codes")</h3>
+                            <p>@HienThi.Chon("Mã OTP đặt lại mật khẩu chỉ dùng một lần duy nhất và hết hạn sau 10 phút. Không đọc hoặc chụp màn hình mã OTP gửi cho bất kỳ ai, kể cả người tự xưng là hỗ trợ viên.", "Password reset OTPs are single-use and expire after 10 minutes. Never read or screenshot OTP codes for anyone, even people claiming to be support.")</p>
+                        </article>
+                        <article class="rm-doc-feature-card">
+                            <span class="rm-doc-feature-icon"><i class="bi bi-laptop"></i></span>
+                            <h3>@HienThi.Chon("Đăng xuất khỏi thiết bị dùng chung", "Sign Out on Shared Devices")</h3>
+                            <p>@HienThi.Chon("Luôn bấm Đăng xuất sau khi truy cập từ máy tính trường học, tiệm net hoặc máy mượn. Nếu nghi ngờ lộ thông tin đăng nhập, đổi mật khẩu ngay lập tức.", "Always sign out after using shared or public computers. If you suspect unauthorized access, change your password immediately.")</p>
+                        </article>
+                        <article class="rm-doc-feature-card">
+                            <span class="rm-doc-feature-icon"><i class="bi bi-cpu"></i></span>
+                            <h3>@HienThi.Chon("Hạ tầng bảo vệ phía máy chủ", "Server-Side Protections")</h3>
+                            <p>@HienThi.Chon("Mật khẩu được mã hóa băm một chiều (BCrypt), cookie phiên đăng nhập gắn cờ HttpOnly, các biểu mẫu quan trọng đều có chống giả mạo CSRF và giới hạn tần suất chống dò mật khẩu tự động.", "Passwords are one-way hashed (BCrypt), session cookies use HttpOnly protection, sensitive forms enforce CSRF tokens, and login/OTP endpoints apply rate-limiting.")</p>
+                        </article>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <a class="btn-rm-outline" asp-controller="Account" asp-action="ChangePassword">
+                            <i class="bi bi-key me-1"></i> @L["Nav_ChangePassword"]
+                        </a>
+                        <a class="btn-rm-outline" asp-controller="Account" asp-action="Profile">
+                            <i class="bi bi-person-gear me-1"></i> @L["Nav_Profile"]
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 06: CÂU HỎI THƯỜNG GẶP (FAQ) TƯƠNG TÁC -->
+            <section class="rm-doc-card rm-doc-reveal" id="faq" data-rm-faq-root>
+                <div class="rm-doc-card-head">
+                    <span class="rm-doc-sec-badge">06</span>
+                    <div>
+                        <h2>@L["Footer_Faq"]</h2>
+                        <p>@HienThi.Chon("Tìm nhanh câu trả lời theo từ khóa hoặc lọc theo nhóm chủ đề mua hàng, bán hàng, đấu giá và tài khoản.", "Search instantly by keyword or filter by Buying, Selling, Auctions, and Account topics.")</p>
+                    </div>
+                </div>
+
+                <div class="rm-faq-toolbar">
+                    <div class="rm-faq-search-row">
+                        <div class="rm-faq-search-wrap">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="search"
+                                   class="rm-faq-search-input"
+                                   data-rm-faq-search
+                                   placeholder="@HienThi.Chon("Tìm nhanh: VietQR, hủy đơn, duyệt tin, đấu giá, địa chỉ dự phòng...", "Search: VietQR, cancel order, moderation, auction, backup address...")"
+                                   aria-label="@HienThi.Chon("Tìm câu hỏi thường gặp", "Search FAQs")" />
+                        </div>
+                        <button type="button"
+                                class="btn-rm-outline btn-sm"
+                                data-rm-faq-toggle-all
+                                data-label-expand="@HienThi.Chon("Mở tất cả", "Expand all")"
+                                data-label-collapse="@HienThi.Chon("Thu gọn tất cả", "Collapse all")">
+                            @HienThi.Chon("Mở tất cả", "Expand all")
+                        </button>
+                    </div>
+                    <div class="rm-faq-cats" role="tablist">
+                        <button type="button" class="rm-faq-cat-btn is-active" data-rm-faq-cat="all">@HienThi.Chon("Tất cả (12)", "All (12)")</button>
+                        <button type="button" class="rm-faq-cat-btn" data-rm-faq-cat="buying">@HienThi.Chon("Mua hàng & Thanh toán", "Buying & Payment")</button>
+                        <button type="button" class="rm-faq-cat-btn" data-rm-faq-cat="selling">@HienThi.Chon("Bán hàng & Kiểm duyệt", "Selling & Moderation")</button>
+                        <button type="button" class="rm-faq-cat-btn" data-rm-faq-cat="auction">@HienThi.Chon("Đấu giá", "Auctions")</button>
+                        <button type="button" class="rm-faq-cat-btn" data-rm-faq-cat="account">@HienThi.Chon("Tài khoản & Sự cố", "Account & Issues")</button>
+                    </div>
+                </div>
+
+                <div class="rm-faq-list">
+                    <details class="rm-faq-item" data-cat="buying" open>
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Thanh toán", "Payment")</span>
+                                <span>@HienThi.Chon("Tôi đã chuyển khoản VietQR nhưng đơn vẫn chưa chuyển sang đã thanh toán?", "I transferred via VietQR, why isn't my order marked paid yet?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Do giao dịch VietQR đi thẳng về tài khoản ngân hàng của shop, chủ cửa hàng cần kiểm tra sao kê và bấm xác nhận thủ công trên hệ thống.", "Because VietQR transfers go directly to the shop's bank account, the seller checks their statement and confirms manually.")</p>
+                            <p>@HienThi.Chon("Sau khi chuyển xong, hãy bấm nút “Tôi đã chuyển khoản” trên trang Chi tiết đơn hàng để gửi thông báo ngay cho shop và luôn giữ lại biên lai chuyển khoản để đối chiếu nếu cần.", "Click \"I have transferred\" on your Order Details page to notify the seller right away, and keep your bank receipt for verification.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="buying">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Đơn hàng", "Orders")</span>
+                                <span>@HienThi.Chon("Vì sao mỗi sản phẩm trên Re:Market chỉ đặt được số lượng 1?", "Why is each listing on Re:Market limited to quantity 1?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Re:Market là sàn chuyên đồ cũ/secondhand, nơi mỗi món đồ đều có tình trạng sử dụng và dấu vết riêng nên là sản phẩm độc bản. Khi một người đặt mua thành công, món đồ sẽ tự động khóa giữ chỗ để tránh bán trùng cho hai khách cùng lúc.", "Re:Market specializes in pre-loved goods where every item has its own condition and wear, making it a unique 1-of-1 piece. Once ordered, it is automatically reserved to prevent double-selling.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="buying">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Đơn hàng", "Orders")</span>
+                                <span>@HienThi.Chon("Tôi có thể hủy đơn hàng ở những trạng thái nào?", "At which statuses can I cancel an order?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Bạn có thể chủ động hủy đơn kèm lý do khi đơn đang ở trạng thái Chờ xác nhận (khi nút Hủy đơn còn hiển thị trên trang Chi tiết đơn). Nếu shop đã xác nhận hoặc đã bàn giao vận chuyển, hãy nhắn tin trực tiếp cho shop để thương lượng hỗ trợ.", "You can cancel directly with a reason while the order is Pending Confirmation (whenever the Cancel button is visible). Once confirmed or shipped, message the shop to coordinate.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="buying">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Địa chỉ", "Addresses")</span>
+                                <span>@HienThi.Chon("Tôi có thể lưu nhiều địa chỉ giao hàng (nhà riêng, công ty) không?", "Can I save multiple shipping addresses (home, office)?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Có. Trong mục Hồ sơ cá nhân, bạn có thể thiết lập 01 địa chỉ mặc định và thêm nhiều địa chỉ dự phòng (tối đa 8 địa chỉ) theo đúng Tỉnh/Thành phố và Phường/Xã. Khi thanh toán ở giỏ hàng, bạn chỉ cần chọn 1 địa chỉ có sẵn hoặc bấm “+ Thêm địa chỉ khác” để lưu thêm địa chỉ dự phòng mới.", "Yes. In your Profile, you can set one default address and store up to 8 backup addresses with Province/Ward selection. At Checkout, simply pick a saved address or click \"+ Add another address\" to save a new backup address.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="buying">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Đánh giá", "Reviews")</span>
+                                <span>@HienThi.Chon("Khi nào tôi được gửi đánh giá sao và nhận xét cho cửa hàng?", "When can I leave a star rating and review for a shop?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Ngay sau khi đơn hàng chuyển sang trạng thái Hoàn tất. Mở trang Chi tiết đơn hàng để gửi đánh giá kèm nhận xét; mỗi đơn hoàn tất tương ứng 01 lượt đánh giá xác thực để đảm bảo độ tin cậy cho cộng đồng.", "Right after the order reaches Completed status. Open Order Details to submit your rating and comment; each completed order allows one verified review.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="selling">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Kiểm duyệt", "Moderation")</span>
+                                <span>@HienThi.Chon("Quy trình duyệt tin đăng bán trên Re:Market diễn ra như thế nào?", "How does listing moderation work on Re:Market?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Mỗi tin gửi duyệt đi qua hệ thống kiểm duyệt 2 tầng: bộ lọc từ khóa + AI phân tích nội dung/hình ảnh, sau đó đội ngũ quản trị viên rà soát các tin cần kiểm tra thủ công. Tin có ảnh chụp thật, giá hợp lý, đúng danh mục và không chứa SĐT/link kéo khách ngoài sàn thường được duyệt rất nhanh.", "Submitted listings pass a 2-tier check: keyword filtering + AI content/image analysis, followed by admin review when needed. Listings with real photos, fair pricing, accurate categories, and no off-platform contact solicitation are approved quickly.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="selling">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Bán hàng", "Selling")</span>
+                                <span>@HienThi.Chon("Tôi ẩn sản phẩm tạm thời rồi mở lại có cần chờ duyệt lại không?", "If I temporarily hide an active listing, do I need re-approval to unhide it?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Không. Nếu bạn chỉ bấm Ẩn sản phẩm đang bán mà không chỉnh sửa nội dung, bạn có thể bấm “Mở bán lại” để hiển thị ngay lập tức. Chỉ khi bạn chỉnh sửa thông tin (tên, mô tả, giá, ảnh mới...) thì tin mới cần gửi duyệt lại để đảm bảo an toàn nội dung.", "No. If you simply hide an active listing without modifying its content, you can click \"Unhide / Relist\" to make it live immediately. Re-approval is only required if you edit its details or upload new images.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="selling">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Cửa hàng", "Shop")</span>
+                                <span>@HienThi.Chon("Làm sao để bật thanh toán chuyển khoản VietQR cho cửa hàng của tôi?", "How do I enable VietQR bank transfer for my shop?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Vào Kênh người bán → Cửa hàng của tôi, chọn ngân hàng thụ hưởng, nhập số tài khoản và tên chủ tài khoản trùng khớp rồi lưu lại. Khi thông tin ngân hàng đầy đủ, người mua sẽ thấy thêm tùy chọn VietQR lúc đặt hàng.", "Go to Seller Channel → My Shop, choose your bank, enter your account number and matching account holder name, and save. Buyers will then see VietQR as a payment option at Checkout.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="auction">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Đấu giá", "Auction")</span>
+                                <span>@HienThi.Chon("Tôi đã đặt giá đấu giá rồi có hủy lượt đặt được không?", "Can I cancel a bid after placing it in an auction?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Không thể tự rút lượt đặt giá đã hợp lệ nhằm bảo vệ tính công bằng của phiên đấu giá. Trước khi bấm Đặt giá, hãy đọc kỹ ảnh thật, mô tả và mức ngân sách tối đa bạn sẵn sàng chi trả.", "Valid bids cannot be retracted to keep auctions fair for all participants. Always review real photos, condition notes, and your maximum budget before bidding.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="auction">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Đấu giá", "Auction")</span>
+                                <span>@HienThi.Chon("Điều gì xảy ra ngay sau khi tôi thắng một phiên đấu giá?", "What happens right after I win an auction?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Hệ thống gửi thông báo chúc mừng trúng phiên đến chuông thông báo của bạn. Bạn truy cập phiên đấu giá hoặc mục Đơn mua để hoàn tất xác nhận thông tin giao nhận với cửa hàng theo đúng mức giá thắng thầu.", "You will receive a winning notification in your notification bell. Open the auction or My Orders to complete delivery details and settle the order with the shop at the winning bid price.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="account">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Tranh chấp", "Dispute")</span>
+                                <span>@HienThi.Chon("Hàng nhận được bị lỗi hoặc khác ảnh mô tả thì xử lý thế nào?", "What if the item I received is defective or doesn't match the photos?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Đừng bấm “Đã nhận được hàng”. Hãy mở Chi tiết đơn hàng, bấm tạo Khiếu nại / Tranh chấp kèm video mở gói và ảnh chụp rõ điểm sai lệch. Quản trị viên Re:Market sẽ làm việc với cả hai bên để xử lý công bằng.", "Do not click \"Confirm Receipt\". Open Order Details and submit a Dispute with your unboxing video and clear defect photos so Re:Market moderators can mediate fairly.")</p>
+                        </div>
+                    </details>
+
+                    <details class="rm-faq-item" data-cat="account">
+                        <summary>
+                            <span class="rm-faq-q-wrap">
+                                <span class="rm-faq-tag">@HienThi.Chon("Tài khoản", "Account")</span>
+                                <span>@HienThi.Chon("Tôi quên mật khẩu đăng nhập thì lấy lại bằng cách nào?", "How do I recover my account if I forgot my password?")</span>
+                            </span>
+                            <span class="rm-faq-chevron"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="rm-faq-body">
+                            <p>@HienThi.Chon("Tại màn hình Đăng nhập, chọn “Quên mật khẩu?”, nhập email tài khoản để nhận mã OTP 6 số (có hiệu lực 10 phút), sau đó nhập mã xác thực và tạo mật khẩu mới. Nếu không thấy email, hãy kiểm tra thêm thư mục Spam/Quảng cáo.", "On the Sign In page, click \"Forgot password?\", enter your email to receive a 6-digit OTP (valid for 10 minutes), verify the code, and set a new password. Check your Spam/Promotions folder if it doesn't arrive within a minute.")</p>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="rm-faq-empty" data-rm-faq-empty hidden>
+                    @HienThi.Chon("Không tìm thấy câu hỏi phù hợp với từ khóa bạn nhập. Hãy thử từ khóa ngắn hơn hoặc chuyển sang mục “Tất cả”.", "No matching FAQ found for your keyword. Try a shorter term or switch back to \"All\".")
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/editorial-doc.js" asp-append-version="true"></script>
+}
