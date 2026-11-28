@@ -58,8 +58,11 @@ public sealed class ProductsController(IProductReviewService reviews) : AdminBas
         if (User.LayNguoiDungId() is not int adminId) return Forbid();
         if (!ModelState.IsValid) return InvalidInput(id);
 
-        var result = await reviews.RejectAsync(adminId, id, input.Reason, cancellationToken);
-        return Report(result, id, "Đã từ chối sản phẩm.", ProductReviewTabs.Pending);
+        var result = await reviews.RejectAsync(adminId, id, input.Reason, input.RecordViolation, cancellationToken);
+        var msg = input.RecordViolation
+            ? "Đã từ chối sản phẩm và ghi nhận 1 vi phạm cho người bán."
+            : "Đã từ chối sản phẩm (không đánh gậy — yêu cầu người bán chỉnh sửa lại).";
+        return Report(result, id, msg, ProductReviewTabs.Pending);
     }
 
     [HttpPost, ValidateAntiForgeryToken]

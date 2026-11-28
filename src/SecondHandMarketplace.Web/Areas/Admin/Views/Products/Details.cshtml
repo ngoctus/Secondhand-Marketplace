@@ -230,16 +230,56 @@
                         <div class="col-md-8">
                             @if (Model.CanReject)
                             {
-                                <form asp-action="Reject" asp-route-id="@Model.MaSanPham" method="post">
+                                var defaultStrike = review.RejectionRecordsViolation;
+                                <form asp-action="Reject" asp-route-id="@Model.MaSanPham" method="post" id="rejectProductForm">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-sm-6">
+                                            <label class="d-flex align-items-start gap-2 p-2 rounded-3 border bg-light h-100" style="cursor:pointer;">
+                                                <input type="radio" name="RecordViolation" value="false" class="form-check-input mt-1" checked="@(!defaultStrike)" onchange="updateRejectModeUi(false)" />
+                                                <span>
+                                                    <span class="fw-semibold d-block text-dark small"><i class="bi bi-pencil-square text-warning me-1"></i>Từ chối — Không đánh gậy</span>
+                                                    <span class="text-muted" style="font-size:12px;">Yêu cầu người bán chỉnh sửa (ảnh mờ, sai danh mục, thiếu mô tả...). Không cộng vi phạm.</span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="d-flex align-items-start gap-2 p-2 rounded-3 border bg-light h-100" style="cursor:pointer;">
+                                                <input type="radio" name="RecordViolation" value="true" class="form-check-input mt-1" checked="@defaultStrike" onchange="updateRejectModeUi(true)" />
+                                                <span>
+                                                    <span class="fw-semibold d-block text-danger small"><i class="bi bi-shield-exclamation me-1"></i>Từ chối &amp; Đánh gậy (+1 vi phạm)</span>
+                                                    <span class="text-muted" style="font-size:12px;">Ghi 1 gậy vi phạm cho người bán (đủ @Model.NguongKhoa gậy tự động khóa tài khoản).</span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
                                     <textarea name="Reason" class="form-control mb-2" rows="3" minlength="10" maxlength="500" required placeholder="@L["AdminMod_RejectPlaceholder"]"></textarea>
-                                    @if (review.RejectionRecordsViolation)
-                                    {
-                                        <div class="small text-danger mb-2">@L["AdminMod_LowRejectWarn", Model.NguongKhoa]</div>
-                                    }
-                                    <button class="btn btn-danger rounded-pill px-4 fw-semibold" type="submit">
-                                        <i class="bi bi-x-lg me-1"></i>@L["AdminMod_RejectBtn"]
+                                    <div id="rejectStrikeNotice" class="small text-danger mb-2" style="display:@(defaultStrike ? "block" : "none");">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>@L["AdminMod_LowRejectWarn", Model.NguongKhoa]
+                                    </div>
+                                    <div id="rejectSoftNotice" class="small text-muted mb-2" style="display:@(defaultStrike ? "none" : "block");">
+                                        <i class="bi bi-info-circle me-1"></i>Sản phẩm sẽ chuyển về trạng thái <strong>Bị từ chối</strong> để người bán sửa và gửi duyệt lại — <strong>không ghi nhận gậy vi phạm</strong>.
+                                    </div>
+                                    <button id="rejectSubmitBtn" class="btn @(defaultStrike ? "btn-danger" : "btn-warning text-dark") rounded-pill px-4 fw-semibold" type="submit">
+                                        <i class="bi @(defaultStrike ? "bi-x-lg" : "bi-pencil-square") me-1"></i>
+                                        <span id="rejectSubmitText">@(defaultStrike ? "Từ chối & Đánh gậy" : "Từ chối (Không đánh gậy)")</span>
                                     </button>
                                 </form>
+                                <script>
+                                    function updateRejectModeUi(withStrike) {
+                                        var strikeNotice = document.getElementById('rejectStrikeNotice');
+                                        var softNotice = document.getElementById('rejectSoftNotice');
+                                        var btn = document.getElementById('rejectSubmitBtn');
+                                        var txt = document.getElementById('rejectSubmitText');
+                                        if (strikeNotice) strikeNotice.style.display = withStrike ? 'block' : 'none';
+                                        if (softNotice) softNotice.style.display = withStrike ? 'none' : 'block';
+                                        if (btn) {
+                                            btn.classList.toggle('btn-danger', withStrike);
+                                            btn.classList.toggle('btn-warning', !withStrike);
+                                            btn.classList.toggle('text-dark', !withStrike);
+                                        }
+                                        if (txt) txt.textContent = withStrike ? 'Từ chối & Đánh gậy' : 'Từ chối (Không đánh gậy)';
+                                    }
+                                </script>
                             }
                         </div>
                     </div>

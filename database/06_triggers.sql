@@ -1,4 +1,4 @@
-﻿SET ANSI_NULLS ON;
+SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 SET ARITHABORT ON;
 GO
@@ -170,6 +170,7 @@ BEGIN
     JOIN dbo.CuaHang c ON c.MaCuaHang = s.MaCuaHang
     WHERE i.QuyetDinh = 'REJECTED' AND d.QuyetDinh IS NULL
       AND i.QuyetDinhTuDong = 0 AND i.MaQuanTriVien IS NOT NULL
+      AND i.GhiNhanViPham = 1
       AND NOT EXISTS (SELECT 1 FROM dbo.LichSuViPham v WHERE v.MaLuotKiemDuyet = i.MaLuotKiemDuyet);
 END
 GO

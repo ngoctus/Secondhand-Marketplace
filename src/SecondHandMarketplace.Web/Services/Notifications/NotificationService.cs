@@ -87,13 +87,27 @@ public sealed class NotificationService(
         return (false, error, 0);
     }
 
-    public async Task<NotificationPage> GetForUserAsync(int userId, int page = 1, int pageSize = 20,
+    public Task<NotificationPage> GetForUserAsync(int userId, int page = 1, int pageSize = 20,
+        CancellationToken cancellationToken = default) =>
+        GetForUserAsync(userId, filter: null, page, pageSize, cancellationToken);
+
+    public async Task<NotificationPage> GetForUserAsync(int userId, string? filter, int page = 1, int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
         var query = db.ThongBaos.AsNoTracking().Where(x => x.MaNguoiDung == userId);
+        var f = filter?.Trim().ToUpperInvariant();
+        query = f switch
+        {
+            "UNREAD" => query.Where(x => !x.DaDoc),
+            NotificationTypes.Order => query.Where(x => x.Loai == NotificationTypes.Order),
+            NotificationTypes.Product => query.Where(x => x.Loai == NotificationTypes.Product),
+            NotificationTypes.System => query.Where(x => x.Loai == NotificationTypes.System),
+            _ => query
+        };
+
         var total = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderByDescending(x => x.NgayTao).ThenByDescending(x => x.MaThongBao)
@@ -147,33 +161,118 @@ public sealed class NotificationService(
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.MaThongBao == notificationId && x.MaNguoiDung == userId, cancellationToken);
 
-        if (n is null || !n.MaThamChieu.HasValue)
+        if (n is null)
             return "/User/Notifications";
 
-        if (n.Loai == NotificationTypes.Order)
+        var text = $"{n.TieuDe} {n.NoiDung}".ToLowerInvariant();
+        var refId = n.MaThamChieu;
+
+        // 1. Tranh chấp (có thể gắn Loai = ORDER hoặc SYSTEM)
+        if (text.Contains("tranh chấp") || text.Contains("dispute"))
         {
-            var orderId = n.MaThamChieu.Value;
+            if (refId.HasValue)
+            {
+                var disputeById = await db.TranhChaps.AsNoTracking()
+                    .Where(d => d.MaTranhChap == refId.Value)
+                    .Select(d => (int?)d.MaTranhChap)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (disputeById.HasValue)
+                    return $"/User/Disputes/Details/{disputeById.Value}";
+
+                var disputeByOrder = await db.TranhChaps.AsNoTracking()
+                    .Where(d => d.MaDonHang == refId.Value)
+                    .OrderByDescending(d => d.MaTranhChap)
+                    .Select(d => (int?)d.MaTranhChap)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (disputeByOrder.HasValue)
+                    return $"/User/Disputes/Details/{disputeByOrder.Value}";
+            }
+            return "/User/Disputes";
+        }
+
+        // 2. Đơn hàng
+        if (n.Loai == NotificationTypes.Order || (refId.HasValue && text.Contains("đơn hàng")))
+        {
+            if (!refId.HasValue)
+                return "/User/Orders";
+
             var order = await db.DonHangs
                 .AsNoTracking()
                 .Include(x => x.CuaHang)
-                .FirstOrDefaultAsync(x => x.MaDonHang == orderId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.MaDonHang == refId.Value, cancellationToken);
 
             if (order is null)
                 return "/User/Orders";
 
-            // Nếu người nhận thông báo là chủ shop (người bán) của đơn hàng này
             if (order.CuaHang != null && order.CuaHang.MaNguoiDung == userId)
-                return $"/User/SellerOrders/Details/{orderId}";
+                return $"/User/SellerOrders/Details/{order.MaDonHang}";
 
-            // Ngược lại, người nhận là người mua
-            return $"/User/Orders/ChiTiet/{orderId}";
+            return $"/User/Orders/ChiTiet/{order.MaDonHang}";
         }
 
+        // 3. Sản phẩm (người bán bị từ chối/chờ duyệt -> vào trang Sửa sản phẩm để chỉnh sửa luôn, tránh 404!)
         if (n.Loai == NotificationTypes.Product)
         {
-            var productId = n.MaThamChieu.Value;
-            return $"/Products/Details/{productId}";
+            if (!refId.HasValue)
+                return "/User/Products";
+
+            var product = await db.SanPhams.AsNoTracking()
+                .Where(p => p.MaSanPham == refId.Value)
+                .Select(p => new { p.MaSanPham, p.TrangThai, p.DaXoa, SellerId = p.CuaHang.MaNguoiDung })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (product is null)
+                return $"/Products/Details/{refId.Value}";
+
+            if (product.DaXoa)
+                return "/User/Products";
+
+            if (product.SellerId == userId)
+            {
+                if (product.TrangThai is "REJECTED" or "DRAFT" or "PENDING_REVIEW")
+                    return $"/User/Products/Edit/{product.MaSanPham}";
+                if (product.TrangThai == "REMOVED")
+                    return "/User/Products";
+            }
+
+            if (product.TrangThai == "ACTIVE")
+                return $"/Products/Details/{product.MaSanPham}";
+
+            return product.SellerId == userId ? "/User/Products" : "/Products";
         }
+
+        // 4. Đấu giá
+        if (text.Contains("đấu giá") || text.Contains("trả giá") || text.Contains("phiên"))
+        {
+            if (refId.HasValue)
+            {
+                var auctionExists = await db.PhienDauGias.AsNoTracking()
+                    .AnyAsync(a => a.MaPhienDauGia == refId.Value, cancellationToken);
+                if (auctionExists)
+                    return $"/dau-gia/{refId.Value}";
+            }
+            return "/dau-gia";
+        }
+
+        // 5. Báo cáo (vi phạm hoặc báo cáo kỹ thuật)
+        if (text.Contains("báo cáo") || text.Contains("kỹ thuật"))
+            return "/User/Reports";
+
+        // 6. Đánh giá
+        if (text.Contains("đánh giá"))
+        {
+            if (text.Contains("cửa hàng") || text.Contains("shop"))
+                return "/User/Reviews/Shop";
+            return "/User/Reviews";
+        }
+
+        // 7. Cửa hàng / Shop
+        if (text.Contains("cửa hàng") || text.Contains("shop"))
+            return "/User/Shop";
+
+        // 8. Tài khoản / Mật khẩu / Hồ sơ
+        if (text.Contains("tài khoản") || text.Contains("mật khẩu") || text.Contains("hồ sơ"))
+            return "/Account/Profile";
 
         return "/User/Notifications";
     }

@@ -50,6 +50,13 @@ public class ReportService : IReportService
             return (false, "Lý do báo cáo không được vượt quá 255 ký tự.");
         }
         var moTaTrim = vm.MoTa?.Trim();
+        var trangGapLoi = vm.TrangGapLoi?.Trim();
+        if (!string.IsNullOrWhiteSpace(trangGapLoi))
+        {
+            moTaTrim = string.IsNullOrWhiteSpace(moTaTrim)
+                ? $"Trang gặp lỗi: {trangGapLoi}"
+                : $"Trang gặp lỗi: {trangGapLoi}\n{moTaTrim}";
+        }
         if (moTaTrim != null && moTaTrim.Length > 1000)
         {
             return (false, "Mô tả chi tiết không được vượt quá 1000 ký tự.");
@@ -57,28 +64,33 @@ public class ReportService : IReportService
 
         // Chuẩn hóa loại đối tượng thành chữ in hoa trước khi so sánh chống trùng
         var loaiDoiTuong = (vm.LoaiDoiTuong ?? string.Empty).Trim().ToUpperInvariant();
-        if (loaiDoiTuong != "PRODUCT" && loaiDoiTuong != "USER" && loaiDoiTuong != "SHOP")
+        if (loaiDoiTuong != "PRODUCT" && loaiDoiTuong != "USER" && loaiDoiTuong != "SHOP" && loaiDoiTuong != "TECHNICAL")
         {
             return (false, "Loại đối tượng báo cáo không hợp lệ.");
         }
 
-        // 2. Chống gửi trùng khi đang có báo cáo PENDING
-        var daTonTai = await _db.BaoCaos.AnyAsync(x =>
-            x.MaNguoiBaoCao == maNguoiBaoCao &&
-            x.LoaiDoiTuong == loaiDoiTuong &&
-            x.MaDoiTuong == vm.MaDoiTuong &&
-            x.TrangThai == "PENDING");
+        var maDoiTuong = loaiDoiTuong == "TECHNICAL" ? 0 : vm.MaDoiTuong;
 
-        if (daTonTai)
+        // 2. Chống gửi trùng khi đang có báo cáo PENDING (riêng báo cáo kỹ thuật cho phép gửi nhiều lỗi khác nhau)
+        if (loaiDoiTuong != "TECHNICAL")
         {
-            return (false, "Bạn đã gửi báo cáo cho đối tượng này và đang chờ ban quản trị xử lý.");
+            var daTonTai = await _db.BaoCaos.AnyAsync(x =>
+                x.MaNguoiBaoCao == maNguoiBaoCao &&
+                x.LoaiDoiTuong == loaiDoiTuong &&
+                x.MaDoiTuong == maDoiTuong &&
+                x.TrangThai == "PENDING");
+
+            if (daTonTai)
+            {
+                return (false, "Bạn đã gửi báo cáo cho đối tượng này và đang chờ ban quản trị xử lý.");
+            }
         }
 
         // 3. Kiểm tra đối tượng báo cáo tồn tại
         switch (loaiDoiTuong)
         {
             case "PRODUCT":
-                var sp = await _db.SanPhams.FindAsync(vm.MaDoiTuong);
+                var sp = await _db.SanPhams.FindAsync(maDoiTuong);
                 if (sp == null || sp.DaXoa) return (false, "Sản phẩm không tồn tại.");
                 var chuShop = await _db.CuaHangs.AsNoTracking()
                     .Where(c => c.MaCuaHang == sp.MaCuaHang)
@@ -87,14 +99,16 @@ public class ReportService : IReportService
                 if (chuShop == maNguoiBaoCao) return (false, "Không thể tự báo cáo sản phẩm của cửa hàng mình.");
                 break;
             case "USER":
-                var nd = await _db.NguoiDungs.FindAsync(vm.MaDoiTuong);
+                var nd = await _db.NguoiDungs.FindAsync(maDoiTuong);
                 if (nd == null) return (false, "Người dùng không tồn tại.");
                 if (nd.MaNguoiDung == maNguoiBaoCao) return (false, "Không thể tự báo cáo chính mình.");
                 break;
             case "SHOP":
-                var ch = await _db.CuaHangs.FindAsync(vm.MaDoiTuong);
+                var ch = await _db.CuaHangs.FindAsync(maDoiTuong);
                 if (ch == null) return (false, "Cửa hàng không tồn tại.");
                 if (ch.MaNguoiDung == maNguoiBaoCao) return (false, "Không thể tự báo cáo cửa hàng của mình.");
+                break;
+            case "TECHNICAL":
                 break;
         }
 
@@ -102,7 +116,7 @@ public class ReportService : IReportService
         var baoCao = new BaoCao
         {
             LoaiDoiTuong = loaiDoiTuong,
-            MaDoiTuong = vm.MaDoiTuong,
+            MaDoiTuong = maDoiTuong,
             MaNguoiBaoCao = maNguoiBaoCao,
             LyDo = lyDoTrim,
             MoTa = moTaTrim,
@@ -115,7 +129,10 @@ public class ReportService : IReportService
             _db.BaoCaos.Add(baoCao);
             await _db.SaveChangesAsync();
             await HomeCacheHelper.XoaCacheTrangChuAsync(_distributedCache);
-            return (true, "Đã gửi báo cáo vi phạm thành công. Ban quản trị sẽ sớm xem xét.");
+            var okMsg = loaiDoiTuong == "TECHNICAL"
+                ? "Đã gửi báo cáo kỹ thuật thành công. Quản trị viên sẽ kiểm tra và gửi thông báo phản hồi cho bạn."
+                : "Đã gửi báo cáo vi phạm thành công. Ban quản trị sẽ sớm xem xét.";
+            return (true, okMsg);
         }
         catch (DbUpdateException ex)
         {
@@ -157,9 +174,14 @@ public class ReportService : IReportService
         }
 
         var loaiChuan = loaiDoiTuong?.Trim().ToUpperInvariant();
-        if (loaiChuan is "PRODUCT" or "USER" or "SHOP")
+        if (loaiChuan is "PRODUCT" or "USER" or "SHOP" or "TECHNICAL")
         {
             query = query.Where(x => x.LoaiDoiTuong == loaiChuan);
+        }
+        else
+        {
+            // Trang "Báo cáo vi phạm" mặc định tách riêng khỏi "Báo cáo kỹ thuật"
+            query = query.Where(x => x.LoaiDoiTuong != "TECHNICAL");
         }
 
         var totalItems = await query.CountAsync();
@@ -170,7 +192,9 @@ public class ReportService : IReportService
             .ToListAsync();
 
         var items = await NapTenDoiTuongVaMapVm(rawList);
-        var tongChuaXuLy = await _db.BaoCaos.CountAsync(x => x.TrangThai == "PENDING");
+        var tongChuaXuLy = loaiChuan == "TECHNICAL"
+            ? await _db.BaoCaos.CountAsync(x => x.TrangThai == "PENDING" && x.LoaiDoiTuong == "TECHNICAL")
+            : await _db.BaoCaos.CountAsync(x => x.TrangThai == "PENDING" && x.LoaiDoiTuong != "TECHNICAL");
 
         return new AdminReportListViewModel
         {
@@ -432,6 +456,69 @@ public class ReportService : IReportService
         }
     }
 
+    public async Task<(bool ThanhCong, string? ThongBao)> PhanHoiBaoCaoKyThuatAdminAsync(
+        int maBaoCao,
+        int adminId,
+        string hanhDong,
+        string? tieuDeThongBao,
+        string? noiDungThongBao)
+    {
+        var bc = await _db.BaoCaos.FindAsync(maBaoCao);
+        if (bc == null) return (false, "Không tìm thấy báo cáo kỹ thuật.");
+        if (bc.LoaiDoiTuong != "TECHNICAL") return (false, "Báo cáo này không phải báo cáo kỹ thuật.");
+
+        var action = (hanhDong ?? string.Empty).Trim().ToUpperInvariant();
+        if (action is not ("RESOLVE" or "DISMISS" or "NOTIFY_ONLY"))
+            return (false, "Hành động xử lý không hợp lệ.");
+
+        var noiDung = noiDungThongBao?.Trim();
+        if (string.IsNullOrWhiteSpace(noiDung))
+            return (false, "Vui lòng nhập nội dung thông báo gửi riêng cho người dùng.");
+        if (noiDung.Length > 1000)
+            return (false, "Nội dung thông báo không được vượt quá 1000 ký tự.");
+
+        var tieuDe = string.IsNullOrWhiteSpace(tieuDeThongBao)
+            ? $"Phản hồi báo cáo kỹ thuật #{bc.MaBaoCao}"
+            : tieuDeThongBao.Trim();
+        if (tieuDe.Length > 200)
+            return (false, "Tiêu đề thông báo không được vượt quá 200 ký tự.");
+
+        var now = DateTime.UtcNow;
+        if (action is "RESOLVE" or "DISMISS")
+        {
+            bc.TrangThai = action == "RESOLVE" ? "RESOLVED" : "DISMISSED";
+            bc.GhiChuXuLy = noiDung.Length <= 500 ? noiDung : noiDung[..500];
+            bc.NguoiXuLyId = adminId;
+            bc.NgayXuLy = now;
+            await _db.SaveChangesAsync();
+        }
+
+        var (okNotify, errNotify) = await _notifications.CreateAsync(
+            bc.MaNguoiBaoCao,
+            NotificationTypes.System,
+            tieuDe,
+            noiDung,
+            bc.MaBaoCao);
+
+        var auditAction = action switch
+        {
+            "RESOLVE" => "RESOLVE_TECHNICAL_REPORT",
+            "DISMISS" => "DISMISS_TECHNICAL_REPORT",
+            _ => "NOTIFY_TECHNICAL_REPORT"
+        };
+        await _audit.LogAsync(adminId, auditAction, "BaoCao", maBaoCao, okNotify ? "SUCCESS" : "PARTIAL",
+            $"[{tieuDe}] {(noiDung.Length <= 350 ? noiDung : noiDung[..350])}");
+
+        if (!okNotify)
+        {
+            return (false, errNotify ?? "Đã cập nhật báo cáo nhưng không gửi được thông báo riêng cho người dùng.");
+        }
+
+        return (true, action == "NOTIFY_ONLY"
+            ? "Đã gửi thông báo riêng tới người dùng thành công."
+            : "Đã cập nhật báo cáo kỹ thuật và gửi thông báo riêng tới người dùng thành công.");
+    }
+
     private async Task<List<BaoCaoItemViewModel>> NapTenDoiTuongVaMapVm(List<BaoCao> list)
     {
         var productIds = list.Where(x => x.LoaiDoiTuong == "PRODUCT").Select(x => x.MaDoiTuong).Distinct().ToList();
@@ -454,6 +541,7 @@ public class ReportService : IReportService
                 "PRODUCT" => products.TryGetValue(x.MaDoiTuong, out var tenSp) ? tenSp : $"Sản phẩm #{x.MaDoiTuong}",
                 "USER" => users.TryGetValue(x.MaDoiTuong, out var tenUser) ? tenUser : $"Người dùng #{x.MaDoiTuong}",
                 "SHOP" => shops.TryGetValue(x.MaDoiTuong, out var tenShop) ? tenShop : $"Cửa hàng #{x.MaDoiTuong}",
+                "TECHNICAL" => "Báo lỗi kỹ thuật / Hệ thống",
                 _ => $"#{x.MaDoiTuong}"
             };
 
@@ -465,6 +553,7 @@ public class ReportService : IReportService
                 TenDoiTuong = tenDoiTuong,
                 MaNguoiBaoCao = x.MaNguoiBaoCao,
                 TenNguoiBaoCao = x.NguoiBaoCao?.HoTen ?? $"User #{x.MaNguoiBaoCao}",
+                EmailNguoiBaoCao = x.NguoiBaoCao?.Email,
                 LyDo = x.LyDo,
                 MoTa = x.MoTa,
                 TrangThai = x.TrangThai,

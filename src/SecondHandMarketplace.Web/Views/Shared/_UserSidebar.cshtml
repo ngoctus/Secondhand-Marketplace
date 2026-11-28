@@ -1,0 +1,110 @@
+@{
+    var hasShop = (bool)(ViewData["__RmUserHasShop"] ?? false);
+    var userAvatar = User.FindFirst("avatar")?.Value;
+    var userName = User.Identity?.Name ?? "User";
+    var userInitial = userName.Length > 0 ? userName.Substring(0, 1).ToUpperInvariant() : "U";
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+<aside class="rm-user-sidebar" aria-label="@HienThi.Chon("Danh mục quản lý tài khoản", "Account management menu")">
+    <div class="rm-user-sidebar-header">
+        @if (!string.IsNullOrWhiteSpace(userAvatar))
+        {
+            <img src="@userAvatar" alt="@userName" class="rm-user-sidebar-avatar"
+                 onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';" />
+            <span class="rm-user-sidebar-avatar" style="display:none;" aria-hidden="true">@userInitial</span>
+        }
+        else
+        {
+            <span class="rm-user-sidebar-avatar" aria-hidden="true">@userInitial</span>
+        }
+        <div class="rm-user-sidebar-info">
+            <div class="rm-user-sidebar-name">@userName</div>
+            <div class="rm-user-sidebar-role">
+                @if (hasShop)
+                {
+                    <i class="bi bi-shop text-success" aria-hidden="true"></i>
+                    <span>@HienThi.Chon("Người mua & Người bán", "Buyer & Seller")</span>
+                }
+                else
+                {
+                    <i class="bi bi-person-check text-primary" aria-hidden="true"></i>
+                    <span>@HienThi.Chon("Thành viên", "Member")</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <nav class="rm-user-sidebar-nav">
+        <div class="rm-user-nav-group">@L["Header_GroupAccount"]</div>
+        <a class="rm-user-nav-item" asp-area="" asp-controller="Account" asp-action="Profile">
+            <i class="bi bi-person"></i> <span>@L["Nav_Profile"]</span>
+        </a>
+        <a class="rm-user-nav-item" asp-area="" asp-controller="Account" asp-action="ChangePassword">
+            <i class="bi bi-shield-lock"></i> <span>@L["Nav_ChangePassword"]</span>
+        </a>
+        <a class="rm-user-nav-item" asp-area="User" asp-controller="Notifications" asp-action="Index">
+            <i class="bi bi-bell"></i> <span>@L["Notify_Title"]</span>
+        </a>
+        <a class="rm-user-nav-item" asp-area="User" asp-controller="Reports" asp-action="Index">
+            <i class="bi bi-flag"></i> <span>@L["Nav_ReportHistory"]</span>
+        </a>
+        <a class="rm-user-nav-item" asp-area="User" asp-controller="Reports" asp-action="TaoKyThuat" asp-route-returnUrl="@currentUrl">
+            <i class="bi bi-bug"></i> <span>@HienThi.Chon("Báo lỗi kỹ thuật", "Report Technical Issue")</span>
+        </a>
+
+        <div class="rm-user-nav-group">@L["Header_GroupBuying"]</div>
+        <a class="rm-user-nav-item" asp-area="User" asp-controller="Orders" asp-action="Index">
+            <i class="bi bi-bag"></i> <span>@L["Nav_MyOrders"]</span>
+        </a>
+        <a class="rm-user-nav-item" asp-area="User" asp-controller="Favorites" asp-action="Index">
+            <i class="bi bi-heart"></i> <span>@L["Nav_Favorites"]</span>
+        </a>
+        <a class="rm-user-nav-item" asp-area="User" asp-controller="Reviews" asp-action="Index">
+            <i class="bi bi-star"></i> <span>@L["Nav_MyReviews"]</span>
+        </a>
+        <a class="rm-user-nav-item" asp-area="User" asp-controller="Disputes" asp-action="Index">
+            <i class="bi bi-exclamation-circle"></i> <span>@L["Nav_Disputes"]</span>
+        </a>
+
+        <div class="rm-user-nav-group">@L["Header_GroupSelling"]</div>
+        @if (hasShop)
+        {
+            <a class="rm-user-nav-item" asp-area="User" asp-controller="Products" asp-action="Create">
+                <i class="bi bi-plus-circle"></i> <span>@L["Nav_SellNow"]</span>
+            </a>
+            <a class="rm-user-nav-item" asp-area="User" asp-controller="Products" asp-action="Index">
+                <i class="bi bi-box-seam"></i> <span>@L["Nav_ManageProducts"]</span>
+            </a>
+            <a class="rm-user-nav-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">
+                <i class="bi bi-receipt"></i> <span>@L["Nav_SellerOrders"]</span>
+            </a>
+            <a class="rm-user-nav-item" asp-area="User" asp-controller="Auctions" asp-action="Index">
+                <i class="bi bi-hammer"></i> <span>@L["E_SellerAuctionsNav"]</span>
+            </a>
+            <a class="rm-user-nav-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">
+                <i class="bi bi-bar-chart-line"></i> <span>@L["Nav_RevenueStats"]</span>
+            </a>
+            <a class="rm-user-nav-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">
+                <i class="bi bi-chat-square-text"></i> <span>@L["Nav_ShopReviews"]</span>
+            </a>
+            <a class="rm-user-nav-item" asp-area="User" asp-controller="Shop" asp-action="Index">
+                <i class="bi bi-shop"></i> <span>@L["Nav_MyShop"]</span>
+            </a>
+        }
+        else
+        {
+            <div class="rm-user-shop-cta">
+                <div class="fw-semibold small text-dark mb-1">
+                    <i class="bi bi-shop-window text-primary me-1"></i>
+                    @HienThi.Chon("Chưa mở cửa hàng", "No shop yet")
+                </div>
+                <p class="text-muted mb-2" style="font-size: 12px; line-height: 1.4;">
+                    @HienThi.Chon("Mở cửa hàng miễn phí để bắt đầu đăng bán đồ cũ và quản lý đơn bán.", "Open a free shop to start listing items and managing sales.")
+                </p>
+                <a class="btn btn-primary btn-sm rounded-pill w-100 fw-semibold" asp-area="User" asp-controller="Shop" asp-action="Index">
+                    <i class="bi bi-plus-circle me-1"></i> @HienThi.Chon("Mở cửa hàng ngay", "Open Shop Now")
+                </a>
+            </div>
+        }
+    </nav>
+</aside>

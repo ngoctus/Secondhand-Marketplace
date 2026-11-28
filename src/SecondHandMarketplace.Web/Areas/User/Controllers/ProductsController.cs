@@ -5,6 +5,7 @@ using SecondHandMarketplace.Web.Models.ViewModels.Products;
 using SecondHandMarketplace.Web.Services.Categories;
 using SecondHandMarketplace.Web.Services.Moderation;
 using SecondHandMarketplace.Web.Services.Products;
+using SecondHandMarketplace.Web.Services.Shops;
 using SecondHandMarketplace.Web.Services.Storage;
 using SkiaSharp;
 
@@ -24,9 +25,11 @@ public class ProductsController : UserBaseController
     private readonly ILogger<ProductsController> _logger;
     private readonly IUploadStorage _uploadStorage;
     private readonly IDistributedCache _distributedCache;
+    private readonly IShopService? _shops;
 
     public ProductsController(IProductService products, ICategoryService categories, IModerationService moderation,
-        IUploadStorage uploadStorage, ILogger<ProductsController> logger, IDistributedCache distributedCache)
+        IUploadStorage uploadStorage, ILogger<ProductsController> logger, IDistributedCache distributedCache,
+        IShopService? shops = null)
     {
         _products = products;
         _categories = categories;
@@ -34,12 +37,19 @@ public class ProductsController : UserBaseController
         _uploadStorage = uploadStorage;
         _logger = logger;
         _distributedCache = distributedCache;
+        _shops = shops;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] SellerProductFilterVm filter)
     {
         var userId = User.LayNguoiDungId()!.Value;
+        if (_shops is not null && await _shops.GetByOwnerAsync(userId) is null)
+        {
+            this.ThongBaoLoi("Bạn cần mở cửa hàng trước khi quản lý sản phẩm bán.");
+            return RedirectToAction("Index", "Shop");
+        }
+
         filter.Page = Math.Clamp(filter.Page, 1, 10000);
         if (!SellerProductFilterVm.CacMucHienThi.Contains(filter.PageSize))
             filter.PageSize = 12;
@@ -60,6 +70,13 @@ public class ProductsController : UserBaseController
     [HttpGet]
     public async Task<IActionResult> Create()
     {
+        var userId = User.LayNguoiDungId()!.Value;
+        if (_shops is not null && await _shops.GetByOwnerAsync(userId) is null)
+        {
+            this.ThongBaoLoi("Bạn cần mở cửa hàng trước khi đăng bán sản phẩm.");
+            return RedirectToAction("Index", "Shop");
+        }
+
         var form = new ProductFormVm();
         await DienDanhMucAsync(form);
         return View(form);

@@ -6,12 +6,15 @@ namespace SecondHandMarketplace.Web.Models.ViewModels.Reports;
 public class TaoBaoCaoViewModel
 {
     [Required]
-    public string LoaiDoiTuong { get; set; } = "PRODUCT"; // PRODUCT, USER, SHOP
+    public string LoaiDoiTuong { get; set; } = "PRODUCT"; // PRODUCT, USER, SHOP, TECHNICAL
 
     [Required]
     public int MaDoiTuong { get; set; }
 
     public string? TenDoiTuong { get; set; }
+
+    [StringLength(300, ErrorMessage = "Đường dẫn trang gặp lỗi tối đa 300 ký tự.")]
+    public string? TrangGapLoi { get; set; }
 
     [Required(ErrorMessage = "Vui lòng nhập lý do báo cáo.")]
     [StringLength(255, ErrorMessage = "Lý do tối đa 255 ký tự.")]
@@ -21,7 +24,7 @@ public class TaoBaoCaoViewModel
     public string? MoTa { get; set; }
 }
 
-/// <summary>Chi tiết một báo cáo vi phạm.</summary>
+/// <summary>Chi tiết một báo cáo vi phạm / kỹ thuật.</summary>
 public class BaoCaoItemViewModel
 {
     public int MaBaoCao { get; set; }
@@ -30,6 +33,7 @@ public class BaoCaoItemViewModel
     public string TenDoiTuong { get; set; } = string.Empty;
     public int MaNguoiBaoCao { get; set; }
     public string TenNguoiBaoCao { get; set; } = string.Empty;
+    public string? EmailNguoiBaoCao { get; set; }
     public string LyDo { get; set; } = string.Empty;
     public string? MoTa { get; set; }
     public string TrangThai { get; set; } = "PENDING";

@@ -214,7 +214,7 @@ public class ProductReviewService(
             return DecisionFailure(ex);
         }
         await HomeCacheHelper.XoaCacheTrangChuAsync(distributedCache, cancellationToken);
-        return await AfterDecisionAsync(adminId, maSanPham, review.MaNguoiBan, "ACTIVE", approve: true, reason: null, cancellationToken);
+        return await AfterDecisionAsync(adminId, maSanPham, review.MaNguoiBan, "ACTIVE", approve: true, reason: null, recordViolation: false, ct: cancellationToken);
     }
 
     public async Task<BulkApproveResult> ApproveGreenLaneAsync(int adminId, IReadOnlyCollection<int> productIds, CancellationToken cancellationToken = default)
@@ -326,7 +326,10 @@ public class ProductReviewService(
             Review: after);
     }
 
-    public async Task<ProductDecisionResult> RejectAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default)
+    public Task<ProductDecisionResult> RejectAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default) =>
+        RejectAsync(adminId, maSanPham, reason, recordViolation: true, cancellationToken);
+
+    public async Task<ProductDecisionResult> RejectAsync(int adminId, int maSanPham, string? reason, bool recordViolation, CancellationToken cancellationToken = default)
     {
         var denied = await RequireAdminAsync(adminId, cancellationToken);
         if (denied is not null) return denied;
@@ -343,13 +346,13 @@ public class ProductReviewService(
 
         try
         {
-            await ExecuteDecisionAsync(maSanPham, adminId, approve: false, cleanReason, cancellationToken);
+            await ExecuteDecisionAsync(maSanPham, adminId, approve: false, cleanReason, recordViolation, cancellationToken);
         }
         catch (ReviewDatabaseException ex)
         {
             return DecisionFailure(ex);
         }
-        return await AfterDecisionAsync(adminId, maSanPham, review.MaNguoiBan, "REJECTED", approve: false, cleanReason, cancellationToken);
+        return await AfterDecisionAsync(adminId, maSanPham, review.MaNguoiBan, "REJECTED", approve: false, cleanReason, recordViolation, cancellationToken);
     }
 
     public async Task<ProductDecisionResult> RemoveProductAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default)
@@ -414,6 +417,25 @@ public class ProductReviewService(
         }
     }
 
+    protected virtual async Task ExecuteDecisionAsync(int maSanPham, int adminId, bool approve, string? reason, bool recordViolation, CancellationToken ct)
+    {
+        if (approve || recordViolation)
+        {
+            await ExecuteDecisionAsync(maSanPham, adminId, approve, reason, ct);
+            return;
+        }
+
+        try
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"EXEC dbo.sp_TuChoiSanPham @MaSanPham = {maSanPham}, @QuanTriVienId = {adminId}, @LyDo = {reason}, @GhiNhanViPham = {false}", ct);
+        }
+        catch (SqlException ex) when (KnownSqlErrors.Contains(ex.Number))
+        {
+            throw new ReviewDatabaseException(ex.Number, ex.Message);
+        }
+    }
+
     protected virtual async Task ExecuteRemoveAsync(int maSanPham, int adminId, string reason, CancellationToken ct)
     {
         try
@@ -429,7 +451,7 @@ public class ProductReviewService(
 
     /// <summary>Chỉ chạy SAU KHI quyết định đã lưu thành công: ngưỡng khóa (C2) rồi thông báo người bán.</summary>
     private async Task<ProductDecisionResult> AfterDecisionAsync(
-        int adminId, int maSanPham, int sellerId, string newStatus, bool approve, string? reason, CancellationToken ct)
+        int adminId, int maSanPham, int sellerId, string newStatus, bool approve, string? reason, bool recordViolation = true, CancellationToken ct = default)
     {
         AdminDecisionFollowUp? followUp = null;
         string? warning = null;
@@ -444,11 +466,15 @@ public class ProductReviewService(
             warning = "Quyết định đã lưu nhưng chưa kiểm tra được ngưỡng khóa tài khoản người bán; cần chạy lại kiểm tra.";
         }
 
-        var title = approve ? "Sản phẩm đã được duyệt" : "Sản phẩm bị từ chối";
+        var title = approve
+            ? "Sản phẩm đã được duyệt"
+            : (recordViolation ? "Sản phẩm bị từ chối (Ghi nhận vi phạm)" : "Sản phẩm cần chỉnh sửa lại");
         var name = await db.SanPhams.AsNoTracking().Where(p => p.MaSanPham == maSanPham).Select(p => p.Ten).SingleOrDefaultAsync(ct) ?? "";
         var content = approve
             ? $"Sản phẩm \"{Truncate(name, 120)}\" đã được duyệt và đang hiển thị trên sàn."
-            : $"Sản phẩm \"{Truncate(name, 120)}\" bị từ chối. Lý do: {reason}";
+            : (recordViolation
+                ? $"Sản phẩm \"{Truncate(name, 120)}\" bị từ chối và ghi nhận 1 vi phạm. Lý do: {reason}"
+                : $"Sản phẩm \"{Truncate(name, 120)}\" chưa đạt yêu cầu hiển thị và cần chỉnh sửa lại (không bị tính gậy vi phạm). Lý do: {reason}");
         await TryNotifyAsync(sellerId, title, Truncate(content, 1000), maSanPham, ct);
 
         return new ProductDecisionResult(true, null, false, newStatus, followUp, warning);

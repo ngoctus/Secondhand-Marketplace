@@ -9,9 +9,14 @@
             <h2 class="h3 mb-1"><i class="bi bi-shield-exclamation text-danger"></i> @L["Report_HistoryTitle"]</h2>
             <p class="text-muted small mb-0">@L["Report_HistorySubtitle"]</p>
         </div>
-        <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-rm-secondary btn-sm rounded-pill px-3">
-            &larr; @L["Report_BackHome"]
-        </a>
+        <div class="d-flex gap-2">
+            <a asp-area="User" asp-controller="Reports" asp-action="TaoKyThuat" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold">
+                <i class="bi bi-bug me-1"></i> @HienThi.Chon("Báo lỗi kỹ thuật", "Report Bug")
+            </a>
+            <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-rm-secondary btn-sm rounded-pill px-3">
+                &larr; @L["Report_BackHome"]
+            </a>
+        </div>
     </div>
 
     <partial name="_ThongBao" />
@@ -47,7 +52,14 @@
                             <tr>
                                 <td class="fw-bold font-monospace">#@item.MaBaoCao</td>
                                 <td>
-                                    <span class="badge bg-secondary me-1">@item.LoaiDoiTuong</span>
+                                    @if (item.LoaiDoiTuong == "TECHNICAL")
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle me-1">@HienThi.Chon("Kỹ thuật", "Technical")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary me-1">@item.LoaiDoiTuong</span>
+                                    }
                                     <span class="fw-semibold">@item.TenDoiTuong</span>
                                 </td>
                                 <td>

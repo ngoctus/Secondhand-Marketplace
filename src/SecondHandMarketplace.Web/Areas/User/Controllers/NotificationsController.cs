@@ -11,12 +11,13 @@ public sealed class NotificationsController(INotificationService notifications) 
     private const int PageSize = 20;
 
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(int page = 1, string? filter = null, CancellationToken cancellationToken = default)
     {
         if (User.LayNguoiDungId() is not int userId) return Challenge();
 
         page = Math.Max(1, page);
-        var result = await notifications.GetForUserAsync(userId, page, PageSize, cancellationToken);
+        var cleanFilter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToUpperInvariant();
+        var result = await notifications.GetForUserAsync(userId, cleanFilter, page, PageSize, cancellationToken);
         var unread = await notifications.CountUnreadAsync(userId, cancellationToken);
         return View(new NotificationListVm
         {
@@ -24,13 +25,14 @@ public sealed class NotificationsController(INotificationService notifications) 
             UnreadCount = unread,
             Page = page,
             TotalItems = result.TotalItems,
-            TotalPages = (int)Math.Ceiling(result.TotalItems / (double)PageSize)
+            TotalPages = (int)Math.Ceiling(result.TotalItems / (double)PageSize),
+            Filter = cleanFilter
         });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MarkRead(int id, int page = 1, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> MarkRead(int id, int page = 1, string? filter = null, CancellationToken cancellationToken = default)
     {
         if (User.LayNguoiDungId() is not int userId) return Challenge();
 
@@ -44,7 +46,7 @@ public sealed class NotificationsController(INotificationService notifications) 
         // Thông báo của người khác hoặc không tồn tại đều cho cùng một kết quả, không lộ thông tin.
         if (!success)
             this.ThongBaoLoi("Không tìm thấy thông báo.");
-        return RedirectToAction(nameof(Index), new { page });
+        return RedirectToAction(nameof(Index), new { page, filter });
     }
 
     /// <summary>Đánh dấu tất cả thông báo là đã đọc (Task C-02).</summary>

@@ -1,0 +1,67 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Reports.TaoBaoCaoViewModel
+@{
+    ViewData["Title"] = HienThi.Chon("Báo lỗi kỹ thuật", "Report Technical Issue");
+}
+
+<div class="container my-4" style="max-width: 680px;">
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 p-md-5">
+        <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+            <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning-emphasis flex-shrink-0"
+                  style="width: 46px; height: 46px; font-size: 22px;">
+                <i class="bi bi-bug-fill"></i>
+            </span>
+            <div>
+                <h4 class="fw-bold text-dark mb-1">@HienThi.Chon("Báo lỗi kỹ thuật / Sự cố website", "Report Technical Issue")</h4>
+                <p class="text-muted small mb-0">@HienThi.Chon("Gặp lỗi hiển thị, lỗi đặt hàng, tải ảnh hay bất kỳ trục trặc nào? Gửi báo cáo để quản trị viên kiểm tra và phản hồi riêng cho bạn.", "Found a bug or website issue? Let our admins know and we will send you a direct notification update.")</p>
+            </div>
+        </div>
+
+        <form asp-area="User" asp-controller="Reports" asp-action="TaoKyThuat" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="LoaiDoiTuong" value="TECHNICAL" />
+            <input type="hidden" asp-for="MaDoiTuong" value="0" />
+            <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+            <div class="mb-3">
+                <label asp-for="LyDo" class="form-label fw-semibold small text-dark">@HienThi.Chon("Nhóm sự cố / Lỗi gặp phải", "Issue Category") <span class="text-danger">*</span></label>
+                <select asp-for="LyDo" class="form-select rounded-3" required>
+                    <option value="">@HienThi.Chon("-- Chọn loại lỗi --", "-- Select issue type --")</option>
+                    <option value="Lỗi hiển thị / Giao diện web">@HienThi.Chon("Lỗi hiển thị / Giao diện web", "UI / Display bug")</option>
+                    <option value="Lỗi giỏ hàng / Đặt hàng / Thanh toán">@HienThi.Chon("Lỗi giỏ hàng / Đặt hàng / Thanh toán", "Cart / Order / Payment issue")</option>
+                    <option value="Lỗi đăng sản phẩm / Tải ảnh lên">@HienThi.Chon("Lỗi đăng sản phẩm / Tải ảnh lên", "Product listing / Image upload issue")</option>
+                    <option value="Lỗi đăng nhập / Tài khoản / Mã OTP">@HienThi.Chon("Lỗi đăng nhập / Tài khoản / Mã OTP", "Login / Account / OTP issue")</option>
+                    <option value="Lỗi tìm kiếm / Bộ lọc sản phẩm">@HienThi.Chon("Lỗi tìm kiếm / Bộ lọc sản phẩm", "Search / Filter issue")</option>
+                    <option value="Lỗi nhắn tin / Thông báo / Đấu giá">@HienThi.Chon("Lỗi nhắn tin / Thông báo / Đấu giá", "Chat / Notification / Auction issue")</option>
+                    <option value="Góp ý cải thiện / Lỗi kỹ thuật khác">@HienThi.Chon("Góp ý cải thiện / Lỗi kỹ thuật khác", "Feedback / Other technical issue")</option>
+                </select>
+                <span asp-validation-for="LyDo" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TrangGapLoi" class="form-label fw-semibold small text-dark">@HienThi.Chon("Trang / Đường dẫn gặp lỗi (không bắt buộc)", "Page / URL where issue occurred (optional)")</label>
+                <input asp-for="TrangGapLoi" class="form-control rounded-3" placeholder="VD: /Products/Details/12 hoặc Trang giỏ hàng..." maxlength="300" />
+                <span asp-validation-for="TrangGapLoi" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="MoTa" class="form-label fw-semibold small text-dark">@HienThi.Chon("Mô tả chi tiết lỗi", "Detailed Description") <span class="text-danger">*</span></label>
+                <textarea asp-for="MoTa" rows="5" class="form-control rounded-3" required maxlength="900"
+                          placeholder="@HienThi.Chon("Hãy mô tả rõ bạn đang thao tác gì, lỗi hiển thị ra sao để đội ngũ kỹ thuật xử lý nhanh hơn...", "Describe what you were doing and what went wrong...")"></textarea>
+                <span asp-validation-for="MoTa" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <a asp-area="User" asp-controller="Reports" asp-action="Index" class="btn btn-rm-secondary rounded-pill px-3 btn-sm">
+                    &larr; @HienThi.Chon("Lịch sử báo cáo", "My Reports")
+                </a>
+                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold btn-sm">
+                    <i class="bi bi-send me-1"></i> @HienThi.Chon("Gửi báo cáo kỹ thuật", "Submit Report")
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

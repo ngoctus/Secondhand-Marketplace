@@ -70,4 +70,52 @@ public class ReportsController : UserBaseController
         ViewBag.ReturnUrl = (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) ? returnUrl : null;
         return View(vm);
     }
+
+    /// <summary>Hiển thị trang gửi báo cáo lỗi kỹ thuật / sự cố website.</summary>
+    [HttpGet]
+    public IActionResult TaoKyThuat(string? returnUrl = null)
+    {
+        var safeReturn = (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) ? returnUrl : null;
+        var pagePath = safeReturn ?? Request.Headers.Referer.FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(pagePath) && pagePath.Length > 300)
+            pagePath = pagePath[..300];
+
+        ViewBag.ReturnUrl = safeReturn;
+        var vm = new TaoBaoCaoViewModel
+        {
+            LoaiDoiTuong = "TECHNICAL",
+            MaDoiTuong = 0,
+            TenDoiTuong = "Báo lỗi kỹ thuật / Hệ thống",
+            TrangGapLoi = pagePath
+        };
+        return View(vm);
+    }
+
+    /// <summary>Xử lý gửi báo cáo kỹ thuật từ người dùng.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TaoKyThuat(TaoBaoCaoViewModel vm, string? returnUrl = null)
+    {
+        vm.LoaiDoiTuong = "TECHNICAL";
+        vm.MaDoiTuong = 0;
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.ReturnUrl = (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) ? returnUrl : null;
+            return View(vm);
+        }
+
+        var userId = User.LayNguoiDungId()!.Value;
+        var (thanhCong, thongBao) = await _reportService.TaoBaoCaoAsync(userId, vm);
+
+        if (thanhCong)
+        {
+            this.ThongBaoThanhCong(thongBao ?? "Đã gửi báo cáo kỹ thuật thành công.");
+            return RedirectToAction(nameof(Index));
+        }
+
+        this.ThongBaoLoi(thongBao ?? "Không thể gửi báo cáo kỹ thuật.");
+        ViewBag.ReturnUrl = (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) ? returnUrl : null;
+        return View(vm);
+    }
 }

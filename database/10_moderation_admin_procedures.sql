@@ -1,4 +1,4 @@
-﻿SET ANSI_NULLS ON;
+SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 SET ARITHABORT ON;
 GO
@@ -37,7 +37,8 @@ CREATE OR ALTER PROCEDURE sp_QuyetDinhKiemDuyet
     @MaSanPham     int,
     @QuanTriVienId int,
     @QuyetDinh     varchar(10),
-    @LyDo          nvarchar(500) = NULL
+    @LyDo          nvarchar(500) = NULL,
+    @GhiNhanViPham bit = 1
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -68,6 +69,7 @@ BEGIN
     UPDATE LuotKiemDuyet
     SET QuyetDinh = @QuyetDinh,
         LyDo = CASE WHEN @QuyetDinh = 'REJECTED' THEN @LyDo END,
+        GhiNhanViPham = CASE WHEN @QuyetDinh = 'REJECTED' THEN ISNULL(@GhiNhanViPham, 1) ELSE 0 END,
         MaQuanTriVien = @QuanTriVienId,
         ThoiGianQuyetDinh = SYSUTCDATETIME()
     WHERE MaLuotKiemDuyet = @LuotId;
@@ -85,7 +87,11 @@ BEGIN
     WHERE MaLuotKiemDuyet = @LuotId AND TrangThai = 'DONE';
 
     -- Khắc phục lỗi parser EXEC bằng cách gán biến trước
-    SET @HanhDong = CASE @QuyetDinh WHEN 'APPROVED' THEN 'APPROVE_PRODUCT' ELSE 'REJECT_PRODUCT' END;
+    SET @HanhDong = CASE
+        WHEN @QuyetDinh = 'APPROVED' THEN 'APPROVE_PRODUCT'
+        WHEN ISNULL(@GhiNhanViPham, 1) = 0 THEN 'REJECT_PRODUCT_NO_STRIKE'
+        ELSE 'REJECT_PRODUCT'
+    END;
 
     EXEC sp_GhiNhatKy @MaNguoiDung = @QuanTriVienId,
                       @HanhDong = @HanhDong,
@@ -107,12 +113,12 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE sp_TuChoiSanPham
-    @MaSanPham int, @QuanTriVienId int, @LyDo nvarchar(500)
+    @MaSanPham int, @QuanTriVienId int, @LyDo nvarchar(500), @GhiNhanViPham bit = 1
 AS
 BEGIN
     SET NOCOUNT ON;
     EXEC sp_QuyetDinhKiemDuyet @MaSanPham = @MaSanPham, @QuanTriVienId = @QuanTriVienId,
-                               @QuyetDinh = 'REJECTED', @LyDo = @LyDo;
+                               @QuyetDinh = 'REJECTED', @LyDo = @LyDo, @GhiNhanViPham = @GhiNhanViPham;
 END
 GO
 

@@ -1,0 +1,196 @@
+@model SecondHandMarketplace.Web.Models.ViewModels.Reports.AdminReportListViewModel
+@{
+    ViewData["Title"] = "Báo cáo kỹ thuật";
+}
+<div class="container-fluid my-4 px-md-4" style="max-width: 1320px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">
+                <i class="bi bi-bug-fill text-warning me-1"></i> Báo cáo kỹ thuật từ người dùng
+            </h2>
+            <p class="text-muted small mb-0">
+                Hiện có <strong class="text-danger">@Model.TongChuaXuLy</strong> báo cáo lỗi web / kỹ thuật đang chờ phản hồi. Bạn có thể gửi thông báo riêng trực tiếp tới từng người dùng ngay tại đây.
+            </p>
+        </div>
+        <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-flag me-1"></i> Xem báo cáo vi phạm
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-3">
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label class="form-label mb-0 fw-semibold small text-dark">Trạng thái:</label>
+            </div>
+            <div class="col-auto">
+                <select name="trangThai" class="form-select form-select-sm rounded-pill" onchange="this.form.submit()">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="PENDING" selected="@(Model.TrangThaiFilter == "PENDING")">Chờ xử lý (PENDING)</option>
+                    <option value="RESOLVED" selected="@(Model.TrangThaiFilter == "RESOLVED")">Đã xử lý (RESOLVED)</option>
+                    <option value="DISMISSED" selected="@(Model.TrangThaiFilter == "DISMISSED")">Đã đóng (DISMISSED)</option>
+                </select>
+            </div>
+            <div class="col-auto ms-auto">
+                <a asp-area="Admin" asp-controller="Reports" asp-action="Technical" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    Xóa lọc
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted">
+                    <tr>
+                        <th style="width: 75px;" class="ps-3">Mã</th>
+                        <th style="width: 210px;">Người báo cáo</th>
+                        <th>Nhóm lỗi &amp; Mô tả chi tiết</th>
+                        <th style="width: 145px;">Ngày gửi</th>
+                        <th style="width: 125px;">Trạng thái</th>
+                        <th style="width: 200px;" class="text-end pe-3">Phản hồi riêng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                Chưa có báo cáo kỹ thuật nào phù hợp với bộ lọc.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="ps-3 fw-bold text-dark font-monospace">#@item.MaBaoCao</td>
+                            <td>
+                                <div class="fw-semibold text-dark">@item.TenNguoiBaoCao</div>
+                                @if (!string.IsNullOrWhiteSpace(item.EmailNguoiBaoCao))
+                                {
+                                    <div class="small text-muted">@item.EmailNguoiBaoCao</div>
+                                }
+                                <div class="small text-muted">ID: #@item.MaNguoiBaoCao</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle me-1">Kỹ thuật</span>
+                                    @item.LyDo
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(item.MoTa))
+                                {
+                                    <div class="small text-secondary mt-1" style="white-space: pre-wrap;">@item.MoTa</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(item.GhiChuXuLy))
+                                {
+                                    <div class="small text-success mt-2 p-2 rounded-3 bg-success-subtle">
+                                        <strong><i class="bi bi-reply-fill me-1"></i>Admin đã phản hồi:</strong> @item.GhiChuXuLy
+                                    </div>
+                                }
+                            </td>
+                            <td class="text-muted small text-nowrap">@HienThi.NgayGio(item.NgayTao)</td>
+                            <td>
+                                @switch (item.TrangThai)
+                                {
+                                    case "PENDING":
+                                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small">Chờ xử lý</span>
+                                        break;
+                                    case "RESOLVED":
+                                        <span class="badge bg-success rounded-pill px-2 py-1 small">Đã khắc phục</span>
+                                        break;
+                                    case "DISMISSED":
+                                        <span class="badge bg-secondary rounded-pill px-2 py-1 small">Đã đóng</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                <button type="button"
+                                        class="btn @(item.TrangThai == "PENDING" ? "btn-primary" : "btn-outline-primary") btn-sm rounded-pill px-3 fw-semibold"
+                                        onclick="toggleTechReply('rowTech_@item.MaBaoCao')">
+                                    <i class="bi bi-bell-fill me-1"></i>
+                                    @(item.TrangThai == "PENDING" ? "Xử lý & Gửi TB" : "Gửi TB riêng")
+                                </button>
+                            </td>
+                        </tr>
+                        <tr id="rowTech_@item.MaBaoCao" style="display: none;" class="table-light">
+                            <td colspan="6" class="p-3">
+                                <form asp-area="Admin" asp-controller="Reports" asp-action="PhanHoiKyThuat" method="post" class="border rounded-3 p-3 bg-white">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="maBaoCao" value="@item.MaBaoCao" />
+                                    <input type="hidden" name="trangThaiFilter" value="@Model.TrangThaiFilter" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+
+                                    <h6 class="fw-bold text-dark mb-3">
+                                        <i class="bi bi-send-check text-primary me-1"></i>
+                                        Gửi thông báo riêng tới <strong>@item.TenNguoiBaoCao</strong> (@(item.EmailNguoiBaoCao ?? $"ID #{item.MaNguoiBaoCao}")) — Báo cáo #@item.MaBaoCao
+                                    </h6>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold small">Trạng thái sau phản hồi <span class="text-danger">*</span></label>
+                                            <select name="hanhDong" class="form-select form-select-sm rounded-2">
+                                                @if (item.TrangThai == "PENDING")
+                                                {
+                                                    <option value="RESOLVE" selected>Đã khắc phục (RESOLVED) + Gửi thông báo</option>
+                                                    <option value="DISMISS">Ghi nhận / Đóng (DISMISSED) + Gửi thông báo</option>
+                                                    <option value="NOTIFY_ONLY">Chỉ gửi thông báo riêng (Giữ chờ xử lý)</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="NOTIFY_ONLY" selected>Gửi thêm thông báo riêng cho người dùng</option>
+                                                    <option value="RESOLVE">Cập nhật Đã khắc phục (RESOLVED) + Gửi thông báo</option>
+                                                    <option value="DISMISS">Cập nhật Đã đóng (DISMISSED) + Gửi thông báo</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="form-label fw-semibold small">Tiêu đề thông báo riêng <span class="text-danger">*</span></label>
+                                            <input type="text" name="tieuDeThongBao" class="form-control form-control-sm rounded-2" maxlength="200" required
+                                                   value="Phản hồi báo cáo kỹ thuật #@item.MaBaoCao" />
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-semibold small">Nội dung phản hồi gửi riêng tới người dùng <span class="text-danger">*</span></label>
+                                            <textarea name="noiDungThongBao" rows="3" class="form-control form-control-sm rounded-2" maxlength="1000" required
+                                                      placeholder="VD: Cảm ơn bạn đã báo lỗi! Đội ngũ kỹ thuật đã kiểm tra và khắc phục sự cố này. Bạn vui lòng tải lại trang để kiểm tra nhé."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2 justify-content-end mt-3">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="toggleTechReply('rowTech_@item.MaBaoCao')">Hủy</button>
+                                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold">
+                                            <i class="bi bi-send me-1"></i> Gửi thông báo riêng
+                                        </button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-3 d-flex justify-content-center">
+            <ul class="pagination pagination-sm mb-0">
+                @for (int p = 1; p <= Model.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" asp-area="Admin" asp-controller="Reports" asp-action="Technical"
+                           asp-route-trangThai="@Model.TrangThaiFilter" asp-route-page="@p">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function toggleTechReply(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.style.display = (el.style.display === 'none' || !el.style.display) ? 'table-row' : 'none';
+        }
+    </script>
+}

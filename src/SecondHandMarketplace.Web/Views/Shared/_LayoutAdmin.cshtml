@@ -54,6 +54,9 @@
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Reports" asp-action="Index">
                     <i class="bi bi-flag"></i> <span>@L["Admin_Reports"]</span>
                 </a>
+                <a class="admin-nav-item" asp-area="Admin" asp-controller="Reports" asp-action="Technical">
+                    <i class="bi bi-bug"></i> <span>@(HienThi.LaTiengAnh ? "Technical Reports" : "Báo cáo kỹ thuật")</span>
+                </a>
                 <a class="admin-nav-item" asp-area="Admin" asp-controller="Disputes" asp-action="Index">
                     <i class="bi bi-exclamation-octagon"></i> <span>@L["Admin_Disputes"]</span>
                 </a>
@@ -147,18 +150,25 @@
     <script>
         // Tự động đánh dấu active link menu admin dựa trên URL hiện tại
         document.addEventListener('DOMContentLoaded', () => {
-            const currentPath = window.location.pathname.toLowerCase();
+            const currentPath = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+            let bestLink = null;
+            let bestLen = -1;
             document.querySelectorAll('.admin-nav-item').forEach(link => {
-                const href = link.getAttribute('href')?.toLowerCase();
-                if (!href) return;
+                const rawHref = link.getAttribute('href')?.toLowerCase();
+                if (!rawHref) return;
+                const href = rawHref.replace(/\/+$/, '') || '/';
+                let matched = false;
                 if (href === '/admin') {
-                    if (currentPath === '/admin' || currentPath === '/admin/' || currentPath.startsWith('/admin/dashboard')) {
-                        link.classList.add('active');
-                    }
-                } else if (currentPath === href || currentPath.startsWith(href + '/')) {
-                    link.classList.add('active');
+                    matched = (currentPath === '/admin' || currentPath.startsWith('/admin/dashboard'));
+                } else {
+                    matched = (currentPath === href || currentPath.startsWith(href + '/'));
+                }
+                if (matched && href.length > bestLen) {
+                    bestLen = href.length;
+                    bestLink = link;
                 }
             });
+            if (bestLink) bestLink.classList.add('active');
 
             document.addEventListener('click', (e) => {
                 const row = e.target.closest('tr.admin-clickable-row[data-href]');

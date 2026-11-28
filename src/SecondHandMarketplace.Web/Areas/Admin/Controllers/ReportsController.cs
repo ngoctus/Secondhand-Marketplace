@@ -40,4 +40,32 @@ public class ReportsController : AdminBaseController
 
         return RedirectToAction(nameof(Index));
     }
+
+    /// <summary>Danh sách báo cáo kỹ thuật (lỗi web/hệ thống) do người dùng gửi.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Technical(string? trangThai = null, int page = 1)
+    {
+        var vm = await _reportService.LayDanhSachBaoCaoAdminAsync(trangThai, "TECHNICAL", page);
+        return View(vm);
+    }
+
+    /// <summary>Admin xử lý báo cáo kỹ thuật và gửi thông báo riêng cho người dùng đã báo cáo.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PhanHoiKyThuat(int maBaoCao, string hanhDong, string? tieuDeThongBao, string? noiDungThongBao, string? trangThaiFilter = null, int page = 1)
+    {
+        var adminId = User.LayNguoiDungId()!.Value;
+        var (thanhCong, thongBao) = await _reportService.PhanHoiBaoCaoKyThuatAdminAsync(maBaoCao, adminId, hanhDong, tieuDeThongBao, noiDungThongBao);
+
+        if (thanhCong)
+        {
+            this.ThongBaoThanhCong(thongBao ?? "Đã phản hồi báo cáo kỹ thuật và gửi thông báo riêng cho người dùng.");
+        }
+        else
+        {
+            this.ThongBaoLoi(thongBao ?? "Không thể phản hồi báo cáo kỹ thuật.");
+        }
+
+        return RedirectToAction(nameof(Technical), new { trangThai = trangThaiFilter, page });
+    }
 }

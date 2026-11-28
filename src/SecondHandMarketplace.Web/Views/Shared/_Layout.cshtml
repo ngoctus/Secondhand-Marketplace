@@ -1,10 +1,12 @@
 @using SecondHandMarketplace.Web.Common
 @using SecondHandMarketplace.Web.Services.Categories
 @using SecondHandMarketplace.Web.Services.Carts
+@using SecondHandMarketplace.Web.Services.Shops
 @using Microsoft.AspNetCore.Antiforgery
 @inject IAntiforgery Antiforgery
 @inject ICategoryService CategoryService
 @inject ICartService CartService
+@inject IShopService ShopService
 @inject IConfiguration Configuration
 @{
     IReadOnlyList<SecondHandMarketplace.Web.Models.Entities.DanhMuc> menuDanhMuc = [];
@@ -19,6 +21,7 @@
     }
 
     var cartCount = 0;
+    var hasShop = false;
     if (User.Identity?.IsAuthenticated == true && User.IsInRole("USER") && User.LayNguoiDungId() is int currentUserId)
     {
         try
@@ -29,7 +32,16 @@
         {
             cartCount = 0;
         }
+        try
+        {
+            hasShop = await ShopService.GetByOwnerAsync(currentUserId) is not null;
+        }
+        catch
+        {
+            hasShop = false;
+        }
     }
+    ViewData["__RmUserHasShop"] = hasShop;
 
     var currentArea = Context.Request.RouteValues["area"]?.ToString() ?? string.Empty;
     var currentController = Context.Request.RouteValues["controller"]?.ToString() ?? string.Empty;
@@ -48,13 +60,18 @@
     var canonicalUrl = Uri.TryCreate(publicSiteUrl, UriKind.Absolute, out var publicSiteUri)
         ? $"{publicSiteUri.GetLeftPart(UriPartial.Authority)}{Context.Request.Path}"
         : null;
-    var isSellerChannelPage = currentArea.Equals("User", StringComparison.OrdinalIgnoreCase) &&
-                              (currentController.Equals("Products", StringComparison.OrdinalIgnoreCase) ||
-                               currentController.Equals("SellerOrders", StringComparison.OrdinalIgnoreCase) ||
-                               currentController.Equals("Auctions", StringComparison.OrdinalIgnoreCase) ||
-                               currentController.Equals("Shop", StringComparison.OrdinalIgnoreCase) ||
-                               currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ||
-                               (currentController.Equals("Reviews", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Shop", StringComparison.OrdinalIgnoreCase)));
+    var isCheckoutOrCart = currentArea.Equals("User", StringComparison.OrdinalIgnoreCase) &&
+                           (currentController.Equals("Cart", StringComparison.OrdinalIgnoreCase) ||
+                            (currentController.Equals("Orders", StringComparison.OrdinalIgnoreCase) &&
+                             (currentAction.Equals("Checkout", StringComparison.OrdinalIgnoreCase) ||
+                              currentAction.Equals("BuyNow", StringComparison.OrdinalIgnoreCase))));
+    var isUserWorkspacePage = User.Identity?.IsAuthenticated == true && User.IsInRole("USER") &&
+                              ((currentArea.Equals("User", StringComparison.OrdinalIgnoreCase) && !isCheckoutOrCart) ||
+                               (string.IsNullOrEmpty(currentArea) &&
+                                currentController.Equals("Account", StringComparison.OrdinalIgnoreCase) &&
+                                (currentAction.Equals("Profile", StringComparison.OrdinalIgnoreCase) ||
+                                 currentAction.Equals("ChangePassword", StringComparison.OrdinalIgnoreCase))));
+    var currentReturnUrl = Context.Request.Path + Context.Request.QueryString;
 }
 <!DOCTYPE html>
 <html lang="@(HienThi.LaTiengAnh ? "en" : "vi")">
@@ -240,34 +257,44 @@
 
                                         <div class="rm-mega-group">
                                             <div class="rm-mega-heading">@L["Header_GroupSelling"]</div>
-                                            <a class="rm-mega-item" asp-area="User" asp-controller="Products" asp-action="Create">
-                                                <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                                                <span>@L["Nav_SellNow"]</span>
-                                            </a>
-                                            <a class="rm-mega-item" asp-area="User" asp-controller="Products" asp-action="Index">
-                                                <i class="bi bi-box-seam" aria-hidden="true"></i>
-                                                <span>@L["Nav_ManageProducts"]</span>
-                                            </a>
-                                            <a class="rm-mega-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">
-                                                <i class="bi bi-receipt" aria-hidden="true"></i>
-                                                <span>@L["Nav_SellerOrders"]</span>
-                                            </a>
-                                            <a class="rm-mega-item" asp-area="User" asp-controller="Auctions" asp-action="Index">
-                                                <i class="bi bi-hammer" aria-hidden="true"></i>
-                                                <span>@L["E_SellerAuctionsNav"]</span>
-                                            </a>
-                                            <a class="rm-mega-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">
-                                                <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
-                                                <span>@L["Nav_RevenueStats"]</span>
-                                            </a>
-                                            <a class="rm-mega-item" asp-area="User" asp-controller="Shop" asp-action="Index">
-                                                <i class="bi bi-shop" aria-hidden="true"></i>
-                                                <span>@L["Nav_MyShop"]</span>
-                                            </a>
-                                            <a class="rm-mega-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">
-                                                <i class="bi bi-chat-square-text" aria-hidden="true"></i>
-                                                <span>@L["Nav_ShopReviews"]</span>
-                                            </a>
+                                            @if (hasShop)
+                                            {
+                                                <a class="rm-mega-item" asp-area="User" asp-controller="Products" asp-action="Create">
+                                                    <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                                                    <span>@L["Nav_SellNow"]</span>
+                                                </a>
+                                                <a class="rm-mega-item" asp-area="User" asp-controller="Products" asp-action="Index">
+                                                    <i class="bi bi-box-seam" aria-hidden="true"></i>
+                                                    <span>@L["Nav_ManageProducts"]</span>
+                                                </a>
+                                                <a class="rm-mega-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">
+                                                    <i class="bi bi-receipt" aria-hidden="true"></i>
+                                                    <span>@L["Nav_SellerOrders"]</span>
+                                                </a>
+                                                <a class="rm-mega-item" asp-area="User" asp-controller="Auctions" asp-action="Index">
+                                                    <i class="bi bi-hammer" aria-hidden="true"></i>
+                                                    <span>@L["E_SellerAuctionsNav"]</span>
+                                                </a>
+                                                <a class="rm-mega-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">
+                                                    <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
+                                                    <span>@L["Nav_RevenueStats"]</span>
+                                                </a>
+                                                <a class="rm-mega-item" asp-area="User" asp-controller="Shop" asp-action="Index">
+                                                    <i class="bi bi-shop" aria-hidden="true"></i>
+                                                    <span>@L["Nav_MyShop"]</span>
+                                                </a>
+                                                <a class="rm-mega-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">
+                                                    <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+                                                    <span>@L["Nav_ShopReviews"]</span>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a class="rm-mega-item fw-semibold text-primary" asp-area="User" asp-controller="Shop" asp-action="Index">
+                                                    <i class="bi bi-shop-window" aria-hidden="true"></i>
+                                                    <span>@HienThi.Chon("Mở cửa hàng ngay", "Open Shop Now")</span>
+                                                </a>
+                                            }
                                         </div>
                                     }
                                     else if (User.IsInRole("ADMIN"))
@@ -303,6 +330,10 @@
                                                 <i class="bi bi-flag" aria-hidden="true"></i>
                                                 <span>@L["Nav_ReportHistory"]</span>
                                             </a>
+                                            <a class="rm-mega-item" asp-area="User" asp-controller="Reports" asp-action="TaoKyThuat" asp-route-returnUrl="@currentReturnUrl">
+                                                <i class="bi bi-bug" aria-hidden="true"></i>
+                                                <span>@HienThi.Chon("Báo lỗi kỹ thuật", "Report Technical Issue")</span>
+                                            </a>
                                         }
                                     </div>
 
@@ -333,6 +364,13 @@
 
                     @if (User.IsInRole("USER"))
                     {
+                        <a asp-area="User" asp-controller="Reports" asp-action="TaoKyThuat" asp-route-returnUrl="@currentReturnUrl"
+                           class="rm-header-icon-btn"
+                           title="@HienThi.Chon("Báo lỗi kỹ thuật / Sự cố website", "Report technical issue")"
+                           aria-label="@HienThi.Chon("Báo lỗi kỹ thuật", "Report technical issue")">
+                            <i class="bi bi-bug" style="font-size: 18px;" aria-hidden="true"></i>
+                        </a>
+
                         <a asp-area="User" asp-controller="Cart" asp-action="Index" class="rm-header-icon-btn rm-cart-link" title="@L["Nav_Cart"]" aria-label="@L["Nav_Cart"]">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                                 <circle cx="9" cy="21" r="1"></circle>
@@ -351,7 +389,14 @@
 
                     @if (User.IsInRole("USER"))
                     {
-                        <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary rm-header-cta">@L["Nav_SellNow"]</a>
+                        if (hasShop)
+                        {
+                            <a asp-area="User" asp-controller="Products" asp-action="Create" class="btn-rm-primary rm-header-cta">@L["Nav_SellNow"]</a>
+                        }
+                        else
+                        {
+                            <a asp-area="User" asp-controller="Shop" asp-action="Index" class="btn-rm-primary rm-header-cta">@HienThi.Chon("Mở cửa hàng", "Open Shop")</a>
+                        }
                     }
                     else if (User.IsInRole("ADMIN"))
                     {
@@ -410,16 +455,27 @@
                     <a class="rm-dropdown-item" asp-area="User" asp-controller="Favorites" asp-action="Index">@L["Nav_Favorites"]</a>
                     <a class="rm-dropdown-item" asp-area="User" asp-controller="Orders" asp-action="Index">@L["Layout_MyOrdersShort"]</a>
                     <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Index">@L["Nav_MyReviews"]</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Reports" asp-action="Index">@L["Nav_ReportHistory"]</a>
+                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Reports" asp-action="TaoKyThuat" asp-route-returnUrl="@currentReturnUrl">@HienThi.Chon("Báo lỗi kỹ thuật", "Report Technical Issue")</a>
                     <div class="rm-dropdown-divider"></div>
-                    <a class="rm-dropdown-item fw-semibold" asp-area="User" asp-controller="Products" asp-action="Index">
-                        <i class="bi bi-shop me-1"></i> @L["Nav_SellerChannel"]
-                    </a>
-                    <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">@L["Nav_SellerOrders"]</a>
-                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Auctions" asp-action="Index">@L["E_SellerAuctionsNav"]</a>
-                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">@L["Nav_ShopReviews"]</a>
-                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">@L["Layout_ShopStats"]</a>
-                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">@L["Nav_MyShop"]</a>
-                    <a class="rm-dropdown-item" asp-area="User" asp-controller="Products" asp-action="Create">@L["Layout_PostProduct"]</a>
+                    @if (hasShop)
+                    {
+                        <a class="rm-dropdown-item fw-semibold" asp-area="User" asp-controller="Products" asp-action="Index">
+                            <i class="bi bi-shop me-1"></i> @L["Nav_SellerChannel"]
+                        </a>
+                        <a class="rm-dropdown-item" asp-area="User" asp-controller="SellerOrders" asp-action="Index">@L["Nav_SellerOrders"]</a>
+                        <a class="rm-dropdown-item" asp-area="User" asp-controller="Auctions" asp-action="Index">@L["E_SellerAuctionsNav"]</a>
+                        <a class="rm-dropdown-item" asp-area="User" asp-controller="Reviews" asp-action="Shop">@L["Nav_ShopReviews"]</a>
+                        <a class="rm-dropdown-item" asp-area="User" asp-controller="Dashboard" asp-action="Index">@L["Layout_ShopStats"]</a>
+                        <a class="rm-dropdown-item" asp-area="User" asp-controller="Shop" asp-action="Index">@L["Nav_MyShop"]</a>
+                        <a class="rm-dropdown-item" asp-area="User" asp-controller="Products" asp-action="Create">@L["Layout_PostProduct"]</a>
+                    }
+                    else
+                    {
+                        <a class="rm-dropdown-item fw-semibold text-primary" asp-area="User" asp-controller="Shop" asp-action="Index">
+                            <i class="bi bi-shop-window me-1"></i> @HienThi.Chon("Mở cửa hàng ngay", "Open Shop Now")
+                        </a>
+                    }
                 }
                 <div class="rm-dropdown-divider"></div>
                 <div class="rm-mega-lang-row px-2 py-1">
@@ -452,40 +508,21 @@
 
     <!-- Main Content -->
     <main class="rm-main-content" id="main-content" tabindex="-1">
-        @if (isSellerChannelPage)
+        @if (isUserWorkspacePage)
         {
-            <nav class="d-flex flex-wrap align-items-center gap-2 mb-3 pb-2 border-bottom" aria-label="@L["Layout_SellerChannelNavAria"]">
-                <span class="fw-bold text-dark me-2 d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-shop text-primary"></i> @L["Nav_SellerChannel"]:
-                </span>
-                <a asp-area="User" asp-controller="Products" asp-action="Index"
-                   class="btn btn-sm @(currentController.Equals("Products", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
-                    @L["Nav_ManageProducts"]
-                </a>
-                <a asp-area="User" asp-controller="SellerOrders" asp-action="Index"
-                   class="btn btn-sm @(currentController.Equals("SellerOrders", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
-                    @L["Nav_SellerOrders"]
-                </a>
-                    <a asp-area="User" asp-controller="Auctions" asp-action="Index"
-                       class="btn btn-sm @(currentController.Equals("Auctions", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
-                        @L["E_SellerAuctionsNav"]
-                    </a>
-                <a asp-area="User" asp-controller="Shop" asp-action="Index"
-                   class="btn btn-sm @(currentController.Equals("Shop", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
-                    @L["Nav_MyShop"]
-                </a>
-                <a asp-area="User" asp-controller="Reviews" asp-action="Shop"
-                   class="btn btn-sm @(currentController.Equals("Reviews", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Shop", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
-                    @L["Nav_ShopReviews"]
-                </a>
-                <a asp-area="User" asp-controller="Dashboard" asp-action="Index"
-                   class="btn btn-sm @(currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")">
-                    @L["Nav_RevenueStats"]
-                </a>
-            </nav>
+            <div class="rm-user-workspace">
+                <partial name="_UserSidebar" />
+                <div class="rm-user-workspace-content">
+                    <partial name="_ThongBao" />
+                    @RenderBody()
+                </div>
+            </div>
         }
-        <partial name="_ThongBao" />
-        @RenderBody()
+        else
+        {
+            <partial name="_ThongBao" />
+            @RenderBody()
+        }
     </main>
 
     <!-- Add to Cart Confirmation Box / Modal -->
@@ -590,6 +627,27 @@
     @if (User.Identity?.IsAuthenticated == true)
     {
         <script src="~/js/realtime.js" asp-append-version="true" data-hub="@Url.Content("~/hubs/notification")"></script>
+    }
+    @if (isUserWorkspacePage)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPath = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+                let bestLink = null;
+                let bestLen = -1;
+                document.querySelectorAll('.rm-user-nav-item').forEach(link => {
+                    const rawHref = link.getAttribute('href');
+                    if (!rawHref) return;
+                    const pathOnly = rawHref.split('?')[0].toLowerCase().replace(/\/+$/, '') || '/';
+                    const matched = (currentPath === pathOnly || currentPath.startsWith(pathOnly + '/'));
+                    if (matched && pathOnly.length > bestLen) {
+                        bestLen = pathOnly.length;
+                        bestLink = link;
+                    }
+                });
+                if (bestLink) bestLink.classList.add('active');
+            });
+        </script>
     }
     @await RenderSectionAsync("Scripts", required: false)
 

@@ -48,6 +48,10 @@ public interface INotificationService
     /// <summary>Danh sách thông báo của chính userId, mới nhất trước, có phân trang.</summary>
     Task<NotificationPage> GetForUserAsync(int userId, int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);
 
+    /// <summary>Danh sách thông báo của chính userId có lọc theo trạng thái/loại (UNREAD, ORDER, PRODUCT, SYSTEM).</summary>
+    Task<NotificationPage> GetForUserAsync(int userId, string? filter, int page = 1, int pageSize = 20, CancellationToken cancellationToken = default) =>
+        GetForUserAsync(userId, page, pageSize, cancellationToken);
+
     /// <summary>Số thông báo chưa đọc của userId (hiển thị trên chuông).</summary>
     Task<int> CountUnreadAsync(int userId, CancellationToken cancellationToken = default);
 

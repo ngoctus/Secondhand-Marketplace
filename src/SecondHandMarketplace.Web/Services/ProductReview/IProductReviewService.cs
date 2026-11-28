@@ -132,6 +132,9 @@ public interface IProductReviewService
     /// <summary>Từ chối: PENDING_REVIEW -> REJECTED, bắt buộc lý do (10-500 ký tự). Vi phạm LOW (nếu có) do trigger SQL ghi cùng quyết định.</summary>
     Task<ProductDecisionResult> RejectAsync(int adminId, int maSanPham, string? reason, CancellationToken cancellationToken = default);
 
+    /// <summary>Từ chối với tùy chọn có ghi nhận gậy vi phạm hay chỉ yêu cầu chỉnh sửa (recordViolation = false -> không đánh gậy).</summary>
+    Task<ProductDecisionResult> RejectAsync(int adminId, int maSanPham, string? reason, bool recordViolation, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Gỡ sản phẩm vi phạm: ACTIVE -> REMOVED qua sp_ChuyenTrangThaiSanPham (lý do bắt buộc). Không ghi vi phạm.
     /// D5 (xử lý báo cáo) gọi hàm này với adminId của Admin đang xử lý. Có nhật ký + thông báo người bán.

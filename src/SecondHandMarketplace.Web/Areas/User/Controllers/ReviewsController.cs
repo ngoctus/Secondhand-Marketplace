@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SecondHandMarketplace.Web.Common;
 using SecondHandMarketplace.Web.Models.ViewModels.Reviews;
 using SecondHandMarketplace.Web.Services.Reviews;
+using SecondHandMarketplace.Web.Services.Shops;
 
 namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 
@@ -10,7 +11,7 @@ namespace SecondHandMarketplace.Web.Areas.User.Controllers;
 /// 1. Index: Liệt kê danh sách các đánh giá do chính người mua đã viết (kèm trạng thái, số sao, nội dung).
 /// 2. Tao: Tiếp nhận đánh giá người bán sau khi đơn hàng chuyển sang trạng thái COMPLETED.
 /// </summary>
-public class ReviewsController(IReviewService reviewService) : UserBaseController
+public class ReviewsController(IReviewService reviewService, IShopService? shops = null) : UserBaseController
 {
     /// <summary>
     /// Danh sách đánh giá người mua đã viết.
@@ -75,6 +76,11 @@ public class ReviewsController(IReviewService reviewService) : UserBaseControlle
     public async Task<IActionResult> Shop(int page = 1, CancellationToken cancellationToken = default)
     {
         var userId = User.LayNguoiDungId()!.Value;
+        if (shops is not null && await shops.GetByOwnerAsync(userId, cancellationToken) is null)
+        {
+            this.ThongBaoLoi("Bạn cần mở cửa hàng trước khi xem đánh giá shop.");
+            return RedirectToAction("Index", "Shop");
+        }
         var vm = await reviewService.LayDanhGiaCuaShopAsync(userId, page, 10, cancellationToken);
         return View(vm);
     }

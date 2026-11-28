@@ -104,6 +104,7 @@ public class Program
             builder.Services.AddHealthChecks().AddCheck<RedisHealthCheck>("redis", tags: ["ready"]);
         if (string.Equals(storageProvider, "S3", StringComparison.OrdinalIgnoreCase))
             builder.Services.AddHealthChecks().AddCheck<S3StorageHealthCheck>("object-storage", tags: ["ready"]);
+        var authRateLimit = builder.Environment.IsDevelopment() ? 50 : 5;
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -111,7 +112,7 @@ public class Program
                 context.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 5,
+                    PermitLimit = authRateLimit,
                     Window = TimeSpan.FromMinutes(15),
                     QueueLimit = 0,
                     AutoReplenishment = true
@@ -120,7 +121,7 @@ public class Program
                 context.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 5,
+                    PermitLimit = authRateLimit,
                     Window = TimeSpan.FromMinutes(10),
                     QueueLimit = 0,
                     AutoReplenishment = true
@@ -129,7 +130,7 @@ public class Program
                 context.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 5,
+                    PermitLimit = authRateLimit,
                     Window = TimeSpan.FromMinutes(15),
                     QueueLimit = 0,
                     AutoReplenishment = true
@@ -138,7 +139,7 @@ public class Program
                 context.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 5,
+                    PermitLimit = authRateLimit,
                     Window = TimeSpan.FromMinutes(15),
                     QueueLimit = 0,
                     AutoReplenishment = true

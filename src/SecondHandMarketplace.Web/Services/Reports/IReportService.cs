@@ -9,4 +9,5 @@ public interface IReportService
     Task<List<BaoCaoItemViewModel>> LayLichSuBaoCaoCuaToiAsync(int maNguoiBaoCao);
     Task<AdminReportListViewModel> LayDanhSachBaoCaoAdminAsync(string? trangThai, string? loaiDoiTuong, int page = 1, int pageSize = 10);
     Task<(bool ThanhCong, string? ThongBao)> XuLyBaoCaoAdminAsync(int maBaoCao, int adminId, string hanhDong, string? ghiChu);
+    Task<(bool ThanhCong, string? ThongBao)> PhanHoiBaoCaoKyThuatAdminAsync(int maBaoCao, int adminId, string hanhDong, string? tieuDeThongBao, string? noiDungThongBao);
 }
