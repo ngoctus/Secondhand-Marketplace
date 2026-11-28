@@ -158,7 +158,8 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="bi bi-geo-alt"></i></span>
-                            <input asp-for="DiaChiChiTiet" id="txtDiaChiChiTiet" class="form-control rounded-end-3 border-start-0" 
+                            <input asp-for="DiaChiChiTiet" id="txtDiaChiChiTiet" class="form-control rounded-end-3 border-start-0"
+                                   data-gmaps-address="true" autocomplete="off"
                                    placeholder="@(Model.HinhThucNhan == "GAP_TRUC_TIEP" ? L["Checkout_MeetupPlaceholder"].Value : L["Checkout_AddressPlaceholder"].Value)" maxlength="300" />
                         </div>
                         <span asp-validation-for="DiaChiChiTiet" class="text-danger small mt-1 d-block"></span>

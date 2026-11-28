@@ -96,7 +96,7 @@
 
                     <div class="mt-3">
                         <label asp-for="DiaChiChiTiet" class="form-label fw-semibold small">@L["Profile_StreetDetail"]</label>
-                        <input asp-for="DiaChiChiTiet" class="form-control" maxlength="300" placeholder="@L["Profile_StreetPlaceholder"]" />
+                        <input asp-for="DiaChiChiTiet" class="form-control" maxlength="300" placeholder="@L["Profile_StreetPlaceholder"]" data-gmaps-address="true" autocomplete="off" />
                         <span asp-validation-for="DiaChiChiTiet" class="text-danger small"></span>
                     </div>
                 </div>
@@ -155,7 +155,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold mb-1" for="backupDetail">@L["Profile_StreetDetail"] <span class="text-danger">*</span></label>
-                            <input id="backupDetail" name="DiaChiChiTiet" class="form-control form-control-sm" maxlength="300" placeholder="@L["Profile_StreetPlaceholder"]" required />
+                            <input id="backupDetail" name="DiaChiChiTiet" class="form-control form-control-sm" maxlength="300" placeholder="@L["Profile_StreetPlaceholder"]" data-gmaps-address="true" autocomplete="off" required />
                         </div>
                         <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2">
                             <label class="form-check-label small d-inline-flex align-items-center gap-2">

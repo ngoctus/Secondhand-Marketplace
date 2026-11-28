@@ -94,7 +94,7 @@
             <partial name="_ChonKhuVuc" model="khuVucShop" />
             <div class="mt-3">
                 <label asp-for="DiaChiChiTiet" class="form-label fw-semibold small">@L["Shop_AddressDetail"] <span class="text-danger">*</span></label>
-                <input asp-for="DiaChiChiTiet" class="form-control" maxlength="300" />
+                <input asp-for="DiaChiChiTiet" class="form-control" maxlength="300" data-gmaps-address="true" autocomplete="off" />
                 <span asp-validation-for="DiaChiChiTiet" class="text-danger small"></span>
             </div>
             <div class="mt-3">

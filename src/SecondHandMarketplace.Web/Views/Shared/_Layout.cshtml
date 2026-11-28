@@ -98,6 +98,7 @@
     {
         <meta name="rm-csrf" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
     }
+    <meta name="rm-gmaps-key" content="@(Configuration["GoogleMaps:ApiKey"] ?? string.Empty)" />
     
     <!-- Google Fonts: Be Vietnam Pro & Playfair Display (hỗ trợ 100% tiếng Việt không lỗi dấu) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -649,6 +650,7 @@
             });
         </script>
     }
+    <script src="~/js/google-maps-address.js" asp-append-version="true" defer></script>
     @await RenderSectionAsync("Scripts", required: false)
 
     <partial name="_ChatWidget" />
